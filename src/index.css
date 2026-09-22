@@ -1,0 +1,601 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Palette derived from the official Aquifert logo: steel blue #31648F / deep #254F76 + sage green #6E9A8E */
+    --background: 160 7% 97%;
+    --foreground: 208 50% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 208 50% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 208 50% 13%;
+    --primary: 207 49% 38%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 164 23% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 170 9% 94%;
+    --muted-foreground: 215 19% 30%;
+    --accent: 164 28% 92%;
+    --accent-foreground: 164 30% 22%;
+    --destructive: 354 70% 54%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 190 10% 86%;
+    --input: 190 10% 86%;
+    --ring: 164 23% 40%;
+    --radius: 0.625rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 210 14% 26%;
+    --sidebar-primary: 164 30% 25%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 25% 96%;
+    --sidebar-accent-foreground: 210 30% 15%;
+    --sidebar-border: 210 16% 90%;
+    --sidebar-ring: 164 25% 50%;
+  }
+
+  .dark {
+    --background: 210 42% 7%;
+    --foreground: 204 25% 93%;
+    --card: 210 40% 10%;
+    --card-foreground: 204 25% 93%;
+    --popover: 210 40% 10%;
+    --popover-foreground: 204 25% 93%;
+    --primary: 207 55% 52%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 164 28% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 32% 15%;
+    --muted-foreground: 208 16% 62%;
+    --accent: 164 24% 18%;
+    --accent-foreground: 164 30% 74%;
+    --destructive: 354 65% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 30% 17%;
+    --input: 210 30% 17%;
+    --ring: 164 28% 48%;
+    --sidebar-background: 210 48% 6%;
+    --sidebar-foreground: 204 25% 90%;
+    --sidebar-primary: 164 28% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 35% 13%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 210 32% 14%;
+    --sidebar-ring: 164 28% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .font-data {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+}
+
+/* ---- AQUIFERT micro-interactions ---- */
+@keyframes aqf-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes aqf-pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55); }
+  50% { box-shadow: 0 0 0 7px rgba(37, 99, 235, 0); }
+}
+@keyframes aqf-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+@keyframes aqf-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes aqf-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.aqf-page {
+  animation: aqf-fade-in 0.22s ease-out both;
+}
+.aqf-card-hover {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+.aqf-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 2px 3px rgb(14 32 49 / 0.08),
+    0 22px 48px -14px rgb(37 79 118 / 0.38),
+    inset 0 1px 0 rgb(255 255 255 / 0.75) !important;
+}
+.dark .aqf-card-hover:hover {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.55),
+    0 24px 54px -14px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.09) !important;
+}
+
+/* Flat marketing card: hairline shadow, sage outline on hover (no dark shadow) */
+.aqf-card-3d {
+  box-shadow:
+    0 1px 2px rgb(14 32 49 / 0.05),
+    0 6px 16px -10px rgb(37 79 118 / 0.16);
+  transition: box-shadow 0.25s ease;
+}
+.aqf-card-3d:hover {
+  box-shadow:
+    0 1px 2px rgb(14 32 49 / 0.05),
+    0 0 0 2px rgb(110 154 142 / 0.6);
+}
+.dark .aqf-card-3d {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 8px 20px -12px rgb(0 0 0 / 0.5);
+}
+.dark .aqf-card-3d:hover {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 0 0 2px rgb(110 154 142 / 0.55);
+}
+
+/* ================= AQUIFERT 3D depth system ================= */
+/* Layered shadows + top inner highlight give every surface physical depth. */
+
+/* Cards & panels */
+[data-slot="card"] {
+  box-shadow:
+    0 1px 2px rgb(14 32 49 / 0.06),
+    0 12px 30px -16px rgb(37 79 118 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  transition: box-shadow 0.2s ease;
+}
+.dark [data-slot="card"] {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 16px 38px -16px rgb(0 0 0 / 0.6),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+/* Filled buttons: flat 2D, no shadow, colour shift on hover only */
+[data-slot="button"] {
+  transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+[data-slot="button"]:not([data-variant="ghost"]):not([data-variant="link"]):not([data-variant="outline"]) {
+  box-shadow: none;
+}
+[data-slot="button"]:not([data-variant="ghost"]):not([data-variant="link"]):not([data-variant="outline"]):hover {
+  box-shadow: none;
+}
+[data-slot="button"][data-variant="outline"] {
+  box-shadow: none;
+}
+.dark [data-slot="button"][data-variant="outline"] {
+  box-shadow: none;
+}
+[data-slot="button"]:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+/* Inputs: subtle inset depth */
+[data-slot="input"],
+textarea[class*="border"],
+select[class*="border"] {
+  box-shadow: inset 0 2px 4px rgb(14 32 49 / 0.05);
+}
+[data-slot="input"]:focus-visible,
+textarea:focus-visible {
+  box-shadow: inset 0 2px 4px rgb(14 32 49 / 0.04), 0 0 0 3px hsl(var(--ring) / 0.25);
+}
+
+/* Popovers / dialogs / dropdowns float higher */
+[data-slot="dialog-content"],
+[data-slot="popover-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="sheet-content"] {
+  box-shadow:
+    0 2px 4px rgb(14 32 49 / 0.08),
+    0 24px 64px -16px rgb(14 32 49 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
+}
+.dark [data-slot="dialog-content"],
+.dark [data-slot="popover-content"],
+.dark [data-slot="dropdown-menu-content"],
+.dark [data-slot="sheet-content"] {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.5),
+    0 24px 64px -12px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+/* 3D icon chip (stat icons, feature icons) — layered shadow + glossy dome */
+.aqf-chip-3d {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgb(14 32 49 / 0.12),
+    0 4px 10px -4px rgb(37 79 118 / 0.25);
+}
+.aqf-chip-3d::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(130% 90% at 30% 12%, rgb(255 255 255 / 0.5) 0%, rgb(255 255 255 / 0.12) 38%, transparent 62%);
+  pointer-events: none;
+}
+
+/* Solid navy CTA band — explicit hexes so it can never render as a light surface */
+.aqf-cta-band {
+  background-color: #163049;
+  background-image: linear-gradient(180deg, #1e405f 0%, #163049 55%, #0e2031 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+/* Sidebar surface — flat Dynamics-style light rail */
+.aqf-sidebar {
+  background-image: none;
+}
+.dark .aqf-sidebar {
+  background-image: linear-gradient(180deg, hsl(210 48% 8%) 0%, hsl(212 60% 4%) 100%);
+}
+
+/* Scroll-triggered reveals */
+.aqf-reveal {
+  opacity: 0;
+  transform: translateY(22px) scale(0.985);
+}
+.aqf-reveal-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Branded loading droplet */
+@keyframes aqf-drop-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgb(110 154 142 / 0)); }
+  50% { transform: scale(1.07); filter: drop-shadow(0 8px 18px rgb(110 154 142 / 0.45)); }
+}
+.aqf-drop-pulse {
+  animation: aqf-drop-pulse 1.6s ease-in-out infinite;
+}
+@keyframes aqf-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.aqf-float {
+  animation: aqf-float 5s ease-in-out infinite;
+}
+.aqf-btn-press:active {
+  transform: scale(0.97);
+}
+.aqf-pulse-dot {
+  animation: aqf-pulse-dot 1.6s ease-out infinite;
+}
+.aqf-shake {
+  animation: aqf-shake 0.4s ease;
+}
+.aqf-pop {
+  animation: aqf-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aqf-page, .aqf-pulse-dot, .aqf-pop, .aqf-shake, .aqf-drop-pulse, .aqf-float {
+    animation: none !important;
+  }
+  .aqf-card-hover, .aqf-card-3d, .aqf-btn-press, .aqf-reveal, .aqf-reveal-in {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-slot="button"], [data-slot="button"]:hover, [data-slot="button"]:active {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Leaflet dark-friendly popup + container */
+.leaflet-container {
+  border-radius: 0.625rem;
+  z-index: 0;
+  background: #dbe7f3;
+}
+.dark .leaflet-container {
+  background: #0c1a2b;
+}
+
+/* Custom scrollbar for data areas */
+.aqf-scroll::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.aqf-scroll::-webkit-scrollbar-thumb {
+  background: rgb(37 79 118 / 0.25);
+  border-radius: 8px;
+}
+
+/* ===== Cinematic video heroes + marketing media ===== */
+.aqf-video-scrim {
+  background:
+    linear-gradient(180deg, rgb(14 32 49 / 0.55) 0%, rgb(14 32 49 / 0.35) 40%, rgb(14 32 49 / 0.75) 100%),
+    radial-gradient(120% 90% at 20% 80%, rgb(14 32 49 / 0.6) 0%, transparent 60%);
+}
+.aqf-video-hero video {
+  transform: scale(1.02);
+}
+
+/* Glass stat bar overlapping the hero */
+.aqf-glass-stat {
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 20px 40px -20px rgb(0 0 0 / 0.5);
+}
+
+/* Infinite commodities marquee */
+@keyframes aqf-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.aqf-marquee-track {
+  animation: aqf-marquee 32s linear infinite;
+  will-change: transform;
+}
+.aqf-marquee:hover .aqf-marquee-track {
+  animation-play-state: paused;
+}
+.aqf-marquee::before,
+.aqf-marquee::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 72px;
+  z-index: 1;
+  pointer-events: none;
+}
+.aqf-marquee::before {
+  left: 0;
+  background: linear-gradient(90deg, hsl(var(--card)) 0%, transparent 100%);
+}
+.aqf-marquee::after {
+  right: 0;
+  background: linear-gradient(-90deg, hsl(var(--card)) 0%, transparent 100%);
+}
+
+/* Outlined display numerals for step cards */
+.aqf-step-numeral {
+  -webkit-text-stroke: 1.5px rgb(49 100 143 / 0.5);
+  color: transparent;
+}
+.dark .aqf-step-numeral {
+  -webkit-text-stroke: 1.5px rgb(130 171 203 / 0.55);
+}
+
+/* Hero headline on video — always pure white, subtle depth */
+.aqf-hero-title {
+  color: #fff;
+  text-shadow: 0 2px 12px rgb(14 32 49 / 0.55), 0 8px 32px rgb(14 32 49 / 0.35);
+}
+.aqf-hero-title span {
+  color: #fff !important;
+}
+.aqf-hero-sub {
+  color: #fff;
+  text-shadow: 0 1px 8px rgb(14 32 49 / 0.5);
+}
+.aqf-hero-kicker {
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aqf-marquee-track {
+    animation: none !important;
+  }
+  .aqf-video-hero video {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   AQUIFERT ONE — DESIGN SYSTEM FOUNDATION (scoped: .aq)
+   NYSE-grade institutional discipline on Aquifert brand colours.
+   Brand ramps derived in OKLCH from the logo palette
+   (blue #31648F / green #6E9A8E / deep #254F76), hue constant,
+   lightness stepped evenly. Grey ramp = brand-deep hue at ~4% chroma.
+   Existing pages are untouched: everything lives under .aq
+   ============================================================ */
+
+.aq {
+  /* --- primary ramp (logo blue, OKLCH hue 246.4) --- */
+  --aq-primary-50:#EAF5FF; --aq-primary-100:#D0E0EF; --aq-primary-200:#ACC6DE;
+  --aq-primary-300:#83A9CC; --aq-primary-400:#5C89B2; --aq-primary-500:#356793;
+  --aq-primary-600:#1A4B72; --aq-primary-700:#073455; --aq-primary-800:#00203B;
+  --aq-primary-900:#000E22;
+  /* --- accent ramp (logo green, OKLCH hue 175.9) --- */
+  --aq-accent-50:#EDF6F3; --aq-accent-100:#D4E2DD; --aq-accent-200:#B2C8C2;
+  --aq-accent-300:#8CADA4; --aq-accent-400:#678E83; --aq-accent-500:#426D62;
+  --aq-accent-600:#285047; --aq-accent-700:#163931; --aq-accent-800:#05241D;
+  --aq-accent-900:#00110D;
+  /* --- deep ramp (brand-deep, OKLCH hue 248.8) --- */
+  --aq-deep-50:#EBF5FE; --aq-deep-100:#D2E0EE; --aq-deep-200:#AFC5DC;
+  --aq-deep-300:#87A8C9; --aq-deep-400:#6289AF; --aq-deep-500:#3C678F;
+  --aq-deep-600:#234A6F; --aq-deep-700:#113353; --aq-deep-800:#021F39;
+  --aq-deep-900:#000E21;
+  /* --- neutral ramp (deep hue at ~4% chroma — every grey carries a faint brand cast) --- */
+  --aq-grey-50:#EDF4FC; --aq-grey-100:#D8DFE6; --aq-grey-200:#BCC3CB;
+  --aq-grey-300:#9FA5AD; --aq-grey-400:#7F858C; --aq-grey-500:#5E646B;
+  --aq-grey-600:#42484F; --aq-grey-700:#2D3238; --aq-grey-800:#191F24;
+  --aq-grey-900:#090E13;
+
+  /* --- semantic tokens (light) --- */
+  --aq-surface-canvas:var(--aq-grey-50);
+  --aq-surface-raised:#FFFFFF;
+  --aq-surface-sunken:var(--aq-grey-100);
+  --aq-surface-dark:var(--aq-deep-900);
+  --aq-border-subtle:var(--aq-grey-200);
+  --aq-border-strong:var(--aq-grey-400);
+  --aq-text-primary:var(--aq-grey-900);
+  --aq-text-secondary:var(--aq-grey-500);
+  --aq-brand-primary:var(--aq-primary-500);
+  --aq-brand-accent:var(--aq-accent-500);
+  --aq-brand-deep:var(--aq-deep-600);
+  --aq-on-primary:#FFFFFF;
+  --aq-price-up:#005D39;    /* clears 4.5:1 on canvas */
+  --aq-price-down:#9B1E22;  /* hue-distinct from every brand hue */
+  --aq-price-flat:var(--aq-text-secondary);
+  --aq-focus:var(--aq-primary-400);
+
+  /* --- typography --- */
+  --aq-font-display:"Archivo",sans-serif;
+  --aq-font-body:"Inter",sans-serif;
+  --aq-font-data:"IBM Plex Mono",ui-monospace,monospace;
+
+  background:var(--aq-surface-canvas);
+  color:var(--aq-text-primary);
+  font-family:var(--aq-font-body);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Dark theme: re-derived from the same ramps against a brand-deep-tinted near-black. Not an inversion. */
+.aq.dark, .aq-dark {
+  --aq-surface-canvas:#0B1015;
+  --aq-surface-raised:#13191F;
+  --aq-surface-sunken:#060A0E;
+  --aq-surface-dark:#060A0E;
+  --aq-border-subtle:#26303A;
+  --aq-border-strong:#55616C;
+  --aq-text-primary:#EAEFF4;
+  --aq-text-secondary:#9FA5AC;
+  --aq-brand-primary:var(--aq-primary-400);
+  --aq-brand-accent:var(--aq-accent-300);
+  --aq-brand-deep:var(--aq-deep-700);
+  --aq-on-primary:#0B1420;
+  --aq-price-up:#61D19A;
+  --aq-price-down:#F66D67;
+  --aq-price-flat:#9FA5AC;
+  --aq-focus:var(--aq-primary-300);
+}
+
+/* Type scale (16px base) */
+.aq-display-1{font-family:var(--aq-font-display);font-size:3.5rem;line-height:1.05;font-weight:700;letter-spacing:-0.03em;}
+.aq-display-2{font-family:var(--aq-font-display);font-size:2.75rem;line-height:1.10;font-weight:700;letter-spacing:-0.025em;}
+.aq-h1{font-family:var(--aq-font-display);font-size:2.25rem;line-height:1.15;font-weight:600;letter-spacing:-0.02em;}
+.aq-h2{font-family:var(--aq-font-display);font-size:1.75rem;line-height:1.20;font-weight:600;letter-spacing:-0.015em;}
+.aq-h3{font-family:var(--aq-font-display);font-size:1.25rem;line-height:1.30;font-weight:600;}
+.aq-body-lg{font-size:1.125rem;line-height:1.60;font-weight:400;}
+.aq-body{font-size:1rem;line-height:1.60;font-weight:400;}
+.aq-small{font-size:0.875rem;line-height:1.50;font-weight:400;}
+.aq-label{font-size:0.75rem;line-height:1.20;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
+.aq-data{font-family:var(--aq-font-data);font-size:0.9375rem;line-height:1.40;font-weight:500;font-variant-numeric:tabular-nums;}
+
+/* MANDATORY: every numeric value is tabular */
+.aq [data-numeric], .aq-num, .aq td[data-numeric] {
+  font-family:var(--aq-font-data);
+  font-variant-numeric:tabular-nums;
+}
+
+/* Visible focus ring on everything interactive inside the system */
+.aq :focus-visible {
+  outline:2px solid var(--aq-focus);
+  outline-offset:2px;
+  border-radius:4px;
+}
+
+/* Landing page reveal — 12px rise, 320ms, staggered, once only */
+.aql-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.aql-reveal-in {
+  opacity: 1;
+  transform: none;
+  transition: opacity 320ms cubic-bezier(0.32, 0.72, 0, 1), transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .aql-reveal, .aql-reveal-in {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .aql-hero-video {
+    display: none !important;
+  }
+}
+
+/* Final polish: nothing in the product flashes, blinks or pulses — ever. */
+.animate-pulse,
+.aqf-pulse-dot,
+.aqf-drop-pulse,
+.animate-ping {
+  animation: none !important;
+}
+
+/* Final polish: page-level horizontal scroll is never allowed.
+   Flex/grid children may shrink so wide data tables scroll INSIDE their
+   own wrappers (.aqf-scroll), never the page. */
+.aqf-page {
+  overflow-x: clip;
+}
+.aqf-page .grid > *,
+.aqf-page [class*="flex"] > * {
+  min-width: 0;
+}
+
+/* Wide data tables: frozen first column while scrolling horizontally. */
+.aqf-scroll table th:first-child,
+.aqf-scroll table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: hsl(var(--card));
+}
+
+/* Hero poster still: hidden by default (video covers it); shown only when
+   reduced-motion suppresses the video. Prevents any stray broken-image flash. */
+.aql-hero-still {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aql-hero-still {
+    display: block;
+  }
+}
+
+/* Rail logo: plain on the light rail, white chip on the dark rail */
+.aqf-rail-logo {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+}
+.dark .aqf-rail-logo {
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 9px;
+  box-shadow: inset 0 1px 2px rgb(14 32 49 / 0.14), 0 3px 10px -3px rgb(0 0 0 / 0.45);
+}
+
+/* AQ1 promo slide-in (suppressed under prefers-reduced-motion) */
+@keyframes aq1-slide-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.aq1-slide-in { animation: aq1-slide-in 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .aq1-slide-in { animation: none; }
+}
