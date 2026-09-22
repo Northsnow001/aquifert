@@ -3,7 +3,7 @@
  * Idempotent: skips if demo data already present.
  */
 import "dotenv/config";
-import { getDb } from "../api/queries/connection";
+import { getDb } from "../server/queries/connection";
 import * as s from "./schema";
 import { eq } from "drizzle-orm";
 

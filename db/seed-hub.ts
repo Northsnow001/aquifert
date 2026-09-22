@@ -8,7 +8,7 @@
  * ingestion once deployed (headline + <=200-char snippet only, ever).
  */
 import "dotenv/config";
-import { getDb } from "../api/queries/connection";
+import { getDb } from "../server/queries/connection";
 import * as s from "./schema";
 
 function mulberry32(a: number) {

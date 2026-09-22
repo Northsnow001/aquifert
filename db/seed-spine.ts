@@ -5,10 +5,10 @@
  * (incl. two demo leaks), a pending per-buyer margin review, freight bids.
  */
 import "dotenv/config";
-import { getDb } from "../api/queries/connection";
+import { getDb } from "../server/queries/connection";
 import * as s from "./schema";
 import { asc, eq } from "drizzle-orm";
-import { scanText, type ProtectedEntityInput } from "../api/lib/firewall";
+import { scanText, type ProtectedEntityInput } from "../server/lib/firewall";
 
 async function main() {
   const db = getDb();

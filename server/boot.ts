@@ -139,7 +139,8 @@ app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
 
-if (env.isProduction) {
+// Long-running Node listen (Docker / npm start). Skip on Vercel serverless.
+if (env.isProduction && !process.env.VERCEL) {
   const { serve } = await import("@hono/node-server");
   const { serveStaticFiles } = await import("./lib/vite");
   serveStaticFiles(app);

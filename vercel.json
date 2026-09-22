@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
+  "framework": "vite",
+  "functions": {
+    "api/[[...route]].ts": {
+      "maxDuration": 30,
+      "includeFiles": "dist/boot.js"
+    }
+  },
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

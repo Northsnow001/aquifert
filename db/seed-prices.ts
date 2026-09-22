@@ -6,7 +6,7 @@
  * for reuse, plus Aquifert desk assessments. No scraped PRA data.
  */
 import "dotenv/config";
-import { getDb } from "../api/queries/connection";
+import { getDb } from "../server/queries/connection";
 import * as s from "./schema";
 
 function mulberry32(a: number) {

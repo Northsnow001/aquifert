@@ -11,7 +11,7 @@
  *   last good value; staleness is surfaced via dataAsOf vs cadence.
  */
 import "dotenv/config";
-import { getDb } from "../api/queries/connection";
+import { getDb } from "./queries/connection";
 import * as s from "../db/schema";
 import { eq } from "drizzle-orm";
 
