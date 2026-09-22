@@ -162,13 +162,6 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           </Link>
           <button
             type="button"
-            onClick={() => window.dispatchEvent(new Event(OPEN_LEAD_MAGNET_EVENT))}
-            className="hidden h-9 items-center rounded bg-navy-700 px-4 text-[12px] font-semibold uppercase tracking-wide text-white hover:bg-navy-800 sm:inline-flex"
-          >
-            Request access
-          </button>
-          <button
-            type="button"
             aria-label={drawer ? "Close menu" : "Open menu"}
             aria-expanded={drawer}
             onClick={() => setDrawer((d) => !d)}
@@ -211,13 +204,6 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             >
               Log in
             </Link>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event(OPEN_LEAD_MAGNET_EVENT))}
-              className="mt-2 inline-flex h-11 items-center justify-center rounded bg-navy-700 px-4 text-sm font-semibold uppercase tracking-wide text-white"
-            >
-              Request access
-            </button>
           </nav>
         </div>
       )}

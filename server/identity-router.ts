@@ -10,11 +10,6 @@ import { signSessionToken } from "./kimi/session";
 import { getSessionCookieOptions } from "./lib/cookies";
 import { sendTransactional } from "./mailer";
 import { env } from "./lib/env";
-import {
-  DEMO_REVIEWER_UNION_ID,
-  isDemoMode,
-  isValidDemoLogin,
-} from "./demo/mode";
 
 /* ---------------- helpers ---------------- */
 
@@ -264,24 +259,10 @@ export const identityRouter = createRouter({
     .mutation(async ({ input, ctx }) => {
       if (input.honey) return { ok: true, redirectTo: safeRedirect(input.redirectTo) };
 
-      // Client-review demo login (no DB / no real auth provider)
-      if (isDemoMode() && isValidDemoLogin(input.identifier, input.password)) {
-        const token = await signSessionToken({
-          unionId: DEMO_REVIEWER_UNION_ID,
-          clientId: env.appId || "aquifert-local",
-        });
-        const opts = getSessionCookieOptions(ctx.req.headers);
-        ctx.resHeaders.append(
-          "set-cookie",
-          cookie.serialize(Session.cookieName, token, {
-            httpOnly: opts.httpOnly,
-            path: opts.path,
-            sameSite: opts.sameSite?.toLowerCase() as "lax" | "none",
-            secure: opts.secure,
-            maxAge: Session.maxAgeMs / 1000,
-          }),
-        );
-        return { ok: true, redirectTo: safeRedirect(input.redirectTo) || "/onboarding", emailVerified: true };
+      // Exploratory phase: reject every credential login (demo and real).
+      // Set LOGIN_ENABLED=true when Supabase auth is wired and ready.
+      if (process.env.LOGIN_ENABLED !== "true" && process.env.LOGIN_ENABLED !== "1") {
+        throw new Error("Sign-in is not available yet. Please check back soon.");
       }
 
       const db = getDb();

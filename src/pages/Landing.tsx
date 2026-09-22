@@ -15,7 +15,7 @@ import { MediaCard } from "@/components/shared/MediaCard";
 import { Seo, ORGANIZATION_JSONLD } from "@/components/shared/Seo";
 import { Faq, SectionHeader, faqJsonLd, type FaqItem } from "@/components/shared/Faq";
 import { CookieConsent } from "@/components/CookieConsent";
-import { LeadMagnet, MarketUpdatesCard } from "@/components/LeadMagnet";
+import { MarketUpdatesCard } from "@/components/LeadMagnet";
 
 /* ---------------------------------------------------------------- */
 /* Reveal: 12px rise, 320ms, once, staggered via delay               */
@@ -610,9 +610,8 @@ export default function Landing() {
       {/* Inline updates card, only for visitors who declined marketing cookies */}
       <MarketUpdatesCard />
 
-      {/* Consent banner + lead capture (gated on consent) */}
+      {/* Consent banner (lead capture hidden for exploratory phase) */}
       <CookieConsent />
-      <LeadMagnet />
     </LandingLayout>
   );
 }
