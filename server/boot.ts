@@ -149,12 +149,13 @@ export default app;
 
 // Long-running Node listen (Docker / npm start). Skip on Vercel serverless.
 if (env.isProduction && !process.env.VERCEL) {
-  const { serve } = await import("@hono/node-server");
-  const { serveStaticFiles } = await import("./lib/vite");
-  serveStaticFiles(app);
-
-  const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
+  void (async () => {
+    const { serve } = await import("@hono/node-server");
+    const { serveStaticFiles } = await import("./lib/vite");
+    serveStaticFiles(app);
+    const port = parseInt(process.env.PORT || "3000");
+    serve({ fetch: app.fetch, port }, () => {
+      console.log(`Server running on http://localhost:${port}/`);
+    });
+  })();
 }
