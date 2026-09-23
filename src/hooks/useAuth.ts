@@ -2,6 +2,7 @@ import { trpc } from "@/providers/trpc";
 import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { LOGIN_PATH } from "@/const";
+import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/lib/supabase";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -28,6 +29,13 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: async () => {
+      if (isSupabaseBrowserConfigured()) {
+        try {
+          await getSupabaseBrowser().auth.signOut();
+        } catch {
+          /* ignore */
+        }
+      }
       await utils.invalidate();
       navigate(redirectPath);
     },

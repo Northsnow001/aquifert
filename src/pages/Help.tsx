@@ -46,7 +46,7 @@ const KB: { match: string[]; answer: string }[] = [
   {
     match: ["account", "register", "sign up", "signup", "log in", "login", "password"],
     answer:
-      "Use Request access or the Register page to create your account, sign-in is by email with a one-time passcode. If you're locked out, the Forgot password link on the login page will get you back in.",
+      "Use Create an account to register with your work email. We send a 6-digit verification code — enter it on the next screen, set a password, then you'll land in the portal. Sign-in after that is email + password. If you're locked out, use Forgot password on the login page.",
   },
   {
     match: ["product", "urea", "dap", "map", "mop", "npk", "micronutrient", "water soluble", "zinc", "iron"],

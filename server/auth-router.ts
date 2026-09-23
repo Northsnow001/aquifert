@@ -1,10 +1,58 @@
 import * as cookie from "cookie";
+import { z } from "zod";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
-import { createRouter, authedQuery } from "./middleware";
+import { createRouter, authedQuery, publicQuery } from "./middleware";
+import { isSupabaseAuthConfigured } from "./lib/supabase";
+import { establishAppSessionFromSupabase } from "./lib/supabase-auth";
 
 export const authRouter = createRouter({
+  /** Public: whether the frontend should use Supabase Auth UI flows. */
+  config: publicQuery.query(() => ({
+    supabaseAuth: isSupabaseAuthConfigured(),
+  })),
+
   me: authedQuery.query((opts) => opts.ctx.user),
+
+  /**
+   * After browser Supabase sign-in / sign-up, exchange the access token for
+   * our httpOnly app session cookie and sync the `users` row.
+   */
+  establishSession: publicQuery
+    .input(
+      z.object({
+        accessToken: z.string().min(20),
+        profile: z
+          .object({
+            name: z.string().min(1).optional(),
+            company: z.string().optional(),
+            country: z.string().optional(),
+            phone: z.string().optional(),
+          })
+          .optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!isSupabaseAuthConfigured()) {
+        throw new Error("Supabase Auth is not configured on the server.");
+      }
+      const { user } = await establishAppSessionFromSupabase({
+        accessToken: input.accessToken,
+        reqHeaders: ctx.req.headers,
+        resHeaders: ctx.resHeaders,
+        profile: input.profile,
+      });
+      return {
+        ok: true as const,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          portalRole: user.portalRole,
+        },
+      };
+    }),
+
   logout: authedQuery.mutation(async ({ ctx }) => {
     const opts = getSessionCookieOptions(ctx.req.headers);
     ctx.resHeaders.append(

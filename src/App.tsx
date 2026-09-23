@@ -10,6 +10,8 @@ import Help from "./pages/Help";
 import Aquibot from "./pages/Aquibot";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
+import SetPassword from "./pages/SetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Onboarding from "./pages/Onboarding";
 import Hub from "./pages/Hub";
@@ -87,6 +89,8 @@ export default function App() {
         <Route path="/help" element={<Help />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/set-password" element={<SetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/hub" element={<RequirePortal allow={["ADMIN","OPERATIONS","FINANCE","SUPPORT","BUYER","SUPPLIER"]}><Hub /></RequirePortal>} />
