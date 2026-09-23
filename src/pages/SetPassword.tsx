@@ -72,22 +72,48 @@ export default function SetPassword() {
       if (!session?.access_token) throw new Error("Your verification session expired. Request a new code.");
 
       const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
+      if (updateError) {
+        const msg = updateError.message || "Could not save your password.";
+        // Common Supabase Auth 422s
+        if (/same|identical|different/i.test(msg)) {
+          throw new Error("Choose a password you haven't used for this account yet.");
+        }
+        if (/weak|leaked|pwned|breach/i.test(msg)) {
+          throw new Error("That password is too weak or appears in known breaches. Choose a longer unique phrase.");
+        }
+        if (/length|characters|short/i.test(msg)) {
+          throw new Error("Password does not meet the minimum length required by Auth settings.");
+        }
+        throw new Error(msg);
+      }
 
       const { data: refreshed } = await supabase.auth.getSession();
       const accessToken = refreshed.session?.access_token ?? session.access_token;
 
-      await establish.mutateAsync({
-        accessToken,
-        profile: pending
-          ? {
-              name: pending.name,
-              company: pending.company,
-              country: pending.country,
-              phone: pending.phone,
-            }
-          : undefined,
-      });
+      try {
+        await establish.mutateAsync({
+          accessToken,
+          profile: pending
+            ? {
+                name: pending.name,
+                company: pending.company,
+                country: pending.country,
+                phone: pending.phone,
+              }
+            : undefined,
+        });
+      } catch (sessionErr) {
+        const raw =
+          sessionErr instanceof Error ? sessionErr.message : String(sessionErr ?? "");
+        if (/not valid JSON|Unexpected token|Failed to fetch|404|HTML/i.test(raw)) {
+          throw new Error(
+            "Password was saved, but the app server could not start your session. Try signing in from the login page.",
+          );
+        }
+        throw sessionErr instanceof Error
+          ? sessionErr
+          : new Error("Password was saved, but session setup failed. Try signing in.");
+      }
       clearSignupPending();
       await utils.invalidate();
       navigate("/onboarding");

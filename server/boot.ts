@@ -28,7 +28,7 @@ app.use("*", async (c, next) => {
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data:",
         "media-src 'self'",
-        "connect-src 'self'",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
         "frame-ancestors 'self'",
       ].join("; ")
     );
