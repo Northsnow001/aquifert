@@ -36,21 +36,29 @@ export const authRouter = createRouter({
       if (!isSupabaseAuthConfigured()) {
         throw new Error("Supabase Auth is not configured on the server.");
       }
-      const { user } = await establishAppSessionFromSupabase({
-        accessToken: input.accessToken,
-        reqHeaders: ctx.req.headers,
-        resHeaders: ctx.resHeaders,
-        profile: input.profile,
-      });
-      return {
-        ok: true as const,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          portalRole: user.portalRole,
-        },
-      };
+      if (!process.env.DATABASE_URL && !process.env.APP_SECRET) {
+        // fall through to establish which throws clearer messages
+      }
+      try {
+        const { user } = await establishAppSessionFromSupabase({
+          accessToken: input.accessToken,
+          reqHeaders: ctx.req.headers,
+          resHeaders: ctx.resHeaders,
+          profile: input.profile,
+        });
+        return {
+          ok: true as const,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            portalRole: user.portalRole,
+          },
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Session setup failed.";
+        throw new Error(message);
+      }
     }),
 
   logout: authedQuery.mutation(async ({ ctx }) => {

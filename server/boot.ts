@@ -36,6 +36,14 @@ app.use("*", async (c, next) => {
 });
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
+app.get("/api/health", (c) =>
+  c.json({
+    ok: true,
+    hasDatabaseUrl: Boolean(env.databaseUrl),
+    hasAppSecret: Boolean(env.appSecret),
+    supabaseAuth: Boolean(env.supabaseUrl && env.supabaseAnonKey),
+  }),
+);
 app.get(Paths.oauthCallback, createOAuthCallbackHandler());
 
 /* ------------------------------------------------------------------ */

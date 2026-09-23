@@ -2,14 +2,16 @@ import "dotenv/config";
 
 function required(name: string): string {
   const value = process.env[name];
-  if (!value && process.env.NODE_ENV === "production") {
+  // Don't throw at module load — Vercel functions hang/crash on import errors.
+  // Callers that need the value should check and return a clear API error.
+  if (!value && process.env.NODE_ENV === "production" && process.env.VERCEL !== "1") {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value ?? "";
 }
 
 export const env = {
-  appId: required("APP_ID"),
+  appId: required("APP_ID") || "aquifert",
   appSecret: required("APP_SECRET"),
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
