@@ -44,3 +44,6 @@ coverage/
 # Runtime uploads
 uploads/
 
+
+api/index.js
+api/boot.js
