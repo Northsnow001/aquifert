@@ -1,18 +1,8 @@
 /**
- * Temporary minimal handler to verify Vercel function + rewrite wiring.
- * Replace with boot.js import once /api/health returns 200.
+ * Vercel Node function entry. Imports pre-bundled Hono handler from ./boot.js
+ * (created by `npm run build` via server/vercel-entry.ts).
+ *
+ * vercel.json rewrites /api/* → /api/index so nested tRPC paths work on Vite.
  */
-export const config = {
-  runtime: "nodejs",
-  maxDuration: 30,
-};
-
-export default async function handler(req: Request): Promise<Response> {
-  const url = new URL(req.url);
-  return Response.json({
-    ok: true,
-    path: url.pathname,
-    method: req.method,
-    probe: "minimal-api-index",
-  });
-}
+// @ts-nocheck
+export { default, config } from "./boot.js";
