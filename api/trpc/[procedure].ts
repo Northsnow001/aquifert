@@ -1,10 +1,9 @@
 /**
- * Vercel Node entry for browser calls to /api/trpc/*.
- * The public URL stays /api/trpc/...; vercel.json rewrites that to this file
- * as /api/rpc?trpcPath=... so the rewrite cannot match itself and loop.
+ * Vercel matches this single dynamic segment to /api/trpc/<procedure>.
+ * No rewrite is required, so vercel.json stays on the documented SPA rule.
  */
 // @ts-nocheck
-import app from "../dist/boot.js";
+import app from "../../dist/boot.js";
 
 type NodeReq = {
   method?: string;
@@ -34,13 +33,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     const proto = (req.headers["x-forwarded-proto"] as string) || "https";
     const host = (req.headers["x-forwarded-host"] as string) || (req.headers.host as string) || "localhost";
     const incoming = new URL(req.url || "/", `${proto}://${host}`);
-    const trpcPath = incoming.searchParams.get("trpcPath");
-    incoming.searchParams.delete("trpcPath");
-    const pathname = trpcPath
-      ? `/api/trpc/${trpcPath}`
-      : incoming.pathname.startsWith("/api/trpc")
-        ? incoming.pathname
-        : incoming.pathname;
+    const pathname = incoming.pathname.startsWith("/api/trpc") ? incoming.pathname : "/api/trpc";
     const qs = incoming.searchParams.toString();
     const url = `${proto}://${host}${pathname}${qs ? `?${qs}` : ""}`;
 

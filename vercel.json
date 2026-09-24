@@ -3,7 +3,6 @@
   "outputDirectory": "dist/public",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/trpc/(.*)", "destination": "/api/rpc" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
