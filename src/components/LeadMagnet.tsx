@@ -356,7 +356,7 @@ export function LeadMagnet() {
       // Price snapshot for selected products × first selected delivery region
       try {
         const res = await fetch(
-          `/api/trpc/prices.slider?input=${encodeURIComponent(JSON.stringify({ json: { region: s1.regions[0] } }))}`
+          `/api/rpc?trpcPath=prices.slider&input=${encodeURIComponent(JSON.stringify({ json: { region: s1.regions[0] } }))}`
         );
         const json = await res.json();
         const items = (json?.result?.data?.json?.items ?? []) as {

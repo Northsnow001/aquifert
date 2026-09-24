@@ -64,16 +64,20 @@ export default function SetPassword() {
 
     setSubmitting(true);
     setErrors({});
+    let step = "start";
     try {
       const supabase = getSupabaseBrowser();
+      step = "session";
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
       const session = sessionData.session;
       if (!session?.access_token) throw new Error("Your verification session expired. Request a new code.");
 
+      step = "refresh";
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) throw refreshError;
 
+      step = "update";
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
         const msg = updateError.message || "Could not save your password.";
@@ -93,6 +97,7 @@ export default function SetPassword() {
       const { data: refreshed } = await supabase.auth.getSession();
       const accessToken = refreshed.session?.access_token ?? session.access_token;
 
+      step = "establish";
       try {
         await establish.mutateAsync({
           accessToken,
@@ -108,7 +113,10 @@ export default function SetPassword() {
       } catch (sessionErr) {
         const raw =
           sessionErr instanceof Error ? sessionErr.message : String(sessionErr ?? "");
-        if (/not valid JSON|Unexpected token|Failed to fetch|404|HTML/i.test(raw)) {
+        // #region agent log
+        fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:"D",location:"SetPassword.tsx:establish",message:"establishSession failed",data:{name:sessionErr instanceof Error?sessionErr.name:"unknown",message:raw},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+        if (/not valid JSON|Unexpected token|Unexpected end of JSON|Failed to fetch|404|HTML/i.test(raw)) {
           throw new Error(
             "Password was saved, but the app server could not start your session. Try signing in from the login page.",
           );
@@ -117,12 +125,18 @@ export default function SetPassword() {
           ? sessionErr
           : new Error("Password was saved, but session setup failed. Try signing in.");
       }
+      step = "done";
       clearSignupPending();
       await utils.invalidate();
       navigate("/onboarding");
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not save your password.";
+      const status = err && typeof err === "object" && "status" in err ? Number((err as { status?: number }).status) : undefined;
+      // #region agent log
+      fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:step==="refresh"?"C":step==="establish"?"D":"C",location:"SetPassword.tsx:submit",message:"set-password step failed",data:{step,name:err instanceof Error?err.name:"unknown",message,status},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       setErrors({
-        form: err instanceof Error ? err.message : "Could not save your password.",
+        form: message,
       });
     } finally {
       setSubmitting(false);
