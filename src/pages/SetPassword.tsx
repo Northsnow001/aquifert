@@ -71,6 +71,9 @@ export default function SetPassword() {
       const session = sessionData.session;
       if (!session?.access_token) throw new Error("Your verification session expired. Request a new code.");
 
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) throw refreshError;
+
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
         const msg = updateError.message || "Could not save your password.";

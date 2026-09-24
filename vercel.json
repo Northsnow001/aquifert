@@ -3,13 +3,19 @@
   "outputDirectory": "dist/public",
   "framework": "vite",
   "functions": {
-    "api/index.js": {
-      "maxDuration": 30
+    "api/rpc.ts": {
+      "maxDuration": 30,
+      "includeFiles": "dist/boot.js"
     }
   },
   "rewrites": [
-    { "source": "/api", "destination": "/api/index" },
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/api/trpc/:path*",
+      "destination": "/api/rpc?trpcPath=:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -1,0 +1,72 @@
+/**
+ * Vercel Node entry for browser calls to /api/trpc/*.
+ * The public URL stays /api/trpc/...; vercel.json rewrites that to this file
+ * as /api/rpc?trpcPath=... so the rewrite cannot match itself and loop.
+ */
+// @ts-nocheck
+import app from "../dist/boot.js";
+
+type NodeReq = {
+  method?: string;
+  url?: string;
+  headers: Record<string, string | string[] | undefined>;
+  [Symbol.asyncIterator](): AsyncIterator<Uint8Array>;
+};
+
+type NodeRes = {
+  status: (code: number) => NodeRes;
+  setHeader: (name: string, value: string | string[]) => void;
+  end: (body?: Buffer) => void;
+};
+
+function headerEntries(headers: NodeReq["headers"]): [string, string][] {
+  const out: [string, string][] = [];
+  for (const [key, value] of Object.entries(headers)) {
+    if (value == null) continue;
+    if (Array.isArray(value)) value.forEach((v) => out.push([key, v]));
+    else out.push([key, value]);
+  }
+  return out;
+}
+
+export default async function handler(req: NodeReq, res: NodeRes) {
+  try {
+    const proto = (req.headers["x-forwarded-proto"] as string) || "https";
+    const host = (req.headers["x-forwarded-host"] as string) || (req.headers.host as string) || "localhost";
+    const incoming = new URL(req.url || "/", `${proto}://${host}`);
+    const trpcPath = incoming.searchParams.get("trpcPath");
+    incoming.searchParams.delete("trpcPath");
+    const pathname = trpcPath ? `/api/trpc/${trpcPath}` : "/api/trpc";
+    const qs = incoming.searchParams.toString();
+    const url = `${proto}://${host}${pathname}${qs ? `?${qs}` : ""}`;
+
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const body = Buffer.concat(chunks);
+    const method = req.method || "GET";
+
+    const request = new Request(url, {
+      method,
+      headers: headerEntries(req.headers),
+      body: method === "GET" || method === "HEAD" || body.length === 0 ? undefined : body,
+    });
+
+    const response = await app.fetch(request);
+    res.status(response.status);
+
+    const setCookies =
+      typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() === "set-cookie") return;
+      res.setHeader(key, value);
+    });
+    if (setCookies.length > 0) res.setHeader("set-cookie", setCookies);
+
+    const buf = Buffer.from(await response.arrayBuffer());
+    res.end(buf);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "API error";
+    res.status(500).setHeader("content-type", "application/json");
+    res.end(Buffer.from(JSON.stringify({ error: message })));
+  }
+}
