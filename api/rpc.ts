@@ -36,7 +36,11 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     const incoming = new URL(req.url || "/", `${proto}://${host}`);
     const trpcPath = incoming.searchParams.get("trpcPath");
     incoming.searchParams.delete("trpcPath");
-    const pathname = trpcPath ? `/api/trpc/${trpcPath}` : "/api/trpc";
+    const pathname = trpcPath
+      ? `/api/trpc/${trpcPath}`
+      : incoming.pathname.startsWith("/api/trpc")
+        ? incoming.pathname
+        : incoming.pathname;
     const qs = incoming.searchParams.toString();
     const url = `${proto}://${host}${pathname}${qs ? `?${qs}` : ""}`;
 
