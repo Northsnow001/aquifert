@@ -2,12 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "framework": "vite",
-  "functions": {
-    "api/rpc.ts": {
-      "maxDuration": 30,
-      "includeFiles": "dist/boot.js"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/trpc/:path*",

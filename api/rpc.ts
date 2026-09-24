@@ -14,7 +14,7 @@ type NodeReq = {
 };
 
 type NodeRes = {
-  status: (code: number) => NodeRes;
+  statusCode: number;
   setHeader: (name: string, value: string | string[]) => void;
   end: (body?: Buffer) => void;
 };
@@ -52,7 +52,7 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     });
 
     const response = await app.fetch(request);
-    res.status(response.status);
+    res.statusCode = response.status;
 
     const setCookies =
       typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
@@ -66,7 +66,8 @@ export default async function handler(req: NodeReq, res: NodeRes) {
     res.end(buf);
   } catch (err) {
     const message = err instanceof Error ? err.message : "API error";
-    res.status(500).setHeader("content-type", "application/json");
+    res.statusCode = 500;
+    res.setHeader("content-type", "application/json");
     res.end(Buffer.from(JSON.stringify({ error: message })));
   }
 }
