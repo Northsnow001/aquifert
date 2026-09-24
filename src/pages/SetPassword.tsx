@@ -74,8 +74,20 @@ export default function SetPassword() {
       if (!session?.access_token) throw new Error("Your verification session expired. Request a new code.");
 
       step = "refresh";
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) throw refreshError;
+      try {
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          const refreshMessage = refreshError.message || "refresh failed";
+          // #region agent log
+          fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:"C",location:"SetPassword.tsx:refresh",message:"refresh failed, continuing with verified session",data:{name:refreshError.name,message:refreshMessage,status:"status" in refreshError?Number(refreshError.status):undefined},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+        }
+      } catch (refreshErr) {
+        const refreshMessage = refreshErr instanceof Error ? refreshErr.message : "refresh threw";
+        // #region agent log
+        fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:"C",location:"SetPassword.tsx:refresh",message:"refresh threw, continuing with verified session",data:{name:refreshErr instanceof Error?refreshErr.name:"unknown",message:refreshMessage},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+      }
 
       step = "update";
       const { error: updateError } = await supabase.auth.updateUser({ password });
@@ -136,7 +148,7 @@ export default function SetPassword() {
       fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:step==="refresh"?"C":step==="establish"?"D":"C",location:"SetPassword.tsx:submit",message:"set-password step failed",data:{step,name:err instanceof Error?err.name:"unknown",message,status},timestamp:Date.now()})}).catch(()=>{});
       // #endregion
       setErrors({
-        form: message,
+        form: `${step}: ${message}`,
       });
     } finally {
       setSubmitting(false);
