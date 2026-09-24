@@ -64,36 +64,20 @@ export default function SetPassword() {
 
     setSubmitting(true);
     setErrors({});
-    let step = "start";
     try {
       const supabase = getSupabaseBrowser();
-      step = "session";
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
       const session = sessionData.session;
-      if (!session?.access_token) throw new Error("Your verification session expired. Request a new code.");
-
-      step = "refresh";
-      try {
-        const { error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError) {
-          const refreshMessage = refreshError.message || "refresh failed";
-          // #region agent log
-          fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:"C",location:"SetPassword.tsx:refresh",message:"refresh failed, continuing with verified session",data:{name:refreshError.name,message:refreshMessage,status:"status" in refreshError?Number(refreshError.status):undefined},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
-        }
-      } catch (refreshErr) {
-        const refreshMessage = refreshErr instanceof Error ? refreshErr.message : "refresh threw";
-        // #region agent log
-        fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:"C",location:"SetPassword.tsx:refresh",message:"refresh threw, continuing with verified session",data:{name:refreshErr instanceof Error?refreshErr.name:"unknown",message:refreshMessage},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
+      if (!session?.access_token) {
+        throw new Error("Your verification session expired. Request a new code.");
       }
 
-      step = "update";
+      // OTP verify already issued a session. Do not refresh first — a failed
+      // refresh previously aborted the form before the password was saved.
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
         const msg = updateError.message || "Could not save your password.";
-        // Common Supabase Auth 422s
         if (/same|identical|different/i.test(msg)) {
           throw new Error("Choose a password you haven't used for this account yet.");
         }
@@ -106,10 +90,9 @@ export default function SetPassword() {
         throw new Error(msg);
       }
 
-      const { data: refreshed } = await supabase.auth.getSession();
-      const accessToken = refreshed.session?.access_token ?? session.access_token;
+      const { data: after } = await supabase.auth.getSession();
+      const accessToken = after.session?.access_token ?? session.access_token;
 
-      step = "establish";
       try {
         await establish.mutateAsync({
           accessToken,
@@ -122,33 +105,20 @@ export default function SetPassword() {
               }
             : undefined,
         });
-      } catch (sessionErr) {
-        const raw =
-          sessionErr instanceof Error ? sessionErr.message : String(sessionErr ?? "");
-        // #region agent log
-        fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:"D",location:"SetPassword.tsx:establish",message:"establishSession failed",data:{name:sessionErr instanceof Error?sessionErr.name:"unknown",message:raw},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
-        if (/not valid JSON|Unexpected token|Unexpected end of JSON|Failed to fetch|404|HTML/i.test(raw)) {
-          throw new Error(
-            "Password was saved, but the app server could not start your session. Try signing in from the login page.",
-          );
-        }
-        throw sessionErr instanceof Error
-          ? sessionErr
-          : new Error("Password was saved, but session setup failed. Try signing in.");
+      } catch {
+        // Password is already saved in Supabase Auth. Session cookie sync can
+        // be completed on the next sign-in without blocking the user here.
+        clearSignupPending();
+        navigate(`/login?email=${encodeURIComponent(pending?.email ?? "")}&set=1`);
+        return;
       }
-      step = "done";
+
       clearSignupPending();
       await utils.invalidate();
       navigate("/onboarding");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not save your password.";
-      const status = err && typeof err === "object" && "status" in err ? Number((err as { status?: number }).status) : undefined;
-      // #region agent log
-      fetch("http://127.0.0.1:7493/ingest/4e11581d-7f60-4e24-b571-b73ce990ecc0",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"9db8e3"},body:JSON.stringify({sessionId:"9db8e3",runId:"post-fix",hypothesisId:step==="refresh"?"C":step==="establish"?"D":"C",location:"SetPassword.tsx:submit",message:"set-password step failed",data:{step,name:err instanceof Error?err.name:"unknown",message,status},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setErrors({
-        form: `${step}: ${message}`,
+        form: err instanceof Error ? err.message : "Could not save your password.",
       });
     } finally {
       setSubmitting(false);

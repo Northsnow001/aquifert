@@ -19,7 +19,8 @@ export default function Login() {
   const redirectTo = safeRedirectPath(params.get("redirect_to") ?? undefined);
   const utils = trpc.useUtils();
 
-  const [email, setEmail] = useState("");
+  const passwordSaved = params.get("set") === "1";
+  const [email, setEmail] = useState(() => params.get("email")?.trim() ?? "");
   const [password, setPassword] = useState("");
   const [honey, setHoney] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -111,6 +112,11 @@ export default function Login() {
               className={`${inputCls} mt-1`}
               required
             />
+            {passwordSaved && !error && (
+              <p className="mt-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[13px] text-teal-900" role="status">
+                Password saved. Sign in with your email and new password to continue.
+              </p>
+            )}
             {error && (
               <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700" role="alert">
                 {error}
