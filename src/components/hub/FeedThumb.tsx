@@ -16,6 +16,15 @@ const CATEGORY_ART: Record<string, string> = {
   MARKET: "/media/thumbs/market.jpg",
 };
 
+const CATEGORY_COLOR: Record<string, string> = {
+  NITROGEN: "#3E8E6E",
+  PHOSPHATE: "#8A7A3C",
+  POTASSIUM: "#5B6B8A",
+  FREIGHT: "#4A6FA5",
+  GENERAL: "#6B7280",
+  MARKET: "#0F766E",
+};
+
 /** Price-board product names → nutrient category. */
 export function productCategory(product: string): string {
   const p = product.toLowerCase();
@@ -49,13 +58,33 @@ export function FeedThumb({
   className?: string;
   alt?: string;
 }) {
+  const category = kind === "MARKET" || kind === "FREIGHT" ? kind : (product ?? "GENERAL");
   const primary = thumbFor({ imageUrl, product, kind });
   const fallback = thumbFor({ product, kind });
   const [src, setSrc] = useState(primary);
+  const [dead, setDead] = useState(false);
+
+  if (dead) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`inline-block shrink-0 rounded-lg ring-1 ring-border ${className}`}
+        style={{
+          width: className ? undefined : size,
+          height: className ? undefined : size,
+          background: CATEGORY_COLOR[category] ?? CATEGORY_COLOR.GENERAL,
+        }}
+      />
+    );
+  }
+
   return (
     <img
       src={src}
-      onError={() => src !== fallback && setSrc(fallback)}
+      onError={() => {
+        if (src !== fallback) setSrc(fallback);
+        else setDead(true);
+      }}
       alt={alt}
       width={size}
       height={size}

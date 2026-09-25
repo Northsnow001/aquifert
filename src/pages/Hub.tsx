@@ -9,8 +9,8 @@ import { NewsFeed } from "@/components/hub/NewsFeed";
 import { AquibotBrief } from "@/components/hub/AquibotBrief";
 import { PriceBoard } from "@/components/hub/PriceBoard";
 import { FreightPanel, CommentaryPanel } from "@/components/hub/SidePanels";
-import { PanelSkeleton } from "@/components/hub/FreshnessBadge";
 import { EngagementPrompt } from "@/components/hub/EngagementPrompt";
+import { SAMPLE_HUB_INDICATORS } from "@/lib/sample-hub";
 
 function Chip({
   active, label, onToggle,
@@ -37,36 +37,43 @@ export default function Hub() {
   const [personalised, setPersonalised] = useState(false);
   const [init, setInit] = useState(false);
 
-  const prefs = trpc.hub.prefs.useQuery();
-  const hints = trpc.hub.interestHints.useQuery();
-  const taxonomies = trpc.hub.taxonomies.useQuery();
-  const indicators = trpc.hub.indicators.useQuery(undefined, { staleTime: 30_000, retry: 0 });
+  const prefs = trpc.hub.prefs.useQuery(undefined, { retry: 0, staleTime: 60_000 });
+  const hints = trpc.hub.interestHints.useQuery(undefined, { retry: 0, staleTime: 60_000 });
+  const taxonomies = trpc.hub.taxonomies.useQuery(undefined, { retry: 0, staleTime: 60_000 });
+  const indicators = trpc.hub.indicators.useQuery(undefined, {
+    staleTime: 30_000,
+    retry: 0,
+    placeholderData: SAMPLE_HUB_INDICATORS,
+  });
   const savePrefs = trpc.hub.savePrefs.useMutation({
     onSuccess: () => { prefs.refetch(); toast.success("Default filters saved to your account"); },
     onError: (e) => toast.error(e.message),
   });
 
   // First-load personalisation: saved prefs win; else B4 lead interests.
+  // Don't block Hub forever if prefs/hints hang — settle after either success or error.
   useEffect(() => {
-    if (init || !prefs.isSuccess || !hints.isSuccess) return;
-    if (prefs.data) {
+    if (init) return;
+    if (prefs.isLoading || hints.isLoading) return;
+    if (prefs.isSuccess && prefs.data) {
       setProducts(prefs.data.products);
       setRegions(prefs.data.regions);
-    } else if (hints.data) {
+    } else if (hints.isSuccess && hints.data) {
       setProducts(hints.data.products);
       setRegions(hints.data.regions);
       if (hints.data.products.length || hints.data.regions.length) setPersonalised(true);
     }
     setInit(true);
-  }, [init, prefs.isSuccess, prefs.data, hints.isSuccess, hints.data]);
+  }, [init, prefs.isLoading, prefs.isSuccess, prefs.data, hints.isLoading, hints.isSuccess, hints.data]);
 
   const filtered = products.length > 0 || regions.length > 0;
   const clear = () => { setProducts([]); setRegions([]); setPersonalised(false); };
   const toggle = (list: string[], v: string, set: (x: string[]) => void) =>
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
-  const productChips = useMemo(() => taxonomies.data?.products ?? [], [taxonomies.data]);
-  const regionChips = useMemo(() => taxonomies.data?.regions ?? [], [taxonomies.data]);
+  const productChips = useMemo(() => taxonomies.data?.products ?? ["NITROGEN", "PHOSPHATE", "POTASSIUM", "FREIGHT", "GENERAL"], [taxonomies.data]);
+  const regionChips = useMemo(() => taxonomies.data?.regions ?? ["GLOBAL", "MIDDLE_EAST", "NORTH_AMERICA", "SOUTH_AMERICA", "EUROPE", "SOUTH_ASIA", "EAST_ASIA", "FSU", "AFRICA"], [taxonomies.data]);
+  const gaugeRows = (indicators.data?.length ? indicators.data : SAMPLE_HUB_INDICATORS) as Indicator[];
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6">
@@ -80,26 +87,11 @@ export default function Hub() {
         </div>
       </div>
 
-      {/* TOP STRIP, market indicator gauges */}
+      {/* TOP STRIP, market indicator gauges — always paint sample/live rows, never blank skeletons */}
       <section aria-label="Market indicators">
-        {indicators.isLoading && (
-          <div className="grid gap-4 md:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="rounded-lg border border-border bg-card p-4"><PanelSkeleton rows={4} /></div>
-            ))}
-          </div>
-        )}
-        {indicators.isError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-            Market indicators failed to load.{" "}
-            <button type="button" onClick={() => indicators.refetch()} className="font-semibold underline">Retry</button>
-          </div>
-        )}
-        {indicators.isSuccess && (
-          <div className="grid gap-4 md:grid-cols-3">
-            {(indicators.data as Indicator[]).map((ind) => <GaugeCard key={ind.id} ind={ind} />)}
-          </div>
-        )}
+        <div className="grid gap-4 md:grid-cols-3">
+          {gaugeRows.map((ind) => <GaugeCard key={ind.id} ind={ind} />)}
+        </div>
       </section>
 
       {/* Filter bar */}

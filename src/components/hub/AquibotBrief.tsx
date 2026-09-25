@@ -93,9 +93,9 @@ export function AquibotBrief() {
 
   const telex = trpc.hub.telex.useInfiniteQuery(
     { products: [], regions: [], limit: 4 },
-    { getNextPageParam: (last) => last.nextCursor ?? undefined },
+    { getNextPageParam: (last) => last.nextCursor ?? undefined, retry: 0 },
   );
-  const news = trpc.hub.news.useQuery({ products: [], regions: [], limit: 4 });
+  const news = trpc.hub.news.useQuery({ products: [], regions: [], limit: 4 }, { retry: 0 });
 
   const rows = useMemo(() => {
     const t = (telex.data?.pages.flatMap((p) => p.items) ?? []).slice(0, 3).map((it) => ({
@@ -119,8 +119,10 @@ export function AquibotBrief() {
     return [...t, ...n];
   }, [telex.data, news.data]);
 
-  const loading = telex.isLoading || news.isLoading;
-  const failed = telex.isError && news.isError;
+  // Don't block the briefing on news — TELEX alone is enough to paint.
+  const loading = telex.isLoading;
+  const failed = telex.isError && !telex.data;
+  const freshness = telex.data?.pages[0]?.freshness ?? news.data?.freshness;
 
   return (
     <Card>
@@ -128,7 +130,7 @@ export function AquibotBrief() {
         <PanelHeader
           title="Aquibot briefing"
           sub="Today's TELEX and news, translated into plain language"
-          freshness={news.data?.freshness}
+          freshness={freshness}
         />
         <div className="mt-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Interpret updates for">
           <span className="mr-1 inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">

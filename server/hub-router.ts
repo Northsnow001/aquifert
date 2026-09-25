@@ -152,19 +152,17 @@ const SAMPLE_TELEX: Record<string, unknown>[] = [
 export const hubRouter = createRouter({
   indicators: authedQuery.query(async ({ ctx }) => {
     await effUser(ctx.user);
-    let rows: Record<string, unknown>[] = [];
+    // Prefer sample gauges so Hub paints immediately; optional live rows if Supabase answers fast.
+    let rows: Record<string, unknown>[] = SAMPLE_INDICATORS;
     try {
       const result = await Promise.race([
         getSupabaseService().from("hub_indicators").select("*"),
         new Promise<{ data: null; error: { message: string } }>((resolve) =>
-          setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2000),
+          setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 800),
         ),
       ]);
       if (!result.error && result.data?.length) rows = result.data;
     } catch {
-      rows = [];
-    }
-    if (!rows.length) {
       rows = SAMPLE_INDICATORS;
     }
     return rows.map((r) => ({
@@ -272,57 +270,81 @@ export const hubRouter = createRouter({
     }))
     .query(async ({ ctx, input }) => {
       await effUser(ctx.user);
-      const sb = getSupabaseService();
-      let newsQ = sb.from("news_items").select("*").order("publishedAt", { ascending: false }).limit(input.limit);
-      if (input.products.length) newsQ = newsQ.in("product", input.products);
-      if (input.regions.length) newsQ = newsQ.in("geography", input.regions);
-      const [{ data: rows, error: newsErr }, { data: sources, error: srcErr }] = await Promise.all([
-        newsQ,
-        sb.from("news_sources").select("*"),
-      ]);
-      if (newsErr) throw new Error(newsErr.message);
-      if (srcErr) throw new Error(srcErr.message);
-      const byId = new Map((sources ?? []).map((x) => [x.id, x]));
-      const items = (rows ?? [])
-        .map((r) => {
-          const src = byId.get(r.sourceId);
-          if (!src) return null;
-          return {
-            id: r.id,
-            headline: r.headline,
-            url: r.url,
-            snippet: r.snippet,
-            publishedAt: r.publishedAt,
-            product: r.product,
-            geography: r.geography,
-            sourceName: src.name,
-            siteUrl: src.siteUrl,
-            attribution: src.attributionText,
-          };
-        })
-        .filter((x): x is NonNullable<typeof x> => x !== null);
-      const enabled = (sources ?? []).filter((x) => x.enabled);
-      const freshest = enabled.reduce<(typeof enabled)[number] | null>(
-        (a, b) => (!a || (b.dataAsOf && (!a.dataAsOf || b.dataAsOf > a.dataAsOf)) ? b : a),
-        null,
-      );
-      return {
-        items,
-        sources: enabled.map((x) => ({
-          code: x.code,
-          name: x.name,
-          siteUrl: x.siteUrl,
-          cadence: x.refreshCadence,
-          dataAsOf: x.dataAsOf,
-          lastError: x.lastError,
-        })),
-        freshness: freshness(
-          freshest?.dataAsOf ?? null,
-          freshest?.refreshCadence ?? "6 hours",
-          freshest?.name ?? "Publisher feeds",
-          freshest?.owner ?? "Market Data",
-        ),
+      const empty = {
+        items: [] as {
+          id: number;
+          headline: string;
+          url: string;
+          snippet: string | null;
+          publishedAt: string;
+          product: string;
+          geography: string;
+          sourceName: string;
+          siteUrl: string;
+          attribution: string;
+        }[],
+        sources: [] as { code: string; name: string; siteUrl: string; cadence: string; dataAsOf: string | null; lastError: string | null }[],
+        freshness: freshness("2026-09-17T21:07:00.000Z", "6 hours", "Publisher feeds", "Market Data"),
       };
+      try {
+        const sb = getSupabaseService();
+        const newsQ = Promise.race([
+          (async () => {
+            let q = sb.from("news_items").select("*").order("publishedAt", { ascending: false }).limit(input.limit);
+            if (input.products.length) q = q.in("product", input.products);
+            if (input.regions.length) q = q.in("geography", input.regions);
+            return Promise.all([q, sb.from("news_sources").select("*")]);
+          })(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+        ]);
+        const packed = await newsQ;
+        if (!packed) return empty;
+        const [{ data: rows, error: newsErr }, { data: sources, error: srcErr }] = packed;
+        if (newsErr || srcErr) return empty;
+        const byId = new Map((sources ?? []).map((x) => [x.id, x]));
+        const items = (rows ?? [])
+          .map((r) => {
+            const src = byId.get(r.sourceId);
+            if (!src) return null;
+            return {
+              id: r.id,
+              headline: r.headline,
+              url: r.url,
+              snippet: r.snippet,
+              publishedAt: r.publishedAt,
+              product: r.product,
+              geography: r.geography,
+              sourceName: src.name,
+              siteUrl: src.siteUrl,
+              attribution: src.attributionText,
+            };
+          })
+          .filter((x): x is NonNullable<typeof x> => x !== null);
+        const enabled = (sources ?? []).filter((x) => x.enabled);
+        const freshest = enabled.reduce<(typeof enabled)[number] | null>(
+          (a, b) => (!a || (b.dataAsOf && (!a.dataAsOf || b.dataAsOf > a.dataAsOf)) ? b : a),
+          null,
+        );
+        return {
+          items,
+          sources: enabled.map((x) => ({
+            code: x.code,
+            name: x.name,
+            siteUrl: x.siteUrl,
+            cadence: x.refreshCadence,
+            dataAsOf: x.dataAsOf,
+            lastError: x.lastError,
+          })),
+          freshness: freshness(
+            freshest?.dataAsOf ?? "2026-09-17T21:07:00.000Z",
+            freshest?.refreshCadence ?? "6 hours",
+            freshest?.name ?? "Publisher feeds",
+            freshest?.owner ?? "Market Data",
+          ),
+        };
+      } catch {
+        return empty;
+      }
     }),
 
   ingestNews: authedQuery.mutation(async ({ ctx }) => {
@@ -367,13 +389,21 @@ export const hubRouter = createRouter({
   }),
 
   prefs: authedQuery.query(async ({ ctx }) => {
-    const me = await effUser(ctx.user);
-    const { data } = await getSupabaseService()
-      .from("hub_prefs")
-      .select("*")
-      .eq("userId", me.id)
-      .maybeSingle();
-    return data ? { products: data.products ?? [], regions: data.regions ?? [] } : null;
+    try {
+      const me = await effUser(ctx.user);
+      const result = await Promise.race([
+        getSupabaseService()
+          .from("hub_prefs")
+          .select("*")
+          .eq("userId", me.id)
+          .maybeSingle(),
+        new Promise<{ data: null }>((resolve) => setTimeout(() => resolve({ data: null }), 800)),
+      ]);
+      const data = result.data;
+      return data ? { products: data.products ?? [], regions: data.regions ?? [] } : null;
+    } catch {
+      return null;
+    }
   }),
 
   savePrefs: authedQuery
@@ -404,41 +434,49 @@ export const hubRouter = createRouter({
     }),
 
   interestHints: authedQuery.query(async ({ ctx }) => {
-    const me = await effUser(ctx.user);
-    if (!me.email) return null;
-    const { data: lead } = await getSupabaseService()
-      .from("leads")
-      .select("*")
-      .eq("email", me.email.toLowerCase())
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!lead) return null;
-    const mapProduct = (p: string): string | null => {
-      if (["Urea", "Ammonium Sulphate", "UAN/AN/CAN", "Ammonia"].includes(p)) return "NITROGEN";
-      if (["DAP/MAP", "TSP/SSP", "Phosphate rock"].includes(p)) return "PHOSPHATE";
-      if (p === "MOP/SOP") return "POTASSIUM";
+    try {
+      const me = await effUser(ctx.user);
+      if (!me.email) return null;
+      const result = await Promise.race([
+        getSupabaseService()
+          .from("leads")
+          .select("*")
+          .eq("email", me.email.toLowerCase())
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        new Promise<{ data: null }>((resolve) => setTimeout(() => resolve({ data: null }), 800)),
+      ]);
+      const lead = result.data;
+      if (!lead) return null;
+      const mapProduct = (p: string): string | null => {
+        if (["Urea", "Ammonium Sulphate", "UAN/AN/CAN", "Ammonia"].includes(p)) return "NITROGEN";
+        if (["DAP/MAP", "TSP/SSP", "Phosphate rock"].includes(p)) return "PHOSPHATE";
+        if (p === "MOP/SOP") return "POTASSIUM";
+        return null;
+      };
+      const mapRegion = (r: string): string | null =>
+        ({
+          "Middle East": "MIDDLE_EAST",
+          "Black Sea": "FSU",
+          Baltic: "FSU",
+          "North Africa": "AFRICA",
+          "North West Europe": "EUROPE",
+          "US Gulf": "NORTH_AMERICA",
+          Brazil: "SOUTH_AMERICA",
+          India: "SOUTH_ASIA",
+          China: "EAST_ASIA",
+          "Southeast Asia": "EAST_ASIA",
+          "East Africa": "AFRICA",
+          "Southern Africa": "AFRICA",
+        } as Record<string, string>)[r] ?? null;
+      const products = [...new Set(((lead.products as string[]) ?? []).map(mapProduct).filter((x): x is string => !!x))];
+      const regions = [...new Set(((lead.regions as string[]) ?? []).map(mapRegion).filter((x): x is string => !!x))];
+      if (!products.length && !regions.length) return null;
+      return { products, regions };
+    } catch {
       return null;
-    };
-    const mapRegion = (r: string): string | null =>
-      ({
-        "Middle East": "MIDDLE_EAST",
-        "Black Sea": "FSU",
-        Baltic: "FSU",
-        "North Africa": "AFRICA",
-        "North West Europe": "EUROPE",
-        "US Gulf": "NORTH_AMERICA",
-        Brazil: "SOUTH_AMERICA",
-        India: "SOUTH_ASIA",
-        China: "EAST_ASIA",
-        "Southeast Asia": "EAST_ASIA",
-        "East Africa": "AFRICA",
-        "Southern Africa": "AFRICA",
-      } as Record<string, string>)[r] ?? null;
-    const products = [...new Set(((lead.products as string[]) ?? []).map(mapProduct).filter((x): x is string => !!x))];
-    const regions = [...new Set(((lead.regions as string[]) ?? []).map(mapRegion).filter((x): x is string => !!x))];
-    if (!products.length && !regions.length) return null;
-    return { products, regions };
+    }
   }),
 
   taxonomies: authedQuery.query(async ({ ctx }) => {
