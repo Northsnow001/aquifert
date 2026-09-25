@@ -6,7 +6,7 @@ VALUES
   (
     'NITROGEN',
     58,
-    'Urea sentiment steady; Middle East offers hold while Indian tender timing keeps the desk constructive.',
+    $$Urea sentiment steady; Middle East offers hold while Indian tender timing keeps the desk constructive.$$,
     '[{"date":"2026-09-18","score":55},{"date":"2026-09-25","score":58}]'::jsonb,
     'Aquifert Trading Desk',
     now()
@@ -14,7 +14,7 @@ VALUES
   (
     'PHOSPHATE',
     52,
-    'DAP/MAP balanced; Brazilian demand supporting floors with limited spot availability out of North Africa.',
+    $$DAP/MAP balanced; Brazilian demand supporting floors with limited spot availability out of North Africa.$$,
     '[{"date":"2026-09-18","score":50},{"date":"2026-09-25","score":52}]'::jsonb,
     'Aquifert Trading Desk',
     now()
@@ -22,7 +22,7 @@ VALUES
   (
     'POTASSIUM',
     47,
-    'MOP quieter into Q4; contract negotiations ongoing with soft spot liquidity.',
+    $$MOP quieter into Q4; contract negotiations ongoing with soft spot liquidity.$$,
     '[{"date":"2026-09-18","score":48},{"date":"2026-09-25","score":47}]'::jsonb,
     'Aquifert Trading Desk',
     now()
@@ -35,38 +35,37 @@ ON CONFLICT ("nutrient") DO UPDATE SET
   "updatedAt" = now();
 
 INSERT INTO public.telex_items ("title", "body", "product", "geography", "createdAt", "updatedAt")
-SELECT * FROM (VALUES
-  (
-    'Urea CFR Brazil offers firm into Oct',
-    'Desk notes limited prompt tonnage; buyers covering short stems ahead of planting windows.',
-    'NITROGEN',
-    'SOUTH_AMERICA',
-    now() - interval '2 hours',
-    now() - interval '2 hours'
-  ),
-  (
-    'DAP FOB Morocco steady; MAP slightly firmer',
-    'Supplier indications unchanged week-on-week. Freight still the swing factor into NW Europe.',
+SELECT * FROM (
+  SELECT
+    $$Urea CFR Brazil offers firm for October$$ AS title,
+    $$Desk notes limited prompt tonnage; buyers covering short stems ahead of planting windows.$$ AS body,
+    'NITROGEN'::varchar AS product,
+    'SOUTH_AMERICA'::varchar AS geography,
+    now() - '2 hours'::interval AS "createdAt",
+    now() - '2 hours'::interval AS "updatedAt"
+  UNION ALL
+  SELECT
+    $$DAP FOB Morocco steady; MAP slightly firmer$$,
+    $$Supplier indications unchanged week-on-week. Freight still the swing factor into NW Europe.$$,
     'PHOSPHATE',
     'AFRICA',
-    now() - interval '5 hours',
-    now() - interval '5 hours'
-  ),
-  (
-    'MOP contract talks: soft spot, firm contracts',
-    'Spot remains quiet while annual negotiations continue. Watch Baltic and Dead Sea stems.',
+    now() - '5 hours'::interval,
+    now() - '5 hours'::interval
+  UNION ALL
+  SELECT
+    $$MOP contract talks: soft spot, firm contracts$$,
+    $$Spot remains quiet while annual negotiations continue. Watch Baltic and Dead Sea stems.$$,
     'POTASSIUM',
     'GLOBAL',
-    now() - interval '1 day',
-    now() - interval '1 day'
-  )
-) AS v("title", "body", "product", "geography", "createdAt", "updatedAt")
+    now() - '1 day'::interval,
+    now() - '1 day'::interval
+) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM public.telex_items LIMIT 1);
 
 INSERT INTO public.hub_commentary ("kind", "title", "byline", "paragraphs", "publishedAt", "createdAt")
 SELECT
   'MARKET',
-  'AQ VIEW: Balanced desks into late September',
+  $$AQ VIEW: Balanced desks into late September$$,
   'Aquifert Trading Desk',
   '["Nitrogen holds a mild constructive bias on tender timing.","Phosphate floors supported by Brazilian demand.","Potash remains the quieter nutrient with soft spot liquidity."]'::jsonb,
   now(),
