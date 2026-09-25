@@ -1,11 +1,8 @@
 import { z } from "zod";
-import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import * as s from "@db/schema";
+import { getSupabaseService } from "./lib/supabase";
 import { effUser, assertStaff, logActivity, fmtActor } from "./rbac";
-import { ingestAllNews } from "./ingest-news";
 
 const PRODUCTS = ["NITROGEN", "PHOSPHATE", "POTASSIUM", "FREIGHT", "GENERAL"] as const;
 const REGIONS = [
@@ -33,33 +30,35 @@ export type Freshness = {
   nextExpected: string | null;
 };
 
-export function freshness(asOf: Date | null, cadence: string, source: string, owner: string): Freshness {
+export function freshness(asOf: Date | string | null, cadence: string, source: string, owner: string): Freshness {
   if (!asOf) {
     return { level: "red", asOf: null, ageHours: null, cadence, source, owner, nextExpected: null };
   }
-  const ageHours = (Date.now() - asOf.getTime()) / 3.6e6;
+  const t = typeof asOf === "string" ? new Date(asOf) : asOf;
+  const ageHours = (Date.now() - t.getTime()) / 3.6e6;
   const cadenceHours = cadenceToHours(cadence);
   const level = ageHours <= cadenceHours ? "green" : ageHours <= cadenceHours * 2 ? "amber" : "red";
   return {
     level,
-    asOf: asOf.toISOString(),
+    asOf: t.toISOString(),
     ageHours: Math.round(ageHours * 10) / 10,
     cadence,
     source,
     owner,
-    nextExpected: new Date(asOf.getTime() + cadenceHours * 3.6e6).toISOString(),
+    nextExpected: new Date(t.getTime() + cadenceHours * 3.6e6).toISOString(),
   };
 }
 
 export const hubRouter = createRouter({
-  /* ------------------------------------------------ market gauges */
   indicators: authedQuery.query(async ({ ctx }) => {
     await effUser(ctx.user);
-    const rows = await getDb().query.hubIndicators.findMany();
-    return rows.map((r) => ({
+    const { data, error } = await getSupabaseService().from("hub_indicators").select("*");
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({
       ...r,
-      label: r.score < 40 ? "Bearish" : r.score > 60 ? "Bullish" : "Neutral",
-      freshness: freshness(r.updatedAt, "7 days", "Aquifert Trading Desk", r.updatedBy),
+      updatedAt: r.updatedAt ? new Date(r.updatedAt) : new Date(),
+      label: Number(r.score) < 40 ? "Bearish" : Number(r.score) > 60 ? "Bullish" : "Neutral",
+      freshness: freshness(r.updatedAt ?? null, "7 days", "Aquifert Trading Desk", r.updatedBy ?? "Desk"),
     }));
   }),
 
@@ -72,21 +71,33 @@ export const hubRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const me = await effUser(ctx.user);
       assertStaff(me);
-      const db = getDb();
-      const row = await db.query.hubIndicators.findFirst({
-        where: eq(s.hubIndicators.nutrient, input.nutrient),
-      });
+      const sb = getSupabaseService();
+      const { data: row, error: findErr } = await sb
+        .from("hub_indicators")
+        .select("*")
+        .eq("nutrient", input.nutrient)
+        .maybeSingle();
+      if (findErr) throw new Error(findErr.message);
       if (!row) throw new TRPCError({ code: "NOT_FOUND" });
-      const history = [...row.history, { date: new Date().toISOString().slice(0, 10), score: input.score }]
-        .slice(-90);
-      await db.update(s.hubIndicators)
-        .set({ score: input.score, rationale: input.rationale, history, updatedBy: fmtActor(me), updatedAt: new Date() })
-        .where(eq(s.hubIndicators.id, row.id));
+      const history = [
+        ...((row.history as { date: string; score: number }[]) ?? []),
+        { date: new Date().toISOString().slice(0, 10), score: input.score },
+      ].slice(-90);
+      const { error } = await sb
+        .from("hub_indicators")
+        .update({
+          score: input.score,
+          rationale: input.rationale,
+          history,
+          updatedBy: fmtActor(me),
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+      if (error) throw new Error(error.message);
       await logActivity(fmtActor(me), `Updated ${input.nutrient} gauge to ${input.score}`, "hub_indicator", String(row.id), me.id);
       return { ok: true };
     }),
 
-  /* --------------------------------------------------- TELEX feed */
   telex: authedQuery
     .input(z.object({
       cursor: z.number().nullish(),
@@ -96,18 +107,20 @@ export const hubRouter = createRouter({
     }))
     .query(async ({ ctx, input }) => {
       await effUser(ctx.user);
-      const conds = [];
-      if (input.cursor) conds.push(lt(s.telexItems.id, input.cursor));
-      if (input.products.length) conds.push(inArray(s.telexItems.product, input.products));
-      if (input.regions.length) conds.push(inArray(s.telexItems.geography, input.regions));
-      const rows = await getDb().query.telexItems.findMany({
-        where: conds.length ? and(...conds) : undefined,
-        orderBy: desc(s.telexItems.id),
-        limit: input.limit + 1,
-      });
+      let q = getSupabaseService()
+        .from("telex_items")
+        .select("*")
+        .order("id", { ascending: false })
+        .limit(input.limit + 1);
+      if (input.cursor) q = q.lt("id", input.cursor);
+      if (input.products.length) q = q.in("product", input.products);
+      if (input.regions.length) q = q.in("geography", input.regions);
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      const rows = data ?? [];
       const hasMore = rows.length > input.limit;
       const items = rows.slice(0, input.limit);
-      const latest = await getDb().query.telexItems.findFirst({ orderBy: desc(s.telexItems.updatedAt) });
+      const latest = items[0];
       return {
         items,
         nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
@@ -115,7 +128,6 @@ export const hubRouter = createRouter({
       };
     }),
 
-  /* ---------------------------------------------------- news feed */
   news: authedQuery
     .input(z.object({
       products: z.array(z.string()).default([]),
@@ -124,37 +136,49 @@ export const hubRouter = createRouter({
     }))
     .query(async ({ ctx, input }) => {
       await effUser(ctx.user);
-      const db = getDb();
-      const conds = [];
-      if (input.products.length) conds.push(inArray(s.newsItems.product, input.products));
-      if (input.regions.length) conds.push(inArray(s.newsItems.geography, input.regions));
-      const rows = await db.query.newsItems.findMany({
-        where: conds.length ? and(...conds) : undefined,
-        orderBy: desc(s.newsItems.publishedAt),
-        limit: input.limit,
-      });
-      const sources = await db.query.newsSources.findMany();
-      const byId = new Map(sources.map((x) => [x.id, x]));
-      const items = rows
+      const sb = getSupabaseService();
+      let newsQ = sb.from("news_items").select("*").order("publishedAt", { ascending: false }).limit(input.limit);
+      if (input.products.length) newsQ = newsQ.in("product", input.products);
+      if (input.regions.length) newsQ = newsQ.in("geography", input.regions);
+      const [{ data: rows, error: newsErr }, { data: sources, error: srcErr }] = await Promise.all([
+        newsQ,
+        sb.from("news_sources").select("*"),
+      ]);
+      if (newsErr) throw new Error(newsErr.message);
+      if (srcErr) throw new Error(srcErr.message);
+      const byId = new Map((sources ?? []).map((x) => [x.id, x]));
+      const items = (rows ?? [])
         .map((r) => {
           const src = byId.get(r.sourceId);
           if (!src) return null;
           return {
-            id: r.id, headline: r.headline, url: r.url, snippet: r.snippet,
-            publishedAt: r.publishedAt, product: r.product, geography: r.geography,
-            sourceName: src.name, siteUrl: src.siteUrl, attribution: src.attributionText,
+            id: r.id,
+            headline: r.headline,
+            url: r.url,
+            snippet: r.snippet,
+            publishedAt: r.publishedAt,
+            product: r.product,
+            geography: r.geography,
+            sourceName: src.name,
+            siteUrl: src.siteUrl,
+            attribution: src.attributionText,
           };
         })
         .filter((x): x is NonNullable<typeof x> => x !== null);
-      // Panel freshness = freshest enabled source; failure detail surfaced per source.
-      const enabled = sources.filter((x) => x.enabled);
-      const freshest = enabled.reduce<s.NewsSource | null>(
-        (a, b) => (!a || (b.dataAsOf && (!a.dataAsOf || b.dataAsOf > a.dataAsOf)) ? b : a), null);
+      const enabled = (sources ?? []).filter((x) => x.enabled);
+      const freshest = enabled.reduce<(typeof enabled)[number] | null>(
+        (a, b) => (!a || (b.dataAsOf && (!a.dataAsOf || b.dataAsOf > a.dataAsOf)) ? b : a),
+        null,
+      );
       return {
         items,
         sources: enabled.map((x) => ({
-          code: x.code, name: x.name, siteUrl: x.siteUrl, cadence: x.refreshCadence,
-          dataAsOf: x.dataAsOf, lastError: x.lastError,
+          code: x.code,
+          name: x.name,
+          siteUrl: x.siteUrl,
+          cadence: x.refreshCadence,
+          dataAsOf: x.dataAsOf,
+          lastError: x.lastError,
         })),
         freshness: freshness(
           freshest?.dataAsOf ?? null,
@@ -165,96 +189,118 @@ export const hubRouter = createRouter({
       };
     }),
 
-  /** Manual ingestion trigger, staff only (also wired to run on a schedule in prod). */
   ingestNews: authedQuery.mutation(async ({ ctx }) => {
     const me = await effUser(ctx.user);
     assertStaff(me);
-    return ingestAllNews();
+    throw new Error("News ingestion requires a scheduled worker. Seed news_items in Supabase for now.");
   }),
 
-  /* ----------------------------------------------- price board hub */
   freight: authedQuery.query(async ({ ctx }) => {
     await effUser(ctx.user);
-    const db = getDb();
-    const enquiries = await db.query.freightEnquiries.findMany({ orderBy: desc(s.freightEnquiries.createdAt), limit: 12 });
-    const commentary = await db.query.hubCommentary.findFirst({
-      where: eq(s.hubCommentary.kind, "FREIGHT"),
-      orderBy: desc(s.hubCommentary.publishedAt),
-    });
+    const sb = getSupabaseService();
+    const [{ data: enquiries }, { data: commentaryRows }] = await Promise.all([
+      sb.from("freight_enquiries").select("*").order("createdAt", { ascending: false }).limit(12),
+      sb.from("hub_commentary").select("*").eq("kind", "FREIGHT").order("publishedAt", { ascending: false }).limit(1),
+    ]);
+    const commentary = commentaryRows?.[0] ?? null;
     return {
-      enquiries,
+      enquiries: enquiries ?? [],
       commentary,
       freshness: freshness(
-        commentary?.publishedAt ?? null, "7 days",
-        "Aquifert Freight Desk", commentary?.byline ?? "Freight Desk"),
+        commentary?.publishedAt ?? null,
+        "7 days",
+        "Aquifert Freight Desk",
+        commentary?.byline ?? "Freight Desk",
+      ),
     };
   }),
 
   commentary: authedQuery.query(async ({ ctx }) => {
     await effUser(ctx.user);
-    const c = await getDb().query.hubCommentary.findFirst({
-      where: eq(s.hubCommentary.kind, "MARKET"),
-      orderBy: desc(s.hubCommentary.publishedAt),
-    });
+    const { data } = await getSupabaseService()
+      .from("hub_commentary")
+      .select("*")
+      .eq("kind", "MARKET")
+      .order("publishedAt", { ascending: false })
+      .limit(1);
+    const c = data?.[0] ?? null;
     return {
       commentary: c,
       freshness: freshness(c?.publishedAt ?? null, "7 days", "AQ VIEW", c?.byline ?? "Trading Desk"),
     };
   }),
 
-  /* --------------------------------------------- saved preferences */
   prefs: authedQuery.query(async ({ ctx }) => {
     const me = await effUser(ctx.user);
-    const row = await getDb().query.hubPrefs.findFirst({ where: eq(s.hubPrefs.userId, me.id) });
-    return row ? { products: row.products, regions: row.regions } : null;
+    const { data } = await getSupabaseService()
+      .from("hub_prefs")
+      .select("*")
+      .eq("userId", me.id)
+      .maybeSingle();
+    return data ? { products: data.products ?? [], regions: data.regions ?? [] } : null;
   }),
 
   savePrefs: authedQuery
     .input(z.object({ products: z.array(z.string()), regions: z.array(z.string()) }))
     .mutation(async ({ ctx, input }) => {
       const me = await effUser(ctx.user);
-      const db = getDb();
-      await db
-        .insert(s.hubPrefs)
-        .values({
+      const sb = getSupabaseService();
+      const { data: existing } = await sb.from("hub_prefs").select("id").eq("userId", me.id).maybeSingle();
+      if (existing?.id) {
+        const { error } = await sb
+          .from("hub_prefs")
+          .update({
+            products: input.products,
+            regions: input.regions,
+            updatedAt: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await sb.from("hub_prefs").insert({
           userId: me.id,
           products: input.products,
           regions: input.regions,
-        })
-        .onConflictDoUpdate({
-          target: s.hubPrefs.userId,
-          set: {
-            products: input.products,
-            regions: input.regions,
-            updatedAt: new Date(),
-          },
         });
+        if (error) throw new Error(error.message);
+      }
       return { ok: true };
     }),
 
-  /** Interest hints from the B4 lead capture (matched by email) for first-load pre-filtering. */
   interestHints: authedQuery.query(async ({ ctx }) => {
     const me = await effUser(ctx.user);
     if (!me.email) return null;
-    const lead = await getDb().query.leads.findFirst({
-      where: eq(s.leads.email, me.email.toLowerCase()),
-      orderBy: desc(s.leads.id),
-    });
+    const { data: lead } = await getSupabaseService()
+      .from("leads")
+      .select("*")
+      .eq("email", me.email.toLowerCase())
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     if (!lead) return null;
     const mapProduct = (p: string): string | null => {
       if (["Urea", "Ammonium Sulphate", "UAN/AN/CAN", "Ammonia"].includes(p)) return "NITROGEN";
       if (["DAP/MAP", "TSP/SSP", "Phosphate rock"].includes(p)) return "PHOSPHATE";
       if (p === "MOP/SOP") return "POTASSIUM";
-      return null; // NPK / solubles / micronutrients / sulphur / unsure → no filter
+      return null;
     };
-    const mapRegion = (r: string): string | null => ({
-      "Middle East": "MIDDLE_EAST", "Black Sea": "FSU", "Baltic": "FSU",
-      "North Africa": "AFRICA", "North West Europe": "EUROPE", "US Gulf": "NORTH_AMERICA",
-      "Brazil": "SOUTH_AMERICA", "India": "SOUTH_ASIA", "China": "EAST_ASIA",
-      "Southeast Asia": "EAST_ASIA", "East Africa": "AFRICA", "Southern Africa": "AFRICA",
-    } as Record<string, string>)[r] ?? null;
-    const products = [...new Set((lead.products ?? []).map(mapProduct).filter((x): x is string => !!x))];
-    const regions = [...new Set((lead.regions ?? []).map(mapRegion).filter((x): x is string => !!x))];
+    const mapRegion = (r: string): string | null =>
+      ({
+        "Middle East": "MIDDLE_EAST",
+        "Black Sea": "FSU",
+        Baltic: "FSU",
+        "North Africa": "AFRICA",
+        "North West Europe": "EUROPE",
+        "US Gulf": "NORTH_AMERICA",
+        Brazil: "SOUTH_AMERICA",
+        India: "SOUTH_ASIA",
+        China: "EAST_ASIA",
+        "Southeast Asia": "EAST_ASIA",
+        "East Africa": "AFRICA",
+        "Southern Africa": "AFRICA",
+      } as Record<string, string>)[r] ?? null;
+    const products = [...new Set(((lead.products as string[]) ?? []).map(mapProduct).filter((x): x is string => !!x))];
+    const regions = [...new Set(((lead.regions as string[]) ?? []).map(mapRegion).filter((x): x is string => !!x))];
     if (!products.length && !regions.length) return null;
     return { products, regions };
   }),
@@ -264,4 +310,3 @@ export const hubRouter = createRouter({
     return { products: PRODUCTS, regions: REGIONS };
   }),
 });
-
