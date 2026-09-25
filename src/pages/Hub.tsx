@@ -40,7 +40,7 @@ export default function Hub() {
   const prefs = trpc.hub.prefs.useQuery();
   const hints = trpc.hub.interestHints.useQuery();
   const taxonomies = trpc.hub.taxonomies.useQuery();
-  const indicators = trpc.hub.indicators.useQuery();
+  const indicators = trpc.hub.indicators.useQuery(undefined, { staleTime: 30_000, retry: 0 });
   const savePrefs = trpc.hub.savePrefs.useMutation({
     onSuccess: () => { prefs.refetch(); toast.success("Default filters saved to your account"); },
     onError: (e) => toast.error(e.message),

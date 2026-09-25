@@ -14,7 +14,7 @@ export function interpolateTip(key: Aq1MenuKey, limits: { nitrogenReportsPerMont
 }
 
 export function useAq1Tips(): Record<Aq1MenuKey, string> {
-  const { data } = trpc.aq1.config.useQuery(undefined, { staleTime: 60_000 });
+  const { data } = trpc.aq1.config.useQuery(undefined, { staleTime: 60_000, retry: 0 });
   const limits = data?.limits ?? { nitrogenReportsPerMonth: 2, ureaCalcsPerMonth: 5, savedReportsRetained: 10 };
   const out = {} as Record<Aq1MenuKey, string>;
   (Object.keys(AQ1_TOOLTIPS) as Aq1MenuKey[]).forEach((k) => { out[k] = interpolateTip(k, limits); });

@@ -161,13 +161,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [tourRestart, setTourRestart] = useState(0);
   const tips = useAq1Tips();
-  const { data: aq1Config } = trpc.aq1.config.useQuery(undefined, { staleTime: 60_000 });
-  const aq1On = aq1Config?.enabled === true && portalRole === "BUYER";
-  const { data: analyticsConfig } = trpc.analytics.config.useQuery(undefined, { staleTime: 60_000 });
-  const analyticsOn = analyticsConfig?.enabled === true && (portalRole === "BUYER" || ["ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"].includes(portalRole ?? ""));
+  // Show updated AQ1 / Analytics nav immediately — never gate on slow config RPCs.
+  const aq1On = portalRole === "BUYER";
+  const analyticsOn =
+    portalRole === "BUYER" ||
+    ["ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"].includes(portalRole ?? "");
+  const { data: analyticsConfig } = trpc.analytics.config.useQuery(undefined, {
+    staleTime: 60_000,
+    retry: 0,
+  });
   useEffect(() => {
     const onRestart = () => setTourRestart(1);
     window.addEventListener("aq1:restart-tour", onRestart);
@@ -189,7 +193,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }, [portalRole, isMember, membership]);
 
   const isStaff = ["ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"].includes(portalRole ?? "");
-  const { data: libraryBadge } = trpc.library.unreadCount.useQuery(undefined, { staleTime: 60_000, retry: 1 });
+  const { data: libraryBadge } = trpc.library.unreadCount.useQuery(undefined, {
+    staleTime: 60_000,
+    retry: 0,
+  });
   const initials = (user?.name ?? "U").split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
   const pageTitle = nav.find((i) =>
     i.to === location.pathname ||
@@ -382,11 +389,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <span className="text-muted-foreground">Aquifert ONE</span>
             <span className="text-muted-foreground/60">/</span>
             <span className="font-semibold text-foreground">{pageTitle}</span>
-            {!isMember && portalRole === "BUYER" && (
-              <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10.5px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-                <Lock className="h-2.5 w-2.5" /> Free plan
-              </span>
-            )}
           </div>
 
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
@@ -438,16 +440,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
-
-        {/* Demo banner */}
-        {!bannerDismissed && (
-          <div className="flex items-center justify-center gap-3 bg-navy-600 px-4 py-1.5 text-center text-[11px] font-medium text-white/90">
-            Sample market data is shown until live feeds are connected.
-            <button className="underline underline-offset-2 hover:text-white" onClick={() => setBannerDismissed(true)}>
-              Dismiss
-            </button>
-          </div>
-        )}
 
         {/* Content */}
         <main id="main-content" className="aqf-page flex-1 px-4 py-6 sm:px-6 lg:px-8 pb-24 lg:pb-10">

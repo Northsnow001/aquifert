@@ -154,8 +154,13 @@ export const hubRouter = createRouter({
     await effUser(ctx.user);
     let rows: Record<string, unknown>[] = [];
     try {
-      const { data, error } = await getSupabaseService().from("hub_indicators").select("*");
-      if (!error && data?.length) rows = data;
+      const result = await Promise.race([
+        getSupabaseService().from("hub_indicators").select("*"),
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 2000),
+        ),
+      ]);
+      if (!result.error && result.data?.length) rows = result.data;
     } catch {
       rows = [];
     }

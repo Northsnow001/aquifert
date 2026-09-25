@@ -157,26 +157,32 @@ export const libraryRouter = createRouter({
   /** Unopened recent weeklies, badge on the Library menu item. */
   unreadCount: authedQuery.query(async ({ ctx }) => {
     if (!LIBRARY_ENABLED()) return { count: 0 };
-    const db = getDb();
-    const me = await effUser(ctx.user);
-    const since = new Date(Date.now() - 30 * 864e5);
-    const recent = await db
-      .select({ id: s.libraryReports.id })
-      .from(s.libraryReports)
-      .where(
-        and(
-          eq(s.libraryReports.status, "published"),
-          eq(s.libraryReports.reportType, "weekly_market"),
-          gte(s.libraryReports.publishedAt, since)
-        )
-      );
-    if (recent.length === 0) return { count: 0 };
-    const seen = await db
-      .select({ reportId: s.libraryAccessLog.reportId })
-      .from(s.libraryAccessLog)
-      .where(and(eq(s.libraryAccessLog.userId, me.id), eq(s.libraryAccessLog.action, "viewed")));
-    const seenIds = new Set(seen.map((x) => x.reportId));
-    return { count: recent.filter((r) => !seenIds.has(r.id)).length };
+    try {
+      const me = await effUser(ctx.user);
+      const since = new Date(Date.now() - 30 * 864e5);
+      const recent = await Promise.race([
+        getDb()
+          .select({ id: s.libraryReports.id })
+          .from(s.libraryReports)
+          .where(
+            and(
+              eq(s.libraryReports.status, "published"),
+              eq(s.libraryReports.reportType, "weekly_market"),
+              gte(s.libraryReports.publishedAt, since)
+            )
+          ),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error("timeout")), 1200)),
+      ]);
+      if (!recent || recent.length === 0) return { count: 0 };
+      const seen = await getDb()
+        .select({ reportId: s.libraryAccessLog.reportId })
+        .from(s.libraryAccessLog)
+        .where(and(eq(s.libraryAccessLog.userId, me.id), eq(s.libraryAccessLog.action, "viewed")));
+      const seenIds = new Set(seen.map((x) => x.reportId));
+      return { count: recent.filter((r) => !seenIds.has(r.id)).length };
+    } catch {
+      return { count: 0 };
+    }
   }),
 
   /** Reading page. Locked reports return header + summary + FIRST

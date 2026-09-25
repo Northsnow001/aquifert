@@ -38,6 +38,19 @@ async function getLimits() {
   return out;
 }
 
+async function getLimitsSafe(): Promise<Record<LimitKey, number>> {
+  try {
+    return await Promise.race([
+      getLimits(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("limits timeout")), 1200),
+      ),
+    ]);
+  } catch {
+    return { ...AQ1_DEFAULT_LIMITS };
+  }
+}
+
 const periodKey = () => new Date().toISOString().slice(0, 7); // UTC calendar month
 
 async function usageCount(userId: number, kind: "NITROGEN_REPORT" | "UREA_CALC") {
@@ -127,10 +140,10 @@ async function nextPromoFor(userId: number, isMember: boolean) {
 }
 
 export const aq1Router = createRouter({
-  /** Feature flag + limits; read by the client to render menu/tooltips. */
+  /** Feature flag + limits; never block the UI on a slow/missing DATABASE_URL. */
   config: publicQuery.query(async () => ({
     enabled: AQ1_ENABLED,
-    limits: await getLimits(),
+    limits: await getLimitsSafe(),
   })),
 
   settings: authedQuery.query(async ({ ctx }) => {
@@ -738,9 +751,17 @@ export const aq1Router = createRouter({
   promoNext: authedQuery.query(async ({ ctx }) => {
     assertAq1Enabled();
     const me = await effUser(ctx.user);
-    return nextPromoFor(me.id, Boolean((await getDb().query.memberships.findFirst({
-      where: and(eq(s.memberships.userId, me.id), eq(s.memberships.status, "ACTIVE")),
-    }))));
+    try {
+      const member = await Promise.race([
+        getDb().query.memberships.findFirst({
+          where: and(eq(s.memberships.userId, me.id), eq(s.memberships.status, "ACTIVE")),
+        }),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error("timeout")), 1000)),
+      ]);
+      return nextPromoFor(me.id, Boolean(member));
+    } catch {
+      return { promo: null, reason: "unavailable" };
+    }
   }),
 
   promoRecord: authedQuery
@@ -754,8 +775,22 @@ export const aq1Router = createRouter({
   /* --------------------------------------- First-run tour */
   tourGet: authedQuery.query(async ({ ctx }) => {
     const me = await effUser(ctx.user);
-    const row = await getDb().query.tourProgress.findFirst({ where: eq(s.tourProgress.userId, me.id) });
-    return row ?? null;
+    try {
+      const row = await Promise.race([
+        getDb().query.tourProgress.findFirst({ where: eq(s.tourProgress.userId, me.id) }),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error("timeout")), 1000)),
+      ]);
+      return row ?? null;
+    } catch {
+      // Skip tour when DB is unavailable so Hub UI is not blocked.
+      return {
+        userId: me.id,
+        lastStepCompleted: 6,
+        status: "completed" as const,
+        resumeOffered: true,
+        updatedAt: new Date(),
+      };
+    }
   }),
 
   tourUpdate: authedQuery

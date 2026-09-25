@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button";
  */
 export function Aq1Tour({ forceStart = 0, onDone }: { forceStart?: number; onDone?: () => void }) {
   const utils = trpc.useUtils();
-  const { data: progress } = trpc.aq1.tourGet.useQuery(undefined, { staleTime: 10_000 });
+  const { data: progress, isLoading, isError } = trpc.aq1.tourGet.useQuery(undefined, {
+    staleTime: 10_000,
+    retry: 0,
+  });
   const update = trpc.aq1.tourUpdate.useMutation({ onSuccess: () => utils.aq1.tourGet.invalidate() });
   const [step, setStep] = useState<number | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -21,6 +24,7 @@ export function Aq1Tour({ forceStart = 0, onDone }: { forceStart?: number; onDon
   // decide whether to run: first entry, or resume offer (once), or forced restart
   useEffect(() => {
     if (forceStart > 0) { setStep(forceStart - 1); return; }
+    if (isLoading || isError) return;
     if (!progress) {
       // no row yet → first entry; only after cookie interaction is done
       const cookieDone = Boolean(localStorage.getItem("aq_cookie_consent") || document.cookie.includes("aq_consent"));
@@ -30,11 +34,12 @@ export function Aq1Tour({ forceStart = 0, onDone }: { forceStart?: number; onDon
       }
       return;
     }
+    if (progress.status === "completed" || progress.status === "skipped") return;
     if (progress.status === "in_progress" && progress.lastStepCompleted > 0 && !progress.resumeOffered) {
       setResumeOffer(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress?.status]);
+  }, [progress?.status, isLoading, isError, forceStart]);
 
   useEffect(() => {
     if (step == null) return;
