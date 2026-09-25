@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
 import SetPassword from "./pages/SetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import Hub from "./pages/Hub";
 import NitrogenReport from "./pages/NitrogenReport";
@@ -106,6 +107,7 @@ export default function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/set-password" element={<SetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/hub" element={<RequirePortal allow={["ADMIN","OPERATIONS","FINANCE","SUPPORT","BUYER","SUPPLIER"]}><Hub /></RequirePortal>} />
         <Route path="/nitrogen-report" element={<RequirePortal allow={["ADMIN","OPERATIONS","FINANCE","SUPPORT","BUYER","SUPPLIER"]}><NitrogenReport /></RequirePortal>} />

@@ -26,6 +26,7 @@ export default function Login() {
   });
 
   const passwordSaved = params.get("set") === "1";
+  const passwordReset = params.get("reset") === "1";
   const [email, setEmail] = useState(() => params.get("email")?.trim() ?? "");
   const [password, setPassword] = useState("");
   const [honey, setHoney] = useState("");
@@ -127,6 +128,11 @@ export default function Login() {
             {passwordSaved && !error && (
               <p className="mt-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[13px] text-teal-900" role="status">
                 Password saved. Sign in with your email and new password to continue.
+              </p>
+            )}
+            {passwordReset && !error && (
+              <p className="mt-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[13px] text-teal-900" role="status">
+                Password updated. Sign in with your new password to continue.
               </p>
             )}
             {error && (
