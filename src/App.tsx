@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router";
+import { Routes, Route, useLocation, Navigate } from "react-router";
 import { Toaster } from "@/components/ui/sonner";
 import Landing from "./pages/Landing";
 import Platform from "./pages/Platform";
@@ -76,7 +76,6 @@ import SupplierProfile from "./pages/supplier/Profile";
 import Aq1Telex from "./pages/aq1/Telex";
 import Aq1Analysis from "./pages/aq1/Analysis";
 import Aq1Signal from "./pages/aq1/Signal";
-import Aq1Nitrogen from "./pages/aq1/Nitrogen";
 import Aq1UreaCalc from "./pages/aq1/UreaCalc";
 import Aq1FreightTeaser from "./pages/aq1/FreightTeaser";
 import Aq1OrderNow from "./pages/aq1/OrderNow";
@@ -149,7 +148,7 @@ export default function App() {
         <Route path="/account/analysis" element={<RequirePortal allow={["BUYER", ...STAFF]}><Aq1Analysis /></RequirePortal>} />
         <Route path="/account/analysis/:slug" element={<RequirePortal allow={["BUYER", ...STAFF]}><Aq1Analysis /></RequirePortal>} />
         <Route path="/account/signal" element={<RequirePortal allow={["BUYER", ...STAFF]}><Aq1Signal /></RequirePortal>} />
-        <Route path="/account/nitrogen-report" element={<RequirePortal allow={["BUYER"]}><Aq1Nitrogen /></RequirePortal>} />
+        <Route path="/account/nitrogen-report" element={<Navigate to="/nitrogen-report" replace />} />
         <Route path="/account/urea-calculator" element={<RequirePortal allow={["BUYER"]}><Aq1UreaCalc /></RequirePortal>} />
         <Route path="/account/freight-analytics" element={<RequirePortal allow={["BUYER", ...STAFF]}><Aq1FreightTeaser /></RequirePortal>} />
         <Route path="/account/order-now" element={<RequirePortal allow={["BUYER"]}><Aq1OrderNow /></RequirePortal>} />

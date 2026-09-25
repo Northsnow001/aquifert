@@ -15,7 +15,6 @@ export const AQ1_MENU: { key: Aq1MenuKey; label: string; to: string; locked?: "A
   { key: "telex", label: "Market TELEX Feed", to: "/account/telex" },
   { key: "analysis", label: "AQ Market Analysis Feed", to: "/account/analysis" },
   { key: "signal", label: "AQ Signal", to: "/account/signal" },
-  { key: "nitrogen", label: "Nitrogen Report Generator", to: "/account/nitrogen-report" },
   { key: "ureaCalc", label: "Urea Cost Calculator", to: "/account/urea-calculator" },
   { key: "freightAnalytics", label: "Freight Analytics", to: "/account/freight-analytics", locked: "AQ_ANALYTICS" },
   { key: "orderNow", label: "Order Fertilizer Now", to: "/account/order-now", locked: "AQ0" },
@@ -97,7 +96,6 @@ export const PROMOS = {
 export const TOUR_STOPS: { key: Aq1MenuKey; title: string; blurb: string }[] = [
   { key: "telex", title: "Market TELEX Feed", blurb: "Start here — what moved overnight." },
   { key: "signal", title: "AQ Signal", blurb: "See the trend over 7, 30, 60 or 90 days." },
-  { key: "nitrogen", title: "Nitrogen Report Generator", blurb: "Get a written market report on demand." },
   { key: "ureaCalc", title: "Urea Cost Calculator", blurb: "Work out your real delivered cost." },
   { key: "orderNow", title: "Order Fertilizer Now", blurb: "Ready to buy? This is where you start." },
 ];

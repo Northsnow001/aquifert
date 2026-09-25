@@ -53,7 +53,7 @@ export default function BuyerDashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="lg" variant="outline" className="shadow-sm" onClick={() => navigate("/nitrogen-report")}>
-            <FlaskConical className="mr-1.5 h-5 w-5" /> Nitrogen Report Generator
+            <FlaskConical className="mr-1.5 h-5 w-5" /> Nitrogen Report
           </Button>
           <Button size="lg" className="bg-teal-500 hover:bg-teal-600 aqf-btn-press shadow-md" onClick={() => navigate("/buyer/request")}>
             <PlusCircle className="mr-1.5 h-5 w-5" /> New Request

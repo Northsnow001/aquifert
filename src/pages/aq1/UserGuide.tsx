@@ -29,10 +29,9 @@ const GUIDE_SECTIONS: { id: string; title: string; body: string[] }[] = [
     ],
   },
   {
-    id: "nitrogen", title: "Nitrogen Report Generator",
+    id: "nitrogen", title: "Nitrogen Report",
     body: [
-      "Ask Aquibot for an on-demand report across the nitrogen complex: urea (granular and prilled), ammonia, AN, CAN, UAN and ammonium sulphate. Pick products, regions and a period, and add anything specific you want covered.",
-      "Every figure in the report is checked against Aquifert's own price records before you see it; if any figure cannot be verified the report is held back and the desk is notified, rather than you seeing something we can't stand behind. Reports are saved to My Reports and are AI-drafted from Aquifert data, desk-reviewed — they are market information, not advice.",
+      "Open Nitrogen Report from the main menu for the desk nitrogen market report. It covers urea, ammonia and related products from Aquifert desk intelligence.",
     ],
   },
   {
