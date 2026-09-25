@@ -25,6 +25,10 @@ import { nitrogenRouter } from "./nitrogen-router";
 import { libraryRouter } from "./library-router";
 import { libraryAdminRouter } from "./library-admin-router";
 import { aq1Router } from "./aq1-router";
+import { analyticsRouter } from "./analytics-router";
+import { billingRouter } from "./billing-router";
+import { alertsRouter } from "./alerts-router";
+import { newsletterRouter } from "./newsletter-router";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -54,6 +58,10 @@ export const appRouter = createRouter({
   library: libraryRouter,
   libraryAdmin: libraryAdminRouter,
   aq1: aq1Router,
+  analytics: analyticsRouter,
+  billing: billingRouter,
+  alerts: alertsRouter,
+  newsletter: newsletterRouter,
 });
 
 export type AppRouter = typeof appRouter;

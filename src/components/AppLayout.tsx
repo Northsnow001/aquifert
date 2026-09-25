@@ -6,8 +6,9 @@ import {
   Ship, LineChart, Users, Landmark, Home, PlusCircle, FileText, Package,
   Crown, Inbox, Wallet, Building2, Moon, Sun, LogOut, Menu, X, ChevronDown,
   ChevronsLeft, ChevronsRight, Languages, FlaskConical,
-  ArrowLeftRight, ShieldCheck, Radio, Bot, Lock, BookOpen, FileUp,
+  ArrowLeftRight, ShieldCheck, Radio, Bot, Lock, BookOpen, FileUp, FileBadge,
   Newspaper, Gauge, Calculator, ShoppingCart, PhoneCall, BookOpenCheck, Mail, SlidersHorizontal,
+  BarChart3, Bell, Activity, Send, CreditCard, Receipt,
 } from "lucide-react";
 import { AQ1_MENU, type Aq1MenuKey } from "@contracts/aq1";
 import { InfoTip } from "@/components/aq1/InfoTip";
@@ -21,6 +22,7 @@ import { VerifyEmailBanner } from "@/components/VerifyEmailBanner";
 import { Logo, LogoMark } from "@/components/shared/Logo";
 import { Tip } from "@/components/shared/Tip";
 import { NotificationsBell } from "@/components/shared/NotificationsBell";
+import { TraderPocket } from "@/components/analytics/TraderPocket";
 import { MembershipBadge } from "@/components/shared/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -29,6 +31,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { BillingBanner } from "@/components/billing/BillingBanner";
 
 type NavItem = { to: string; label: string; icon: ReactNode; roles?: string[]; membersOnly?: boolean; tier2Only?: boolean };
 
@@ -48,13 +51,18 @@ const STAFF_NAV: NavItem[] = [
   { to: "/admin/users", label: "Users", icon: <Users className="h-4 w-4" />, roles: ["ADMIN"] },
   { to: "/admin/finance", label: "Finance", icon: <Landmark className="h-4 w-4" />, roles: ["ADMIN", "FINANCE"] },
   { to: "/admin/aq1", label: "AQ1 Free Plan", icon: <Gauge className="h-4 w-4" /> },
+  { to: "/admin/plans", label: "Plans & Entitlements", icon: <Crown className="h-4 w-4" />, roles: ["ADMIN"] },
+  { to: "/admin/billing", label: "Billing", icon: <Receipt className="h-4 w-4" />, roles: ["ADMIN", "FINANCE"] },
+  { to: "/admin/licences", label: "Data Licences", icon: <FileBadge className="h-4 w-4" />, roles: ["ADMIN"] },
+  { to: "/admin/brokers", label: "Broker Registry", icon: <Send className="h-4 w-4" /> },
+  { to: "/admin/newsletter", label: "Newsletter", icon: <Newspaper className="h-4 w-4" /> },
   { to: "/aquibot", label: "Aquibot", icon: <Bot className="h-4 w-4" /> },
 ];
 
 const BUYER_NAV: NavItem[] = [
   { to: "/hub", label: "Hub", icon: <Radio className="h-4 w-4" /> },
   { to: "/library", label: "Library", icon: <BookOpen className="h-4 w-4" /> },
-  { to: "/buyer", label: "Dashboard", icon: <Home className="h-4 w-4" /> },
+  { to: "/buyer", label: "Dashboard", icon: <Home className="h-4 w-4" />, membersOnly: true },
   { to: "/buyer/request", label: "New Request", icon: <PlusCircle className="h-4 w-4" />, membersOnly: true },
   { to: "/buyer/quotes", label: "Quotes & Invoices", icon: <FileText className="h-4 w-4" />, membersOnly: true },
   { to: "/buyer/orders", label: "Orders", icon: <Package className="h-4 w-4" />, membersOnly: true },
@@ -63,6 +71,7 @@ const BUYER_NAV: NavItem[] = [
   { to: "/buyer/insights", label: "Market Insights", icon: <LineChart className="h-4 w-4" />, membersOnly: true },
   { to: "/buyer/financing", label: "Financing", icon: <Landmark className="h-4 w-4" />, membersOnly: true },
   { to: "/buyer/membership", label: "Membership", icon: <Crown className="h-4 w-4" /> },
+  { to: "/buyer/billing", label: "Billing", icon: <CreditCard className="h-4 w-4" /> },
 ];
 
 const SUPPLIER_NAV: NavItem[] = [
@@ -79,7 +88,8 @@ const SUPPLIER_NAV: NavItem[] = [
 export function portalHome(role?: string | null) {
   if (!role) return "/onboarding";
   if (["ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"].includes(role)) return "/admin";
-  if (role === "BUYER") return "/buyer";
+  // Free-plan buyers land on Hub (market view), not the empty trading dashboard.
+  if (role === "BUYER") return "/hub";
   return "/supplier";
 }
 
@@ -95,7 +105,6 @@ const AQ1_ICONS: Record<Aq1MenuKey, ReactNode> = {
   analysis: <Newspaper className="h-4 w-4" />,
   signal: <Gauge className="h-4 w-4" />,
   nitrogen: <FlaskConical className="h-4 w-4" />,
-  library: <BookOpen className="h-4 w-4" />,
   ureaCalc: <Calculator className="h-4 w-4" />,
   freightAnalytics: <Ship className="h-4 w-4" />,
   orderNow: <ShoppingCart className="h-4 w-4" />,
@@ -103,6 +112,18 @@ const AQ1_ICONS: Record<Aq1MenuKey, ReactNode> = {
   userGuide: <BookOpenCheck className="h-4 w-4" />,
   contact: <Mail className="h-4 w-4" />,
 };
+
+/** PLANS PART 3 — AQ Analytics nav. cap = entitlement key; absent capability
+ *  keeps the item visible with a lock badge (never hidden). */
+const ANALYTICS_MENU: { to: string; label: string; icon: ReactNode; cap: string }[] = [
+  { to: "/analytics/telex", label: "AQ TELEX", icon: <Radio className="h-4 w-4" />, cap: "intel.telex_feed" },
+  { to: "/analytics/market-data", label: "Market Data", icon: <LineChart className="h-4 w-4" />, cap: "analytics.pra_data" },
+  { to: "/analytics/signal", label: "AQ Signal", icon: <Activity className="h-4 w-4" />, cap: "intel.aq_signal_outlook" },
+  { to: "/analytics/freight", label: "Freight Analytics", icon: <Ship className="h-4 w-4" />, cap: "analytics.trade_flows" },
+  { to: "/analytics/supply-demand", label: "Supply & Demand", icon: <BarChart3 className="h-4 w-4" />, cap: "analytics.supply_demand" },
+  { to: "/analytics/newsletter", label: "The Briefing", icon: <Newspaper className="h-4 w-4" />, cap: "push.paid_newsletter" },
+  { to: "/analytics/alerts", label: "Alerts & Brief", icon: <Bell className="h-4 w-4" />, cap: "push.tailored_alerts" },
+];
 
 function LiveClock() {
   const [now, setNow] = useState(new Date());
@@ -140,10 +161,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const [tourRestart, setTourRestart] = useState(0);
   const tips = useAq1Tips();
   const { data: aq1Config } = trpc.aq1.config.useQuery(undefined, { staleTime: 60_000 });
   const aq1On = aq1Config?.enabled === true && portalRole === "BUYER";
+  const { data: analyticsConfig } = trpc.analytics.config.useQuery(undefined, { staleTime: 60_000 });
+  const analyticsOn = analyticsConfig?.enabled === true && (portalRole === "BUYER" || ["ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"].includes(portalRole ?? ""));
   useEffect(() => {
     const onRestart = () => setTourRestart(1);
     window.addEventListener("aq1:restart-tour", onRestart);
@@ -249,6 +273,37 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <SlidersHorizontal className="h-4 w-4" />
             {!collapsed && <span className="truncate">Plan & Usage</span>}
           </NavLink>
+        </div>
+      )}
+
+      {/* PLANS PART 3 — AQ Analytics section. Items stay visible with a lock
+          badge when the capability is absent; each page renders its teaser. */}
+      {analyticsOn && (
+        <div className="mt-4 border-t border-sidebar-border pt-3" aria-label="AQ Analytics">
+          {!collapsed && <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">AQ Analytics</p>}
+          {ANALYTICS_MENU.map((m) => {
+            const locked = analyticsConfig ? analyticsConfig.capabilities[m.cap]?.allowed === false : false;
+            const link = (
+              <NavLink
+                key={m.to}
+                to={m.to}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  `relative flex min-w-0 flex-1 items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                    isActive
+                      ? "bg-sidebar-accent font-semibold text-navy-800 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-teal-500 dark:text-white dark:before:bg-teal-400"
+                      : "font-medium text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  } ${collapsed ? "justify-center px-0 before:hidden" : ""}`
+                }
+                aria-label={m.label}
+              >
+                {m.icon}
+                {!collapsed && <span className="truncate">{m.label}</span>}
+                {!collapsed && locked && <Lock className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Locked — upgrade available" />}
+              </NavLink>
+            );
+            return collapsed ? <Tip key={m.to} label={m.label} side="right">{link}</Tip> : link;
+          })}
         </div>
       )}
     </nav>
@@ -384,8 +439,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
+        {/* Demo banner */}
+        {!bannerDismissed && (
+          <div className="flex items-center justify-center gap-3 bg-navy-600 px-4 py-1.5 text-center text-[11px] font-medium text-white/90">
+            Sample market data is shown until live feeds are connected.
+            <button className="underline underline-offset-2 hover:text-white" onClick={() => setBannerDismissed(true)}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Content */}
-        <main id="main-content" className="aqf-page flex-1 px-4 py-6 sm:px-6 lg:px-8 pb-24 lg:pb-10">{children}</main>
+        <main id="main-content" className="aqf-page flex-1 px-4 py-6 sm:px-6 lg:px-8 pb-24 lg:pb-10">
+          <BillingBanner />
+          {children}
+        </main>
         {aq1On && <Aq1Tour forceStart={tourRestart} onDone={() => setTourRestart(0)} />}
         {aq1On && <Aq1Promo />}
 
@@ -407,6 +475,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* PLANS PART 3 / 1.11 — Trader in your pocket: on every screen */}
+        <TraderPocket />
       </div>
     </div>
   );

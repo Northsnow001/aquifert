@@ -22,11 +22,10 @@ import NotFound from "./pages/NotFound";
 import StyleGuide from "./pages/StyleGuide";
 import { RequirePortal } from "@/components/AppLayout";
 
-/** Every route change opens the new page at its header, not mid-page. */
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    if (hash) return; // in-page anchors handle their own scroll
+    if (hash) return;
     window.scrollTo(0, 0);
   }, [pathname, hash]);
   return null;
@@ -44,12 +43,27 @@ import AdminInsights from "./pages/admin/Insights";
 import AdminUsers from "./pages/admin/Users";
 import AdminFinance from "./pages/admin/Finance";
 import AdminLibrary from "./pages/admin/Library";
+import AdminPlans from "./pages/admin/Plans";
+import AdminBilling from "./pages/admin/Billing";
+import AdminLicences from "./pages/admin/Licences";
+import LicensedData from "./pages/LicensedData";
+import AnalyticsMarketData from "./pages/analytics/MarketData";
+import AnalyticsSignal from "./pages/analytics/SignalFull";
+import AnalyticsFreight from "./pages/analytics/FreightAnalytics";
+import AnalyticsSupplyDemand from "./pages/analytics/SupplyDemand";
+import AnalyticsTelex from "./pages/analytics/TelexFull";
+import AnalyticsNewsletter from "./pages/analytics/Newsletter";
+import AnalyticsAlerts from "./pages/analytics/Alerts";
+import AdminNewsletter from "./pages/admin/NewsletterAdmin";
+import AdminBrokers from "./pages/admin/Brokers";
 
 import BuyerDashboard from "./pages/buyer/Dashboard";
 import BuyerNewRequest from "./pages/buyer/NewRequest";
 import BuyerQuotes from "./pages/buyer/Quotes";
 import BuyerOrders from "./pages/buyer/Orders";
 import BuyerMembership from "./pages/buyer/Membership";
+import BuyerBilling from "./pages/buyer/Billing";
+import PricingPage from "./pages/Pricing";
 import BuyerInsights from "./pages/buyer/Insights";
 import BuyerFinancing from "./pages/buyer/Financing";
 
@@ -85,6 +99,7 @@ export default function App() {
         <Route path="/platform" element={<Platform />} />
         <Route path="/why-aquifert" element={<WhyAquifert />} />
         <Route path="/membership" element={<MembershipPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/help" element={<Help />} />
         <Route path="/login" element={<Login />} />
@@ -96,7 +111,6 @@ export default function App() {
         <Route path="/hub" element={<RequirePortal allow={["ADMIN","OPERATIONS","FINANCE","SUPPORT","BUYER","SUPPLIER"]}><Hub /></RequirePortal>} />
         <Route path="/nitrogen-report" element={<RequirePortal allow={["ADMIN","OPERATIONS","FINANCE","SUPPORT","BUYER","SUPPLIER"]}><NitrogenReport /></RequirePortal>} />
 
-        {/* Admin Hub */}
         <Route path="/admin" element={<RequirePortal allow={STAFF}><AdminDashboard /></RequirePortal>} />
         <Route path="/admin/communications" element={<RequirePortal allow={STAFF}><AdminCommunications /></RequirePortal>} />
         <Route path="/admin/requests" element={<RequirePortal allow={STAFF}><AdminRequests /></RequirePortal>} />
@@ -113,19 +127,18 @@ export default function App() {
         <Route path="/admin/users" element={<RequirePortal allow={["ADMIN"]}><AdminUsers /></RequirePortal>} />
         <Route path="/admin/finance" element={<RequirePortal allow={["ADMIN", "FINANCE"]}><AdminFinance /></RequirePortal>} />
 
-        {/* Buyer Portal */}
         <Route path="/buyer" element={<RequirePortal allow={["BUYER"]}><BuyerDashboard /></RequirePortal>} />
         <Route path="/buyer/request" element={<RequirePortal allow={["BUYER"]} membersOnly><BuyerNewRequest /></RequirePortal>} />
         <Route path="/buyer/quotes" element={<RequirePortal allow={["BUYER"]} membersOnly><BuyerQuotes /></RequirePortal>} />
         <Route path="/buyer/orders" element={<RequirePortal allow={["BUYER"]} membersOnly><BuyerOrders /></RequirePortal>} />
         <Route path="/buyer/membership" element={<RequirePortal allow={["BUYER"]}><BuyerMembership /></RequirePortal>} />
+        <Route path="/buyer/billing" element={<RequirePortal allow={["BUYER"]}><BuyerBilling /></RequirePortal>} />
         <Route path="/buyer/insights" element={<RequirePortal allow={["BUYER"]} membersOnly><BuyerInsights /></RequirePortal>} />
         <Route path="/buyer/financing" element={<RequirePortal allow={["BUYER"]} membersOnly><BuyerFinancing /></RequirePortal>} />
         <Route path="/aquibot" element={<RequirePortal allow={["BUYER", "SUPPLIER", "ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"]}><Aquibot /></RequirePortal>} />
         <Route path="/library" element={<RequirePortal allow={["BUYER", "SUPPLIER", "ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"]}><Library /></RequirePortal>} />
         <Route path="/library/:slug" element={<RequirePortal allow={["BUYER", "SUPPLIER", "ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"]}><LibraryReport /></RequirePortal>} />
 
-        {/* Supplier Portal */}
         <Route path="/supplier" element={<RequirePortal allow={["SUPPLIER"]}><SupplierDashboard /></RequirePortal>} />
         <Route path="/supplier/requests" element={<RequirePortal allow={["SUPPLIER"]}><SupplierRequests /></RequirePortal>} />
         <Route path="/supplier/orders" element={<RequirePortal allow={["SUPPLIER"]}><SupplierOrders /></RequirePortal>} />
@@ -145,6 +158,19 @@ export default function App() {
         <Route path="/account/contact" element={<RequirePortal allow={["BUYER", ...STAFF]}><Aq1Contact /></RequirePortal>} />
         <Route path="/account/plan" element={<RequirePortal allow={["BUYER"]}><Aq1PlanUsage /></RequirePortal>} />
         <Route path="/admin/aq1" element={<RequirePortal allow={STAFF}><AdminAq1 /></RequirePortal>} />
+        <Route path="/admin/plans" element={<RequirePortal allow={["ADMIN"]}><AdminPlans /></RequirePortal>} />
+        <Route path="/admin/billing" element={<RequirePortal allow={["ADMIN", "FINANCE"]}><AdminBilling /></RequirePortal>} />
+        <Route path="/admin/licences" element={<RequirePortal allow={["ADMIN"]}><AdminLicences /></RequirePortal>} />
+        <Route path="/licensed-data" element={<RequirePortal allow={["BUYER", "SUPPLIER", "ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"]}><LicensedData /></RequirePortal>} />
+        <Route path="/analytics/telex" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsTelex /></RequirePortal>} />
+        <Route path="/analytics/market-data" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsMarketData /></RequirePortal>} />
+        <Route path="/analytics/signal" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsSignal /></RequirePortal>} />
+        <Route path="/analytics/freight" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsFreight /></RequirePortal>} />
+        <Route path="/analytics/supply-demand" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsSupplyDemand /></RequirePortal>} />
+        <Route path="/analytics/newsletter" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsNewsletter /></RequirePortal>} />
+        <Route path="/analytics/alerts" element={<RequirePortal allow={["BUYER", ...STAFF]}><AnalyticsAlerts /></RequirePortal>} />
+        <Route path="/admin/newsletter" element={<RequirePortal allow={STAFF}><AdminNewsletter /></RequirePortal>} />
+        <Route path="/admin/brokers" element={<RequirePortal allow={STAFF}><AdminBrokers /></RequirePortal>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { GaugeCard, type Indicator } from "@/components/hub/GaugeCard";
 import { TelexFeed, PRODUCT_LABEL, REGION_LABEL } from "@/components/hub/TelexFeed";
 import { NewsFeed } from "@/components/hub/NewsFeed";
+import { AquibotBrief } from "@/components/hub/AquibotBrief";
 import { PriceBoard } from "@/components/hub/PriceBoard";
 import { FreightPanel, CommentaryPanel } from "@/components/hub/SidePanels";
 import { PanelSkeleton } from "@/components/hub/FreshnessBadge";
@@ -146,6 +147,7 @@ export default function Hub() {
           <TelexFeed products={products} regions={regions} onClearFilters={clear} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          <AquibotBrief />
           <NewsFeed products={products} regions={regions} onClearFilters={clear} />
           <PriceBoard />
           <FreightPanel />

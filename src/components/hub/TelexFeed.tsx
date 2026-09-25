@@ -4,6 +4,7 @@ import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PanelHeader, PanelSkeleton, PanelError, PanelEmpty } from "./FreshnessBadge";
+import { FeedThumb } from "./FeedThumb";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 
 const PRODUCT_LABEL: Record<string, string> = {
@@ -80,18 +81,23 @@ export function TelexFeed({
                 <ul className="mt-1 divide-y divide-border">
                   {items.map((it) => (
                     <li key={it.id} className="py-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
-                          {new Date(it.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                        <Tag tone="teal">{PRODUCT_LABEL[it.product] ?? it.product}</Tag>
-                        <Tag>{REGION_LABEL[it.geography] ?? it.geography}</Tag>
+                      <div className="flex items-start gap-3">
+                        <FeedThumb imageUrl={it.imageUrl} product={it.product} size={56} alt="" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                              {new Date(it.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            <Tag tone="teal">{PRODUCT_LABEL[it.product] ?? it.product}</Tag>
+                            <Tag>{REGION_LABEL[it.geography] ?? it.geography}</Tag>
+                          </div>
+                          <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{it.title}</p>
+                          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{it.body}</p>
+                          <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                            UPDATED {fmtDateTime(it.updatedAt)}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{it.title}</p>
-                      <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{it.body}</p>
-                      <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                        UPDATED {fmtDateTime(it.updatedAt)}
-                      </p>
                     </li>
                   ))}
                 </ul>

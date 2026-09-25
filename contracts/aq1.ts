@@ -8,7 +8,7 @@
  *  so the same bundle can switch the feature off without a rebuild. */
 
 export type Aq1MenuKey =
-  | "telex" | "analysis" | "signal" | "nitrogen" | "library" | "ureaCalc"
+  | "telex" | "analysis" | "signal" | "nitrogen" | "ureaCalc"
   | "freightAnalytics" | "orderNow" | "communityCall" | "userGuide" | "contact";
 
 export const AQ1_MENU: { key: Aq1MenuKey; label: string; to: string; locked?: "AQ_ANALYTICS" | "AQ0" }[] = [
@@ -16,7 +16,6 @@ export const AQ1_MENU: { key: Aq1MenuKey; label: string; to: string; locked?: "A
   { key: "analysis", label: "AQ Market Analysis Feed", to: "/account/analysis" },
   { key: "signal", label: "AQ Signal", to: "/account/signal" },
   { key: "nitrogen", label: "Nitrogen Report Generator", to: "/account/nitrogen-report" },
-  { key: "library", label: "Market Report Library & Resources", to: "/library" },
   { key: "ureaCalc", label: "Urea Cost Calculator", to: "/account/urea-calculator" },
   { key: "freightAnalytics", label: "Freight Analytics", to: "/account/freight-analytics", locked: "AQ_ANALYTICS" },
   { key: "orderNow", label: "Order Fertilizer Now", to: "/account/order-now", locked: "AQ0" },
@@ -32,7 +31,6 @@ export const AQ1_TOOLTIPS: Record<Aq1MenuKey, string> = {
   analysis: "The desk's interpretation of the news, not just the news itself. Short analytical notes explaining why a price moved and what it means for a buyer. Use it when you know what happened but not what it implies.",
   signal: "Rolling market snapshots over four windows — 7, 30, 60 and 90 days. Each shows what prices have done across that period, the direction of travel, and the events that drove it. Use 7 days for timing a purchase and 90 days to see the real trend through the noise.",
   nitrogen: "Ask Aquibot to build you a nitrogen market report on demand, covering urea, ammonia, AN, CAN, UAN and ammonium sulphate. It writes only from Aquifert's own price records and desk intelligence, and cites every figure it uses. Your plan includes {reports} reports a month.",
-  library: "Every weekly market report and research note the desk has published, searchable by week, product and region. Free reports open straight away; member reports show you the summary and what's covered inside.",
   ureaCalc: "Works out what a tonne of urea actually costs you delivered — or what your farm-gate price implies back at FOB. It adds freight, discharge, bagging, duty and finance, shows the full cost ladder, and ranks which origin lands cheapest. Your plan includes {calcs} calculations a month.",
   freightAnalytics: "Trade-flow and freight-rate intelligence: which corridors are moving, at what rate, and where new lanes are opening before they price in. Part of AQ Analytics — low cost, high ROI, and an unbiased view.",
   orderNow: "Tell us what you need — product, quantity, ports and packing — and the Aquifert desk sources it, prices it and ships it. Ordering runs on the AQ0 plan, which unlocks quotes, contracts and shipment tracking.",
@@ -101,7 +99,6 @@ export const TOUR_STOPS: { key: Aq1MenuKey; title: string; blurb: string }[] = [
   { key: "signal", title: "AQ Signal", blurb: "See the trend over 7, 30, 60 or 90 days." },
   { key: "nitrogen", title: "Nitrogen Report Generator", blurb: "Get a written market report on demand." },
   { key: "ureaCalc", title: "Urea Cost Calculator", blurb: "Work out your real delivered cost." },
-  { key: "library", title: "Market Report Library", blurb: "Every report the desk has published." },
   { key: "orderNow", title: "Order Fertilizer Now", blurb: "Ready to buy? This is where you start." },
 ];
 

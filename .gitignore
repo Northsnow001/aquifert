@@ -1,3 +1,6 @@
+# Kimi full export — merge UI into repo root; do not deploy this tree
+new_update/
+
 # Logs
 logs
 *.log
