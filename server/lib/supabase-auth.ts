@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./cookies";
 import { getSupabaseAnon } from "./supabase";
-import { findUserByUnionId, upsertUser } from "../queries/users";
+import { dbErrorMessage, findUserByUnionId, upsertUser } from "../queries/users";
 import { signSessionToken } from "../kimi/session";
 import { getDb } from "../queries/connection";
 import * as schema from "@db/schema";
@@ -22,7 +22,8 @@ export type SupabaseProfileExtras = {
 };
 
 /**
- * Verify a Supabase access token, upsert the app `users` row, mint our session cookie.
+ * Verify a Supabase access token, sync the app `users` row, mint our session cookie.
+ * Relies on the auth trigger for the first insert when possible; updates safely either way.
  */
 export async function establishAppSessionFromSupabase(opts: {
   accessToken: string;
@@ -31,7 +32,10 @@ export async function establishAppSessionFromSupabase(opts: {
   profile?: SupabaseProfileExtras;
 }): Promise<{ user: User; unionId: string }> {
   if (!env.databaseUrl) {
-    throw new Error("DATABASE_URL is required for Supabase Auth (Drizzle user sync).");
+    throw new Error("DATABASE_URL is required for Supabase Auth (user sync).");
+  }
+  if (!env.appSecret) {
+    throw new Error("APP_SECRET is required to create an app session cookie.");
   }
 
   const supabase = getSupabaseAnon();
@@ -55,20 +59,19 @@ export async function establishAppSessionFromSupabase(opts: {
     (typeof meta.phone === "string" ? meta.phone : null) ||
     null;
 
-  await upsertUser({
-    unionId,
-    name,
-    email,
-    phone,
-    lastSignInAt: new Date(),
-  });
-
-  const user = await findUserByUnionId(unionId);
-  if (!user) {
-    throw new Error("Failed to sync user profile.");
+  let user: User;
+  try {
+    user = await upsertUser({
+      unionId,
+      name,
+      email,
+      phone,
+      lastSignInAt: new Date(),
+    });
+  } catch (err) {
+    throw new Error(dbErrorMessage(err));
   }
 
-  // Keep optional CRM fields on user_credentials (password is managed by Supabase).
   const company =
     opts.profile?.company?.trim() ||
     (typeof meta.company === "string" ? meta.company : undefined);
@@ -77,35 +80,18 @@ export async function establishAppSessionFromSupabase(opts: {
     (typeof meta.country === "string" ? meta.country : undefined);
 
   if (email) {
-    const db = getDb();
-    const existing = await db
-      .select()
-      .from(schema.userCredentials)
-      .where(eq(schema.userCredentials.userId, user.id))
-      .limit(1);
-
-    if (existing[0]) {
-      await db
-        .update(schema.userCredentials)
-        .set({
-          email,
-          emailVerified: Boolean(sbUser.email_confirmed_at),
-          company: company ?? existing[0].company,
-          country: country ?? existing[0].country,
-          phone: phone ?? existing[0].phone,
-        })
-        .where(eq(schema.userCredentials.id, existing[0].id));
-    } else {
-      await db.insert(schema.userCredentials).values({
+    try {
+      await syncUserCredentials({
         userId: user.id,
         email,
-        // Sentinel: password is owned by Supabase Auth, not this table.
-        passwordHash: "supabase:managed",
         emailVerified: Boolean(sbUser.email_confirmed_at),
         company: company ?? null,
         country: country ?? null,
         phone: phone ?? null,
       });
+    } catch (err) {
+      // Credentials are optional for portal entry; session cookie is enough.
+      console.error("[auth] user_credentials sync:", dbErrorMessage(err));
     }
   }
 
@@ -126,4 +112,66 @@ export async function establishAppSessionFromSupabase(opts: {
   );
 
   return { user, unionId };
+}
+
+async function syncUserCredentials(opts: {
+  userId: number;
+  email: string;
+  emailVerified: boolean;
+  company: string | null;
+  country: string | null;
+  phone: string | null;
+}) {
+  const db = getDb();
+  const byUser = await db
+    .select()
+    .from(schema.userCredentials)
+    .where(eq(schema.userCredentials.userId, opts.userId))
+    .limit(1);
+
+  if (byUser[0]) {
+    await db
+      .update(schema.userCredentials)
+      .set({
+        email: opts.email,
+        emailVerified: opts.emailVerified,
+        company: opts.company ?? byUser[0].company,
+        country: opts.country ?? byUser[0].country,
+        phone: opts.phone ?? byUser[0].phone,
+        passwordHash: "supabase:managed",
+      })
+      .where(eq(schema.userCredentials.id, byUser[0].id));
+    return;
+  }
+
+  const byEmail = await db
+    .select()
+    .from(schema.userCredentials)
+    .where(eq(schema.userCredentials.email, opts.email))
+    .limit(1);
+
+  if (byEmail[0]) {
+    await db
+      .update(schema.userCredentials)
+      .set({
+        userId: opts.userId,
+        emailVerified: opts.emailVerified,
+        company: opts.company ?? byEmail[0].company,
+        country: opts.country ?? byEmail[0].country,
+        phone: opts.phone ?? byEmail[0].phone,
+        passwordHash: "supabase:managed",
+      })
+      .where(eq(schema.userCredentials.id, byEmail[0].id));
+    return;
+  }
+
+  await db.insert(schema.userCredentials).values({
+    userId: opts.userId,
+    email: opts.email,
+    passwordHash: "supabase:managed",
+    emailVerified: opts.emailVerified,
+    company: opts.company,
+    country: opts.country,
+    phone: opts.phone,
+  });
 }

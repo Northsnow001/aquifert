@@ -56,7 +56,11 @@ export const authRouter = createRouter({
           },
         };
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Session setup failed.";
+        const raw = err instanceof Error ? err.message : "Session setup failed.";
+        // Never dump raw SQL / Drizzle wrappers to the login UI.
+        const message = raw.startsWith("Failed query:")
+          ? "Could not sync your account to the app database. Check DATABASE_URL and that public.users exists."
+          : raw;
         throw new Error(message);
       }
     }),

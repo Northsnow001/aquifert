@@ -16,7 +16,10 @@ export function getDb() {
     }
     client = postgres(env.databaseUrl, {
       prepare: false, // required for Supabase transaction pooler (PgBouncer)
-      max: 10,
+      max: 1, // Vercel serverless: one connection per isolate
+      idle_timeout: 20,
+      connect_timeout: 10,
+      ssl: "require",
     });
     instance = drizzle(client, { schema: fullSchema });
   }
