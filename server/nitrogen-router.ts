@@ -55,42 +55,42 @@ export const nitrogenRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const me = await effUser(ctx.user);
       const refNo = genNumber("NR");
+      // Pure in-process synthesis — never touches Drizzle / DATABASE_URL.
       const reportMd = generateNitrogenReport(input as NitrogenAnswers, refNo);
       const answers = input as Record<string, unknown>;
+      const memId = Date.now();
 
-      try {
-        const { data, error } = await getSupabaseService()
-          .from("nitrogen_reports")
-          .insert({
-            refNo,
-            userId: me.id,
-            answers,
-            reportMd,
-          })
-          .select("id")
-          .single();
-        if (!error && data?.id != null) {
-          try {
-            await logActivity(fmtActor(me), `Generated nitrogen assessment ${refNo}`, "nitrogen_report", String(data.id), me.id);
-          } catch {
-            /* activity log is best-effort */
-          }
-          return { id: Number(data.id), refNo, reportMd };
-        }
-      } catch {
-        /* fall through to memory */
-      }
-
-      const id = Date.now();
       memSave({
-        id,
+        id: memId,
         refNo,
         userId: me.id,
         answers,
         reportMd,
         createdAt: new Date().toISOString(),
       });
-      return { id, refNo, reportMd };
+
+      // Optional history persist via Supabase HTTPS only — timed so generate never hangs.
+      let persistedId = memId;
+      try {
+        const result = await Promise.race([
+          getSupabaseService()
+            .from("nitrogen_reports")
+            .insert({ refNo, userId: me.id, answers, reportMd })
+            .select("id")
+            .single(),
+          new Promise<{ data: null; error: { message: string } }>((resolve) =>
+            setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 800),
+          ),
+        ]);
+        if (!result.error && result.data?.id != null) {
+          persistedId = Number(result.data.id);
+          void logActivity(fmtActor(me), `Generated nitrogen assessment ${refNo}`, "nitrogen_report", String(persistedId), me.id);
+        }
+      } catch {
+        /* memory copy already saved */
+      }
+
+      return { id: persistedId, refNo, reportMd };
     }),
 
   list: authedQuery.query(async ({ ctx }) => {
