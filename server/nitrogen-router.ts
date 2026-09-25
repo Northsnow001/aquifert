@@ -1,9 +1,11 @@
+/**
+ * Nitrogen Assessment router — no Drizzle.
+ * Report text is synthesised in-process; optional Supabase persist for history.
+ */
 import { z } from "zod";
-import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { createRouter, authedQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import * as s from "@db/schema";
+import { getSupabaseService } from "./lib/supabase";
 import { effUser, logActivity, fmtActor, genNumber } from "./rbac";
 import { generateNitrogenReport, type NitrogenAnswers } from "./nitrogen-ai";
 
@@ -25,6 +27,28 @@ const answersSchema = z.object({
   siteNotes: z.string().max(2000).default(""),
 });
 
+type StoredReport = {
+  id: number;
+  refNo: string;
+  userId: number;
+  answers: Record<string, unknown>;
+  reportMd: string;
+  createdAt: string;
+};
+
+/** Per-isolate fallback when nitrogen_reports isn't reachable via Supabase. */
+const memByUser = new Map<number, StoredReport[]>();
+
+function memList(userId: number) {
+  return memByUser.get(userId) ?? [];
+}
+
+function memSave(row: StoredReport) {
+  const list = memList(row.userId);
+  list.unshift(row);
+  memByUser.set(row.userId, list.slice(0, 50));
+}
+
 export const nitrogenRouter = createRouter({
   generate: authedQuery
     .input(answersSchema)
@@ -32,29 +56,75 @@ export const nitrogenRouter = createRouter({
       const me = await effUser(ctx.user);
       const refNo = genNumber("NR");
       const reportMd = generateNitrogenReport(input as NitrogenAnswers, refNo);
-      const [{ id }] = await getDb().insert(s.nitrogenReports).values({
+      const answers = input as Record<string, unknown>;
+
+      try {
+        const { data, error } = await getSupabaseService()
+          .from("nitrogen_reports")
+          .insert({
+            refNo,
+            userId: me.id,
+            answers,
+            reportMd,
+          })
+          .select("id")
+          .single();
+        if (!error && data?.id != null) {
+          try {
+            await logActivity(fmtActor(me), `Generated nitrogen assessment ${refNo}`, "nitrogen_report", String(data.id), me.id);
+          } catch {
+            /* activity log is best-effort */
+          }
+          return { id: Number(data.id), refNo, reportMd };
+        }
+      } catch {
+        /* fall through to memory */
+      }
+
+      const id = Date.now();
+      memSave({
+        id,
         refNo,
         userId: me.id,
-        answers: input as Record<string, unknown>,
+        answers,
         reportMd,
-      }).returning({ id: s.nitrogenReports.id });
-      await logActivity(fmtActor(me), `Generated nitrogen assessment ${refNo}`, "nitrogen_report", String(id), me.id);
-      return { id: Number(id), refNo, reportMd };
+        createdAt: new Date().toISOString(),
+      });
+      return { id, refNo, reportMd };
     }),
 
   list: authedQuery.query(async ({ ctx }) => {
     const me = await effUser(ctx.user);
-    const rows = await getDb().query.nitrogenReports.findMany({
-      where: eq(s.nitrogenReports.userId, me.id),
-      orderBy: desc(s.nitrogenReports.createdAt),
-      limit: 50,
-    });
-    return rows.map((r) => ({
-      id: Number(r.id),
+    try {
+      const { data, error } = await Promise.race([
+        getSupabaseService()
+          .from("nitrogen_reports")
+          .select("id, refNo, answers, createdAt")
+          .eq("userId", me.id)
+          .order("createdAt", { ascending: false })
+          .limit(50),
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: "timeout" } }), 1500),
+        ),
+      ]);
+      if (!error && data?.length) {
+        return data.map((r) => ({
+          id: Number(r.id),
+          refNo: String(r.refNo),
+          cropType: String((r.answers as Record<string, unknown>)?.cropType ?? ""),
+          destinationCountry: String((r.answers as Record<string, unknown>)?.destinationCountry ?? ""),
+          createdAt: r.createdAt ? new Date(String(r.createdAt)) : new Date(),
+        }));
+      }
+    } catch {
+      /* use memory */
+    }
+    return memList(me.id).map((r) => ({
+      id: r.id,
       refNo: r.refNo,
-      cropType: (r.answers as Record<string, unknown>).cropType as string ?? "",
-      destinationCountry: (r.answers as Record<string, unknown>).destinationCountry as string ?? "",
-      createdAt: r.createdAt,
+      cropType: String(r.answers.cropType ?? ""),
+      destinationCountry: String(r.answers.destinationCountry ?? ""),
+      createdAt: new Date(r.createdAt),
     }));
   }),
 
@@ -62,10 +132,31 @@ export const nitrogenRouter = createRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const me = await effUser(ctx.user);
-      const row = await getDb().query.nitrogenReports.findFirst({
-        where: and(eq(s.nitrogenReports.id, input.id), eq(s.nitrogenReports.userId, me.id)),
-      });
+      try {
+        const { data, error } = await getSupabaseService()
+          .from("nitrogen_reports")
+          .select("id, refNo, reportMd, createdAt")
+          .eq("id", input.id)
+          .eq("userId", me.id)
+          .maybeSingle();
+        if (!error && data) {
+          return {
+            id: Number(data.id),
+            refNo: String(data.refNo),
+            reportMd: String(data.reportMd),
+            createdAt: data.createdAt ? new Date(String(data.createdAt)) : new Date(),
+          };
+        }
+      } catch {
+        /* memory */
+      }
+      const row = memList(me.id).find((r) => r.id === input.id);
       if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Report not found" });
-      return { id: Number(row.id), refNo: row.refNo, reportMd: row.reportMd, createdAt: row.createdAt };
+      return {
+        id: row.id,
+        refNo: row.refNo,
+        reportMd: row.reportMd,
+        createdAt: new Date(row.createdAt),
+      };
     }),
 });

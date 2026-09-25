@@ -146,9 +146,14 @@ export default function NitrogenReport() {
   const [report, setReport] = useState<{ id: number; refNo: string; reportMd: string; createdAt?: Date | string } | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const list = trpc.nitrogen.list.useQuery();
+  const list = trpc.nitrogen.list.useQuery(undefined, { retry: 0, staleTime: 30_000 });
   const generate = trpc.nitrogen.generate.useMutation({
-    onSuccess: (r) => { setReport(r); setView("report"); list.refetch(); },
+    onSuccess: (r) => {
+      setReport({ ...r, createdAt: new Date() });
+      setView("report");
+      list.refetch();
+      toast.success(`Assessment ${r.refNo} ready — you can download the PDF.`);
+    },
     onError: (e) => setErr(e.message),
   });
   const openReport = trpc.nitrogen.get.useMutation({
@@ -207,7 +212,7 @@ export default function NitrogenReport() {
             <CardContent className="p-5">
               <h2 className="text-sm font-bold text-foreground">Previous reports</h2>
               {list.isLoading && <div className="mt-3 space-y-2"><div className="h-8 rounded bg-muted" /><div className="h-8 rounded bg-muted" /></div>}
-              {list.isSuccess && list.data.length === 0 && (
+              {(list.isError || (list.isSuccess && list.data.length === 0)) && (
                 <div className="mt-3 rounded-lg border border-dashed border-border p-6 text-center">
                   <p className="text-sm text-muted-foreground">No nitrogen assessments yet. Your completed reports will appear here.</p>
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => setView("form")}>Start your first assessment</Button>
@@ -382,7 +387,14 @@ export default function NitrogenReport() {
             <Button variant="ghost" size="sm" onClick={() => setView("list")} className="gap-1">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" /> All reports
             </Button>
-            <Button size="sm" onClick={() => downloadNitrogenPdf(report.refNo, report.reportMd)} className="gap-1.5 bg-navy-700 hover:bg-navy-800">
+            <Button
+              size="sm"
+              onClick={() => {
+                downloadNitrogenPdf(report.refNo, report.reportMd);
+                toast.success(`Downloaded Aquifert_Nitrogen_Report_${report.refNo}.pdf`);
+              }}
+              className="gap-1.5 bg-navy-700 hover:bg-navy-800"
+            >
               <Download className="h-4 w-4" aria-hidden="true" /> Download PDF
             </Button>
           </div>
