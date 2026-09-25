@@ -65,7 +65,8 @@ export const authRouter = createRouter({
       }
     }),
 
-  logout: authedQuery.mutation(async ({ ctx }) => {
+  /** Public so a half-broken session can still clear the cookie. */
+  logout: publicQuery.mutation(async ({ ctx }) => {
     const opts = getSessionCookieOptions(ctx.req.headers);
     ctx.resHeaders.append(
       "set-cookie",
@@ -75,6 +76,7 @@ export const authRouter = createRouter({
         sameSite: opts.sameSite?.toLowerCase() as "lax" | "none",
         secure: opts.secure,
         maxAge: 0,
+        expires: new Date(0),
       }),
     );
     return { success: true };

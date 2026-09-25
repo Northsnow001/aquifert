@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { BillingBanner } from "@/components/billing/BillingBanner";
+import { portalHome } from "@/lib/portal-home";
 
 type NavItem = { to: string; label: string; icon: ReactNode; roles?: string[]; membersOnly?: boolean; tier2Only?: boolean };
 
@@ -83,13 +84,7 @@ const SUPPLIER_NAV: NavItem[] = [
   { to: "/aquibot", label: "Aquibot", icon: <Bot className="h-4 w-4" /> },
 ];
 
-export function portalHome(role?: string | null) {
-  if (!role) return "/onboarding";
-  if (["ADMIN", "OPERATIONS", "FINANCE", "SUPPORT"].includes(role)) return "/admin";
-  // Free-plan buyers land on Hub (market view), not the empty trading dashboard.
-  if (role === "BUYER") return "/hub";
-  return "/supplier";
-}
+export { portalHome } from "@/lib/portal-home";
 
 function navForRole(role: string | null | undefined) {
   if (!role) return [];
@@ -352,12 +347,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
       >
         <div className={`flex h-16 items-center border-b border-sidebar-border ${collapsed ? "justify-center" : "px-5"}`}>
           {collapsed ? (
-            <NavLink to="/" aria-label="Aquifert home" title="Aquifert home" className="transition-opacity hover:opacity-80">
+            <NavLink to={portalHome(portalRole)} aria-label="Aquifert home" title="Aquifert home" className="transition-opacity hover:opacity-80">
               <span className="aqf-rail-logo"><LogoMark size={26} /></span>
             </NavLink>
           ) : (
             <div className="flex items-center justify-between w-full">
-              <NavLink to="/" aria-label="Aquifert home" className="transition-opacity hover:opacity-80">
+              <NavLink to={portalHome(portalRole)} aria-label="Aquifert home" className="transition-opacity hover:opacity-80">
                 <span className="aqf-rail-logo"><Logo size={30} /></span>
               </NavLink>
             </div>
@@ -390,7 +385,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] bg-sidebar-background p-0 text-sidebar-foreground">
               <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-5">
-                <NavLink to="/" aria-label="Aquifert home" onClick={() => setMobileOpen(false)} className="transition-opacity hover:opacity-80">
+                <NavLink to={portalHome(portalRole)} aria-label="Aquifert home" onClick={() => setMobileOpen(false)} className="transition-opacity hover:opacity-80">
                   <span className="aqf-rail-logo"><Logo size={30} /></span>
                 </NavLink>
                 <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)} aria-label="Close menu" className="text-sidebar-foreground">
@@ -402,7 +397,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </Sheet>
 
           <div className="lg:hidden">
-            <NavLink to="/" aria-label="Aquifert home" className="transition-opacity hover:opacity-80">
+            <NavLink to={portalHome(portalRole)} aria-label="Aquifert home" className="transition-opacity hover:opacity-80">
               <Logo size={26} />
             </NavLink>
           </div>
@@ -456,7 +451,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="text-danger focus:text-danger">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    void logout();
+                  }}
+                  className="text-danger focus:text-danger"
+                >
                   <LogOut className="mr-2 h-4 w-4" /> Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>

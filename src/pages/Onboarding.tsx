@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { trpc } from "@/providers/trpc";
 import { Logo } from "@/components/shared/Logo";
-import { portalHome } from "@/components/AppLayout";
+import { portalHome } from "@/lib/portal-home";
 import { toast } from "sonner";
 import { useEffect } from "react";
 

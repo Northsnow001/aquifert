@@ -5,7 +5,7 @@
  * Chrome (header, footer) lives in LandingLayout.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
 import {
   ArrowRight, BookOpen, Bot, Calculator, Compass,
   FileStack, LineChart, Pause, Play, Radio, Route, Ship,
@@ -16,6 +16,8 @@ import { Seo, ORGANIZATION_JSONLD } from "@/components/shared/Seo";
 import { Faq, SectionHeader, faqJsonLd, type FaqItem } from "@/components/shared/Faq";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MarketUpdatesCard } from "@/components/LeadMagnet";
+import { portalHome } from "@/lib/portal-home";
+import { trpc } from "@/providers/trpc";
 
 /* ---------------------------------------------------------------- */
 /* Reveal: 12px rise, 320ms, once, staggered via delay               */
@@ -570,6 +572,15 @@ function ClosingCta() {
 
 /* ---------------------------------------------------------------- */
 export default function Landing() {
+  const { data: sessionUser, isLoading } = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    staleTime: 60_000,
+  });
+
+  if (!isLoading && sessionUser) {
+    return <Navigate to={portalHome(sessionUser.portalRole)} replace />;
+  }
+
   return (
     <LandingLayout>
       <Seo

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
+import { portalHome } from "@/lib/portal-home";
 import { safeRedirectPath } from "@/lib/redirect";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/lib/supabase";
 import { trpc } from "@/providers/trpc";
@@ -19,6 +20,11 @@ export default function Login() {
   const redirectTo = safeRedirectPath(params.get("redirect_to") ?? undefined);
   const utils = trpc.useUtils();
 
+  const { data: sessionUser, isLoading: sessionLoading } = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    staleTime: 60_000,
+  });
+
   const passwordSaved = params.get("set") === "1";
   const [email, setEmail] = useState(() => params.get("email")?.trim() ?? "");
   const [password, setPassword] = useState("");
@@ -27,6 +33,11 @@ export default function Login() {
   const [pending, setPending] = useState(false);
 
   const establish = trpc.auth.establishSession.useMutation();
+
+  if (!sessionLoading && sessionUser) {
+    const dest = redirectTo === "/" ? portalHome(sessionUser.portalRole) : redirectTo;
+    return <Navigate to={dest} replace />;
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +63,8 @@ export default function Login() {
 
       await establish.mutateAsync({ accessToken });
       await utils.invalidate();
-      navigate(redirectTo === "/" ? "/onboarding" : redirectTo);
+      const { data: me } = await utils.auth.me.fetch();
+      navigate(redirectTo === "/" ? portalHome(me?.portalRole) : redirectTo);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign-in failed.";
       setError(message);

@@ -1,5 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/providers/trpc";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router";
 import { LOGIN_PATH } from "@/const";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/lib/supabase";
@@ -14,8 +15,8 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
 
   const navigate = useNavigate();
-
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
+  const loggingOut = useRef(false);
 
   const {
     data: user,
@@ -27,21 +28,30 @@ export function useAuth(options?: UseAuthOptions) {
     retry: false,
   });
 
-  const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: async () => {
+  const logoutMutation = trpc.auth.logout.useMutation();
+
+  const logout = useCallback(async () => {
+    if (loggingOut.current) return;
+    loggingOut.current = true;
+    try {
+      try {
+        await logoutMutation.mutateAsync();
+      } catch {
+        /* still clear client session */
+      }
       if (isSupabaseBrowserConfigured()) {
         try {
-          await getSupabaseBrowser().auth.signOut();
+          await getSupabaseBrowser().auth.signOut({ scope: "local" });
         } catch {
           /* ignore */
         }
       }
-      await utils.invalidate();
-      navigate(redirectPath);
-    },
-  });
-
-  const logout = useCallback(() => logoutMutation.mutate(), [logoutMutation]);
+      queryClient.clear();
+      navigate(redirectPath, { replace: true });
+    } finally {
+      loggingOut.current = false;
+    }
+  }, [logoutMutation, navigate, queryClient, redirectPath]);
 
   useEffect(() => {
     if (redirectOnUnauthenticated && !isLoading && !user) {
