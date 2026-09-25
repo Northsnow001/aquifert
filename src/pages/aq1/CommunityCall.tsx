@@ -44,7 +44,7 @@ export default function Aq1CommunityCall() {
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-4 md:p-6">
       <PageHeader
-        title={<span className="inline-flex items-center">Community Call <InfoTip label="Community Call" text={tips.communityCall} /></span>}
+        title={<span className="inline-flex items-center">Fertilizer Analytics Call <InfoTip label="Fertilizer Analytics Call" text={tips.communityCall} /></span>}
         description="A free 45-minute market and fertilizer call with the Aquifert desk."
       />
       {q.isLoading && <Card><CardContent className="p-5 text-sm text-muted-foreground">Loading…</CardContent></Card>}

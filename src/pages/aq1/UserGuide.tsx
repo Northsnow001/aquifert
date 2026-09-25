@@ -60,9 +60,9 @@ const GUIDE_SECTIONS: { id: string; title: string; body: string[] }[] = [
     ],
   },
   {
-    id: "community", title: "Community Call",
+    id: "community", title: "Fertilizer Analytics Call",
     body: [
-      "A free 45-minute call where the desk walks through the current market and takes questions. Register with your account details, add a calendar hold from the .ics file we email you, and cancel any time from the same page.",
+      "A free 45-minute Fertilizer Analytics Call where the desk walks through the current market and takes questions. Register with your account details, add a calendar hold from the .ics file we email you, and cancel any time from the same page.",
     ],
   },
   {

@@ -18,7 +18,7 @@ export const AQ1_MENU: { key: Aq1MenuKey; label: string; to: string; locked?: "A
   { key: "ureaCalc", label: "Urea Cost Calculator", to: "/account/urea-calculator" },
   { key: "freightAnalytics", label: "Freight Analytics", to: "/account/freight-analytics", locked: "AQ_ANALYTICS" },
   { key: "orderNow", label: "Order Fertilizer Now", to: "/account/order-now", locked: "AQ0" },
-  { key: "communityCall", label: "Community Call", to: "/account/community-call" },
+  { key: "communityCall", label: "Fertilizer Analytics Call", to: "/account/community-call" },
   { key: "userGuide", label: "User Guide", to: "/account/user-guide" },
   { key: "contact", label: "Contact Us", to: "/account/contact" },
 ];
@@ -33,7 +33,7 @@ export const AQ1_TOOLTIPS: Record<Aq1MenuKey, string> = {
   ureaCalc: "Works out what a tonne of urea actually costs you delivered — or what your farm-gate price implies back at FOB. It adds freight, discharge, bagging, duty and finance, shows the full cost ladder, and ranks which origin lands cheapest. Your plan includes {calcs} calculations a month.",
   freightAnalytics: "Trade-flow and freight-rate intelligence: which corridors are moving, at what rate, and where new lanes are opening before they price in. Part of AQ Analytics — low cost, high ROI, and an unbiased view.",
   orderNow: "Tell us what you need — product, quantity, ports and packing — and the Aquifert desk sources it, prices it and ships it. Ordering runs on the AQ0 plan, which unlocks quotes, contracts and shipment tracking.",
-  communityCall: "A free 45-minute call where the Aquifert desk walks through the current market and takes questions from buyers and traders. Register once and we'll send you the invitation and a calendar hold.",
+  communityCall: "A free 45-minute Fertilizer Analytics Call where the Aquifert desk walks through the current market and takes questions from buyers and traders. Register once and we'll send you the invitation and a calendar hold.",
   userGuide: "Step-by-step walkthroughs of every part of Aquifert, including what each number means and how the calculators work. Start here if something isn't obvious.",
   contact: "Reach the Aquifert desk by WhatsApp, phone, email or a booked call. Use this when you want a person rather than a screen.",
 };
