@@ -39,7 +39,7 @@ export default function Onboarding() {
       toast.success(`Welcome, ${r.persona.name}`);
       navigate(portalHome(r.persona.portalRole), { replace: true });
     },
-    onError: () => toast.error("Could not select portal"),
+    onError: (err) => toast.error(err.message || "Could not select portal"),
   });
 
   useEffect(() => {

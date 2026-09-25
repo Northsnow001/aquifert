@@ -74,14 +74,56 @@ export const profileRouter = createRouter({
         if (!persona) throw new Error("Persona not found");
         return { ok: true, persona };
       }
+
+      const card = DEMO_PERSONAS.find((p) => p.unionId === input.unionId);
+      const roleByKey: Record<string, "ADMIN" | "BUYER" | "SUPPLIER"> = {
+        admin: "ADMIN",
+        member: "BUYER",
+        buyer: "BUYER",
+        supplier: "SUPPLIER",
+      };
+      const portalRole = card ? roleByKey[card.key] : undefined;
+
+      // Prefer switching into a seeded demo user when it exists.
       const demo = await findUserByUnionId(input.unionId);
-      if (!demo) throw new Error("Persona not found");
-      const { error } = await getSupabaseService()
+      if (demo) {
+        const { error } = await getSupabaseService()
+          .from("users")
+          .update({
+            demoUserId: demo.id,
+            portalRole: demo.portalRole ?? portalRole ?? null,
+          })
+          .eq("id", ctx.user.id);
+        if (error) throw new Error(error.message);
+        return { ok: true, persona: { ...demo, portalRole: demo.portalRole ?? portalRole ?? null } };
+      }
+
+      // Live signup: demo_* rows are not in the DB. Assign a portal role to this user.
+      if (!portalRole) throw new Error("Unknown portal selection.");
+
+      const { data: updated, error } = await getSupabaseService()
         .from("users")
-        .update({ demoUserId: demo.id, portalRole: demo.portalRole })
-        .eq("id", ctx.user.id);
+        .update({
+          portalRole,
+          demoUserId: null,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq("id", ctx.user.id)
+        .select("*")
+        .single();
+
       if (error) throw new Error(error.message);
-      return { ok: true, persona: demo };
+
+      const persona = {
+        ...ctx.user,
+        ...(updated ?? {}),
+        id: Number(updated?.id ?? ctx.user.id),
+        name: (updated?.name as string) ?? ctx.user.name ?? card?.label ?? "User",
+        portalRole,
+        demoUserId: null,
+      };
+
+      return { ok: true, persona };
     }),
 
   clearPersona: authedQuery.mutation(async ({ ctx }) => {
