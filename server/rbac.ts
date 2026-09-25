@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
-import { getDb } from "./queries/connection";
+import { getSupabaseService } from "./lib/supabase";
+import { findUserByUnionId } from "./queries/users";
 import * as s from "@db/schema";
 import { STAFF_ROLES, type PortalRole } from "@contracts/constants";
 import { nanoid } from "nanoid";
@@ -15,10 +15,19 @@ export async function effUser(user: CtxUser): Promise<s.User> {
     return resolveDemoUser(user.unionId) ?? user;
   }
   if (user.demoUserId) {
-    const demo = await getDb().query.users.findFirst({
-      where: eq(s.users.id, user.demoUserId),
-    });
-    if (demo) return demo;
+    try {
+      const { data } = await getSupabaseService()
+        .from("users")
+        .select("*")
+        .eq("id", user.demoUserId)
+        .maybeSingle();
+      if (data?.unionId) {
+        const demo = await findUserByUnionId(String(data.unionId));
+        if (demo) return demo;
+      }
+    } catch {
+      // Fall through to signed-in user
+    }
   }
   return user;
 }
@@ -61,7 +70,17 @@ export async function notify(
   actionUrl?: string,
 ) {
   if (isDemoMode()) return;
-  await getDb().insert(s.notifications).values({ userId, type, title, message, actionUrl });
+  try {
+    await getSupabaseService().from("notifications").insert({
+      userId,
+      type,
+      title,
+      message,
+      actionUrl,
+    });
+  } catch {
+    // non-fatal
+  }
 }
 
 export async function logActivity(
@@ -72,7 +91,17 @@ export async function logActivity(
   userId?: number,
 ) {
   if (isDemoMode()) return;
-  await getDb().insert(s.activities).values({ actor, action, entity, entityId, userId });
+  try {
+    await getSupabaseService().from("activities").insert({
+      actor,
+      action,
+      entity,
+      entityId,
+      userId,
+    });
+  } catch {
+    // non-fatal
+  }
 }
 
 export function genNumber(prefix: string) {

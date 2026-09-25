@@ -1,8 +1,6 @@
 import { z } from "zod";
-import { eq, and, desc } from "drizzle-orm";
 import { createRouter, authedQuery } from "./middleware";
-import { getDb } from "./queries/connection";
-import * as s from "@db/schema";
+import { getSupabaseService } from "./lib/supabase";
 import { effUser } from "./rbac";
 import { DEMO_PERSONAS } from "@contracts/constants";
 import {
@@ -13,6 +11,8 @@ import {
   setDemoLanguage,
   setDemoPersona,
 } from "./demo/mode";
+import { findUserByUnionId } from "./queries/users";
+import type { User } from "@db/schema";
 
 export const profileRouter = createRouter({
   /** Effective current user (persona-aware) + org + membership */
@@ -29,20 +29,38 @@ export const profileRouter = createRouter({
       };
     }
 
-    const db = getDb();
-    const org = user.organizationId
-      ? await db.query.organizations.findFirst({ where: eq(s.organizations.id, user.organizationId) })
-      : null;
-    const membership = await db.query.memberships.findFirst({
-      where: and(eq(s.memberships.userId, user.id), eq(s.memberships.status, "ACTIVE")),
-      orderBy: desc(s.memberships.createdAt),
-    });
+    // Prefer Supabase HTTP API — do not require DATABASE_URL / Drizzle here.
+    let organization = null;
+    let membership = null;
+    try {
+      const sb = getSupabaseService();
+      if (user.organizationId) {
+        const { data } = await sb
+          .from("organizations")
+          .select("*")
+          .eq("id", user.organizationId)
+          .maybeSingle();
+        organization = data ?? null;
+      }
+      const { data: mem } = await sb
+        .from("memberships")
+        .select("*")
+        .eq("userId", user.id)
+        .eq("status", "ACTIVE")
+        .order("createdAt", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      membership = mem ?? null;
+    } catch {
+      // Org lookup is optional for portal entry.
+    }
+
     return {
       user,
       realUser: ctx.user,
       isPersona: Boolean(ctx.user.demoUserId),
-      organization: org ?? null,
-      membership: membership ?? null,
+      organization,
+      membership,
     };
   }),
 
@@ -56,13 +74,13 @@ export const profileRouter = createRouter({
         if (!persona) throw new Error("Persona not found");
         return { ok: true, persona };
       }
-      const db = getDb();
-      const demo = await db.query.users.findFirst({ where: eq(s.users.unionId, input.unionId) });
+      const demo = await findUserByUnionId(input.unionId);
       if (!demo) throw new Error("Persona not found");
-      await db
-        .update(s.users)
-        .set({ demoUserId: demo.id, portalRole: demo.portalRole })
-        .where(eq(s.users.id, ctx.user.id));
+      const { error } = await getSupabaseService()
+        .from("users")
+        .update({ demoUserId: demo.id, portalRole: demo.portalRole })
+        .eq("id", ctx.user.id);
+      if (error) throw new Error(error.message);
       return { ok: true, persona: demo };
     }),
 
@@ -71,10 +89,11 @@ export const profileRouter = createRouter({
       clearDemoPersona(ctx.user.unionId);
       return { ok: true };
     }
-    await getDb()
-      .update(s.users)
-      .set({ demoUserId: null })
-      .where(eq(s.users.id, ctx.user.id));
+    const { error } = await getSupabaseService()
+      .from("users")
+      .update({ demoUserId: null })
+      .eq("id", ctx.user.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   }),
 
@@ -85,8 +104,11 @@ export const profileRouter = createRouter({
         setDemoLanguage(ctx.user.unionId, input.language);
         return { ok: true };
       }
-      const user = await effUser(ctx.user);
-      await getDb().update(s.users).set({ language: input.language }).where(eq(s.users.id, user.id));
+      const { error } = await getSupabaseService()
+        .from("users")
+        .update({ language: input.language })
+        .eq("id", ctx.user.id);
+      if (error) throw new Error(error.message);
       return { ok: true };
     }),
 });

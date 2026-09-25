@@ -58,8 +58,8 @@ export const authRouter = createRouter({
       } catch (err) {
         const raw = err instanceof Error ? err.message : "Session setup failed.";
         // Never dump raw SQL / Drizzle wrappers to the login UI.
-        const message = raw.startsWith("Failed query:")
-          ? "Could not sync your account to the app database. Check DATABASE_URL and that public.users exists."
+        const message = raw.startsWith("Failed query:") || /ENOTFOUND|getaddrinfo/i.test(raw)
+          ? "Could not sync your account. Confirm SUPABASE_SERVICE_ROLE_KEY is set on Vercel."
           : raw;
         throw new Error(message);
       }
