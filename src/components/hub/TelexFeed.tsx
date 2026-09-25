@@ -1,11 +1,9 @@
 import { useMemo } from "react";
-import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { PanelHeader, PanelEmpty } from "./FreshnessBadge";
 import { FeedThumb } from "./FeedThumb";
 import { fmtDate, fmtDateTime } from "@/lib/format";
-import { SAMPLE_TELEX_PAGE } from "@contracts/hub-sample";
+import { SAMPLE_TELEX_PAGE, type SampleTelexItem } from "@contracts/hub-sample";
 
 const PRODUCT_LABEL: Record<string, string> = {
   NITROGEN: "Nitrogen", PHOSPHATE: "Phosphate", POTASSIUM: "Potash",
@@ -27,35 +25,24 @@ function Tag({ children, tone = "navy" }: { children: string; tone?: "navy" | "t
   );
 }
 
+/** Desk TELEX feed — sample data rendered synchronously (no skeleton wait). */
 export function TelexFeed({
   products, regions, onClearFilters,
 }: { products: string[]; regions: string[]; onClearFilters: () => void }) {
-  const query = trpc.hub.telex.useInfiniteQuery(
-    { products, regions, limit: 12 },
-    {
-      getNextPageParam: (last) => last.nextCursor ?? undefined,
-      retry: 0,
-      placeholderData: { pages: [SAMPLE_TELEX_PAGE], pageParams: [undefined] },
-    },
-  );
-
   const groups = useMemo(() => {
-    const items = (query.data?.pages.flatMap((p) => p.items) ?? SAMPLE_TELEX_PAGE.items)
-      .filter((it) => {
-        if (products.length && !products.includes(it.product)) return false;
-        if (regions.length && !regions.includes(it.geography)) return false;
-        return true;
-      });
-    const map = new Map<string, typeof items>();
+    const items = SAMPLE_TELEX_PAGE.items.filter((it) => {
+      if (products.length && !products.includes(it.product)) return false;
+      if (regions.length && !regions.includes(it.geography)) return false;
+      return true;
+    });
+    const map = new Map<string, SampleTelexItem[]>();
     for (const it of items) {
       const day = fmtDate(it.createdAt);
       if (!map.has(day)) map.set(day, []);
       map.get(day)!.push(it);
     }
     return [...map.entries()];
-  }, [query.data, products, regions]);
-
-  const freshness = query.data?.pages[0]?.freshness ?? SAMPLE_TELEX_PAGE.freshness;
+  }, [products, regions]);
 
   return (
     <Card>
@@ -63,7 +50,7 @@ export function TelexFeed({
         <PanelHeader
           title="TELEX Intelligence"
           sub="Desk-issued market flashes, chronological"
-          freshness={freshness}
+          freshness={SAMPLE_TELEX_PAGE.freshness}
         />
         {groups.length === 0 && (
           <div className="mt-4">
@@ -106,17 +93,6 @@ export function TelexFeed({
                 </ul>
               </div>
             ))}
-            {query.hasNextPage && (
-              <div className="pt-2 text-center">
-                <Button
-                  variant="outline" size="sm"
-                  onClick={() => query.fetchNextPage()}
-                  disabled={query.isFetchingNextPage}
-                >
-                  {query.isFetchingNextPage ? "Loading…" : "Load older flashes"}
-                </Button>
-              </div>
-            )}
             <p className="border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground">
               TELEX flashes are desk assessments provided for information only. They do not constitute
               an offer, a price assessment, or advice. Verify independently before trading.

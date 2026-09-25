@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown } from "lucide-react";
 import { PanelHeader } from "./FreshnessBadge";
@@ -7,8 +6,7 @@ import { fmtDate } from "@/lib/format";
 import { SAMPLE_COMMENTARY, SAMPLE_FREIGHT } from "@contracts/hub-sample";
 
 export function FreightPanel() {
-  const q = trpc.hub.freight.useQuery(undefined, { retry: 0, placeholderData: SAMPLE_FREIGHT });
-  const d = q.data ?? SAMPLE_FREIGHT;
+  const d = SAMPLE_FREIGHT;
 
   return (
     <Card>
@@ -18,37 +16,35 @@ export function FreightPanel() {
           sub="Open enquiries and corridor analysis from the freight desk"
           freshness={d.freshness}
         />
-        {d.enquiries.length > 0 && (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[520px] text-[12px]">
-              <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
-                  <th className="py-1.5 pr-2 font-medium">Account</th>
-                  <th className="py-1.5 pr-2 font-medium">Product</th>
-                  <th className="py-1.5 pr-2 text-right font-medium">Qty MT</th>
-                  <th className="py-1.5 pr-2 font-medium">Origin</th>
-                  <th className="py-1.5 pr-2 font-medium">Destination</th>
-                  <th className="py-1.5 font-medium">Laycan</th>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[520px] text-[12px]">
+            <thead>
+              <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+                <th className="py-1.5 pr-2 font-medium">Account</th>
+                <th className="py-1.5 pr-2 font-medium">Product</th>
+                <th className="py-1.5 pr-2 text-right font-medium">Qty MT</th>
+                <th className="py-1.5 pr-2 font-medium">Origin</th>
+                <th className="py-1.5 pr-2 font-medium">Destination</th>
+                <th className="py-1.5 font-medium">Laycan</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.enquiries.map((e) => (
+                <tr key={e.id} className="border-b border-border/60 last:border-0">
+                  <td className="py-2 pr-2 font-mono text-muted-foreground">{e.accountCode}</td>
+                  <td className="py-2 pr-2 text-foreground">{e.product}</td>
+                  <td className="py-2 pr-2 text-right tabular-nums text-foreground">{e.qtyMt.toLocaleString("en-GB")}</td>
+                  <td className="py-2 pr-2 text-foreground">{e.origin}</td>
+                  <td className="py-2 pr-2 text-foreground">{e.destination}</td>
+                  <td className="py-2 text-foreground">{e.laycan}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {d.enquiries.map((e) => (
-                  <tr key={e.id} className="border-b border-border/60 last:border-0">
-                    <td className="py-2 pr-2 font-mono text-muted-foreground">{e.accountCode}</td>
-                    <td className="py-2 pr-2 text-foreground">{e.product}</td>
-                    <td className="py-2 pr-2 text-right tabular-nums text-foreground">{e.qtyMt.toLocaleString("en-GB")}</td>
-                    <td className="py-2 pr-2 text-foreground">{e.origin}</td>
-                    <td className="py-2 pr-2 text-foreground">{e.destination}</td>
-                    <td className="py-2 text-foreground">{e.laycan}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mt-1 text-[10px] text-muted-foreground">
-              Accounts are anonymised desk codes, counterparties are never identified.
-            </p>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Accounts are anonymised desk codes, counterparties are never identified.
+          </p>
+        </div>
         {d.commentary && (
           <div className="mt-4">
             <p className="text-sm font-semibold leading-snug text-foreground">{d.commentary.title}</p>
@@ -66,9 +62,8 @@ export function FreightPanel() {
 }
 
 export function CommentaryPanel() {
-  const q = trpc.hub.commentary.useQuery(undefined, { retry: 0, placeholderData: SAMPLE_COMMENTARY });
-  const c = q.data?.commentary ?? SAMPLE_COMMENTARY.commentary;
-  const freshness = q.data?.freshness ?? SAMPLE_COMMENTARY.freshness;
+  const c = SAMPLE_COMMENTARY.commentary;
+  const freshness = SAMPLE_COMMENTARY.freshness;
   const [expanded, setExpanded] = useState(false);
   const paras = expanded ? c.paragraphs : c.paragraphs.slice(0, 2);
 

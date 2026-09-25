@@ -133,19 +133,23 @@ export default function Hub() {
         </div>
       </section>
 
-      {/* Main grid: 60% TELEX / 40% stacked panels */}
+      {/* Main grid: TELEX + Aquibot briefing side by side */}
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
           <TelexFeed products={products} regions={regions} onClearFilters={clear} />
         </div>
-        <div className="min-w-0 space-y-5 lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <AquibotBrief />
-          <NewsFeed products={products} regions={regions} onClearFilters={clear} />
-          <PriceBoard />
-          <FreightPanel />
-          <CommentaryPanel />
         </div>
       </div>
+
+      {/* Full-width boards — never squeeze price tables into the narrow column */}
+      <PriceBoard />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <FreightPanel />
+        <CommentaryPanel />
+      </div>
+      <NewsFeed products={products} regions={regions} onClearFilters={clear} />
       <EngagementPrompt />
     </div>
   );

@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Bot, ArrowRight } from "lucide-react";
 import { Link } from "react-router";
-import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { PanelHeader } from "./FreshnessBadge";
 import { FeedThumb } from "./FeedThumb";
@@ -45,9 +44,9 @@ function interpret(tone: Tone, productLabel: string, audience: Audience): string
 }
 
 function BriefRow({
-  imageUrl, product, text, tone, audience, href, source,
+  imageUrl, product, text, tone, audience, source,
 }: {
-  imageUrl?: string | null; product: string; text: string; tone: Tone; audience: Audience; href?: string; source: string;
+  imageUrl?: string | null; product: string; text: string; tone: Tone; audience: Audience; source: string;
 }) {
   const productLabel = PRODUCT_LABEL[product] ?? product;
   const toneLabel = tone === "UP" ? "Firmer" : tone === "DOWN" ? "Softer" : "Steady";
@@ -56,71 +55,46 @@ function BriefRow({
     : tone === "DOWN"
       ? "bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300"
       : "bg-muted text-muted-foreground";
-  const body = (
-    <>
-      <div className="flex items-center gap-2">
-        <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${toneCls}`}>{toneLabel}</span>
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{source}</span>
-      </div>
-      <p className="mt-1 text-[13px] font-semibold leading-snug text-foreground">{text}</p>
-      <p className="mt-1 text-[12px] leading-relaxed text-navy-700 dark:text-navy-200">
-        {interpret(tone, productLabel, audience)}
-      </p>
-    </>
-  );
   return (
     <li className="flex items-start gap-3 py-3">
       <FeedThumb imageUrl={imageUrl} product={product} size={48} alt="" />
       <div className="min-w-0 flex-1">
-        {href ? (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="block">{body}</a>
-        ) : body}
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${toneCls}`}>{toneLabel}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{source}</span>
+        </div>
+        <p className="mt-1 text-[13px] font-semibold leading-snug text-foreground">{text}</p>
+        <p className="mt-1 text-[12px] leading-relaxed text-navy-700 dark:text-navy-200">
+          {interpret(tone, productLabel, audience)}
+        </p>
       </div>
     </li>
   );
 }
 
+/** Aquibot briefing — sample TELEX/news, no API wait. */
 export function AquibotBrief() {
   const [audience, setAudience] = useState<Audience>("buyer");
 
-  const telex = trpc.hub.telex.useInfiniteQuery(
-    { products: [], regions: [], limit: 4 },
-    {
-      getNextPageParam: (last) => last.nextCursor ?? undefined,
-      retry: 0,
-      placeholderData: { pages: [SAMPLE_TELEX_PAGE], pageParams: [undefined] },
-    },
-  );
-  const news = trpc.hub.news.useQuery(
-    { products: [], regions: [], limit: 4 },
-    { retry: 0, placeholderData: SAMPLE_NEWS },
-  );
-
   const rows = useMemo(() => {
-    const telexItems = telex.data?.pages.flatMap((p) => p.items) ?? SAMPLE_TELEX_PAGE.items;
-    const newsItems = news.data?.items ?? SAMPLE_NEWS.items;
-    const t = telexItems.slice(0, 3).map((it) => ({
+    const t = SAMPLE_TELEX_PAGE.items.slice(0, 3).map((it) => ({
       key: `t${it.id}`,
       imageUrl: it.imageUrl,
       product: it.product,
       text: it.title,
       tone: toneOf(`${it.title} ${it.body}`),
       source: "TELEX",
-      href: undefined as string | undefined,
     }));
-    const n = newsItems.slice(0, 2).map((it) => ({
+    const n = SAMPLE_NEWS.items.slice(0, 2).map((it) => ({
       key: `n${it.id}`,
       imageUrl: it.imageUrl,
       product: it.product,
       text: it.headline,
       tone: toneOf(`${it.headline} ${it.snippet ?? ""}`),
       source: it.sourceName ?? "News",
-      href: it.url as string | undefined,
     }));
     return [...t, ...n];
-  }, [telex.data, news.data]);
-
-  const freshness = telex.data?.pages[0]?.freshness ?? news.data?.freshness ?? SAMPLE_TELEX_PAGE.freshness;
+  }, []);
 
   return (
     <Card>
@@ -128,7 +102,7 @@ export function AquibotBrief() {
         <PanelHeader
           title="Aquibot briefing"
           sub="Today's TELEX and news, translated into plain language"
-          freshness={freshness}
+          freshness={SAMPLE_TELEX_PAGE.freshness}
         />
         <div className="mt-3 flex flex-wrap items-center gap-1.5" role="group" aria-label="Interpret updates for">
           <span className="mr-1 inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">

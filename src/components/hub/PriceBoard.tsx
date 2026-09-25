@@ -1,4 +1,3 @@
-import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { PanelHeader } from "./FreshnessBadge";
 import { fmtDateTime } from "@/lib/format";
@@ -10,12 +9,19 @@ type PriceRow = {
   changePct: number | null; direction: "UP" | "DOWN" | "FLAT";
 };
 
-const NITROGEN = ["Urea", "Ammonium Nitrate", "Ammonium Sulphate", "Calcium Ammonium Nitrate", "UAN 32"];
+const NITROGEN = ["Urea", "Ammonium Nitrate", "Ammonium Sulphate", "UAN 32"];
 const PHOSPHATES = ["DAP", "MAP", "TSP", "SSP"];
 const POTASH = ["MOP", "SOP"];
 const FEEDSTOCK = ["Ammonia", "Phosphoric Acid", "Sulphur"];
 
 const fmt = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+
+function changeLabel(r: PriceRow) {
+  if (r.changePct == null) return "—";
+  const arrow = r.direction === "UP" ? "▲" : r.direction === "DOWN" ? "▼" : "–";
+  const sign = r.changePct > 0 ? "+" : "";
+  return `${arrow} ${sign}${r.changePct.toFixed(2)}%`;
+}
 
 function Rows({ rows }: { rows: PriceRow[] }) {
   return (
@@ -24,19 +30,19 @@ function Rows({ rows }: { rows: PriceRow[] }) {
         const color =
           r.direction === "UP" ? "text-emerald-700 dark:text-emerald-400"
           : r.direction === "DOWN" ? "text-red-700 dark:text-red-400" : "text-muted-foreground";
-        const arrow = r.direction === "UP" ? "▲" : r.direction === "DOWN" ? "▼" : "–";
         return (
           <tr key={r.id} className="border-b border-border/60 last:border-0">
-            <td className="py-2 pr-2 text-[13px] text-foreground">
-              {r.product}{r.grade ? ` ${r.grade}` : ""}
-              <span className="block text-[10px] text-muted-foreground">{r.basis} {r.location}</span>
+            <td className="w-[52%] py-2 pr-3 align-top text-[13px] text-foreground">
+              <span className="block truncate font-medium">
+                {r.product}{r.grade ? ` ${r.grade}` : ""}
+              </span>
+              <span className="block truncate text-[10px] text-muted-foreground">{r.basis} {r.location}</span>
             </td>
-            <td className="py-2 pr-2 text-right font-mono text-[12px] tabular-nums text-foreground">{fmt(r.value)}</td>
-            <td className={`py-2 text-right font-mono text-[12px] tabular-nums ${color}`}>
-              <span aria-hidden="true">{arrow} </span>
-              {r.changeAbs != null && r.changePct != null
-                ? `${r.changeAbs > 0 ? "+" : ""}${r.changeAbs.toFixed(2)} (${r.changePct > 0 ? "+" : ""}${r.changePct.toFixed(2)}%)`
-                : "N/A"}
+            <td className="w-[22%] py-2 pr-2 text-right align-top font-mono text-[12px] tabular-nums text-foreground">
+              {fmt(r.value)}
+            </td>
+            <td className={`w-[26%] py-2 text-right align-top font-mono text-[11px] tabular-nums whitespace-nowrap ${color}`}>
+              {changeLabel(r)}
             </td>
           </tr>
         );
@@ -45,21 +51,32 @@ function Rows({ rows }: { rows: PriceRow[] }) {
   );
 }
 
-export function PriceBoard() {
-  const main = trpc.prices.slider.useQuery(
-    { region: "Middle East" },
-    { retry: 0, placeholderData: { region: "Middle East", asOf: new Date(HUB_AS_OF), items: SAMPLE_PRICES_ME as never[] } },
+function Group({ label, rows }: { label: string; rows: PriceRow[] }) {
+  if (!rows.length) return null;
+  return (
+    <div className="min-w-0 overflow-hidden">
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700 dark:text-teal-400">{label}</h3>
+      <table className="mt-2 w-full table-fixed">
+        <thead>
+          <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+            <th className="w-[52%] py-1.5 pr-3 font-medium">Description</th>
+            <th className="w-[22%] py-1.5 pr-2 text-right font-medium">Last</th>
+            <th className="w-[26%] py-1.5 text-right font-medium">Chg</th>
+          </tr>
+        </thead>
+        <tbody><Rows rows={rows} /></tbody>
+      </table>
+    </div>
   );
-  const freight = trpc.prices.slider.useQuery(
-    { region: "Freight" },
-    { retry: 0, placeholderData: { region: "Freight", asOf: new Date(HUB_AS_OF), items: SAMPLE_PRICES_FREIGHT as never[] } },
-  );
+}
 
-  const items = (main.data?.items?.length ? main.data.items : SAMPLE_PRICES_ME) as PriceRow[];
-  const freightItems = (freight.data?.items?.length ? freight.data.items : SAMPLE_PRICES_FREIGHT) as PriceRow[];
+/** Sample price board — no network required; layout stays readable at any width. */
+export function PriceBoard() {
+  const items = SAMPLE_PRICES_ME as PriceRow[];
+  const freightItems = SAMPLE_PRICES_FREIGHT as PriceRow[];
   const pick = (names: string[], max: number) =>
     names.map((n) => items.filter((i) => i.product === n).slice(0, n === "Urea" ? 2 : 1)).flat().slice(0, max);
-  const groups: { label: string; rows: PriceRow[] }[] = [
+  const groups = [
     { label: "Nitrogen", rows: pick(NITROGEN, 5) },
     { label: "Phosphates", rows: pick(PHOSPHATES, 4) },
     { label: "Potash", rows: pick(POTASH, 3) },
@@ -83,21 +100,9 @@ export function PriceBoard() {
             nextExpected: new Date(asOf.getTime() + 7 * 864e5).toISOString(),
           }}
         />
-        <div className="mt-4 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-8 md:grid-cols-2">
           {groups.map((g) => (
-            <div key={g.label}>
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700 dark:text-teal-400">{g.label}</h3>
-              <table className="mt-2 w-full">
-                <thead>
-                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <th className="py-1.5 pr-2 font-medium">Description</th>
-                    <th className="py-1.5 pr-2 text-right font-medium">Last</th>
-                    <th className="py-1.5 text-right font-medium">Change (%)</th>
-                  </tr>
-                </thead>
-                <tbody><Rows rows={g.rows} /></tbody>
-              </table>
-            </div>
+            <Group key={g.label} label={g.label} rows={g.rows} />
           ))}
         </div>
         <p className="mt-4 border-t border-border pt-3 text-[10px] leading-relaxed text-muted-foreground">
