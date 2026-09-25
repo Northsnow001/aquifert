@@ -1,7 +1,8 @@
 import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
-import { PanelHeader, PanelSkeleton, PanelError, PanelEmpty } from "./FreshnessBadge";
+import { PanelHeader } from "./FreshnessBadge";
 import { fmtDateTime } from "@/lib/format";
+import { HUB_AS_OF, SAMPLE_PRICES_FREIGHT, SAMPLE_PRICES_ME } from "@contracts/hub-sample";
 
 type PriceRow = {
   id: number; product: string; grade: string | null; basis: string; location: string;
@@ -45,75 +46,64 @@ function Rows({ rows }: { rows: PriceRow[] }) {
 }
 
 export function PriceBoard() {
-  const main = trpc.prices.slider.useQuery({ region: "Middle East" });
-  const freight = trpc.prices.slider.useQuery({ region: "Freight" });
-  const loading = main.isLoading || freight.isLoading;
-  const failed = main.isError && freight.isError;
+  const main = trpc.prices.slider.useQuery(
+    { region: "Middle East" },
+    { retry: 0, placeholderData: { region: "Middle East", asOf: new Date(HUB_AS_OF), items: SAMPLE_PRICES_ME as never[] } },
+  );
+  const freight = trpc.prices.slider.useQuery(
+    { region: "Freight" },
+    { retry: 0, placeholderData: { region: "Freight", asOf: new Date(HUB_AS_OF), items: SAMPLE_PRICES_FREIGHT as never[] } },
+  );
 
-  const items = (main.data?.items ?? []) as PriceRow[];
+  const items = (main.data?.items?.length ? main.data.items : SAMPLE_PRICES_ME) as PriceRow[];
+  const freightItems = (freight.data?.items?.length ? freight.data.items : SAMPLE_PRICES_FREIGHT) as PriceRow[];
   const pick = (names: string[], max: number) =>
     names.map((n) => items.filter((i) => i.product === n).slice(0, n === "Urea" ? 2 : 1)).flat().slice(0, max);
   const groups: { label: string; rows: PriceRow[] }[] = [
     { label: "Nitrogen", rows: pick(NITROGEN, 5) },
     { label: "Phosphates", rows: pick(PHOSPHATES, 4) },
     { label: "Potash", rows: pick(POTASH, 3) },
-    { label: "Freight & Feedstock", rows: [...((freight.data?.items ?? []) as PriceRow[]), ...pick(FEEDSTOCK, 2)].slice(0, 5) },
+    { label: "Freight & Feedstock", rows: [...freightItems, ...pick(FEEDSTOCK, 2)].slice(0, 5) },
   ];
-  const asOf = [main.data?.asOf, freight.data?.asOf]
-    .filter(Boolean)
-    .map((d) => new Date(d as string))
-    .sort((a, b) => b.getTime() - a.getTime())[0];
-  const empty = main.isSuccess && items.length === 0;
+  const asOf = new Date(HUB_AS_OF);
 
   return (
     <Card>
       <CardContent className="p-5">
         <PanelHeader
           title="Price Board"
-          sub={asOf ? `As of ${fmtDateTime(asOf)}` : "Indicative values"}
-          freshness={asOf ? {
-            level: Date.now() - asOf.getTime() > 14 * 864e5 ? "red" : Date.now() - asOf.getTime() > 7 * 864e5 ? "amber" : "green",
-            asOf: asOf.toISOString(), ageHours: Math.round((Date.now() - asOf.getTime()) / 3.6e5) / 10,
-            cadence: "7 days", source: "Aquifert desk assessments + open datasets", owner: "Aquifert Market Data",
+          sub={`As of ${fmtDateTime(asOf)}`}
+          freshness={{
+            level: "amber",
+            asOf: asOf.toISOString(),
+            ageHours: Math.round((Date.now() - asOf.getTime()) / 3.6e5) / 10,
+            cadence: "7 days",
+            source: "Aquifert desk assessments + open datasets",
+            owner: "Aquifert Market Data",
             nextExpected: new Date(asOf.getTime() + 7 * 864e5).toISOString(),
-          } : undefined}
+          }}
         />
-        {loading && <div className="mt-4"><PanelSkeleton rows={6} /></div>}
-        {failed && <div className="mt-4"><PanelError label="Price board" onRetry={() => { main.refetch(); freight.refetch(); }} /></div>}
-        {empty && (
-          <div className="mt-4">
-            <PanelEmpty
-              message="No price indications are currently available for this board."
-              actionLabel="Retry loading prices"
-              onAction={() => { main.refetch(); freight.refetch(); }}
-            />
-          </div>
-        )}
-        {!loading && !failed && !empty && (
-          <div className="mt-4 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-            {groups.map((g) => (
-              <div key={g.label}>
-                <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700 dark:text-teal-400">{g.label}</h3>
-                <table className="mt-2 w-full">
-                  <thead>
-                    <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
-                      <th className="py-1.5 pr-2 font-medium">Description</th>
-                      <th className="py-1.5 pr-2 text-right font-medium">Last</th>
-                      <th className="py-1.5 text-right font-medium">Change (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody><Rows rows={g.rows} /></tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        )}
-        {!loading && !failed && !empty && (
-          <p className="mt-4 border-t border-border pt-3 text-[10px] leading-relaxed text-muted-foreground">
-            Price indications compiled from public sources and Aquifert desk assessments. May be delayed.
-            Not a price assessment, an offer, or advice.
-          </p>
-        )}
+        <div className="mt-4 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          {groups.map((g) => (
+            <div key={g.label}>
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700 dark:text-teal-400">{g.label}</h3>
+              <table className="mt-2 w-full">
+                <thead>
+                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <th className="py-1.5 pr-2 font-medium">Description</th>
+                    <th className="py-1.5 pr-2 text-right font-medium">Last</th>
+                    <th className="py-1.5 text-right font-medium">Change (%)</th>
+                  </tr>
+                </thead>
+                <tbody><Rows rows={g.rows} /></tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 border-t border-border pt-3 text-[10px] leading-relaxed text-muted-foreground">
+          Price indications compiled from public sources and Aquifert desk assessments. May be delayed.
+          Not a price assessment, an offer, or advice.
+        </p>
       </CardContent>
     </Card>
   );

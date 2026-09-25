@@ -10,7 +10,7 @@ import { AquibotBrief } from "@/components/hub/AquibotBrief";
 import { PriceBoard } from "@/components/hub/PriceBoard";
 import { FreightPanel, CommentaryPanel } from "@/components/hub/SidePanels";
 import { EngagementPrompt } from "@/components/hub/EngagementPrompt";
-import { SAMPLE_HUB_INDICATORS } from "@/lib/sample-hub";
+import { SAMPLE_HUB_INDICATORS } from "@contracts/hub-sample";
 
 function Chip({
   active, label, onToggle,

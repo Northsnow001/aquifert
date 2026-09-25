@@ -3,10 +3,10 @@ import { Bot, ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
-import { PanelHeader, PanelSkeleton, PanelError } from "./FreshnessBadge";
+import { PanelHeader } from "./FreshnessBadge";
 import { FeedThumb } from "./FeedThumb";
 import { PRODUCT_LABEL } from "./TelexFeed";
-import { useProfile } from "@/hooks/useProfile";
+import { SAMPLE_NEWS, SAMPLE_TELEX_PAGE } from "@contracts/hub-sample";
 
 type Audience = "farmer" | "importer" | "buyer";
 
@@ -27,7 +27,6 @@ function toneOf(text: string): Tone {
   return "NEUTRAL";
 }
 
-/** Plain-language "what this means for you", per audience. Deterministic, desk-style. */
 function interpret(tone: Tone, productLabel: string, audience: Audience): string {
   const p = productLabel.toLowerCase();
   if (audience === "farmer") {
@@ -81,24 +80,26 @@ function BriefRow({
   );
 }
 
-/**
- * Aquibot briefing widget: reads the latest TELEX flashes and Global News
- * and restates them in plain language, tuned to how the reader works —
- * farmer, importer or buyer. Deterministic desk rules, no data leaves the app.
- */
 export function AquibotBrief() {
-  const { portalRole } = useProfile();
   const [audience, setAudience] = useState<Audience>("buyer");
-  const effective = audience;
 
   const telex = trpc.hub.telex.useInfiniteQuery(
     { products: [], regions: [], limit: 4 },
-    { getNextPageParam: (last) => last.nextCursor ?? undefined, retry: 0 },
+    {
+      getNextPageParam: (last) => last.nextCursor ?? undefined,
+      retry: 0,
+      placeholderData: { pages: [SAMPLE_TELEX_PAGE], pageParams: [undefined] },
+    },
   );
-  const news = trpc.hub.news.useQuery({ products: [], regions: [], limit: 4 }, { retry: 0 });
+  const news = trpc.hub.news.useQuery(
+    { products: [], regions: [], limit: 4 },
+    { retry: 0, placeholderData: SAMPLE_NEWS },
+  );
 
   const rows = useMemo(() => {
-    const t = (telex.data?.pages.flatMap((p) => p.items) ?? []).slice(0, 3).map((it) => ({
+    const telexItems = telex.data?.pages.flatMap((p) => p.items) ?? SAMPLE_TELEX_PAGE.items;
+    const newsItems = news.data?.items ?? SAMPLE_NEWS.items;
+    const t = telexItems.slice(0, 3).map((it) => ({
       key: `t${it.id}`,
       imageUrl: it.imageUrl,
       product: it.product,
@@ -107,7 +108,7 @@ export function AquibotBrief() {
       source: "TELEX",
       href: undefined as string | undefined,
     }));
-    const n = (news.data?.items ?? []).slice(0, 2).map((it) => ({
+    const n = newsItems.slice(0, 2).map((it) => ({
       key: `n${it.id}`,
       imageUrl: it.imageUrl,
       product: it.product,
@@ -119,10 +120,7 @@ export function AquibotBrief() {
     return [...t, ...n];
   }, [telex.data, news.data]);
 
-  // Don't block the briefing on news — TELEX alone is enough to paint.
-  const loading = telex.isLoading;
-  const failed = telex.isError && !telex.data;
-  const freshness = telex.data?.pages[0]?.freshness ?? news.data?.freshness;
+  const freshness = telex.data?.pages[0]?.freshness ?? news.data?.freshness ?? SAMPLE_TELEX_PAGE.freshness;
 
   return (
     <Card>
@@ -140,10 +138,10 @@ export function AquibotBrief() {
             <button
               key={a.key}
               type="button"
-              aria-pressed={effective === a.key}
+              aria-pressed={audience === a.key}
               onClick={() => setAudience(a.key)}
               className={`min-h-8 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
-                effective === a.key
+                audience === a.key
                   ? "border-teal-600 bg-teal-600 text-white"
                   : "border-border bg-background text-muted-foreground hover:border-teal-500/60 hover:text-foreground"
               }`}
@@ -153,20 +151,11 @@ export function AquibotBrief() {
           ))}
         </div>
 
-        {loading && <div className="mt-3"><PanelSkeleton rows={4} /></div>}
-        {failed && <div className="mt-3"><PanelError label="Aquibot briefing" onRetry={() => { telex.refetch(); news.refetch(); }} /></div>}
-        {!loading && !failed && rows.length > 0 && (
-          <ul className="mt-1 divide-y divide-border">
-            {rows.map((r) => (
-              <BriefRow key={r.key} {...r} audience={effective} />
-            ))}
-          </ul>
-        )}
-        {!loading && !failed && rows.length === 0 && (
-          <p className="mt-3 text-[13px] text-muted-foreground">
-            No fresh flashes to interpret yet — the desk publishes through the trading day.
-          </p>
-        )}
+        <ul className="mt-1 divide-y divide-border">
+          {rows.map(({ key, ...r }) => (
+            <BriefRow key={key} {...r} audience={audience} />
+          ))}
+        </ul>
         <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
             Aquibot restates desk content in plain language. Indicative only, not advice.

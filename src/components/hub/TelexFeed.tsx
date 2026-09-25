@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { trpc } from "@/providers/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PanelHeader, PanelSkeleton, PanelError, PanelEmpty } from "./FreshnessBadge";
+import { PanelHeader, PanelEmpty } from "./FreshnessBadge";
 import { FeedThumb } from "./FeedThumb";
 import { fmtDate, fmtDateTime } from "@/lib/format";
+import { SAMPLE_TELEX_PAGE } from "@contracts/hub-sample";
 
 const PRODUCT_LABEL: Record<string, string> = {
   NITROGEN: "Nitrogen", PHOSPHATE: "Phosphate", POTASSIUM: "Potash",
@@ -32,11 +32,20 @@ export function TelexFeed({
 }: { products: string[]; regions: string[]; onClearFilters: () => void }) {
   const query = trpc.hub.telex.useInfiniteQuery(
     { products, regions, limit: 12 },
-    { getNextPageParam: (last) => last.nextCursor ?? undefined },
+    {
+      getNextPageParam: (last) => last.nextCursor ?? undefined,
+      retry: 0,
+      placeholderData: { pages: [SAMPLE_TELEX_PAGE], pageParams: [undefined] },
+    },
   );
 
   const groups = useMemo(() => {
-    const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+    const items = (query.data?.pages.flatMap((p) => p.items) ?? SAMPLE_TELEX_PAGE.items)
+      .filter((it) => {
+        if (products.length && !products.includes(it.product)) return false;
+        if (regions.length && !regions.includes(it.geography)) return false;
+        return true;
+      });
     const map = new Map<string, typeof items>();
     for (const it of items) {
       const day = fmtDate(it.createdAt);
@@ -44,9 +53,9 @@ export function TelexFeed({
       map.get(day)!.push(it);
     }
     return [...map.entries()];
-  }, [query.data]);
+  }, [query.data, products, regions]);
 
-  const freshness = query.data?.pages[0]?.freshness;
+  const freshness = query.data?.pages[0]?.freshness ?? SAMPLE_TELEX_PAGE.freshness;
 
   return (
     <Card>
@@ -56,13 +65,7 @@ export function TelexFeed({
           sub="Desk-issued market flashes, chronological"
           freshness={freshness}
         />
-        {query.isLoading && <div className="mt-4"><PanelSkeleton rows={6} tall /></div>}
-        {query.isError && (
-          <div className="mt-4">
-            <PanelError label="TELEX feed" onRetry={() => query.refetch()} />
-          </div>
-        )}
-        {query.isSuccess && groups.length === 0 && (
+        {groups.length === 0 && (
           <div className="mt-4">
             <PanelEmpty
               message="No TELEX flashes match your current filters. The desk publishes through the trading day."
