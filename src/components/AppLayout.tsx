@@ -5,7 +5,7 @@ import {
   LayoutDashboard, MessageSquareText, ClipboardList, KanbanSquare, PackageCheck,
   Ship, LineChart, Users, Landmark, Home, PlusCircle, FileText, Package,
   Crown, Inbox, Wallet, Building2, Moon, Sun, LogOut, Menu, X, ChevronDown,
-  ChevronsLeft, ChevronsRight, RefreshCcw, Languages, FlaskConical,
+  ChevronsLeft, ChevronsRight, Languages, FlaskConical,
   ArrowLeftRight, ShieldCheck, Radio, Bot, Lock, BookOpen, FileUp,
   Newspaper, Gauge, Calculator, ShoppingCart, PhoneCall, BookOpenCheck, Mail, SlidersHorizontal,
 } from "lucide-react";
@@ -134,33 +134,9 @@ function ThemeToggle() {
   );
 }
 
-function PersonaSwitcher() {
-  const navigate = useNavigate();
-  const utils = trpc.useUtils();
-  const { data: personas } = trpc.profile.personas.useQuery();
-  const select = trpc.profile.selectPersona.useMutation({
-    onSuccess: async (r) => {
-      await utils.invalidate();
-      toast.success(`Switched to ${r.persona.name}`);
-      navigate(portalHome(r.persona.portalRole));
-    },
-    onError: () => toast.error("Could not switch persona"),
-  });
-  return (
-    <>
-      {(personas ?? []).map((p) => (
-        <DropdownMenuItem key={p.key} onClick={() => select.mutate({ unionId: p.unionId })} disabled={select.isPending}>
-          <RefreshCcw className="mr-2 h-3.5 w-3.5" />
-          {p.label}
-        </DropdownMenuItem>
-      ))}
-    </>
-  );
-}
-
 export function AppLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
-  const { user, membership, portalRole, isPersona, isMember } = useProfile();
+  const { user, membership, portalRole, isMember } = useProfile();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -360,11 +336,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             {isStaff && <LiveClock />}
-            {isPersona && (
-              <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                <FlaskConical className="h-3 w-3" /> Demo: {portalRole}
-              </span>
-            )}
             {portalRole === "SUPPLIER" && (
               <Tip label={user?.language === "ZH" ? "Switch to English" : "切换到中文"}>
                 <Button
@@ -384,7 +355,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <NotificationsBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-muted transition-colors" aria-label="Account menu" title="Account & demo portals">
+                <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-muted transition-colors" aria-label="Account menu" title="Account">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-navy-400 to-navy-700 text-xs font-bold text-white aqf-chip-3d">
                     {initials}
                   </span>
@@ -404,11 +375,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </div>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Switch demo portal
-                </DropdownMenuLabel>
-                <PersonaSwitcher />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="text-danger focus:text-danger">
                   <LogOut className="mr-2 h-4 w-4" /> Sign out

@@ -12,9 +12,7 @@ export const DEMO_PASSWORD = "demo1234";
 export const DEMO_REVIEWER_UNION_ID = "demo_reviewer";
 
 export function isDemoMode(): boolean {
-  if (process.env.DEMO_MODE === "1" || process.env.DEMO_MODE === "true") return true;
-  // Local review without Supabase still gets a working shell
-  if (!env.isProduction && !env.databaseUrl) return true;
+  // Live product: demo/in-memory personas are disabled.
   return false;
 }
 
