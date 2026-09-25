@@ -7,7 +7,6 @@ import { GaugeCard, type Indicator } from "@/components/hub/GaugeCard";
 import { TelexFeed, PRODUCT_LABEL, REGION_LABEL } from "@/components/hub/TelexFeed";
 import { NewsFeed } from "@/components/hub/NewsFeed";
 import { AquibotBrief } from "@/components/hub/AquibotBrief";
-import { PriceBoard } from "@/components/hub/PriceBoard";
 import { FreightPanel, CommentaryPanel } from "@/components/hub/SidePanels";
 import { EngagementPrompt } from "@/components/hub/EngagementPrompt";
 import { SAMPLE_HUB_INDICATORS } from "@contracts/hub-sample";
@@ -145,7 +144,6 @@ export default function Hub() {
       </div>
 
       {/* Full-width boards */}
-      <PriceBoard />
       <FreightPanel />
       <NewsFeed products={products} regions={regions} onClearFilters={clear} />
       <EngagementPrompt />
