@@ -278,30 +278,31 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <SlidersHorizontal className="h-4 w-4" />
             {!collapsed && <span className="truncate">Plan & Usage</span>}
           </NavLink>
-          {([
-            { to: "/buyer/membership", label: "Membership", icon: <Crown className="h-4 w-4" /> },
-            { to: "/buyer/billing", label: "Billing", icon: <CreditCard className="h-4 w-4" /> },
-          ] as const).map((item) => {
-            const link = (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={onNavigate}
-                className={({ isActive }) =>
-                  `relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
-                    isActive
-                      ? "bg-sidebar-accent font-semibold text-navy-800 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-teal-500 dark:text-white dark:before:bg-teal-400"
-                      : "font-medium text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  } ${collapsed ? "justify-center px-0 before:hidden" : ""}`
-                }
-                aria-label={item.label}
-              >
-                {item.icon}
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </NavLink>
-            );
-            return collapsed ? <Tip key={item.to} label={item.label} side="right">{link}</Tip> : link;
-          })}
+          {portalRole === "BUYER" &&
+            ([
+              { to: "/buyer/membership", label: "Membership", icon: <Crown className="h-4 w-4" /> },
+              { to: "/buyer/billing", label: "Billing", icon: <CreditCard className="h-4 w-4" /> },
+            ] as const).map((item) => {
+              const link = (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    `relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
+                      isActive
+                        ? "bg-sidebar-accent font-semibold text-navy-800 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[3px] before:rounded-full before:bg-teal-500 dark:text-white dark:before:bg-teal-400"
+                        : "font-medium text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    } ${collapsed ? "justify-center px-0 before:hidden" : ""}`
+                  }
+                  aria-label={item.label}
+                >
+                  {item.icon}
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </NavLink>
+              );
+              return collapsed ? <Tip key={item.to} label={item.label} side="right">{link}</Tip> : link;
+            })}
         </div>
       )}
 
