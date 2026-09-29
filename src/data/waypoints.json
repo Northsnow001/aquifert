@@ -1,0 +1,66 @@
+{
+  "hormuzExit": {
+    "lat": 23.5,
+    "lon": 58.7
+  },
+  "rasHadd": {
+    "lat": 22.53,
+    "lon": 59.78
+  },
+  "guardafui": {
+    "lat": 11.82,
+    "lon": 51.27
+  },
+  "babelMandeb": {
+    "lat": 12.58,
+    "lon": 43.44
+  },
+  "aden": {
+    "lat": 12.8,
+    "lon": 45.03
+  },
+  "suezSouth": {
+    "lat": 29.97,
+    "lon": 32.55
+  },
+  "suezNorth": {
+    "lat": 31.26,
+    "lon": 32.28
+  },
+  "gibraltar": {
+    "lat": 35.98,
+    "lon": -5.48
+  },
+  "malacca": {
+    "lat": 1.25,
+    "lon": 103.82
+  },
+  "sriLanka": {
+    "lat": 6,
+    "lon": 80.5
+  },
+  "capeHope": {
+    "lat": -34.36,
+    "lon": 18.48
+  },
+  "capeWest": {
+    "lat": -34.36,
+    "lon": 14
+  },
+  "panamaAtl": {
+    "lat": 9.37,
+    "lon": -79.91
+  },
+  "panamaPac": {
+    "lat": 8.87,
+    "lon": -79.53
+  },
+  "skaw": {
+    "lat": 57.74,
+    "lon": 10.6
+  },
+  "dover": {
+    "lat": 51,
+    "lon": 2
+  }
+}

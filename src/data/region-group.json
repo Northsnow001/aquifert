@@ -1,0 +1,20 @@
+{
+  "Baltic": "atlantic",
+  "Northern Europe": "atlantic",
+  "Atlantic Europe": "atlantic",
+  "North America": "atlantic",
+  "South America": "atlantic",
+  "Caribbean": "atlantic",
+  "Central America": "atlantic",
+  "Mediterranean": "med",
+  "North Africa": "med",
+  "Black Sea": "med",
+  "East Asia": "pacific",
+  "Southeast Asia": "pacific",
+  "Oceania": "pacific",
+  "Indian Subcontinent": "indian",
+  "Middle East": "indian",
+  "East Africa": "indian",
+  "Southern Africa": "indian",
+  "West Africa": "indian"
+}
