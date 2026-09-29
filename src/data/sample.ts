@@ -21,9 +21,27 @@ export const telex = [
 ];
 
 export const indicators = [
-  { name: "Nitrogen", value: 60, note: "Rumours around China still saying a urea 3rd quota to be announced, under 2 mil mts is expected. Expect Brazil, EU, Turkey and UK to come to market this week, pushing up nitrogen prices." },
-  { name: "Phosphate", value: 45, note: "In Asia, Brunei seems to be cheaper than Chinese granular urea. USD 400 vs USD 410 FOB." },
-  { name: "Potassium", value: 45, note: "Potash remains supplied. Buyers are covering nearby needs and are not chasing forward tonnes." },
+  {
+    name: "Nitrogen",
+    value: 60,
+    summary:
+      "China's next urea quota is talked under 2 million tonnes. Buyers back this week would lift prices.",
+    note: "Rumours around China still saying a urea 3rd quota to be announced, under 2 mil mts is expected. Expect Brazil, EU, Turkey and UK to come to market this week, pushing up nitrogen prices.",
+  },
+  {
+    name: "Phosphate",
+    value: 45,
+    summary:
+      "Brunei is cheaper than Chinese urea in Asia, near USD 400 against USD 410 FOB.",
+    note: "In Asia, Brunei seems to be cheaper than Chinese granular urea. USD 400 vs USD 410 FOB.",
+  },
+  {
+    name: "Potassium",
+    value: 45,
+    summary:
+      "Potash is well supplied. Buyers are covering nearby tonnes, not chasing forward.",
+    note: "Potash remains supplied. Buyers are covering nearby needs and are not chasing forward tonnes.",
+  },
 ];
 
 export const freightEnquiries = [

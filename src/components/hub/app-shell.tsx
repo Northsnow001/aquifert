@@ -124,7 +124,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
         </div>
       </aside>
 
-      <main className="area-main min-h-0 min-w-0 overflow-auto p-6">{children}</main>
+      <main className="area-main flex min-h-0 min-w-0 flex-col overflow-auto p-6">{children}</main>
     </div>
   );
 }
