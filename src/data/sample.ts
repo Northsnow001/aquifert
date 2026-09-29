@@ -41,18 +41,6 @@ export const freightCommentary = {
   ],
 };
 
-export const libraryFiles = [
-  { title: "Weekly nitrogen telex", collection: "Telex", access: "Free" },
-  { title: "Q3 phosphate cost curve", collection: "Research", access: "Paid · $49" },
-  { title: "Direct hedge snapshot", collection: "Hedge", access: "Free" },
-];
-
-export const hedgeRows = [
-  { period: "Q4 2026", commodity: "Urea granular", bid: "385", ask: "395" },
-  { period: "Q1 2027", commodity: "Urea granular", bid: "370", ask: "382" },
-  { period: "Q4 2026", commodity: "DAP", bid: "640", ask: "655" },
-];
-
 export const aquibotSessions = [
   {
     id: "s1",
