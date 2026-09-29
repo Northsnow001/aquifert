@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { CalendarClock, FileText, MessageSquare, Phone, Send, X } from "lucide-react";
 import { sendContactMessage } from "@/app/hub/contact/actions";
 
@@ -15,6 +15,15 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
   const [sent, setSent] = useState<"remote" | "local" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (view !== "meeting") return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setView("cards");
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [view]);
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
@@ -109,19 +118,31 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
       </div>
 
       {view === "meeting" ? (
-        <section className="overflow-hidden rounded-xl border border-border bg-surface">
-          <header className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h2 className="text-base font-bold text-ink">Schedule a meeting</h2>
-            <button type="button" onClick={() => setView("cards")} className="rounded-lg border border-border p-1.5 text-mid" aria-label="Close scheduler">
-              <X className="h-4 w-4" />
-            </button>
-          </header>
-          <iframe
-            src={CALENDLY}
-            title="Aquifert Calendly scheduling"
-            className="h-[min(70vh,720px)] w-full border-0"
-          />
-        </section>
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1a3a5c]/45 p-4"
+          role="presentation"
+          onClick={() => setView("cards")}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="meeting-title"
+            className="flex h-[min(85vh,780px)] w-full max-w-[980px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between border-b border-border px-4 py-3">
+              <h2 id="meeting-title" className="text-base font-bold text-ink">Schedule a meeting</h2>
+              <button type="button" onClick={() => setView("cards")} className="rounded-lg border border-border p-1.5 text-mid" aria-label="Close scheduler">
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+            <iframe
+              src={CALENDLY}
+              title="Aquifert Calendly scheduling"
+              className="min-h-0 w-full flex-1 border-0"
+            />
+          </section>
+        </div>
       ) : null}
 
       {view === "message" ? (
