@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { PaperForwardBrief } from "@/components/hub/paper-forward";
 import { indicators, telex } from "@/data/sample";
 // import { freightCommentary, freightEnquiries } from "@/data/sample";
 
@@ -33,8 +34,9 @@ function stance(value: number) {
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <section className="flex min-h-0 flex-[35_1_0%] flex-col max-md:flex-none">
+    <div className="flex flex-col gap-4 pb-2">
+      <div className="flex shrink-0 flex-col gap-4">
+      <section className="flex h-[calc((100dvh-7.5rem)*0.35)] min-h-[13.5rem] flex-col">
         <div className="mb-2 flex shrink-0 items-baseline justify-between gap-4">
           <h2 className="text-sm font-bold tracking-tight text-ink">Market Indicators</h2>
           <p className="font-mono text-[11px] uppercase tracking-wide text-mid">29 Sep 2026</p>
@@ -63,7 +65,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="grid min-h-0 flex-[65_1_0%] grid-cols-1 gap-4 max-md:flex-none lg:grid-cols-2">
+      <section className="grid h-[calc((100dvh-7.5rem)*0.75)] min-h-[24rem] grid-cols-1 gap-4 lg:grid-cols-2">
         <article className="flex min-h-[280px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm lg:min-h-0">
           <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-3.5">
             <div>
@@ -118,6 +120,9 @@ export default function HomePage() {
           </div>
         </article>
       </section>
+      </div>
+
+      <PaperForwardBrief />
 
       {/*
       <section className="overflow-hidden rounded-xl border border-border bg-surface">
