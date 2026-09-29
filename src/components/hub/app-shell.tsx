@@ -5,7 +5,6 @@ import { useState } from "react";
 import {
   Archive,
   ArrowLeftRight,
-  BarChart2,
   BookOpen,
   Bot,
   Calculator,
@@ -16,7 +15,6 @@ import {
   LogOut,
   Mail,
   Menu,
-  Send,
   UserCircle,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -24,7 +22,6 @@ import { initials, type SessionUser } from "@/lib/session-shared";
 
 const NAV = [
   { href: "/hub", label: "Home", icon: LayoutDashboard },
-  { href: "/hub/voyage", label: "Voyage", icon: BarChart2 },
   { href: "/hub/freight-calculator", label: "Freight Calculator", icon: Calculator },
   { href: "/hub/netback", label: "Netback", icon: ArrowLeftRight },
   { href: "/hub/library", label: "Library", icon: Archive },
@@ -34,8 +31,6 @@ const NAV = [
   { href: "/hub/aquibot", label: "Aquibot", icon: Bot },
   { href: "/hub/account", label: "Account", icon: UserCircle },
 ];
-
-const NO_PANEL = new Set(["/hub/freight-calculator", "/hub/netback"]);
 
 function Logo() {
   return (
@@ -55,11 +50,10 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const noPanel = NO_PANEL.has(pathname) || pathname.startsWith("/hub/account");
   const planLabel = user.plan.toUpperCase();
 
   return (
-    <div className={`one-grid relative ${noPanel ? "no-panel" : ""} ${collapsed ? "collapsed" : ""}`}>
+    <div className={`one-grid no-panel relative ${collapsed ? "collapsed" : ""}`}>
       <header className="area-topbar sticky top-0 z-50 flex items-center gap-4 border-b border-border bg-surface px-5">
         <button
           type="button"
@@ -131,43 +125,6 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
       </aside>
 
       <main className="area-main min-h-0 min-w-0 overflow-auto p-6">{children}</main>
-
-      {noPanel ? null : (
-        <aside className="area-panel hidden h-full min-h-0 min-w-0 flex-col overflow-hidden border-l border-border bg-surface lg:flex">
-          <div className="flex items-center gap-2 border-b border-border px-3 py-3">
-            <span className="rounded-full bg-[#e8f7ee] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#178a4c]">
-              LIVE
-            </span>
-            <button type="button" className="ml-auto rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-mid">
-              New chat
-            </button>
-          </div>
-          <div className="flex-1 space-y-3 overflow-auto px-4 py-4">
-            <div className="flex gap-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue text-white">
-                <Bot className="h-4 w-4" />
-              </div>
-              <div className="rounded-xl bg-s2 px-3 py-2 text-[13px] leading-relaxed text-ink">
-                <p>I&apos;m Aquibot, your Aquifert market assistant. Ask me about fertiliser markets, trade flows, freight, pricing, technical production and manufacturing processes, or anything across your ONE Hub intelligence.</p>
-                <p className="mt-2 text-mid">Aquibot can make mistakes. Always verify before acting on anything market-critical.</p>
-                <p className="mt-2 font-mono text-[10px] uppercase tracking-wide text-dim">Aquifert version 1.0.8</p>
-              </div>
-            </div>
-          </div>
-          <form className="border-t border-border p-3" action="/hub/aquibot">
-            <div className="flex items-center gap-2 rounded-full border border-border bg-s2 px-3 py-2">
-              <input
-                name="q"
-                placeholder="Ask anything about the market..."
-                className="w-full bg-transparent text-sm outline-none"
-              />
-              <button type="submit" className="flex h-8 w-8 items-center justify-center rounded-full bg-blue text-white" aria-label="Send">
-                <Send className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </form>
-        </aside>
-      )}
     </div>
   );
 }
