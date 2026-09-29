@@ -231,6 +231,45 @@ export const HOW_IT_IS_MADE = [
   },
 ];
 
+export const ACADEMY_COMMENTARY = {
+  kicker: "Commentary",
+  title: "Urea: How Pricing and Availability Works",
+  sections: [
+    {
+      heading: "The global market in brief",
+      paragraphs: [
+        "Seaborne urea trade runs at roughly 60 million MT per annum, making it the most widely traded nitrogen fertiliser in the world. It is produced from natural gas or coal, which means cost of production varies enormously by origin, and those cost differentials are the engine that drives global price formation.",
+      ],
+    },
+    {
+      heading: "The key origins and where they sell",
+      paragraphs: [
+        "The Arab Gulf (AG) and Russia are the swing exporters. They are well-capitalised, high-volume producers who will move material wherever the market clears. In practice, that means India absorbs a large share of their tonnage, particularly during tender windows.",
+        "Egypt is an interesting case. Its price is structurally linked to the AG: if Egyptian FOB gets too expensive relative to the AG, European and Mediterranean buyers will simply switch to AG material. The rule of thumb is AG FOB plus approximately 6.5% (the EU import duty on urea) plus a small freight differential, call it around USD 10/MT, sets the ceiling for Egypt into the EU. Egypt knows this and prices accordingly. Its natural market is premium destinations, chiefly the EU, where it enjoys a freight advantage over the AG.",
+        "Iran is the wild card. Sanctions mean Iranian urea cannot access mainstream banking or mainstream markets, so it sells at a structural discount. That discount channels material into Brazil, Turkey, Myanmar and South Africa, markets that are either willing or able to absorb sanctioned-origin product. Iran's cost base is among the lowest in the world, which means it can undercut almost everyone when it needs to move volume.",
+        "China is the market's pressure valve in reverse. When Chinese domestic demand is weak, or when producers need to monetise inventory, export volumes rise and prices correct downwards globally. China's average production cost is roughly USD 250/MT FOB, though this varies considerably by feedstock (coal vs gas) and plant age. That figure acts as a floor: as prices approach it, plants begin to throttle operating rates or go offline, and the downward spiral tends to arrest itself near that level.",
+      ],
+    },
+    {
+      heading: "India: the release valve",
+      paragraphs: [
+        "India is the single most important demand event in global urea. The government procures through periodic tenders run by state-owned entities (IPL, RCF, NFL and previously others), and these tenders are capable of pulling hundreds of thousands of tonnes out of the market in a single event. When global inventories build and prices soften, the market watches India closely, both for the price at which it clears and, critically, for the volume it takes. Price is only half the story.",
+        "A hypothetical but realistic example illustrates this well:",
+        "NFL is tendering. Historically it buys more than RCF (with some years of hiatus), so the market anticipates volumes of around 750kt, potentially targeting 1 million MT. At the time of the tender, the market is already soft. Russia and the AG are long and looking to offload. China may export in October. Iran is offering around USD 300 FOB. AG paper for October is around USD 325 FOB. Brazil physical CFR is around USD 340, paper October around USD 337.50.",
+        "With a long shipping window to try and draw in third-position callers, the L1 clears somewhere in the 338–340s CFR range. The question is not just the price. It is how much gets confirmed and is offered in, as this gives you an idea of the traders' intention. If India takes only 500kt at USD 340 CFR and 3–4 million MT was offered in, the market is in trouble. There is still a surplus looking for a home. If India takes over 1 million MT and only 2.5 million MT was on offer, the market rebounds quickly.",
+      ],
+    },
+    {
+      heading: "The cascade effect when things go wrong",
+      paragraphs: [
+        "Say the pessimistic outcome plays out: only 500kt gets confirmed, 250kt Russian and 250kt AG. Russia and the AG are still sitting on unsold inventory. China then decides to export 500kt in October. India is now out of the market. Who else can absorb this?",
+        "The market turns to Brazil and Turkey. But Brazil is already competing with Venezuelan, Iranian and Bolivian material. To attract buyers, Brazil CFR has to fall, say to USD 320 CFR. That puts a Chinese netback at roughly USD 260 FOB. At that level, Indonesian, Bruneian and Malaysian producers have to correct to compete in SE Asian markets, call it USD 300 FOB. That in turn forces the AG down, sub-USD 280 FOB. And then Egypt and the EU have to correct to match, USD 300 FOB (AG USD 280 plus the 6.5% duty).",
+        "This is the urea market's defining characteristic: origins are interconnected through arbitrage, and a dislocation in one region propagates globally within weeks. A downward spiral can accelerate fast, and it typically does not stop until Chinese production economics force the market to find a floor.",
+      ],
+    },
+  ],
+};
+
 export const GLOSSARY = [
   ["FOB — Free On Board", "Price at the loading port. Seller delivers goods onto the ship. Buyer pays all freight and insurance onwards."],
   ["CFR — Cost and Freight", "Price includes cost plus freight to destination port. Buyer handles insurance and discharge costs."],

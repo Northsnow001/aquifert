@@ -1,9 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type MouseEvent } from "react";
 import markers from "@/data/tools-markers.json";
-import { GLOSSARY, HOW_IT_IS_MADE, PHOSPHATE_CURVE, ureaCurve } from "@/lib/tools/academy";
+import { ACADEMY_COMMENTARY, GLOSSARY, HOW_IT_IS_MADE, PHOSPHATE_CURVE, ureaCurve } from "@/lib/tools/academy";
 import { ammoniaCost, productCosts } from "@/lib/tools/costs";
+import {
+  COUNTRY_SHAPES,
+  factNameForCountry,
+  MAP_HEIGHT,
+  MAP_WIDTH,
+  projectPoint,
+  UREA_EXPORTER_IDS,
+} from "@/lib/tools/world-map";
 
 type Tab = "map" | "calc" | "how" | "glossary";
 type Layer = "nh3" | "urea" | "phos" | "mop";
@@ -22,19 +30,6 @@ const LAYERS: Array<{ id: Layer; label: string; dot: string }> = [
   { id: "mop", label: "MOP / Potash Mines", dot: "bg-[#dc2626]" },
 ];
 
-function project(lat: number, lon: number) {
-  const width = 900;
-  const height = 420;
-  const x = ((lon + 180) / 360) * width;
-  const clamped = Math.max(-58, Math.min(78, lat));
-  const rad = (clamped * Math.PI) / 180;
-  const merc = Math.log(Math.tan(Math.PI / 4 + rad / 2));
-  const max = Math.log(Math.tan(Math.PI / 4 + (78 * Math.PI) / 180 / 2));
-  const min = Math.log(Math.tan(Math.PI / 4 + (-58 * Math.PI) / 180 / 2));
-  const y = ((max - merc) / (max - min)) * height;
-  return { x, y };
-}
-
 export function ToolsBoard() {
   const [tab, setTab] = useState<Tab>("map");
   const [layers, setLayers] = useState<Record<Layer, boolean>>({
@@ -49,7 +44,6 @@ export function ToolsBoard() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [factName, setFactName] = useState<string | null>(null);
   const [phosphate, setPhosphate] = useState<(typeof PHOSPHATE_CURVE)[number] | null>(null);
-  const [marker, setMarker] = useState<string | null>(null);
 
   const products = useMemo(() => productCosts({ gas, rock, sulphur }), [gas, rock, sulphur]);
   const selected = products.find((product) => product.id === selectedId) ?? null;
@@ -58,7 +52,7 @@ export function ToolsBoard() {
   const fact = markers.facts.find((item) => item.n === factName) ?? null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex min-w-0 max-w-full flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">Tools</h1>
         <span className="rounded-full border border-border bg-s2 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-mid">
@@ -87,11 +81,9 @@ export function ToolsBoard() {
           layers={layers}
           urea={urea}
           phosphate={phosphate}
-          marker={marker}
           fact={fact}
           onToggle={(id) => setLayers((current) => ({ ...current, [id]: !current[id] }))}
           onPhosphate={setPhosphate}
-          onMarker={setMarker}
           onFact={setFactName}
         />
       ) : null}
@@ -217,6 +209,8 @@ export function ToolsBoard() {
           </div>
         </section>
       ) : null}
+
+      <Commentary />
     </div>
   );
 }
@@ -265,34 +259,30 @@ function MapTab({
   layers,
   urea,
   phosphate,
-  marker,
   fact,
   onToggle,
   onPhosphate,
-  onMarker,
   onFact,
 }: {
   layers: Record<Layer, boolean>;
   urea: ReturnType<typeof ureaCurve>;
   phosphate: (typeof PHOSPHATE_CURVE)[number] | null;
-  marker: string | null;
   fact: { n: string; f: string; t: string[] } | null;
   onToggle: (id: Layer) => void;
   onPhosphate: (row: (typeof PHOSPHATE_CURVE)[number] | null) => void;
-  onMarker: (name: string) => void;
   onFact: (name: string) => void;
 }) {
   const width = 900;
-  const height = 270;
+  const height = 340;
   const left = 54;
   const top = 28;
   const plotW = width - left - 8;
-  const plotH = height - top - 50;
+  const plotH = height - top - 96;
   const capacity = PHOSPHATE_CURVE.reduce((sum, row) => sum + row.cap, 0);
   let cursor = 0;
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap gap-1.5">
         {LAYERS.map((layer) => (
           <button
@@ -311,10 +301,11 @@ function MapTab({
 
       {layers.urea ? <UreaChart rows={urea} /> : null}
       {layers.phos ? (
-        <section className="rounded-xl border border-border bg-surface p-3">
+        <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-surface p-3">
           <h2 className="text-sm font-semibold text-ink">Phosphate Rock Ex-Works Cost Curve — Global Producers (2019 basis)</h2>
           <p className="text-xs text-dim">USD/t — Mining + Beneficiation ordered by cumulative capacity (mn t). Click any bar to reveal country.</p>
-          <svg viewBox={`0 0 ${width} ${height}`} className="mt-2 w-full" role="img" aria-label="Phosphate rock cost curve">
+          <div className="mt-2 min-w-0 overflow-x-auto">
+          <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full min-w-[560px]" overflow="hidden" role="img" aria-label="Phosphate rock cost curve">
             {[0, 25, 50, 75, 100, 125, 150, 175].map((tick) => {
               const y = top + plotH - (tick / 180) * plotH;
               return (
@@ -347,6 +338,7 @@ function MapTab({
               USD/t ex-works
             </text>
           </svg>
+          </div>
           {phosphate ? (
             <p className="mt-2 rounded-lg bg-s2 px-3 py-2 text-sm text-ink">
               <strong>{phosphate.label}</strong>
@@ -356,71 +348,13 @@ function MapTab({
         </section>
       ) : null}
 
-      <section className="overflow-hidden rounded-xl border border-border bg-surface">
-        <svg viewBox="0 0 900 420" className="w-full bg-[#e7eef3]" role="img" aria-label="Fertilizer trade map">
-          {layers.nh3
-            ? markers.nh3.map((point, index) => {
-                const { x, y } = project(point.lat, point.lon);
-                return (
-                  <polygon
-                    key={`${point.name}-${index}`}
-                    points={`${x},${y - 5} ${x + 4.5},${y + 4} ${x - 4.5},${y + 4}`}
-                    fill="#2e6da4"
-                    className="cursor-pointer"
-                    onClick={() => onMarker(`${point.name} · ${point.cap}`)}
-                  >
-                    <title>{point.name}</title>
-                  </polygon>
-                );
-              })
-            : null}
-          {layers.phos
-            ? markers.phos.map((point) => {
-                const { x, y } = project(point.lat, point.lon);
-                return (
-                  <rect
-                    key={point.name}
-                    x={x - 5}
-                    y={y - 5}
-                    width="10"
-                    height="10"
-                    rx="2"
-                    fill="#d97706"
-                    className="cursor-pointer"
-                    onClick={() => onMarker(point.name)}
-                  >
-                    <title>{point.name}</title>
-                  </rect>
-                );
-              })
-            : null}
-          {layers.mop
-            ? markers.mop.map((point) => {
-                const { x, y } = project(point.lat, point.lon);
-                return (
-                  <circle
-                    key={point.name}
-                    cx={x}
-                    cy={y}
-                    r="5.5"
-                    fill="#dc2626"
-                    className="cursor-pointer"
-                    onClick={() => onMarker(point.name)}
-                  >
-                    <title>{point.name}</title>
-                  </circle>
-                );
-              })
-            : null}
-        </svg>
-        <div className="flex flex-wrap gap-4 border-t border-border px-4 py-2 text-[11px] text-mid">
-          <span>NH₃ Terminals</span>
-          <span>Urea Exporters (top 11)</span>
-          <span>Phosphate Producers</span>
-          <span>MOP / Potash Mines</span>
-        </div>
-        {marker ? <p className="border-t border-border px-4 py-2 text-sm text-ink">{marker}</p> : null}
-      </section>
+      <WorldMap
+        layers={layers}
+        onCountry={(name) => {
+          const factName = factNameForCountry(name);
+          if (markers.facts.some((item) => item.n === factName)) onFact(factName);
+        }}
+      />
 
       {layers.urea ? (
         <div className="flex flex-wrap gap-1.5">
@@ -465,10 +399,11 @@ function UreaChart({ rows }: { rows: ReturnType<typeof ureaCurve> }) {
   const colors = ["#1a3a5c", "#6baa8e", "#a3cdba", "#d5e6df"];
 
   return (
-    <section className="overflow-x-auto rounded-xl border border-border bg-surface p-3">
+    <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-surface p-3">
       <h2 className="text-sm font-semibold text-ink">Urea Export Cost Curve — Key Origins (FOB/FCA basis, 2025 estimates)</h2>
       <p className="text-xs text-dim">USD/t — Feedstock · Other Variable · Fixed · Cost-to-FOB stacked, sorted lowest to highest.</p>
-      <svg viewBox={`0 0 ${width} ${height}`} className="mt-2 min-w-[680px]" role="img" aria-label="Urea export cost curve">
+      <div className="mt-2 min-w-0 overflow-x-auto">
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full min-w-[680px]" overflow="hidden" role="img" aria-label="Urea export cost curve">
         {["Feedstock", "Other Variable", "Fixed", "Cost to FOB"].map((label, index) => (
           <g key={label} transform={`translate(${left + index * 125}, 8)`}>
             <rect width="10" height="10" rx="1" fill={colors[index]} />
@@ -507,6 +442,175 @@ function UreaChart({ rows }: { rows: ReturnType<typeof ureaCurve> }) {
           );
         })}
       </svg>
+      </div>
     </section>
+  );
+}
+
+function WorldMap({
+  layers,
+  onCountry,
+}: {
+  layers: Record<Layer, boolean>;
+  onCountry: (name: string) => void;
+}) {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+
+  function showTip(event: MouseEvent, text: string) {
+    const frame = frameRef.current;
+    const tip = tipRef.current;
+    if (!frame || !tip) return;
+    const rect = frame.getBoundingClientRect();
+    tip.hidden = false;
+    tip.textContent = text;
+    const tipWidth = tip.offsetWidth;
+    const tipHeight = tip.offsetHeight;
+    const left = Math.min(Math.max(8, event.clientX - rect.left + 12), Math.max(8, rect.width - tipWidth - 8));
+    const top = Math.max(8, event.clientY - rect.top - tipHeight - 8);
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+  }
+
+  function hideTip() {
+    if (tipRef.current) tipRef.current.hidden = true;
+  }
+
+  return (
+    <section className="min-w-0 overflow-hidden rounded-xl border border-border bg-surface">
+      <div ref={frameRef} className="relative" onMouseLeave={hideTip}>
+        <svg
+          viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+          className="block h-auto w-full"
+          role="img"
+          aria-label="Fertilizer trade map"
+        >
+          <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="#dce4ea" onMouseMove={hideTip} />
+          {COUNTRY_SHAPES.map((country) => (
+            <path
+              key={country.name}
+              d={country.d}
+              data-name={country.name}
+              fill={layers.urea && UREA_EXPORTER_IDS.has(country.id) ? "#d5e6df" : "#f4f7f8"}
+              stroke="#b7c5ce"
+              strokeWidth={0.6}
+              className="cursor-pointer"
+              onMouseMove={(event) => showTip(event, country.name)}
+              onClick={() => onCountry(country.name)}
+            />
+          ))}
+          {layers.mop
+            ? markers.mop.map((point) => {
+                const projected = projectPoint(point.lon, point.lat);
+                if (!projected) return null;
+                return (
+                  <circle
+                    key={point.name}
+                    cx={projected.x}
+                    cy={projected.y}
+                    r={5.5}
+                    fill="#dc2626"
+                    fillOpacity={0.9}
+                    stroke="#fff"
+                    strokeWidth={1.2}
+                    className="cursor-pointer"
+                    onMouseMove={(event) => showTip(event, `MOP mine: ${point.name}`)}
+                  />
+                );
+              })
+            : null}
+          {layers.phos
+            ? markers.phos.map((point) => {
+                const projected = projectPoint(point.lon, point.lat);
+                if (!projected) return null;
+                return (
+                  <rect
+                    key={point.name}
+                    x={projected.x - 5}
+                    y={projected.y - 5}
+                    width={10}
+                    height={10}
+                    rx={2}
+                    fill="#d97706"
+                    fillOpacity={0.92}
+                    stroke="#fff"
+                    strokeWidth={1.2}
+                    className="cursor-pointer"
+                    onMouseMove={(event) => showTip(event, `Phosphate: ${point.name}`)}
+                  />
+                );
+              })
+            : null}
+          {layers.nh3
+            ? markers.nh3.map((point, index) => {
+                const projected = projectPoint(point.lon, point.lat);
+                if (!projected) return null;
+                const { x, y } = projected;
+                const label = `NH₃ terminal: ${point.name}${point.cap && point.cap !== "na" ? ` (${point.cap})` : ""}`;
+                return (
+                  <polygon
+                    key={`${point.name}-${index}`}
+                    points={`${x},${y - 7} ${x + 5},${y + 4} ${x - 5},${y + 4}`}
+                    fill="#2e6da4"
+                    fillOpacity={0.9}
+                    stroke="#fff"
+                    strokeWidth={1}
+                    className="cursor-pointer"
+                    onMouseMove={(event) => showTip(event, label)}
+                  />
+                );
+              })
+            : null}
+        </svg>
+        <div
+          ref={tipRef}
+          hidden
+          className="pointer-events-none absolute z-10 max-w-[220px] rounded-lg bg-[#1a3a5c] px-2.5 py-1.5 text-[11px] leading-snug text-white shadow-lg"
+        />
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-border px-4 py-2.5 text-[11px] text-mid">
+        <span className="inline-flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+            <polygon points="6,1 11,11 1,11" fill="#2e6da4" />
+          </svg>
+          NH₃ Terminals
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-[2px] border-[1.5px] border-[#559278] bg-[#d5e6df]" />
+          Urea Exporters (top 11)
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-[#d97706]" />
+          Phosphate Producers
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#dc2626]" />
+          MOP / Potash Mines
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function Commentary() {
+  return (
+    <article className="min-w-0 rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <p className="text-[13px] font-semibold text-ink">{ACADEMY_COMMENTARY.kicker}</p>
+      <h2 className="mt-3 text-[15px] font-bold text-ink">{ACADEMY_COMMENTARY.title}</h2>
+      <div className="mt-4 space-y-5">
+        {ACADEMY_COMMENTARY.sections.map((section) => (
+          <section key={section.heading}>
+            <h3 className="text-[13.5px] font-bold text-ink">{section.heading}</h3>
+            <div className="mt-2 space-y-3">
+              {section.paragraphs.map((paragraph) => (
+                <p key={paragraph.slice(0, 48)} className="text-[13px] leading-relaxed text-mid">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </article>
   );
 }

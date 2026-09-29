@@ -124,7 +124,9 @@ body::before {
   grid-template-areas:
     "topbar topbar topbar"
     "sidebar main panel";
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 .one-grid.no-panel {

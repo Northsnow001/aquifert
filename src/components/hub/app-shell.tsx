@@ -82,7 +82,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
         </Link>
       </header>
 
-      <aside className={`area-sidebar flex flex-col border-r border-border bg-surface py-4 ${mobileOpen ? "open" : ""}`}>
+      <aside className={`area-sidebar flex h-full min-h-0 flex-col overflow-y-auto border-r border-border bg-surface py-4 ${mobileOpen ? "open" : ""}`}>
         <div className="mb-3 flex items-center justify-between px-4">
           {collapsed ? null : <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mid">Navigation</p>}
           <button
@@ -130,10 +130,10 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
         </div>
       </aside>
 
-      <main className="area-main min-h-0 overflow-auto p-6">{children}</main>
+      <main className="area-main min-h-0 min-w-0 overflow-auto p-6">{children}</main>
 
       {noPanel ? null : (
-        <aside className="area-panel hidden h-full min-h-0 flex-col border-l border-border bg-surface lg:flex">
+        <aside className="area-panel hidden h-full min-h-0 min-w-0 flex-col overflow-hidden border-l border-border bg-surface lg:flex">
           <div className="flex items-center gap-2 border-b border-border px-3 py-3">
             <span className="rounded-full bg-[#e8f7ee] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-[#178a4c]">
               LIVE
