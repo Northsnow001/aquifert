@@ -5,6 +5,12 @@ export type SessionUser = {
   email: string;
   name: string;
   plan: Plan;
+  firstName?: string;
+  lastName?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  country?: string;
 };
 
 export function initials(name: string): string {

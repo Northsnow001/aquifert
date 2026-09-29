@@ -1,10 +1,15 @@
 export default function LegalPage() {
   return (
-    <section className="max-w-2xl rounded-xl border border-border bg-surface p-5 text-sm leading-relaxed text-mid">
-      <h1 className="text-lg font-black text-ink">Legal</h1>
-      <p className="mt-3">
+    <div className="max-w-3xl space-y-4 text-sm leading-relaxed text-mid">
+      <h2 className="text-lg font-semibold text-ink">Terms of Service</h2>
+      <p>
+        Membership covers access to Aquifert ONE: the hub, library, freight tools, and account pages for the plan on this
+        account.
+      </p>
+      <p>
         Calculator outputs are estimates for orientation. They are not a freight fixture, a firm offer, or customs advice.
       </p>
-    </section>
+      <p>Plan changes and billing run through the Plan tab. Enterprise coverage is arranged with the desk.</p>
+    </div>
   );
 }

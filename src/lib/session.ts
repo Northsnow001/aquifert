@@ -18,11 +18,19 @@ export async function getSession(): Promise<SessionUser | null> {
       .eq("id", user.id)
       .maybeSingle();
     const plan = (profile?.plan as Plan | undefined) ?? "growth";
+    const meta = user.user_metadata ?? {};
+    const text = (value: unknown) => (typeof value === "string" ? value : undefined);
     return {
       id: user.id,
       email: user.email ?? "",
       name: profile?.full_name || user.email || "Member",
       plan,
+      firstName: text(meta.first_name),
+      lastName: text(meta.last_name),
+      address1: text(meta.address_line_1),
+      address2: text(meta.address_line_2),
+      city: text(meta.city),
+      country: text(meta.country),
     };
   }
 
