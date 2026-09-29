@@ -19,10 +19,11 @@ const inter = Inter({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+// Variable font. A weight list makes Google emit kit URLs with extra query
+// params, which Vercel's Turbopack font loader rejects ("queries have exactly one entry").
 const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com";
