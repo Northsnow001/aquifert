@@ -2,7 +2,7 @@ import "server-only";
 
 import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "fs";
 import path from "path";
-import { assertLocalAllowed, databaseError, dataClient } from "@/lib/data/db";
+import { assertLocalAllowed, databaseError, dataClient, readFallback } from "@/lib/data/db";
 import type { DocumentKey } from "@/lib/data/tables";
 
 const localPath = (key: DocumentKey) => path.join(process.cwd(), "data", `${key}.json`);
@@ -40,7 +40,7 @@ export async function readDocument(key: DocumentKey): Promise<unknown> {
   const db = dataClient();
   if (!db) return readLocal(key);
   const { data, error } = await db.from("app_documents").select("data").eq("key", key).maybeSingle();
-  if (error) throw databaseError(`read ${key}`, error);
+  if (error) return readFallback("app_documents", error, null);
   return (data?.data as unknown) ?? null;
 }
 

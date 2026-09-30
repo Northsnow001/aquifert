@@ -25,7 +25,24 @@ export function assertLocalAllowed() {
   }
 }
 
-export function databaseError(action: string, error: { message: string }) {
-  const missing = /does not exist|schema cache|relation/i.test(error.message);
-  return new Error(missing ? `Could not ${action}: the table is missing. Run supabase/migrations/003_app_data.sql in the Supabase SQL editor.` : `Could not ${action}: ${error.message}`);
+export const isMissingTable = (error: { message: string; code?: string }) =>
+  error.code === "42P01" || error.code === "PGRST205" || /does not exist|schema cache|relation/i.test(error.message);
+
+export function databaseError(action: string, error: { message: string; code?: string }) {
+  return new Error(isMissingTable(error) ? `Could not ${action}: the table is missing. Run supabase/migrations/003_app_data.sql in the Supabase SQL editor.` : `Could not ${action}: ${error.message}`);
+}
+
+const warned = new Set<string>();
+
+/**
+ * Reads treat a table that does not exist yet as empty, so pages keep working with built-in
+ * defaults until the migration runs. Writes to it still fail, so nothing is saved over real data.
+ */
+export function readFallback<T>(table: string, error: { message: string; code?: string }, fallback: T): T {
+  if (!isMissingTable(error)) throw databaseError(`read ${table}`, error);
+  if (!warned.has(table)) {
+    warned.add(table);
+    console.error(`[data] ${table} is missing. Run supabase/migrations/003_app_data.sql in the Supabase SQL editor.`);
+  }
+  return fallback;
 }

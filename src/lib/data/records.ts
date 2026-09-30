@@ -2,7 +2,7 @@ import "server-only";
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
 import path from "path";
-import { assertLocalAllowed, databaseError, dataClient } from "@/lib/data/db";
+import { assertLocalAllowed, databaseError, dataClient, readFallback } from "@/lib/data/db";
 import { toRow, type RecordSpec } from "@/lib/data/tables";
 
 const PAGE = 1000;
@@ -69,7 +69,7 @@ export async function listRecords<T>(spec: RecordSpec<T>, options: Filter & { li
     if (or) query = query.or(or);
     const size = Math.min(PAGE, limit - rows.length);
     const { data, error } = await query.range(rows.length, rows.length + size - 1);
-    if (error) throw databaseError(`read ${spec.table}`, error);
+    if (error) return readFallback(spec.table, error, rows);
     rows.push(...(data ?? []).map((row) => row.data as T));
     if (!data || data.length < size) break;
   }
@@ -98,7 +98,7 @@ export async function getRecord<T>(spec: RecordSpec<T>, id: string): Promise<T |
   const db = dataClient();
   if (!db) return readLocal(spec).find((item) => spec.keys(item).id === id) ?? null;
   const { data, error } = await db.from(spec.table).select("data").eq("id", id).maybeSingle();
-  if (error) throw databaseError(`read ${spec.table}`, error);
+  if (error) return readFallback(spec.table, error, null);
   return (data?.data as T | undefined) ?? null;
 }
 
@@ -111,7 +111,7 @@ export async function countRecords<T>(spec: RecordSpec<T>, filter: Filter = {}):
   const or = ownerFilter(filter);
   if (or) query = query.or(or);
   const { count, error } = await query;
-  if (error) throw databaseError(`count ${spec.table}`, error);
+  if (error) return readFallback(spec.table, error, 0);
   return count ?? 0;
 }
 
