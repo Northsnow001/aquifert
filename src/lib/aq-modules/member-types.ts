@@ -1,3 +1,4 @@
+import type { BillingCycle, MembershipTier } from "@/lib/aq-modules/membership";
 import type { NitrogenAnswers } from "@/lib/nitrogen/engine";
 import type { Plan } from "@/lib/session-shared";
 import type { Persona, TelexProduct } from "@/lib/aq-modules/types";
@@ -66,6 +67,9 @@ export type MembershipRequest = {
   company: string;
   currentPlan: Plan;
   requestedPlan: Plan;
+  /** Sprout, Harvest or Scale when the request is for AQ ZERO membership. */
+  tier?: MembershipTier | null;
+  cycle?: BillingCycle | null;
   /** The locked module that sent them here, if any. */
   source: string;
   message: string;

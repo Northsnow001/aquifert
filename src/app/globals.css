@@ -336,6 +336,13 @@ body::before {
 .aq-backdrop {
   animation: aq-fade 0.2s ease-out both;
 }
+@keyframes aq-dock-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+.aq-dock {
+  animation: aq-dock-in 0.24s var(--aq-ease) both;
+}
 .aq-gauge-arc {
   animation: aq-gauge 0.9s var(--aq-ease) both;
 }
@@ -424,7 +431,7 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .aq-page, .aq-rise, .aq-stagger > *, .aq-drop, .aq-sheet, .aq-drawer, .aq-backdrop, .aq-gauge-arc, .aq-skeleton, .aq-avatar img {
+  .aq-page, .aq-rise, .aq-stagger > *, .aq-drop, .aq-sheet, .aq-drawer, .aq-dock, .aq-backdrop, .aq-gauge-arc, .aq-skeleton, .aq-avatar img {
     animation: none !important;
   }
   .aq-lift, .aq-lift:hover, .aq-app button:active {

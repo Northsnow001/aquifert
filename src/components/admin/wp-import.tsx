@@ -15,8 +15,8 @@ type Ready = { summary: ExportSummary; options: ImportOptions; sections: Section
 
 const ACCESS_OPTIONS: { value: TelexAccess; label: string }[] = [
   { value: "public", label: "All members" },
-  { value: "growth", label: "Growth and AQ Zero" },
-  { value: "enterprise", label: "AQ Zero only" },
+  { value: "growth", label: "AQ Analytics and AQ ZERO" },
+  { value: "enterprise", label: "AQ ZERO only" },
 ];
 
 const ORDER: SectionKey[] = ["telex", "indicators", "hedge", "freight", "tools", "library", "enquiries"];

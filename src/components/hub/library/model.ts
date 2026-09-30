@@ -31,13 +31,13 @@ export const SORTS: { value: LibrarySort; label: string }[] = [
 
 export const ACCESS_OPTIONS: { value: TelexAccess; label: string }[] = [
   { value: "public", label: "Free" },
-  { value: "growth", label: "Growth+" },
-  { value: "enterprise", label: "AQ Zero" },
+  { value: "growth", label: "AQ Analytics" },
+  { value: "enterprise", label: "AQ ZERO" },
 ];
 
 const UNLOCK = {
-  growth: { plan: "growth", label: "Growth" },
-  enterprise: { plan: "enterprise", label: "AQ Zero" },
+  growth: { plan: "growth", label: "AQ Analytics" },
+  enterprise: { plan: "enterprise", label: "AQ ZERO" },
 } as const;
 
 export function unlockFor(access: TelexAccess) {

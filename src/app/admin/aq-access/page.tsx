@@ -10,7 +10,7 @@ export default async function AqAccessAdminPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Access & allowances"
-        description="Which plan unlocks each AQ Analytics module on the hub, and how many AQ1 reports each plan gets a month."
+        description="Which plan unlocks each AQ Analytics module on the hub, and how many AQ ONE reports each plan gets a month."
       />
       <AccessForm access={access} limits={limits} updatedAt={updatedAt} />
     </div>

@@ -9,7 +9,7 @@ import { FILE_ACCESS_LABEL, formatBytes, type Collection, type LibraryDocument, 
 type Upload = { file: File; progress: number; state: "waiting" | "sending" | "done" | "error"; message?: string };
 
 const ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.zip";
-const ACCESS_HINT: Record<TelexAccess, string> = { public: "Every member", growth: "Growth and AQ Zero", enterprise: "AQ Zero only" };
+const ACCESS_HINT: Record<TelexAccess, string> = { public: "Every member", growth: "AQ Analytics and AQ ZERO", enterprise: "AQ ZERO only" };
 
 type Result = { ok: boolean; id?: string; message?: string };
 type Prepared = { ok: true; id: string; storedName: string; upload: { url: string } | null } | { ok: false; message: string };

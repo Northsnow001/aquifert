@@ -10,9 +10,9 @@ import { premiumTaper } from "@/lib/freight/reference";
 import { DEFAULT_FREIGHT_SETTINGS, type FreightSettings } from "@/lib/freight-desk/types";
 
 const PLANS = [
-  { key: "limitCore", plan: "Core" },
-  { key: "limitGrowth", plan: "Growth" },
-  { key: "limitEnterprise", plan: "AQ Zero" },
+  { key: "limitCore", plan: "AQ ONE" },
+  { key: "limitGrowth", plan: "AQ Analytics" },
+  { key: "limitEnterprise", plan: "AQ ZERO" },
 ] as const;
 
 const TAPER_SAMPLES = [5000, 8000, 11000, 14000];

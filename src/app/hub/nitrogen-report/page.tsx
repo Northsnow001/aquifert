@@ -28,7 +28,7 @@ export default async function NitrogenReportPage() {
   return (
     <div className="flex flex-col gap-5 pb-2">
       <HubPageHeader
-        eyebrow="AQ1"
+        eyebrow="AQ ONE"
         title="Nitrogen Report"
         tip="Answer four short sections about delivery, volumes, crop and goals. The desk engine turns them into a tailored nitrogen sourcing and agronomy report you can print, save as PDF or send to the desk for a quote."
         guide="nitrogen"

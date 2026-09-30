@@ -12,7 +12,7 @@ import type { Plan } from "@/lib/session-shared";
 const PLANS: Plan[] = ["core", "growth", "enterprise"];
 
 const ALLOWANCES: { key: keyof Aq1Limits; label: string; hint: string }[] = [
-  { key: "nitrogenReports", label: "AQ1 nitrogen reports", hint: "Reports a member can generate each month." },
+  { key: "nitrogenReports", label: "AQ ONE nitrogen reports", hint: "Reports a member can generate each month." },
   { key: "savedReports", label: "Saved reports", hint: "Reports a member can keep in their library." },
 ];
 
@@ -20,7 +20,7 @@ type Status = "idle" | "pending" | "saving" | "saved" | "error";
 
 function audience(plan: Plan) {
   const plans = PLANS.filter((item) => PLAN_RANK[item] >= PLAN_RANK[plan]).map((item) => PLAN_LABEL[item]);
-  if (plans.length === 3) return "Every member: Core, Growth and AQ Zero";
+  if (plans.length === 3) return "Every member: AQ ONE, AQ Analytics and AQ ZERO";
   if (plans.length === 2) return `${plans[0]} and ${plans[1]} members`;
   return `${plans[0]} members only`;
 }
@@ -163,7 +163,7 @@ export function AccessForm({ access: initialAccess, limits: initialLimits, updat
       </section>
 
       <section className="overflow-hidden aq-card">
-        <CardHeader title="AQ1 allowances" meta="Monthly limits per plan. Enter 0 for unlimited." />
+        <CardHeader title="AQ ONE allowances" meta="Monthly limits per plan. Enter 0 for unlimited." />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-left">
             <thead>

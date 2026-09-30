@@ -26,7 +26,7 @@ export default async function CommunityCallPage() {
   return (
     <div className="mx-auto max-w-5xl pb-2">
       <HubPageHeader
-        eyebrow="AQ1 Free plan"
+        eyebrow="AQ ONE Free plan"
         title="Freight Analytics Call"
         description="A free live call with the Aquifert desk on fertilizer prices and freight. Register in one click, add it to your calendar and send in the question you want answered."
         tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan. The joining link appears on this page 15 minutes before the start."

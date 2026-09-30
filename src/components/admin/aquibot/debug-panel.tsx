@@ -11,9 +11,9 @@ import { Panel, Switch } from "./shared";
 
 const AUDIENCES = [
   { value: "admin", label: "Admin (all content)" },
-  { value: "enterprise", label: "AQ Zero member" },
-  { value: "growth", label: "Growth member" },
-  { value: "core", label: "Core member" },
+  { value: "enterprise", label: "AQ ZERO member" },
+  { value: "growth", label: "AQ Analytics member" },
+  { value: "core", label: "AQ ONE member" },
 ] as const;
 
 const SAMPLES = ["Urea prices last week", "How is DAP made and what is its spec?", "Latest news on Egypt granular urea", "Compare DAP CFR India this time last year"];

@@ -5,8 +5,10 @@ import { useRef, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, Check, CircleAlert, FlaskConical, Lightbulb, Loader2, RotateCcw, Ship, Sprout } from "lucide-react";
 import { toast } from "sonner";
 import { generateReport } from "@/app/hub/nitrogen-report/actions";
+import { CountrySelect } from "@/components/app/country-select";
 import { areaClass, btnPrimary, btnSecondary, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { seasonalN, shipmentPlan, tonnes } from "@/components/hub/nitrogen/hints";
+import { WORLD_COUNTRIES, type CountryOption } from "@/lib/countries";
 import {
   ADDITIVES,
   CROPS,
@@ -47,6 +49,13 @@ const STEPS = [
     desc: "What matters most this season.",
     why: "Your priority tips the programme towards the cheapest nitrogen or the most efficient, and additives change the loss risk.",
   },
+];
+
+const ORIGIN_REGIONS = ["Middle East", "North Africa", "West Africa", "Black Sea", "Baltic", "Southeast Asia", "North America", "South America"];
+
+const ORIGIN_OPTIONS: CountryOption[] = [
+  ...ORIGIN_REGIONS.map((region) => ({ value: region, label: region, group: "Regions" })),
+  ...WORLD_COUNTRIES.map((country) => ({ ...country, group: "Countries" })),
 ];
 
 const NOTES_MAX = 1000;
@@ -310,13 +319,21 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field id="n-country" label="Destination country" required>
-                  <input id="n-country" value={answers.destinationCountry} onChange={(event) => set("destinationCountry", event.target.value)} placeholder="e.g. United Kingdom" autoComplete="country-name" maxLength={80} className={fieldClass} />
+                  <CountrySelect id="n-country" value={answers.destinationCountry} onChange={(value) => set("destinationCountry", value)} options={WORLD_COUNTRIES} placeholder="Select a country" />
                 </Field>
                 <Field id="n-port" label="Destination port" hint="Leave blank if you are not sure yet.">
                   <input id="n-port" value={answers.destinationPort} onChange={(event) => set("destinationPort", event.target.value)} placeholder="e.g. Immingham" maxLength={80} className={fieldClass} />
                 </Field>
                 <Field id="n-origin" label="Preferred origin" hint="The desk quotes it alongside at least one alternative.">
-                  <input id="n-origin" value={answers.preferredOrigin} onChange={(event) => set("preferredOrigin", event.target.value)} placeholder="e.g. Middle East, or leave open" maxLength={80} className={fieldClass} />
+                  <CountrySelect
+                    id="n-origin"
+                    value={answers.preferredOrigin}
+                    onChange={(value) => set("preferredOrigin", value)}
+                    options={ORIGIN_OPTIONS}
+                    clearLabel="Open to any origin"
+                    placeholder="Open to any origin"
+                    searchPlaceholder="Search countries or regions…"
+                  />
                 </Field>
               </div>
               <PillRadio name="n-window" legend="Delivery window" required options={WINDOWS} value={answers.deliveryWindow} onChange={(value) => set("deliveryWindow", value)} />

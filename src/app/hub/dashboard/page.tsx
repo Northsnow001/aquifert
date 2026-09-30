@@ -76,7 +76,7 @@ export default async function DashboardPage() {
           <Tag tone="teal" className="mr-1.5 align-middle">
             {PLAN_LABEL[user.plan]} plan
           </Tag>
-          {user.plan === "core" ? "AQ1 is included. Upgrade any time to unlock AQ Analytics." : "Your plan includes AQ Analytics. Locked items show what else is available."}
+          {user.plan === "core" ? "AQ ONE is included. Upgrade any time to unlock AQ Analytics." : "Your plan includes AQ Analytics. Locked items show what else is available."}
         </p>
       </div>
 

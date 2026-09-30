@@ -1,45 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { CheckCircle2, CircleAlert } from "lucide-react";
 import { updateProfile, type ProfileState } from "@/app/(auth)/actions";
 import { btnPrimary, fieldClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
+import { CountrySelect } from "@/components/app/country-select";
+import { WORLD_COUNTRIES } from "@/lib/countries";
 import type { SessionUser } from "@/lib/session-shared";
-
-const COUNTRIES = [
-  "Argentina",
-  "Australia",
-  "Belgium",
-  "Brazil",
-  "Canada",
-  "China",
-  "Egypt",
-  "France",
-  "Germany",
-  "India",
-  "Indonesia",
-  "Ireland",
-  "Italy",
-  "Japan",
-  "Kenya",
-  "Malaysia",
-  "Mexico",
-  "Morocco",
-  "Netherlands",
-  "Nigeria",
-  "Norway",
-  "Pakistan",
-  "Poland",
-  "Saudi Arabia",
-  "Singapore",
-  "South Africa",
-  "Spain",
-  "Turkey",
-  "Ukraine",
-  "United Arab Emirates",
-  "United Kingdom (UK)",
-  "United States",
-];
 
 function splitName(user: SessionUser) {
   if (user.firstName || user.lastName) {
@@ -60,6 +27,7 @@ function Field({ label, children, className = "" }: { label: string; children: R
 
 export function ProfileForm({ user, saved }: { user: SessionUser; saved: boolean }) {
   const [state, action, pending] = useActionState(updateProfile, {} as ProfileState);
+  const [country, setCountry] = useState(user.country === "United Kingdom (UK)" ? "United Kingdom" : (user.country ?? ""));
   const name = splitName(user);
 
   return (
@@ -104,16 +72,12 @@ export function ProfileForm({ user, saved }: { user: SessionUser; saved: boolean
           <Field label="City">
             <input name="city" required autoComplete="address-level2" defaultValue={user.city ?? ""} className={fieldClass} />
           </Field>
-          <Field label="Country">
-            <select name="country" required autoComplete="country-name" defaultValue={user.country ?? ""} className={fieldClass}>
-              <option value="">Select a country</option>
-              {COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <div>
+            <label htmlFor="profile-country" className={labelClass}>
+              Country
+            </label>
+            <CountrySelect id="profile-country" name="country" value={country} onChange={setCountry} options={WORLD_COUNTRIES} />
+          </div>
         </div>
       </section>
 

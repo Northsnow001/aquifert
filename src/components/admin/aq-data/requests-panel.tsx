@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { removeMembershipRequest, saveMembershipRequest } from "@/app/admin/aq-data/actions";
 import { EmptyState, btnDanger, btnPrimary, label, textarea } from "@/components/admin/ui";
 import { REQUEST_STATUSES, type MembershipRequest, type RequestStatus } from "@/lib/aq-modules/member-types";
+import { TIER_LABEL } from "@/lib/aq-modules/membership";
 import { MODULES, PLAN_LABEL } from "@/lib/aq-modules/types";
 import { formatStamp } from "@/lib/content-types";
 
@@ -20,6 +21,7 @@ const TONE: Record<RequestStatus, string> = {
 
 const sourceLabel = (source: string) => (source ? (MODULES.find((item) => item.key === source)?.label ?? source) : "Membership page");
 const planLabel = (plan: string) => PLAN_LABEL[plan as keyof typeof PLAN_LABEL] ?? plan;
+const requestedLabel = (row: MembershipRequest) => (row.tier ? `${planLabel(row.requestedPlan)} · ${TIER_LABEL[row.tier]}` : planLabel(row.requestedPlan));
 
 function Row({ row, open, onToggle }: { row: MembershipRequest; open: boolean; onToggle: () => void }) {
   const router = useRouter();
@@ -71,9 +73,12 @@ function Row({ row, open, onToggle }: { row: MembershipRequest; open: boolean; o
           <span className="flex items-center gap-1.5 text-[13px] text-ink">
             {planLabel(row.currentPlan)}
             <ArrowRight className="h-3 w-3 text-dim" />
-            <span className="font-semibold">{planLabel(row.requestedPlan)}</span>
+            <span className="font-semibold">{requestedLabel(row)}</span>
           </span>
-          <span className="block truncate text-[11.5px] text-mid">From {sourceLabel(row.source)}</span>
+          <span className="block truncate text-[11.5px] text-mid">
+            From {sourceLabel(row.source)}
+            {row.cycle ? ` · ${row.cycle === "annual" ? "Annual" : "Monthly"}` : ""}
+          </span>
         </span>
         <span>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[row.status]}`}>{STATUS_LABEL[row.status]}</span>
@@ -88,7 +93,7 @@ function Row({ row, open, onToggle }: { row: MembershipRequest; open: boolean; o
               <dt className="text-dim">Contact</dt>
               <dd className="text-ink">
                 {row.name}{" "}
-                <a href={`mailto:${row.email}?subject=${encodeURIComponent(`Your Aquifert ${planLabel(row.requestedPlan)} request`)}`} className="inline-flex items-center gap-1 text-blue">
+                <a href={`mailto:${row.email}?subject=${encodeURIComponent(`Your Aquifert ${requestedLabel(row)} request`)}`} className="inline-flex items-center gap-1 text-blue">
                   <Mail className="h-3 w-3" />
                   {row.email}
                 </a>
@@ -97,8 +102,14 @@ function Row({ row, open, onToggle }: { row: MembershipRequest; open: boolean; o
               <dd className="text-ink">{row.company || "None given"}</dd>
               <dt className="text-dim">Plan</dt>
               <dd className="text-ink">
-                {planLabel(row.currentPlan)} to {planLabel(row.requestedPlan)}
+                {planLabel(row.currentPlan)} to {requestedLabel(row)}
               </dd>
+              {row.cycle ? (
+                <>
+                  <dt className="text-dim">Billing</dt>
+                  <dd className="text-ink">{row.cycle === "annual" ? "Annual (10% off)" : "Monthly"}</dd>
+                </>
+              ) : null}
               <dt className="text-dim">Came from</dt>
               <dd className="text-ink">{sourceLabel(row.source)}</dd>
               <dt className="text-dim">Account id</dt>

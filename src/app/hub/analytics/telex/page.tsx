@@ -38,7 +38,7 @@ export default async function AqTelexPage({ searchParams }: { searchParams: Prom
         eyebrow="AQ Analytics"
         title="AQ TELEX"
         description="The full desk wire: every flash for every plan tier, with the complete archive. Search it, narrow it by product, tag or date, and export what you are reading."
-        tip="AQ TELEX carries every flash the desk files, including Growth and AQ Zero items. Search matches the headline, text and tags, and every word you type must appear. Filters live in the address bar, so you can bookmark or share a view."
+        tip="AQ TELEX carries every flash the desk files, including AQ Analytics and AQ ZERO items. Search matches the headline, text and tags, and every word you type must appear. Filters live in the address bar, so you can bookmark or share a view."
         actions={matches.length ? <DownloadLink href={`/hub/analytics/telex/csv${telexQuery(filter)}`} label={filtered ? "Download CSV (this filter)" : "Download CSV"} /> : null}
       />
 

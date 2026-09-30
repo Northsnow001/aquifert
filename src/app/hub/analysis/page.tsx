@@ -75,7 +75,7 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
   return (
     <div className="mx-auto max-w-5xl pb-2">
       <HubPageHeader
-        eyebrow="AQ1 Free plan"
+        eyebrow="AQ ONE Free plan"
         title="AQ Market Analysis Feed"
         description={
           notes[0]

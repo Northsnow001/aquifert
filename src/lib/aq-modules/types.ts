@@ -9,7 +9,7 @@ export const MODULES: { key: ModuleKey; label: string; href: string; pitch: stri
     label: "AQ TELEX",
     href: "/hub/analytics/telex",
     pitch: "The full desk wire: every flash for every plan tier, searchable, with the complete archive.",
-    covers: ["Every Growth and AQ Zero flash as it is filed", "Search and filter the full archive by product and tag", "Export what you are reading for your own notes"],
+    covers: ["Every AQ Analytics and AQ ZERO flash as it is filed", "Search and filter the full archive by product and tag", "Export what you are reading for your own notes"],
   },
   {
     key: "market-data",
@@ -63,15 +63,15 @@ export const DEFAULT_ACCESS: AccessRules = {
   "aq-telex": "growth",
   "market-data": "growth",
   "aq-signal-pro": "growth",
-  "freight-analytics": "enterprise",
+  "freight-analytics": "growth",
   "supply-demand": "enterprise",
   briefing: "growth",
   alerts: "growth",
 };
 
 export const PLAN_RANK: Record<Plan, number> = { core: 0, growth: 1, enterprise: 2 };
-/** Display names. The stored key stays `enterprise`; members see it as AQ Zero. */
-export const PLAN_LABEL: Record<Plan, string> = { core: "Core", growth: "Growth", enterprise: "AQ Zero" };
+/** Display names. The stored key stays `enterprise`; members see it as AQ ZERO. */
+export const PLAN_LABEL: Record<Plan, string> = { core: "AQ ONE", growth: "AQ Analytics", enterprise: "AQ ZERO" };
 export const planName = (value: string | null | undefined) => (value ? (PLAN_LABEL[value as Plan] ?? value) : "");
 
 export function canUse(rules: AccessRules, key: ModuleKey, user: { plan: Plan; admin?: boolean } | null) {

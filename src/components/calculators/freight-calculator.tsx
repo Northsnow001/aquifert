@@ -184,11 +184,11 @@ export function FreightCalculator({
           }}
         >
           <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">— Voyage parameters</p>
-          <PortField label="Load port" value={load} onSelect={setLoad} ports={ports} />
+          <PortField countryLabel="Load country" label="Load port" value={load} onSelect={setLoad} ports={ports} />
           <div className="flex justify-center py-2 text-dim">
             <ArrowDown className="h-4 w-4" />
           </div>
-          <PortField label="Discharge port" value={discharge} onSelect={setDischarge} ports={ports} />
+          <PortField countryLabel="Discharge country" label="Discharge port" value={discharge} onSelect={setDischarge} ports={ports} />
           <div className="my-4 h-px bg-border" />
           <label className="mb-3 block">
             <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Cargo type</span>

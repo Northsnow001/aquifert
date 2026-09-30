@@ -12,9 +12,9 @@ import { estimateNetbackFreight, type NetbackCosts, type NetbackOrigin } from "@
 import { DEFAULT_NETBACK_SETTINGS, type NetbackSettings } from "@/lib/netback-desk/types";
 
 const PLANS = [
-  { key: "limitCore", plan: "Core" },
-  { key: "limitGrowth", plan: "Growth" },
-  { key: "limitEnterprise", plan: "AQ Zero" },
+  { key: "limitCore", plan: "AQ ONE" },
+  { key: "limitGrowth", plan: "AQ Analytics" },
+  { key: "limitEnterprise", plan: "AQ ZERO" },
 ] as const;
 
 const SAMPLE = { name: "Paranaguá", lat: -25.52, lon: -48.51, region: "South America" };

@@ -72,9 +72,9 @@ export function LogsPanel({ rows, total, page, pages, filters, months }: { rows:
         </div>
         <select name="plan" aria-label="Plan" defaultValue={filters.plan} className={`${field} h-9`}>
           <option value="">All plans</option>
-          <option value="core">Core</option>
-          <option value="growth">Growth</option>
-          <option value="enterprise">AQ Zero</option>
+          <option value="core">AQ ONE</option>
+          <option value="growth">AQ Analytics</option>
+          <option value="enterprise">AQ ZERO</option>
           <option value="admin">Admins</option>
         </select>
         <select name="month" aria-label="Month" defaultValue={filters.month} className={`${field} h-9`}>

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftRight, Calculator, PackageOpen, Share2 } from "lucide-react";
 import { runNetback, type NetbackUsage } from "@/app/hub/netback/actions";
-import { FlagMark } from "@/components/calculators/flag-mark";
 import { PortField } from "@/components/calculators/port-field";
 import { CURRENCIES, findCurrency } from "@/lib/netback/currencies";
 import { basisCosts, type Basis, type ForwardOrigin, type NetbackCosts, type ReverseOrigin } from "@/lib/netback/calculate";
@@ -114,8 +113,9 @@ export function NetbackCalculator({ ports, config, usage: initialUsage }: { port
   const farmUsd = toUsd(farm, currency.code, fx);
   const ran = run !== null;
 
-  function selectDestination(port: PortRecord) {
+  function selectDestination(port: PortRecord | null) {
     setDestination(port);
+    if (!port) return;
     const record = findDuty(config.duties, port.country);
     setDutyEnabled(Boolean(record?.active));
     setDutyPercent(record?.rate ?? 0);
@@ -257,13 +257,8 @@ export function NetbackCalculator({ ports, config, usage: initialUsage }: { port
           }}
         >
           <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">— Import parameters</p>
-          <PortField label="Destination port" value={destination} onSelect={selectDestination} ports={ports} />
-          {destination ? (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs text-mid">
-              <FlagMark country={destination.country} className="h-3 w-4" />
-              {destination.country} · {destination.region}
-            </p>
-          ) : null}
+          <PortField countryLabel="Destination country" label="Destination port" value={destination} onSelect={selectDestination} ports={ports} />
+          {destination ? <p className="mt-1.5 text-xs text-mid">{destination.region}</p> : null}
 
           {mode === "netback" ? (
             <div className="mt-4">

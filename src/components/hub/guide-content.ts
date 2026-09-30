@@ -43,7 +43,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     summary: "Where everything lives and the fastest ways to reach it.",
     aliases: ["guide"],
     body: [
-      "The sidebar opens with the places you use daily: Dashboard, Hub, Library, Nitrogen Report and Aquibot. Below them, AQ1 Free plan holds everything included with every account, and AQ Analytics holds the deeper data unlocked by plan. Desk tools and You sit at the bottom. Hover any item and tap the small ⓘ for a one-line explanation.",
+      "The sidebar opens with the places you use daily: Dashboard, Hub, Library, Nitrogen Report and Aquibot. Below them, AQ ONE Free plan holds everything included with every account, and AQ Analytics holds the deeper data unlocked by plan. Desk tools and You sit at the bottom. Hover any item and tap the small ⓘ for a one-line explanation.",
       "A lock beside a menu item means your plan does not include it yet. Open it anyway: the page explains what it covers, shows a preview and lets you upgrade or talk to the desk.",
     ],
     points: [
@@ -78,7 +78,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     href: "/hub",
     body: [
       "The Hub is your morning read. It opens with three market indicators, one each for Nitrogen (green), Phosphate (orange) and Potassium (red). Each is scored from 0 to 100 with the date it was set and a stance. Hover a card for the desk's longer note.",
-      "The Telex feed is the desk's running log of market events: tenders, price moves, plant outages, policy changes and cargoes on the move. Newest items sit at the top. Posts are marked Public, Growth+ or AQ Zero and appear according to your plan. Treat Telex as preliminary intel and verify figures before trading.",
+      "The Telex feed is the desk's running log of market events: tenders, price moves, plant outages, policy changes and cargoes on the move. Newest items sit at the top. Posts are marked Public, AQ Analytics or AQ ZERO and appear according to your plan. Treat Telex as preliminary intel and verify figures before trading.",
       "Market Commentary explains each indicator in full. When the desk publishes forward curves, Direct Hedge | Paper Forward Curves shows bid and ask prices in USD/t by month for each product. Pick a report from the Published dropdown; arrows show whether each price moved higher, lower or held.",
     ],
     points: [
@@ -94,7 +94,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     summary: "Every report and research note the desk has published.",
     href: "/hub/library",
     body: [
-      "Search by title, summary or collection, then narrow by collection, year and access. Each file carries an access badge: Free, Growth+ or AQ Zero. Open a card to read the summary, view the PDF in your browser or download it.",
+      "Search by title, summary or collection, then narrow by collection, year and access. Each file carries an access badge: Free, AQ Analytics or AQ ZERO. Open a card to read the summary, view the PDF in your browser or download it.",
       "Files above your plan show a lock and an unlock panel that takes you to your plan options or the desk.",
     ],
   },
@@ -207,7 +207,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     aliases: ["plan-usage"],
     body: [
       "Plan & Usage shows every allowance in one place: what you have used this month, your limit and the date it resets. Calculations, Aquibot questions and Nitrogen Reports are counted per calendar month.",
-      "Reading is included on every plan: Core sees Public Telex and Free library files, Growth adds Growth+, and AQ Zero sees everything.",
+      "Reading is included on every plan: AQ ONE sees Public Telex and Free library files, AQ Analytics adds the AQ Analytics items, and AQ ZERO sees everything.",
     ],
   },
   {
@@ -218,7 +218,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     href: "/hub/membership",
     aliases: ["billing"],
     body: [
-      "Membership compares Core, Growth and AQ Zero side by side, including which AQ Analytics modules and allowances each includes. Pick a plan and send the request; the desk confirms and moves your account, and you can follow the request's status on the same page.",
+      "AQ ONE is the free plan. Membership shows the paid options as cards: Sprout (up to 200 tonnes a month), Harvest (201 to 600 tonnes) and Scale (unlimited) are AQ ZERO memberships that replace the margin on every quote, and AQ Analytics (£299 a month) adds licensed market data without physical trading. Switch between monthly and annual billing (10% off), select a card and send the request; the desk confirms and moves your account, and you can follow the request's status on the same page. A table below compares the modules and allowances of each plan.",
       "Billing shows your plan, the contact the desk invoices, and your invoices and payment history. The desk handles billing directly, so a person is always on hand for questions.",
     ],
   },

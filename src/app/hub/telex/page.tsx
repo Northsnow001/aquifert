@@ -53,7 +53,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto max-w-4xl pb-2">
       <HubPageHeader
-        eyebrow="AQ1 Free plan"
+        eyebrow="AQ ONE Free plan"
         title="Market TELEX Feed"
         description="Desk-issued market flashes, newest first and grouped by day. Pick the products you trade and save them as your default, so the feed opens on what matters to you."
         tip="Short, time-stamped flashes from the Aquifert desk: tenders, price moves, plant news and freight. Green chips lean firmer, red lean softer. Flashes above your plan show as locked rows."

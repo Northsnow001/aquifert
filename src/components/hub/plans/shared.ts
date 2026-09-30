@@ -2,12 +2,12 @@ import type { Plan } from "@/lib/session-shared";
 
 export const PLAN_ORDER: Plan[] = ["core", "growth", "enterprise"];
 
-export const PLAN_PRICE: Record<Plan, string> = { core: "$99 / month", growth: "$249 / month", enterprise: "Tailored" };
+export const PLAN_PRICE: Record<Plan, string> = { core: "Free", growth: "£299 / month", enterprise: "From £2,000 / month" };
 
 export const PLAN_PITCH: Record<Plan, string> = {
-  core: "The AQ1 hub, the calculators and Aquibot, with monthly allowances that suit occasional buyers.",
-  growth: "AQ Analytics for teams that buy every month: the full wire, market data, signals and alerts.",
-  enterprise: "Everything, with unlimited allowances, freight analytics and supply and demand balances.",
+  core: "The free AQ ONE plan: the hub, Telex, analysis, AQ Signal, the library, the calculators and Aquibot.",
+  growth: "Analytics and licensed market data with no physical trading: the full wire, market data, signals, freight and alerts.",
+  enterprise: "Sprout, Harvest or Scale membership. One flat fee replaces the margin on every quote, with every AQ Analytics module.",
 };
 
 export type Allowances = { nitrogen: number; saved: number; freight: number; netback: number; aquibot: number };

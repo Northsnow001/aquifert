@@ -53,6 +53,8 @@ export default async function AquibotPage({ searchParams }: { searchParams: Prom
       engine={{ ready: status.ready, problem: status.problem }}
       isAdmin={isAdmin}
       hasTestPrompt={Boolean(config.prompt.test.trim())}
+      firstName={user?.name.trim().split(/\s+/)[0] ?? ""}
+      upgraded={Boolean(user && user.plan !== "core")}
     />
   );
 }

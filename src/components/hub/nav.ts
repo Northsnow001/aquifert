@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import type { ModuleKey } from "@/lib/aq-modules/types";
 
-export type HubSection = "Main" | "AQ1 Free plan" | "AQ Analytics" | "Desk tools" | "You";
+export type HubSection = "Main" | "AQ ONE Free plan" | "AQ Analytics" | "Desk tools" | "You";
 
 export type HubNavItem = {
   key: string;
@@ -98,7 +98,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Market TELEX Feed",
     short: "Telex",
     icon: Radio,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Desk-issued market flashes, newest first, grouped by day. Filter by product and save the filter as your default so the feed opens on what you trade.",
   },
   {
@@ -107,7 +107,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "AQ Market Analysis Feed",
     short: "Analysis",
     icon: Newspaper,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "The desk's interpretation, separate from the Telex: what a move means for buyers and what to watch next.",
   },
   {
@@ -116,7 +116,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "AQ Signal",
     short: "Signal",
     icon: Activity,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Rolling 7, 30, 60 and 90-day windows on benchmark prices: start and current price, change, high and low, and a one-line summary of the window.",
   },
   {
@@ -125,7 +125,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Netback",
     short: "Netback",
     icon: ArrowLeftRight,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Works out what a tonne of granular urea actually costs you landed, or what your farm-gate price implies back at FOB. It shows the full cost ladder and ranks which origin lands cheapest.",
   },
   {
@@ -134,7 +134,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Freight Analytics",
     short: "Freight",
     icon: Ship,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     module: "freight-analytics",
     tip: "Fixtures, lane benchmarks and freight commentary from AQ Analytics. Upgrade to unlock, or talk to the desk.",
   },
@@ -144,7 +144,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Order Fertilizer Now",
     short: "Order",
     icon: ShoppingCart,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Tell the desk what you need, product, quantity, destination and target price, and the Aquifert trading desk comes back with a quote.",
   },
   {
@@ -153,7 +153,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Freight Analytics Call",
     short: "Call",
     icon: PhoneCall,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "A free 45-minute market and freight call with the Aquifert desk. Register in one click, add it to your calendar and send in your questions.",
   },
   {
@@ -162,7 +162,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "User Guide",
     short: "Guide",
     icon: BookOpenCheck,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Step-by-step help for every part of Aquifert, including what each number means and how the calculators work. Start here if something isn't obvious.",
   },
   {
@@ -171,7 +171,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Contact Us",
     short: "Contact",
     icon: Mail,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Reach the Aquifert desk by WhatsApp, a booked meeting or a message. Use this when you want a person rather than a screen.",
   },
   {
@@ -180,7 +180,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Plan & Usage",
     short: "Usage",
     icon: SlidersHorizontal,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Every allowance in one place: what you have used this month, your limit and when it resets.",
   },
   {
@@ -189,8 +189,8 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Membership",
     short: "Plans",
     icon: Crown,
-    section: "AQ1 Free plan",
-    tip: "Compare Core, Growth and AQ Zero, see what each unlocks, and ask the desk to move your account.",
+    section: "AQ ONE Free plan",
+    tip: "Sprout, Harvest and Scale memberships (AQ ZERO) and AQ Analytics, monthly or annual. Select one and the desk moves your account.",
   },
   {
     key: "billing",
@@ -198,7 +198,7 @@ export const HUB_NAV: HubNavItem[] = [
     label: "Billing",
     short: "Billing",
     icon: CreditCard,
-    section: "AQ1 Free plan",
+    section: "AQ ONE Free plan",
     tip: "Your plan, billing contact, invoices and payment history.",
   },
 
@@ -314,7 +314,7 @@ export const HUB_NAV: HubNavItem[] = [
 
 export const ADMIN_LINK = { href: "/admin", label: "Admin console", icon: LayoutGrid };
 
-export const SECTIONS: HubSection[] = ["Main", "AQ1 Free plan", "AQ Analytics", "Desk tools", "You"];
+export const SECTIONS: HubSection[] = ["Main", "AQ ONE Free plan", "AQ Analytics", "Desk tools", "You"];
 
 /** Phone tab bar: the four most-used places plus "More", which opens the full menu. */
 export const TAB_KEYS = ["dashboard", "home", "telex", "aquibot"];

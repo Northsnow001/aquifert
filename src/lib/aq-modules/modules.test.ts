@@ -66,8 +66,9 @@ test("alerts trigger on the latest price and ignore paused alerts", () => {
 test("modules unlock by plan rank, and admins see everything", () => {
   assert.equal(canUse(DEFAULT_ACCESS, "aq-telex", { plan: "core" }), false);
   assert.equal(canUse(DEFAULT_ACCESS, "aq-telex", { plan: "growth" }), true);
-  assert.equal(canUse(DEFAULT_ACCESS, "freight-analytics", { plan: "growth" }), false);
-  assert.equal(canUse(DEFAULT_ACCESS, "freight-analytics", { plan: "core", admin: true }), true);
+  assert.equal(canUse(DEFAULT_ACCESS, "freight-analytics", { plan: "growth" }), true);
+  assert.equal(canUse(DEFAULT_ACCESS, "supply-demand", { plan: "growth" }), false);
+  assert.equal(canUse(DEFAULT_ACCESS, "supply-demand", { plan: "core", admin: true }), true);
   assert.equal(canUse(DEFAULT_ACCESS, "briefing", null), false);
   assert.equal(unlockedModules(DEFAULT_ACCESS, { plan: "enterprise" }).length, 7);
 });

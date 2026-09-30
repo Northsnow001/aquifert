@@ -12,9 +12,9 @@ type Plan = "core" | "growth" | "enterprise";
 export type GuideLimits = { label: string; core: number; growth: number; enterprise: number }[];
 
 const PLANS: { key: Plan; label: string }[] = [
-  { key: "core", label: "Core" },
-  { key: "growth", label: "Growth" },
-  { key: "enterprise", label: "AQ Zero" },
+  { key: "core", label: "AQ ONE" },
+  { key: "growth", label: "AQ Analytics" },
+  { key: "enterprise", label: "AQ ZERO" },
 ];
 
 function SectionIcon({ icon, size = 36 }: { icon: GuideSection["icon"]; size?: number }) {

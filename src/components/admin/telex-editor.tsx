@@ -19,9 +19,9 @@ import {
 } from "@/lib/content-types";
 
 const ACCESS_AUDIENCE: Record<TelexAccess, string> = {
-  public: "Core, Growth and AQ Zero members",
-  growth: "Growth and AQ Zero members",
-  enterprise: "AQ Zero members only",
+  public: "AQ ONE, AQ Analytics and AQ ZERO members",
+  growth: "AQ Analytics and AQ ZERO members",
+  enterprise: "AQ ZERO members only",
 };
 
 export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexItem; knownTags: string[]; defaultAuthor: string }) {

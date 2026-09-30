@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Crown, Info, Lock, Sparkles } from "lucide-react";
-import { btnPrimary, btnSecondary } from "@/components/app/form";
-import { HubPageHeader, Tag } from "@/components/hub/kit";
+import { ArrowRight, Check, Clock, Info, Lock, Sparkles } from "lucide-react";
+import { btnPrimary } from "@/components/app/form";
+import { Tag } from "@/components/hub/kit";
 import { planAllowances } from "@/components/hub/plans/load";
-import { RequestForm } from "@/components/hub/plans/request-form";
-import { ALLOWANCE_LABEL, amount, isPlan, longDay, PLAN_ORDER, PLAN_PITCH, PLAN_PRICE, type Allowances } from "@/components/hub/plans/shared";
+import { MembershipBoard } from "@/components/hub/plans/membership-board";
+import { ALLOWANCE_LABEL, amount, isPlan, longDay, PLAN_ORDER, PLAN_PRICE, type Allowances } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
+import { isTier, TIER_LABEL, type MembershipOffer } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
 import { MODULES, PLAN_LABEL, PLAN_RANK, type ModuleKey } from "@/lib/aq-modules/types";
 import type { Plan } from "@/lib/session-shared";
@@ -15,20 +16,6 @@ export const metadata: Metadata = { title: "Membership" };
 export const dynamic = "force-dynamic";
 
 const ALLOWANCE_KEYS = Object.keys(ALLOWANCE_LABEL) as (keyof Allowances)[];
-
-const ALLOWANCE_LINE: Record<keyof Allowances, [string, string]> = {
-  nitrogen: ["nitrogen report a month", "nitrogen reports a month"],
-  saved: ["saved report kept", "saved reports kept"],
-  freight: ["freight calculator run a month", "freight calculator runs a month"],
-  netback: ["netback calculation a month", "netback calculations a month"],
-  aquibot: ["Aquibot question a month", "Aquibot questions a month"],
-};
-
-function allowanceLine(key: keyof Allowances, value: number) {
-  const [one, many] = ALLOWANCE_LINE[key];
-  if (value === 0) return key === "saved" ? "Every saved report kept" : `Unlimited ${many.replace(/ a month$/, "")}`;
-  return `${value.toLocaleString("en-GB")} ${value === 1 ? one : many}`;
-}
 
 const STATUS_COPY = {
   new: { label: "Received", body: "The desk has your request and will be in touch shortly." },
@@ -39,7 +26,15 @@ const STATUS_COPY = {
 const FAQ = [
   {
     q: "How do I change my plan?",
-    a: "Choose a plan and send the request below. The desk confirms the details by email and moves your account, usually the same working day.",
+    a: "Select a plan above and send the request. The desk confirms the details by email and moves your account, usually the same working day.",
+  },
+  {
+    q: "Which membership tier fits me?",
+    a: "Tiers follow the tonnage you buy through the desk each month: Sprout covers up to 200 tonnes, Harvest 201 to 600 tonnes, and Scale has no limit. If you outgrow your tier, the desk suggests the next one.",
+  },
+  {
+    q: "What is the difference between AQ Analytics and AQ ZERO?",
+    a: "AQ Analytics is for analysis and licensed market data, with no physical trading. Sprout, Harvest and Scale are AQ ZERO memberships: one flat fee replaces the margin on every quote, and every AQ Analytics module is included.",
   },
   {
     q: "When does a new plan take effect?",
@@ -50,40 +45,33 @@ const FAQ = [
     a: "Monthly allowances such as nitrogen reports, calculator runs and Aquibot questions reset on the 1st of each month. Reading the Telex, analysis and free library reports is never metered.",
   },
   {
-    q: "What happens to my saved reports if I move to a smaller plan?",
-    a: "Nothing is removed straight away. On a plan that keeps fewer reports, your oldest reports make way the next time you save a new one, so print or save anything you want to keep.",
-  },
-  {
     q: "How am I billed?",
-    a: "The desk invoices you directly. Your invoices and billing contact are on the Billing page, and the billing team can help with anything else.",
+    a: "The desk invoices you directly, monthly or annually. Annual billing takes 10% off. Your invoices and billing contact are on the Billing page.",
   },
 ];
 
-export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ plan?: string; from?: string }> }) {
-  const [{ plan: planParam, from }, { user, admin, modules, can }] = await Promise.all([searchParams, getHubAccess()]);
+export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ plan?: string; tier?: string; from?: string }> }) {
+  const [{ plan: planParam, tier: tierParam, from }, { user, admin, modules, can }] = await Promise.all([searchParams, getHubAccess()]);
   const [allowances, requests] = await Promise.all([planAllowances(modules), myMembershipRequests(user)]);
 
   const fromModule = MODULES.find((item) => item.key === from);
   const includedIn = (plan: Plan, key: ModuleKey) => PLAN_RANK[plan] >= PLAN_RANK[modules.access[key]];
-  const above = PLAN_ORDER.find((plan) => PLAN_RANK[plan] > PLAN_RANK[user.plan]);
-  const moduleTarget = fromModule && PLAN_RANK[modules.access[fromModule.key]] > PLAN_RANK[user.plan] ? modules.access[fromModule.key] : undefined;
-  const initial: Plan = isPlan(planParam) ? planParam : (moduleTarget ?? above ?? "growth");
-  const open = [...requests].sort((a, b) => b.at.localeCompare(a.at)).find((item) => item.status !== "done");
+  const sorted = [...requests].sort((a, b) => b.at.localeCompare(a.at));
+  const open = sorted.find((item) => item.status !== "done");
+  const lastTier = sorted.find((item) => item.status === "done" && item.requestedPlan === "enterprise" && item.tier)?.tier ?? null;
+  const currentTier = user.plan === "enterprise" ? lastTier : null;
+
+  let initialOffer: MembershipOffer["id"] | null = null;
+  if (isPlan(planParam) && !open) {
+    if (planParam === "growth" && user.plan === "core") initialOffer = "analytics";
+    if (planParam === "enterprise" && user.plan !== "enterprise") initialOffer = isTier(tierParam) ? tierParam : "harvest";
+  }
 
   return (
     <div className="flex flex-col gap-6 pb-2">
-      <HubPageHeader
-        eyebrow="Your account"
-        title="Membership"
-        tip="Compare Core, Growth and AQ Zero, see which AQ Analytics modules and allowances each includes, and ask the desk to move your account."
-        guide="membership"
-        description="Every plan includes the AQ1 hub. Growth and AQ Zero add AQ Analytics and larger allowances."
-        actions={
-          <Link href="/hub/plan-usage" className={btnSecondary}>
-            See my usage
-          </Link>
-        }
-      />
+      <div className="flex flex-col gap-4">
+        <MembershipBoard plan={user.plan} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
+      </div>
 
       {fromModule ? (
         <div className="aq-rise flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50/80 p-4">
@@ -111,7 +99,11 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           </span>
           <div className="min-w-0 flex-1 text-[13.5px]">
             <p className="font-semibold text-ink">
-              Your request for {PLAN_LABEL[open.requestedPlan]} <Tag tone={open.status === "new" ? "amber" : "blue"} className="ml-1 align-middle">{STATUS_COPY[open.status].label}</Tag>
+              Your request for {open.tier ? `${TIER_LABEL[open.tier]} (${PLAN_LABEL.enterprise})` : PLAN_LABEL[open.requestedPlan]}
+              {open.cycle ? `, billed ${open.cycle}` : ""}{" "}
+              <Tag tone={open.status === "new" ? "amber" : "blue"} className="ml-1 align-middle">
+                {STATUS_COPY[open.status].label}
+              </Tag>
             </p>
             <p className="text-mid">
               Sent {longDay(open.at)}. {STATUS_COPY[open.status].body}
@@ -127,153 +119,83 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
         </p>
       ) : null}
 
-      <div className="aq-stagger grid gap-4 lg:grid-cols-3">
-        {PLAN_ORDER.map((plan) => {
-          const current = plan === user.plan;
-          const chosen = plan === initial && !current;
-          const limits = allowances[plan];
-          return (
-            <section
-              key={plan}
-              className={`aq-card relative flex flex-col p-5 md:p-6 ${current ? "ring-2 ring-teal-500" : chosen ? "ring-2 ring-blue/50" : ""}`}
-              aria-label={`${PLAN_LABEL[plan]} plan`}
-            >
-              {current ? (
-                <span className="absolute -top-3 left-5 rounded-full bg-teal-500 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-white shadow-sm">Your plan</span>
-              ) : chosen ? (
-                <span className="absolute -top-3 left-5 rounded-full bg-blue px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-white shadow-sm">Selected</span>
-              ) : null}
-              <div className="flex items-center gap-2">
-                <Crown className={`h-5 w-5 ${plan === "enterprise" ? "text-[#d9951f]" : plan === "growth" ? "text-teal-600" : "text-dim"}`} aria-hidden />
-                <h2 className="text-[18px] font-semibold text-ink">{PLAN_LABEL[plan]}</h2>
-              </div>
-              <p className="mt-3 text-[26px] font-semibold leading-none tracking-[-0.02em] text-ink">{PLAN_PRICE[plan]}</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-mid">{PLAN_PITCH[plan]}</p>
-
-              <ul className="mt-4 space-y-2 border-t border-border pt-4 text-[13px]">
-                <li className="flex items-start gap-2 text-ink">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" aria-hidden /> AQ1 hub: Telex, analysis, AQ Signal and the library
-                </li>
-                {ALLOWANCE_KEYS.map((key) => (
-                  <li key={key} className="flex items-start gap-2 text-ink">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" aria-hidden /> {allowanceLine(key, limits[key])}
-                  </li>
-                ))}
-                {MODULES.map((item) =>
-                  includedIn(plan, item.key) ? (
-                    <li key={item.key} className="flex items-start gap-2 text-ink">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" aria-hidden /> {item.label}
-                    </li>
-                  ) : (
-                    <li key={item.key} className="flex items-start gap-2 text-dim">
-                      <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                      <span>
-                        {item.label} <span className="sr-only">(not included)</span>
-                      </span>
-                    </li>
-                  ),
-                )}
-              </ul>
-
-              <div className="mt-auto pt-5">
-                {current ? (
-                  <span className={`${btnSecondary} pointer-events-none w-full opacity-70`} aria-disabled>
-                    <Check className="h-4 w-4" /> Your plan
-                  </span>
-                ) : (
-                  <Link href={`/hub/membership?plan=${plan}${fromModule ? `&from=${fromModule.key}` : ""}#request`} className={`${chosen ? btnPrimary : btnSecondary} w-full`}>
-                    {plan === "enterprise" ? "Talk to the desk about AQ Zero" : `${PLAN_RANK[plan] > PLAN_RANK[user.plan] ? "Upgrade" : "Move"} to ${PLAN_LABEL[plan]}`}
-                  </Link>
-                )}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-
-      <section className="aq-card overflow-hidden" aria-labelledby="compare-title">
-        <header className="border-b border-border px-5 py-3.5">
-          <h2 id="compare-title" className="text-[15px] font-semibold text-ink">
-            Compare plans
-          </h2>
-          <p className="text-[12px] text-dim">Allowances come straight from the desk&rsquo;s current settings.</p>
-        </header>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left text-[13px]">
-            <thead>
-              <tr className="border-b border-border bg-s2/70">
-                <th scope="col" className="sticky left-0 bg-s2 px-5 py-3 font-semibold text-ink">
-                  Feature
-                </th>
-                {PLAN_ORDER.map((plan) => (
-                  <th key={plan} scope="col" className={`px-4 py-3 text-center font-semibold ${plan === user.plan ? "text-teal-700" : "text-ink"}`}>
-                    {PLAN_LABEL[plan]}
-                    {plan === user.plan ? <span className="block text-[10.5px] font-bold uppercase tracking-[0.08em]">Your plan</span> : null}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              <tr>
-                <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                  AQ1 hub, Telex, analysis and library
-                </th>
-                {PLAN_ORDER.map((plan) => (
-                  <td key={plan} className="px-4 py-2.5 text-center">
-                    <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" />
-                  </td>
-                ))}
-              </tr>
-              {ALLOWANCE_KEYS.map((key) => (
-                <tr key={key}>
-                  <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                    {ALLOWANCE_LABEL[key]}
+      <div className="grid gap-4 lg:grid-cols-5">
+        <section className="aq-card overflow-hidden lg:col-span-3" aria-labelledby="compare-title">
+          <header className="border-b border-border px-5 py-3.5">
+            <h2 id="compare-title" className="text-[15px] font-semibold text-ink">
+              Compare plans
+            </h2>
+            <p className="text-[12px] text-dim">Modules and allowances come straight from the desk&rsquo;s current settings.</p>
+          </header>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-left text-[13px]">
+              <thead>
+                <tr className="border-b border-border bg-s2/70">
+                  <th scope="col" className="sticky left-0 bg-s2 px-5 py-3 font-semibold text-ink">
+                    Feature
                   </th>
                   {PLAN_ORDER.map((plan) => (
-                    <td key={plan} className={`px-4 py-2.5 text-center tabular-nums ${allowances[plan][key] === 0 ? "font-semibold text-teal-700" : "text-ink"}`}>
-                      {amount(allowances[plan][key])}
-                    </td>
+                    <th key={plan} scope="col" className={`px-4 py-3 text-center font-semibold ${plan === user.plan ? "text-teal-700" : "text-ink"}`}>
+                      {PLAN_LABEL[plan]}
+                      <span className="block text-[11px] font-medium text-dim">{PLAN_PRICE[plan]}</span>
+                      {plan === user.plan ? <span className="block text-[10.5px] font-bold uppercase tracking-[0.08em]">Your plan</span> : null}
+                    </th>
                   ))}
                 </tr>
-              ))}
-              <tr className="bg-s2/50">
-                <th scope="row" colSpan={4} className="px-5 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-teal-700">
-                  AQ Analytics
-                </th>
-              </tr>
-              {MODULES.map((item) => (
-                <tr key={item.key}>
+              </thead>
+              <tbody className="divide-y divide-border">
+                <tr>
                   <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                    {item.label}
+                    AQ ONE hub, Telex, analysis and library
                   </th>
                   {PLAN_ORDER.map((plan) => (
                     <td key={plan} className="px-4 py-2.5 text-center">
-                      {includedIn(plan, item.key) ? <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" /> : <Lock className="mx-auto h-4 w-4 text-[#b8c3ce]" aria-label="Not included" />}
+                      <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" />
                     </td>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div className="grid gap-4 lg:grid-cols-5">
-        <section id="request" className="aq-card scroll-mt-24 p-5 md:p-6 lg:col-span-3" aria-labelledby="request-title">
-          <h2 id="request-title" className="text-[17px] font-semibold text-ink">
-            Ask the desk to change your plan
-          </h2>
-          <p className="mb-5 mt-1 text-[13.5px] text-mid">
-            You are on {PLAN_LABEL[user.plan]}. Pick the plan you want and the desk sets it up, usually the same working day.
-          </p>
-          <RequestForm
-            key={initial}
-            plans={PLAN_ORDER.map((plan) => ({ plan, label: PLAN_LABEL[plan], price: PLAN_PRICE[plan] }))}
-            current={user.plan}
-            initial={initial}
-            email={user.email}
-            source={from ?? ""}
-          />
+                <tr>
+                  <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
+                    Cost-to-cost quotes (no margin)
+                  </th>
+                  {PLAN_ORDER.map((plan) => (
+                    <td key={plan} className="px-4 py-2.5 text-center">
+                      {plan === "enterprise" ? <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" /> : <Lock className="mx-auto h-4 w-4 text-[#b8c3ce]" aria-label="Not included" />}
+                    </td>
+                  ))}
+                </tr>
+                {ALLOWANCE_KEYS.map((key) => (
+                  <tr key={key}>
+                    <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
+                      {ALLOWANCE_LABEL[key]}
+                    </th>
+                    {PLAN_ORDER.map((plan) => (
+                      <td key={plan} className={`px-4 py-2.5 text-center tabular-nums ${allowances[plan][key] === 0 ? "font-semibold text-teal-700" : "text-ink"}`}>
+                        {amount(allowances[plan][key])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="bg-s2/50">
+                  <th scope="row" colSpan={4} className="px-5 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-teal-700">
+                    AQ Analytics modules
+                  </th>
+                </tr>
+                {MODULES.map((item) => (
+                  <tr key={item.key}>
+                    <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
+                      {item.label}
+                    </th>
+                    {PLAN_ORDER.map((plan) => (
+                      <td key={plan} className="px-4 py-2.5 text-center">
+                        {includedIn(plan, item.key) ? <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" /> : <Lock className="mx-auto h-4 w-4 text-[#b8c3ce]" aria-label="Not included" />}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="lg:col-span-2" aria-labelledby="faq-title">

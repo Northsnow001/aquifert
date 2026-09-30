@@ -25,7 +25,7 @@ export default async function MembershipRequestsAdminPage() {
         <span>
           Change the member&apos;s plan in Supabase, then mark the request done. The plan is the <code className="font-mono text-[12px] text-ink">plan</code> column on the member&apos;s row in the{" "}
           <code className="font-mono text-[12px] text-ink">profiles</code> table (Table Editor, match the account id shown on the request), set to{" "}
-          <code className="font-mono text-[12px] text-ink">core</code>, <code className="font-mono text-[12px] text-ink">growth</code> or <code className="font-mono text-[12px] text-ink">enterprise</code> (shown to members as AQ Zero). It is not
+          <code className="font-mono text-[12px] text-ink">core</code>, <code className="font-mono text-[12px] text-ink">growth</code> or <code className="font-mono text-[12px] text-ink">enterprise</code> (shown to members as AQ ONE, AQ Analytics and AQ ZERO). It is not
           read from user metadata, and the member sees the new plan on their next page load.
         </span>
       </p>

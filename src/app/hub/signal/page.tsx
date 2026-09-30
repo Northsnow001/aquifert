@@ -113,7 +113,7 @@ export default async function SignalPage({ searchParams }: { searchParams: Promi
   return (
     <div className="mx-auto max-w-5xl pb-2">
       <HubPageHeader
-        eyebrow="AQ1 Free plan"
+        eyebrow="AQ ONE Free plan"
         title="AQ Signal"
         description="Rolling windows on benchmark fertilizer and freight prices: where each series started, where it is now, how far it moved and where it sits in its range."
         tip="Pick a 7, 30, 60 or 90-day window. Each card compares the first and latest price in the window. The bar shows where today's price sits between the window's low and high. A move under half a percent counts as flat."
