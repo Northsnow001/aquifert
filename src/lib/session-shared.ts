@@ -11,6 +11,8 @@ export type SessionUser = {
   address2?: string;
   city?: string;
   country?: string;
+  /** Set from Supabase app_metadata.role, which only the service role or SQL can change. */
+  admin?: boolean;
 };
 
 export function initials(name: string): string {

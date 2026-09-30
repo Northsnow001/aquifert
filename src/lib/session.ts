@@ -49,6 +49,7 @@ async function readSession(): Promise<SessionUser | null> {
       address2: text(meta.address_line_2),
       city: text(meta.city),
       country: text(meta.country),
+      admin: user.app_metadata?.role === "admin",
     };
   }
 
@@ -58,7 +59,7 @@ async function readSession(): Promise<SessionUser | null> {
   try {
     const parsed = JSON.parse(raw) as SessionUser;
     if (!parsed.email) return null;
-    return parsed;
+    return { ...parsed, admin: false };
   } catch {
     return null;
   }
