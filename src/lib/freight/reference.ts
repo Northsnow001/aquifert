@@ -99,16 +99,12 @@ export function dailyHire(vessel: VesselType, market: Market, bdi = DEFAULT_BDI)
   return Math.round(bdi * VESSEL_SPECS[vessel].bdiMult * MARKET_FACTORS[market]);
 }
 
-export function premiumTaper(distanceNm: number, canal: string): number {
-  if (distanceNm <= PREMIUM_TAPER.baseDistanceNm) return 1;
+export type PremiumTaper = typeof PREMIUM_TAPER;
+
+export function premiumTaper(distanceNm: number, canal: string, taper: PremiumTaper = PREMIUM_TAPER): number {
+  if (distanceNm <= taper.baseDistanceNm) return 1;
   if (canal === "cape") {
-    return Math.max(
-      PREMIUM_TAPER.capeFloor,
-      1 - (distanceNm - PREMIUM_TAPER.baseDistanceNm) / PREMIUM_TAPER.capeSpanNm,
-    );
+    return Math.max(taper.capeFloor, 1 - (distanceNm - taper.baseDistanceNm) / Math.max(1, taper.capeSpanNm));
   }
-  return Math.max(
-    PREMIUM_TAPER.nonCapeFloor,
-    1 - (distanceNm - PREMIUM_TAPER.baseDistanceNm) / PREMIUM_TAPER.nonCapeSpanNm,
-  );
+  return Math.max(taper.nonCapeFloor, 1 - (distanceNm - taper.baseDistanceNm) / Math.max(1, taper.nonCapeSpanNm));
 }

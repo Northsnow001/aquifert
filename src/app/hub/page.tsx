@@ -1,7 +1,10 @@
 import { Info } from "lucide-react";
+import { FreightAnalytics } from "@/components/hub/freight-board";
+import { Markdown } from "@/components/hub/markdown";
 import { PaperForwardBrief } from "@/components/hub/paper-forward";
-import { indicators, telex } from "@/data/sample";
-// import { freightCommentary, freightEnquiries } from "@/data/sample";
+import { canReadTelex, formatDay, formatStamp, formatTelexDay, telexHeadline } from "@/lib/content-types";
+import { getHubContent, sortHedge, sortTelex } from "@/lib/hub-content";
+import { getSession } from "@/lib/session";
 
 const GAUGE_COLORS = ["#16a34a", "#d97706", "#dc2626"];
 const ARC = Math.PI * 46;
@@ -32,14 +35,23 @@ function stance(value: number) {
   return "Bearish";
 }
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const user = await getSession();
+  const content = getHubContent();
+  const { indicators, freight } = content;
+  const readingsDay = content.indicatorsUpdatedAt ?? content.updatedAt;
+  const plan = user?.plan ?? "core";
+  const telex = sortTelex(content.telex).filter((item) => item.status === "published" && canReadTelex(item.access, plan));
+  const hedgeReports = sortHedge(content.hedgeReports).filter((item) => item.status === "published");
   return (
     <div className="flex flex-col gap-4 pb-2">
       <div className="flex shrink-0 flex-col gap-4">
       <section className="flex h-[calc((100dvh-7.5rem)*0.35)] min-h-[13.5rem] flex-col">
         <div className="mb-2 flex shrink-0 items-baseline justify-between gap-4">
           <h2 className="text-sm font-bold tracking-tight text-ink">Market Indicators</h2>
-          <p className="font-mono text-[11px] uppercase tracking-wide text-mid">29 Sep 2026</p>
+          {readingsDay ? <p className="font-mono text-[11px] uppercase tracking-wide text-mid">{formatDay(readingsDay)}</p> : null}
         </div>
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-3">
           {indicators.map((item, index) => {
@@ -55,9 +67,11 @@ export default function HomePage() {
                 </div>
                 <p className="group relative mt-2 shrink-0 border-t border-border pt-2 text-[13px] leading-5 text-ink">
                   <span className="line-clamp-2">{item.summary}</span>
-                  <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-0 z-20 hidden w-full rounded-lg bg-ink px-3 py-2 text-xs leading-relaxed text-white shadow-lg group-hover:block">
-                    {item.note}
-                  </span>
+                  {item.note ? (
+                    <span className="pointer-events-none absolute bottom-[calc(100%+6px)] left-0 z-20 hidden w-full rounded-lg bg-ink px-3 py-2 text-xs leading-relaxed text-white shadow-lg group-hover:block">
+                      {item.note}
+                    </span>
+                  ) : null}
                 </p>
               </article>
             );
@@ -73,7 +87,9 @@ export default function HomePage() {
                 <h2 className="text-sm font-bold uppercase tracking-wider text-ink">Telex</h2>
                 <span className="text-xs text-mid">Intel Feed</span>
               </div>
-              <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-mid">Updated 28 Sep 2026 2:58 AM</p>
+              {telex[0] ? (
+                <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-mid">Updated {formatStamp(telex[0].publishedAt)}</p>
+              ) : null}
             </div>
           </header>
           <div className="flex shrink-0 items-start gap-2 border-b border-border bg-s3/40 px-5 py-2.5 text-[11.5px] leading-relaxed text-mid">
@@ -86,15 +102,21 @@ export default function HomePage() {
             </p>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
+            {telex.length === 0 ? <p className="px-5 py-10 text-center text-sm text-mid">No Telex messages for your plan yet.</p> : null}
             {telex.map((item) => (
               <article key={item.id} className="border-b border-border px-5 py-4 last:border-b-0">
-                <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{item.date}</p>
-                <h3 className="mt-2 text-[15px] font-bold uppercase leading-snug tracking-wide text-ink">{item.title}</h3>
-                <div className="mt-3 space-y-3 text-[13.5px] leading-relaxed text-ink">
-                  {item.paragraphs.map((paragraph) => (
-                    <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-                  ))}
-                </div>
+                <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatTelexDay(item.publishedAt)}</p>
+                <h3 className="mt-2 text-[15px] font-bold uppercase leading-snug tracking-wide text-ink">{telexHeadline(item)}</h3>
+                <Markdown text={item.paragraphs.join("\n\n")} images className="mt-3 text-[13.5px] text-ink" />
+                {item.tags.length ? (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {item.tags.map((tag) => (
+                      <span key={tag} className="rounded-md bg-blue-light px-1.5 py-0.5 text-[11px] font-semibold text-blue">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>
@@ -102,12 +124,14 @@ export default function HomePage() {
 
         <article className="flex min-h-[280px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm lg:min-h-0">
           <header className="shrink-0 border-b border-border px-5 py-3.5">
-            <h2 className="text-sm font-bold text-ink">Commentary</h2>
-            <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-mid">29 Sep 2026</p>
+            <h2 className="text-sm font-bold text-ink">Market Commentary</h2>
+            {readingsDay ? <p className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-mid">{formatDay(readingsDay)}</p> : null}
           </header>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
+            {indicators.every((item) => !item.note) ? <p className="py-8 text-center text-sm text-mid">No commentary this week.</p> : null}
             {indicators.map((item, index) => {
               const color = GAUGE_COLORS[index] ?? "#2e6da4";
+              if (!item.note) return null;
               return (
                 <div key={item.name}>
                   <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color }}>
@@ -122,50 +146,9 @@ export default function HomePage() {
       </section>
       </div>
 
-      <PaperForwardBrief />
+      <PaperForwardBrief reports={hedgeReports} />
 
-      {/*
-      <section className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="border-b border-border px-5 py-3.5">
-          <h3 className="text-sm font-bold">Freight Analytics - Open Freight Enquiries</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[13px]">
-            <thead>
-              <tr className="border-b border-border bg-s2">
-                {["Account", "Product", "Qty (Mts)", "Origin", "Destination", "Laycan"].map((heading) => (
-                  <th key={heading} className="px-4 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-wider text-mid">
-                    {heading}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {freightEnquiries.map((row) => (
-                <tr key={`${row.origin}-${row.qty}`} className="border-b border-border last:border-b-0">
-                  <td className="px-4 py-3 font-semibold">{row.account}</td>
-                  <td className="px-4 py-3 uppercase">{row.product}</td>
-                  <td className="px-4 py-3 font-mono">{row.qty}</td>
-                  <td className="px-4 py-3">{row.origin}</td>
-                  <td className="px-4 py-3">{row.destination}</td>
-                  <td className="px-4 py-3">{row.laycan}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-border bg-surface px-5 py-4">
-        <h3 className="text-sm font-semibold">Freight Analytics Commentary</h3>
-        <h4 className="mt-3 text-[13px] font-bold uppercase tracking-wide">{freightCommentary.title}</h4>
-        <div className="mt-3 space-y-3 text-[13.5px] leading-relaxed text-ink">
-          {freightCommentary.paragraphs.map((paragraph) => (
-            <p key={paragraph.slice(0, 32)}>{paragraph}</p>
-          ))}
-        </div>
-      </section>
-      */}
+      {freight.showOnHome ? <FreightAnalytics fixtures={freight.fixtures.filter((row) => row.visible)} commentary={freight.commentary} /> : null}
     </div>
   );
 }

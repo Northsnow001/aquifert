@@ -8,14 +8,16 @@ export function PortField({
   label,
   value,
   onSelect,
+  ports,
 }: {
   label: string;
   value: PortRecord | null;
   onSelect: (port: PortRecord) => void;
+  ports: PortRecord[];
 }) {
   const [query, setQuery] = useState(value ? `${value.name} (${value.code})` : "");
   const [open, setOpen] = useState(false);
-  const matches = useMemo(() => searchPorts(query), [query]);
+  const matches = useMemo(() => searchPorts(query, ports), [query, ports]);
 
   return (
     <label className="relative block">

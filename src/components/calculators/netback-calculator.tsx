@@ -1,38 +1,44 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { logCalculation } from "@/app/hub/log-actions";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeftRight, Calculator, Share2 } from "lucide-react";
+import { ArrowLeftRight, Calculator, PackageOpen, Share2 } from "lucide-react";
+import { runNetback, type NetbackUsage } from "@/app/hub/netback/actions";
 import { FlagMark } from "@/components/calculators/flag-mark";
 import { PortField } from "@/components/calculators/port-field";
 import { CURRENCIES, findCurrency } from "@/lib/netback/currencies";
-import {
-  BENCHMARK_WEEK,
-  NETBACK_CONSTANTS,
-  basisCosts,
-  rankForward,
-  rankReverse,
-  type Basis,
-  type ForwardOrigin,
-  type ReverseOrigin,
-} from "@/lib/netback/calculate";
+import { basisCosts, type Basis, type ForwardOrigin, type NetbackCosts, type ReverseOrigin } from "@/lib/netback/calculate";
+import { computeNetback, toUsd, type NetbackConfig, type NetbackRequest } from "@/lib/netback-desk/run";
+import { NO_DUTY_NOTE, findDuty, type DutyRecord, type DutyTone } from "@/lib/netback-desk/types";
 import { findPort, type PortRecord } from "@/lib/ports";
 
 type Mode = "netback" | "forward";
 
-const BASIS_ROWS: Array<{ id: Basis; label: string; haulage: number }> = [
+const basisRows = (costs: NetbackCosts): Array<{ id: Basis; label: string; haulage: number }> => [
   { id: "cfr", label: "CFR Port — discharge & merchant excluded", haulage: 0 },
   { id: "exw", label: "EXW Port", haulage: 0 },
-  { id: "local", label: "Local <50 km", haulage: 15 },
-  { id: "regional", label: "Regional 50–150 km", haulage: 25 },
-  { id: "remote", label: "Remote >150 km", haulage: 40 },
+  { id: "local", label: "Local <50 km", haulage: costs.haulageLocal },
+  { id: "regional", label: "Regional 50–150 km", haulage: costs.haulageRegional },
+  { id: "remote", label: "Remote >150 km", haulage: costs.haulageRemote },
 ];
 
-function resetLabel(date = new Date()) {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${months[date.getMonth()]} ${date.getFullYear()}`.toUpperCase();
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function usageLine(usage: NetbackUsage) {
+  const [year, month] = usage.resetsOn.split("-");
+  const resets = `${MONTHS[Number(month) - 1] ?? ""} ${year ?? ""}`.toUpperCase();
+  const remaining = usage.limit > 0 ? `${Math.max(0, usage.limit - usage.used).toLocaleString()} remaining` : "unlimited";
+  return `${usage.used.toLocaleString()}${usage.limit > 0 ? ` of ${usage.limit.toLocaleString()}` : ""} calculated · ${remaining} · resets ${resets}`;
 }
+
+const DUTY_BANNER: Record<DutyTone, string> = {
+  active: "border-[#f5c2c2] bg-[#fdf1f1] text-[#b42318]",
+  warn: "border-[#f5dfb3] bg-[#fff8ea] text-[#9a5b00]",
+  ok: "border-[#cdebd8] bg-[#f1faf4] text-[#1f7a45]",
+  dim: "border-border bg-s2 text-dim",
+};
+
+const pct = (value: number) => `${Number((value * 100).toFixed(2))}%`;
 
 function usd(value: number) {
   return `$${Math.abs(value).toFixed(2)}`;
@@ -73,43 +79,62 @@ function heroStatus(margin: number) {
   return { label: "No viable origin at this price", className: "bg-[#fdecec] text-[#dc2626]" };
 }
 
-export function NetbackCalculator() {
+export function NetbackCalculator({ ports, config, usage: initialUsage }: { ports: PortRecord[]; config: NetbackConfig; usage: NetbackUsage }) {
   const params = useSearchParams();
   const router = useRouter();
   const initialCurrency = findCurrency(params.get("currency") ?? "USD");
+  const initialDestination = findPort(params.get("port") ?? "", ports) ?? null;
+  const initialDuty = initialDestination ? findDuty(config.duties, initialDestination.country) : undefined;
+  const fxFromLink = params.get("fx") != null;
   const [mode, setMode] = useState<Mode>(params.get("tab") === "forward" ? "forward" : "netback");
-  const [destination, setDestination] = useState<PortRecord | null>(findPort(params.get("port") ?? "") ?? null);
+  const [destination, setDestination] = useState<PortRecord | null>(initialDestination);
   const [farm, setFarm] = useState(Number(params.get("farm") ?? 800));
   const [fx, setFx] = useState(Number(params.get("fx") ?? 1));
-  const [fxSource, setFxSource] = useState(params.get("fx") ? "cached today" : "");
+  const [fxSource, setFxSource] = useState(fxFromLink ? "cached today" : initialCurrency.code !== "USD" ? "Fetching live rate..." : "");
   const [currencyCode, setCurrencyCode] = useState(initialCurrency.code);
   const [cargo, setCargo] = useState(Number(params.get("cargo") ?? 35000));
   const [packaging, setPackaging] = useState<"bagged" | "bulk">(params.get("packaging") === "bulk" ? "bulk" : "bagged");
   const [basis, setBasis] = useState<Basis>((params.get("basis") as Basis) || "exw");
   const [inland, setInland] = useState(Number(params.get("inland") ?? 0));
   const [showInland, setShowInland] = useState(Number(params.get("inland") ?? 0) > 0);
-  const [dutyEnabled, setDutyEnabled] = useState(params.get("duty") === "1");
-  const [dutyPercent, setDutyPercent] = useState(Number(params.get("duty_rate") ?? 0));
-  const [ran, setRan] = useState(false);
-  const [runs, setRuns] = useState(0);
+  const [dutyEnabled, setDutyEnabled] = useState(params.has("duty") ? params.get("duty") === "1" : Boolean(initialDuty?.active));
+  const [dutyPercent, setDutyPercent] = useState(params.has("duty_rate") ? Number(params.get("duty_rate")) : (initialDuty?.rate ?? 0));
+  const [run, setRun] = useState<{ request: NetbackRequest; destination: PortRecord } | null>(null);
+  const [usage, setUsage] = useState(initialUsage);
+  const [error, setError] = useState("");
   const [shared, setShared] = useState(false);
+  const [running, startRun] = useTransition();
   const initialCurrencyCode = useRef(initialCurrency.code);
-  const fxLocked = useRef(params.get("fx") != null);
+  const fxLocked = useRef(fxFromLink);
   const currency = findCurrency(currencyCode);
-  const costs = basisCosts(basis);
-  const afrmm = destination?.country === "Brazil";
-  const farmUsd = currency.code === "USD" || fx === 1 ? farm : farm / (fx || 1);
-  const inlandUsd = currency.code === "USD" || fx === 1 ? inland : inland / (fx || 1);
+  const costs = config.costs;
+  const basisCost = basisCosts(basis, costs);
+  const duty: DutyRecord | undefined = destination ? findDuty(config.duties, destination.country) : undefined;
+  const afrmm = Boolean(duty?.afrmm);
+  const farmUsd = toUsd(farm, currency.code, fx);
+  const ran = run !== null;
+
+  function selectDestination(port: PortRecord) {
+    setDestination(port);
+    const record = findDuty(config.duties, port.country);
+    setDutyEnabled(Boolean(record?.active));
+    setDutyPercent(record?.rate ?? 0);
+  }
+
+  function changeCurrency(code: string) {
+    setCurrencyCode(code);
+    if (code === "USD") {
+      setFx(1);
+      setFxSource("");
+    } else if (!(fxLocked.current && code === initialCurrencyCode.current)) {
+      setFxSource("Fetching live rate...");
+    }
+  }
 
   useEffect(() => {
-    if (currency.code === "USD") {
-      if (!(fxLocked.current && initialCurrencyCode.current === "USD")) setFx(1);
-      setFxSource("");
-      return;
-    }
+    if (currency.code === "USD") return;
     if (fxLocked.current && currency.code === initialCurrencyCode.current) return;
     const controller = new AbortController();
-    setFxSource("Fetching live rate...");
     fetch("https://open.er-api.com/v6/latest/USD", { signal: controller.signal, cache: "no-cache" })
       .then((response) => response.json())
       .then((payload: { result?: string; rates?: Record<string, number> }) => {
@@ -126,22 +151,36 @@ export function NetbackCalculator() {
     return () => controller.abort();
   }, [currency.code]);
 
-  const forward = useMemo(() => {
-    if (!destination || !ran || mode !== "forward") return [];
-    return rankForward(destination, cargo, { basis, packaging, dutyEnabled, dutyPercent, afrmm, inlandUsd });
-  }, [destination, ran, mode, cargo, basis, packaging, dutyEnabled, dutyPercent, afrmm, inlandUsd]);
+  const result = useMemo(() => (run ? computeNetback(config, run.request, run.destination) : null), [config, run]);
+  const forward = result?.forward ?? [];
+  const reverse = result?.reverse ?? [];
 
-  const reverse = useMemo(() => {
-    if (!destination || !ran || mode !== "netback") return [];
-    return rankReverse(destination, cargo, farmUsd, { basis, packaging, dutyEnabled, dutyPercent, afrmm, inlandUsd });
-  }, [destination, ran, mode, cargo, farmUsd, basis, packaging, dutyEnabled, dutyPercent, afrmm, inlandUsd]);
-
-  useEffect(() => {
-    if (!ran || !destination) return;
-    const best = mode === "forward" ? forward[0] : reverse[0];
-    if (!best) return;
-    void logCalculation("netback", { mode, port: destination.code, cargo, basis, packaging }, { key: best.key });
-  }, [ran, destination, mode, forward, reverse, cargo, basis, packaging]);
+  function calculate() {
+    if (!destination) return;
+    const request: NetbackRequest = {
+      mode,
+      port: destination.code,
+      cargoMt: cargo,
+      basis,
+      packaging,
+      currency: currency.code,
+      fx,
+      farm,
+      inland,
+      dutyEnabled,
+      dutyPercent,
+    };
+    setError("");
+    startRun(async () => {
+      const response = await runNetback(request);
+      if (response.usage) setUsage(response.usage);
+      if (!response.ok) {
+        setError(response.message);
+        return;
+      }
+      setRun({ request, destination });
+    });
+  }
 
   function share() {
     const query = new URLSearchParams({
@@ -166,17 +205,29 @@ export function NetbackCalculator() {
   const bestForward = forward[0];
   const lcPreview = bestReverse?.impliedLc ?? bestForward?.finCost;
   const maxMargin = Math.max(...reverse.map((origin) => Math.abs(origin.margin)), 1);
+  const shown = run ? { ...run.request, currency: findCurrency(run.request.currency) } : null;
+
+  if (!config.origins.length) {
+    return (
+      <section className="space-y-4">
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">Granular Urea — Netback & Landed Cost</h1>
+        <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
+          <PackageOpen className="mb-3 h-8 w-8 text-dim" />
+          <p className="text-base font-semibold text-ink">Awaiting pricing data</p>
+          <p className="mt-1 max-w-sm text-sm leading-relaxed text-mid">Netback is available again as soon as the team publishes this week&apos;s benchmark prices.</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4">
       <div>
         <h1 className="text-[28px] font-semibold tracking-tight text-ink">Granular Urea — Netback & Landed Cost</h1>
-        <p className="text-sm text-mid">FOB Netback · On-Farm Landed Cost · Origin Ranking · {BENCHMARK_WEEK}</p>
+        <p className="text-sm text-mid">FOB Netback · On-Farm Landed Cost · Origin Ranking{config.week ? ` · ${config.week}` : ""}</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] text-mid">
-        {runs} calculated · unlimited · resets {resetLabel()}
-      </div>
+      <div className="rounded-xl border border-border bg-surface px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] text-mid">{usageLine(usage)}</div>
 
       <div className="flex items-center gap-2 rounded-xl border border-border bg-surface p-1.5">
         {([
@@ -188,7 +239,7 @@ export function NetbackCalculator() {
             type="button"
             onClick={() => {
               setMode(value);
-              setRan(false);
+              setRun(null);
             }}
             className={`rounded-lg px-4 py-2 text-sm font-semibold ${mode === value ? "bg-blue text-white" : "text-mid"}`}
           >
@@ -202,13 +253,11 @@ export function NetbackCalculator() {
           className="rounded-xl border border-border bg-surface p-4"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!destination) return;
-            setRan(true);
-            setRuns((count) => count + 1);
+            calculate();
           }}
         >
           <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">— Import parameters</p>
-          <PortField label="Destination port" value={destination} onSelect={setDestination} />
+          <PortField label="Destination port" value={destination} onSelect={selectDestination} ports={ports} />
           {destination ? (
             <p className="mt-1.5 flex items-center gap-1.5 text-xs text-mid">
               <FlagMark country={destination.country} className="h-3 w-4" />
@@ -222,7 +271,7 @@ export function NetbackCalculator() {
               <div className="flex gap-2">
                 <select
                   value={currency.code}
-                  onChange={(event) => setCurrencyCode(event.target.value)}
+                  onChange={(event) => changeCurrency(event.target.value)}
                   className="min-w-0 flex-1 rounded-lg border border-border bg-white px-2 py-2 text-sm"
                 >
                   {CURRENCIES.map((item) => (
@@ -290,7 +339,7 @@ export function NetbackCalculator() {
           <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Packaging</p>
           <div className="mb-3 flex gap-2">
             {([
-              ["bagged", NETBACK_CONSTANTS.bagged],
+              ["bagged", costs.bagged],
               ["bulk", 0],
             ] as Array<["bagged" | "bulk", number]>).map(([value, amount]) => (
               <button
@@ -306,7 +355,7 @@ export function NetbackCalculator() {
 
           <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Pricing basis</p>
           <div className="mb-3 space-y-1.5">
-            {BASIS_ROWS.map((row) => (
+            {basisRows(costs).map((row) => (
               <button
                 key={row.id}
                 type="button"
@@ -342,10 +391,9 @@ export function NetbackCalculator() {
 
           <div className="mt-4">
             <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Import duty</p>
-            <p className="mb-2 text-[11px] leading-relaxed text-dim">
-              {destination?.country === "India"
-                ? "India reference duty is 5%. Confirm the contracted rate before relying on it."
-                : "No specific duty data for this country — verify with local customs authority before contracting."}
+            <p className={`mb-2 whitespace-pre-line rounded-lg border px-3 py-2 text-[11px] leading-relaxed ${DUTY_BANNER[duty?.tone ?? "dim"]}`}>
+              {duty?.note || NO_DUTY_NOTE}
+              {duty?.afrmm ? `\nAFRMM levy of ${pct(costs.afrmmRate)} of freight applies.` : ""}
             </p>
             <label className="flex items-center gap-2 rounded-lg bg-s2 px-3 py-2 text-xs text-ink">
               <input type="checkbox" checked={dutyEnabled} onChange={(event) => setDutyEnabled(event.target.checked)} />
@@ -366,26 +414,30 @@ export function NetbackCalculator() {
           <div className="mt-4">
             <p className="mb-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Trade costs applied (USD/MT)</p>
             <div className="space-y-1 rounded-lg border border-border px-3 py-2 text-xs">
-              <CostLine label="Discharge port" value={costs.includeDischarge ? "$15.00" : "excluded"} muted={!costs.includeDischarge} />
-              <CostLine label="Merchant margin" value={costs.includeMargin ? "$10.00" : "excluded"} muted={!costs.includeMargin} />
-              <CostLine label="Bags & bagging" value={packaging === "bagged" && costs.includePackaging ? "$12.00" : "$0.00"} />
-              <CostLine label="Inspection" value="$1.00" />
-              <CostLine label="Insurance" value="$1.00" />
-              <CostLine label="Haulage" value={`$${costs.haulage.toFixed(2)}`} />
+              <CostLine label="Discharge port" value={basisCost.includeDischarge ? usd(costs.discharge) : "excluded"} muted={!basisCost.includeDischarge} />
+              <CostLine label="Merchant margin" value={basisCost.includeMargin ? usd(costs.margin) : "excluded"} muted={!basisCost.includeMargin} />
+              <CostLine label="Bags & bagging" value={packaging === "bagged" && basisCost.includePackaging ? usd(costs.bagged) : "$0.00"} />
+              <CostLine label="Inspection" value={usd(costs.inspection)} />
+              <CostLine label="Insurance" value={usd(costs.insurance)} />
+              <CostLine label="Haulage" value={usd(basisCost.haulage)} />
               <CostLine
-                label="LC finance (8%/30d)"
+                label={`LC finance (${pct(costs.lcRate)}/${costs.lcDays}d)`}
                 value={ran && lcPreview != null ? `USD ${lcPreview.toFixed(2)}${mode === "forward" ? " (best origin)" : ""}` : "calc on run"}
                 accent
               />
               <CostLine label="Import duty" value={dutyEnabled && dutyPercent > 0 ? `${dutyPercent.toFixed(2)}% on CIF` : "None"} />
-              {afrmm ? <CostLine label="AFRMM levy (Brazil)" value="0.25% of freight" /> : null}
+              {afrmm ? <CostLine label={`AFRMM levy (${destination?.country ?? ""})`} value={`${pct(costs.afrmmRate)} of freight`} /> : null}
             </div>
           </div>
 
           <div className="mt-4 flex gap-2">
-            <button type="submit" className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue px-4 py-2.5 text-sm font-semibold text-white">
+            <button
+              type="submit"
+              disabled={!destination || running}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            >
               <Calculator className="h-4 w-4" />
-              Calculate
+              {running ? "Calculating…" : "Calculate"}
             </button>
             {ran ? (
               <button type="button" onClick={share} className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-mid">
@@ -394,33 +446,35 @@ export function NetbackCalculator() {
               </button>
             ) : null}
           </div>
+          {error ? <p className="mt-2 rounded-lg bg-[#fdecec] px-3 py-2 text-xs text-[#b42318]">{error}</p> : null}
           {shared ? <p className="mt-2 rounded-lg bg-[#e8f7ee] px-3 py-2 text-xs text-[#178a4c]">Share link copied to clipboard.</p> : null}
         </form>
 
-        {!ran || !destination ? (
+        {!run || !shown || !result ? (
           <div className="flex min-h-[520px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
             <ArrowLeftRight className="mb-3 h-8 w-8 text-dim" />
             <p className="max-w-sm text-sm leading-relaxed text-mid">
               Select a destination port, set your parameters, and calculate to see the full origin ranking and cost breakdown.
             </p>
           </div>
-        ) : mode === "netback" && bestReverse ? (
+        ) : shown.mode === "netback" && bestReverse ? (
           <ReverseResults
             rows={reverse}
             best={bestReverse}
-            destination={destination}
-            farmUsd={farmUsd}
-            currency={currency}
-            fx={fx}
-            basis={basis}
-            packaging={packaging}
-            dutyEnabled={dutyEnabled}
-            dutyPercent={dutyPercent}
-            inlandUsd={inlandUsd}
+            destination={run.destination}
+            farmUsd={result.farmUsd}
+            currency={shown.currency}
+            fx={shown.fx}
+            basis={shown.basis}
+            packaging={shown.packaging}
+            dutyEnabled={shown.dutyEnabled}
+            dutyPercent={shown.dutyPercent}
+            inlandUsd={result.inlandUsd}
             maxMargin={maxMargin}
+            costs={costs}
           />
         ) : bestForward ? (
-          <ForwardResults rows={forward} best={bestForward} currency={currency} fx={fx} />
+          <ForwardResults rows={forward} best={bestForward} currency={shown.currency} fx={shown.fx} />
         ) : (
           <div className="rounded-xl border border-border bg-surface p-6 text-sm text-mid">No origins matched this destination.</div>
         )}
@@ -462,7 +516,9 @@ function ReverseResults({
   dutyPercent,
   inlandUsd,
   maxMargin,
+  costs: tradeCosts,
 }: {
+  costs: NetbackCosts;
   rows: ReverseOrigin[];
   best: ReverseOrigin;
   destination: PortRecord;
@@ -476,13 +532,13 @@ function ReverseResults({
   inlandUsd: number;
   maxMargin: number;
 }) {
-  const costs = basisCosts(basis);
+  const costs = basisCosts(basis, tradeCosts);
   const hero = heroMoney(best.impliedFob, currency.symbol, currency.code, fx);
   const badge = heroStatus(best.margin);
   const basisName = basis === "cfr" ? "CFR Port" : basis === "exw" ? "EXW Port" : basis[0].toUpperCase() + basis.slice(1);
-  const discharge = costs.includeDischarge ? NETBACK_CONSTANTS.discharge : 0;
-  const marginCost = costs.includeMargin ? NETBACK_CONSTANTS.margin : 0;
-  const bags = costs.includePackaging && packaging === "bagged" ? NETBACK_CONSTANTS.bagged : 0;
+  const discharge = costs.includeDischarge ? tradeCosts.discharge : 0;
+  const marginCost = costs.includeMargin ? tradeCosts.margin : 0;
+  const bags = costs.includePackaging && packaging === "bagged" ? tradeCosts.bagged : 0;
   const marginPair = dual(best.margin, currency.symbol, currency.code, fx);
   const actualPair = dual(best.actualFob, currency.symbol, currency.code, fx);
   const farmPair = dual(farmUsd, currency.symbol, currency.code, fx);
@@ -533,15 +589,15 @@ function ReverseResults({
         <Deduct label="Discharge / port costs" value={discharge} currency={currency} fx={fx} minus excluded={!costs.includeDischarge} />
         <Deduct label="Bags & bagging" value={bags} currency={currency} fx={fx} minus excluded={!costs.includePackaging} />
         <Deduct label="Merchant margin" value={marginCost} currency={currency} fx={fx} minus excluded={!costs.includeMargin} />
-        <Deduct label="Inspection" value={NETBACK_CONSTANTS.inspection} currency={currency} fx={fx} minus />
-        <Deduct label="Insurance (marine & credit)" value={NETBACK_CONSTANTS.insurance} currency={currency} fx={fx} minus />
-        <Deduct label="LC finance (8% / 30d on CFR)" value={best.impliedLc} currency={currency} fx={fx} minus />
+        <Deduct label="Inspection" value={tradeCosts.inspection} currency={currency} fx={fx} minus />
+        <Deduct label="Insurance (marine & credit)" value={tradeCosts.insurance} currency={currency} fx={fx} minus />
+        <Deduct label={`LC finance (${pct(tradeCosts.lcRate)} / ${tradeCosts.lcDays}d on CFR)`} value={best.impliedLc} currency={currency} fx={fx} minus />
         {dutyEnabled && dutyPercent > 0 ? (
           <Deduct label={`Import duty (${dutyPercent.toFixed(2)}% on CIF)`} value={best.impliedDuty} currency={currency} fx={fx} minus />
         ) : (
           <Deduct label="Import duty" value={0} currency={currency} fx={fx} excluded />
         )}
-        {best.afrmmCost > 0 ? <Deduct label="AFRMM levy (0.25% of freight — Brazil)" value={best.afrmmCost} currency={currency} fx={fx} minus /> : null}
+        {best.afrmmCost > 0 ? <Deduct label={`AFRMM levy (${pct(tradeCosts.afrmmRate)} of freight — ${destination.country})`} value={best.afrmmCost} currency={currency} fx={fx} minus /> : null}
         {inlandUsd > 0 ? <Deduct label="Additional inland / landed cost" value={inlandUsd} currency={currency} fx={fx} minus /> : null}
         <div className="flex justify-between border-t border-border py-1.5 text-[13px]">
           <span>= Implied CFR ({best.label})</span>

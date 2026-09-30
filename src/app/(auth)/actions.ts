@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DEMO_COOKIE } from "@/lib/session";
 import type { SessionUser } from "@/lib/session-shared";
+import { recordInbox } from "@/lib/inbox";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export type ProfileState = { error?: string };
@@ -87,7 +88,9 @@ export async function updatePassword(_prev: PasswordState, formData: FormData): 
   return { saved: true, preview: true };
 }
 
-export async function saveEnquiry(table: "contact_messages" | "order_enquiries", payload: Record<string, string>) {
+/** `detail` is kept in the admin inbox only, for fields the Supabase table has no column for. */
+export async function saveEnquiry(table: "contact_messages" | "order_enquiries", payload: Record<string, string>, detail: Record<string, string> = {}) {
+  recordInbox(table, { ...payload, ...detail });
   if (!isSupabaseConfigured()) return { saved: "local" as const };
   const supabase = await createClient();
   const { error } = await supabase!.from(table).insert(payload);

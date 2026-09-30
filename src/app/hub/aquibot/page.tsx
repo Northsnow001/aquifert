@@ -1,32 +1,57 @@
-import { aquibotSessions } from "@/data/sample";
+import { AquibotChat, type ChatMessage, type SessionSummary } from "@/components/hub/aquibot-chat";
+import { isAdminUser } from "@/lib/admin-access";
+import { planLimit } from "@/lib/aquibot";
+import { usageFor, type Usage } from "@/lib/aquibot-engine/chat";
+import { engineStatus, getSessionRow, listUserSessions, nextMonthStart, sessionMessages } from "@/lib/aquibot-engine/store";
+import { getHubContent } from "@/lib/hub-content";
+import { getSession } from "@/lib/session";
 
-export default function AquibotPage() {
-  const active = aquibotSessions[0];
+export const dynamic = "force-dynamic";
+
+export default async function AquibotPage({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
+  const { chat } = await searchParams;
+  const user = await getSession();
+  const config = getHubContent().aquibot;
+  const isAdmin = isAdminUser(user);
+  const status = await engineStatus();
+  const limit = planLimit(config.settings, user?.plan ?? "core");
+
+  let usage: Usage = { used: 0, limit, unlimited: isAdmin || limit === 0, resetsOn: nextMonthStart() };
+  let sessions: SessionSummary[] = [];
+  let active: { id: string; title: string; messages: ChatMessage[] } | null = null;
+
+  if (status.ready && user) {
+    try {
+      const actor = { user, isAdmin };
+      const [rows, currentUsage] = await Promise.all([listUserSessions(user.id), usageFor(actor, config)]);
+      usage = currentUsage;
+      sessions = rows.map((row) => ({ id: row.id, title: row.title, updatedAt: row.updated_at }));
+      if (chat) {
+        const row = await getSessionRow(chat);
+        if (row && row.user_id === user.id) {
+          const messages = await sessionMessages(row.id);
+          active = {
+            id: row.id,
+            title: row.title,
+            messages: messages.map((message) => ({ id: String(message.id), role: message.role, content: message.content, meta: message.meta })),
+          };
+        }
+      }
+    } catch {
+      // The chat still renders; sending shows the connection problem.
+    }
+  }
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="rounded-xl border border-border bg-surface">
-        <p className="border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-mid">
-          Past sessions
-        </p>
-        {aquibotSessions.map((session) => (
-          <p key={session.id} className="border-b border-border px-4 py-3 text-sm">
-            {session.title}
-          </p>
-        ))}
-      </aside>
-      <section className="rounded-xl border border-border bg-surface p-5">
-        <h1 className="text-lg font-black">{active.title}</h1>
-        <div className="mt-4 space-y-3">
-          {active.messages.map((message) => (
-            <p
-              key={message.text}
-              className={`rounded-lg px-3 py-2 text-sm ${message.role === "user" ? "bg-blue-light" : "bg-s2 text-mid"}`}
-            >
-              {message.text}
-            </p>
-          ))}
-        </div>
-      </section>
-    </div>
+    <AquibotChat
+      key={active?.id ?? "new"}
+      sessions={sessions}
+      session={active}
+      usage={usage}
+      intro={config.settings.introMessage}
+      engine={{ ready: status.ready, problem: status.problem }}
+      isAdmin={isAdmin}
+      hasTestPrompt={Boolean(config.prompt.test.trim())}
+    />
   );
 }

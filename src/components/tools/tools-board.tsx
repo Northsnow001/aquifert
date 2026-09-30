@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, type MouseEvent } from "react";
 import markers from "@/data/tools-markers.json";
-import { ACADEMY_COMMENTARY, GLOSSARY, HOW_IT_IS_MADE, PHOSPHATE_CURVE, ureaCurve } from "@/lib/tools/academy";
+import { GLOSSARY, HOW_IT_IS_MADE, PHOSPHATE_CURVE, ureaCurve } from "@/lib/tools/academy";
 import { ammoniaCost, productCosts } from "@/lib/tools/costs";
 import {
   COUNTRY_SHAPES,
@@ -30,7 +30,7 @@ const LAYERS: Array<{ id: Layer; label: string; dot: string }> = [
   { id: "mop", label: "MOP / Potash Mines", dot: "bg-[#dc2626]" },
 ];
 
-export function ToolsBoard() {
+export function ToolsBoard({ commentaryHtml }: { commentaryHtml: string }) {
   const [tab, setTab] = useState<Tab>("map");
   const [layers, setLayers] = useState<Record<Layer, boolean>>({
     nh3: true,
@@ -210,7 +210,7 @@ export function ToolsBoard() {
         </section>
       ) : null}
 
-      <Commentary />
+      <Commentary html={commentaryHtml} />
     </div>
   );
 }
@@ -279,7 +279,7 @@ function MapTab({
   const plotW = width - left - 8;
   const plotH = height - top - 96;
   const capacity = PHOSPHATE_CURVE.reduce((sum, row) => sum + row.cap, 0);
-  let cursor = 0;
+  const offsets = PHOSPHATE_CURVE.map((_, index) => PHOSPHATE_CURVE.slice(0, index).reduce((sum, row) => sum + (row.cap / capacity) * plotW, 0));
 
   return (
     <div className="min-w-0 space-y-3">
@@ -315,10 +315,9 @@ function MapTab({
                 </g>
               );
             })}
-            {PHOSPHATE_CURVE.map((row) => {
+            {PHOSPHATE_CURVE.map((row, index) => {
               const barW = Math.max((row.cap / capacity) * plotW - 1, 1);
-              const x = left + cursor;
-              cursor += (row.cap / capacity) * plotW;
+              const x = left + offsets[index];
               const mineH = (row.mine / 180) * plotH;
               const benH = (row.ben / 180) * plotH;
               const base = top + plotH;
@@ -592,25 +591,13 @@ function WorldMap({
   );
 }
 
-function Commentary() {
+function Commentary({ html }: { html: string }) {
+  const blank = !/<(img|table|iframe)\b/i.test(html) && !html.replace(/<[^>]*>/g, "").replace(/&nbsp;|\s/g, "");
+  if (blank) return null;
   return (
     <article className="min-w-0 rounded-xl border border-border bg-surface p-4 sm:p-5">
-      <p className="text-[13px] font-semibold text-ink">{ACADEMY_COMMENTARY.kicker}</p>
-      <h2 className="mt-3 text-[15px] font-bold text-ink">{ACADEMY_COMMENTARY.title}</h2>
-      <div className="mt-4 space-y-5">
-        {ACADEMY_COMMENTARY.sections.map((section) => (
-          <section key={section.heading}>
-            <h3 className="text-[13.5px] font-bold text-ink">{section.heading}</h3>
-            <div className="mt-2 space-y-3">
-              {section.paragraphs.map((paragraph) => (
-                <p key={paragraph.slice(0, 48)} className="text-[13px] leading-relaxed text-mid">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+      <p className="text-[13px] font-semibold text-ink">Commentary</p>
+      <div className="aq-prose mt-3" dangerouslySetInnerHTML={{ __html: html }} />
     </article>
   );
 }

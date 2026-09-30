@@ -14,6 +14,9 @@ if (supabaseAnonKey) env.NEXT_PUBLIC_SUPABASE_ANON_KEY = supabaseAnonKey;
 
 const nextConfig: NextConfig = {
   env,
+  outputFileTracingIncludes: {
+    "/admin/import/plugin": ["./wordpress/aquifert-export/**/*"],
+  },
 };
 
 export default nextConfig;

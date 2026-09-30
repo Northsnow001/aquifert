@@ -1,6 +1,6 @@
 "use client";
 
-const LOGO_ASPECT = 814 / 214;
+const LOGO_ASPECT = 1024 / 299;
 const MARK_ASPECT = 148 / 214;
 
 /**
@@ -21,7 +21,7 @@ export function Logo({
   const aspect = mark ? MARK_ASPECT : LOGO_ASPECT;
   const img = (
     <img
-      src={mark ? "/brand/mark-v2.png" : "/brand/logo-v2.png"}
+      src="/brand/logo.png"
       alt="Aquifert"
       height={h}
       width={Math.round(h * aspect)}

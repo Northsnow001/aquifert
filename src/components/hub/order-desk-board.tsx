@@ -9,7 +9,7 @@ const PRODUCTS = [
 const PACKAGING = ["Bulk", "25kg", "50kg", "500kg", "600kg", "1000kg", "Other"];
 const ORIGINS = ["Baltic", "Black Sea", "Arab Gulf", "North Africa", "China", "FSU", "USA", "No preference"];
 
-export function OrderDeskBoard({ name, email }: { name: string; email: string }) {
+export function OrderDeskBoard({ name, email, success }: { name: string; email: string; success: string }) {
   const [product, setProduct] = useState("");
   const [packaging, setPackaging] = useState("");
   const [origins, setOrigins] = useState<string[]>(["No preference"]);
@@ -19,7 +19,7 @@ export function OrderDeskBoard({ name, email }: { name: string; email: string })
   const [price, setPrice] = useState("");
   const [prepay, setPrepay] = useState(20);
   const [pallets, setPallets] = useState("no");
-  const [sent, setSent] = useState<"remote" | "local" | null>(null);
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -39,18 +39,23 @@ export function OrderDeskBoard({ name, email }: { name: string; email: string })
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Order Desk</h1>
-        <p className="mt-1 text-sm text-mid">Your enquiry goes directly to the Aquifert trading desk.</p>
-      </div>
-
+    <div className="flex w-full flex-col gap-5">
       {sent ? (
-        <p className="rounded-xl border border-border bg-surface px-4 py-4 text-sm leading-relaxed text-ink">
-          {sent === "remote"
-            ? "Enquiry submitted. The trading desk will reply with a quote."
-            : "Enquiry captured in this preview. Connect Supabase to deliver it to the trading desk."}
-        </p>
+        <div className="rounded-xl border border-[#cdebd8] bg-[#f1faf4] px-5 py-5 text-sm leading-relaxed text-[#1f5f3a]">
+          <p className="font-semibold">{success}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setSent(false);
+              setProduct("");
+              setPackaging("");
+              setPrice("");
+            }}
+            className="mt-3 rounded-lg border border-[#cdebd8] bg-white px-3 py-1.5 text-xs font-semibold text-[#1f7a45]"
+          >
+            Send another enquiry
+          </button>
+        </div>
       ) : (
         <form
           className="space-y-5 rounded-xl border border-border bg-surface p-5"
@@ -60,38 +65,40 @@ export function OrderDeskBoard({ name, email }: { name: string; email: string })
             const chosen = String(data.get("product") ?? "");
             const productName = chosen === "Other" ? String(data.get("otherProduct") ?? "").trim() : chosen;
             const pack = String(data.get("packaging") ?? "");
-            const packName = pack === "Other" ? String(data.get("packagingOther") ?? "").trim() : pack;
-            const notes = [
-              `Name: ${String(data.get("name") ?? "").trim()}`,
-              `Email: ${String(data.get("email") ?? "").trim()}`,
-              `Company: ${String(data.get("company") ?? "").trim()}`,
-              `Grade: ${String(data.get("grade") ?? "").trim()}`,
-              `Pallets: ${pallets}`,
-              `Shipping: ${String(data.get("shipFrom") ?? "")} to ${String(data.get("shipTo") ?? "")}`,
-              `Target: ${currency} ${String(data.get("targetPrice") ?? "")} ${incoterm}`,
-              `Prepayment: ${prepay}%`,
-              `Payment: ${String(data.get("payment") ?? "")}`,
-              `Frequency: ${String(data.get("frequency") ?? "")}`,
-              String(data.get("notes") ?? "").trim(),
-            ].filter((line) => !line.endsWith(": ") && line !== "to").join("\n");
+            const text = (key: string) => String(data.get(key) ?? "").trim();
             setError(null);
             startTransition(async () => {
               const result = await submitOrderEnquiry({
+                name: text("name"),
+                email: text("email"),
+                company: text("company"),
                 product: productName,
-                quantity: `${String(data.get("quantity") ?? "").trim()} MT · ${packName}`,
-                origin: origins.join(", "),
-                destination: String(data.get("destination") ?? ""),
+                grade: text("grade"),
+                quantity: text("quantity"),
+                packaging: pack === "Other" ? text("packagingOther") : pack,
+                pallets,
+                origins: origins.join(", "),
+                destination: text("destination"),
                 incoterm,
-                notes,
+                shipFrom: text("shipFrom"),
+                shipTo: text("shipTo"),
+                currency,
+                targetPrice: text("targetPrice"),
+                prepayment: String(prepay),
+                paymentTerms: text("payment"),
+                frequency: text("frequency"),
+                notes: text("notes"),
+                website: text("website"),
               });
               if (!result.ok) {
                 setError(result.message);
                 return;
               }
-              setSent(result.delivered ? "remote" : "local");
+              setSent(true);
             });
           }}
         >
+          <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" />
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Name" name="name" defaultValue={name} required />
             <Field label="Email" name="email" type="email" defaultValue={email} required />

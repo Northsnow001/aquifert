@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# admin content store and inbox written at runtime
+/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

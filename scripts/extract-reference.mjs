@@ -28,19 +28,26 @@ const regionLabel = {
   red_sea: "Red Sea",
 };
 
+const str = String.raw`'((?:[^'\\]|\\.)*)'`;
+const unescape = (value) => value.replace(/\\(.)/g, "$1");
+const re = new RegExp(
+  String.raw`'name' => ${str}, 'country' => ${str}, 'region' => ${str}, 'unlocode' => ${str}, 'lat' => ([-\d.]+), 'lng' => ([-\d.]+)(?:, 'aliases' => \[([^\]]*)\])?`,
+  "g",
+);
+
 const ports = [];
-const re =
-  /'name' => '([^']*)', 'country' => '([^']*)', 'region' => '([^']*)', 'unlocode' => '([^']*)', 'lat' => ([-\d.]+), 'lng' => ([-\d.]+)/g;
 let match;
 while ((match = re.exec(portsPhp))) {
   const slug = match[3];
+  const aliases = match[7] ? [...match[7].matchAll(new RegExp(str, "g"))].map((alias) => unescape(alias[1])) : [];
   ports.push({
-    name: match[1],
-    country: match[2],
+    name: unescape(match[1]),
+    country: unescape(match[2]),
     region: regionLabel[slug] ?? slug,
-    code: match[4],
+    code: unescape(match[4]),
     lat: Number(match[5]),
     lon: Number(match[6]),
+    ...(aliases.length ? { aliases } : {}),
   });
 }
 

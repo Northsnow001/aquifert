@@ -1,4 +1,4 @@
-import { blendRate, type FixtureBand } from "@/lib/freight/fixtures";
+import { blendRate, type BlendWeights, type FixtureBand } from "@/lib/freight/fixtures";
 import {
   CANAL_RATES,
   DEFAULT_BDI,
@@ -12,9 +12,18 @@ import {
   premiumTaper,
   vesselForCargo,
   type Market,
+  type PremiumTaper,
   type VesselType,
 } from "@/lib/freight/reference";
 import { buildRoute, isGulfPort, type BuiltRoute, type Canal, type PortPoint } from "@/lib/freight/route";
+
+/** Admin-tuned pricing. Anything left out falls back to the built-in reference values. */
+export type PricingOverrides = {
+  originPremiums?: Record<string, number>;
+  seasonalPremium?: number;
+  taper?: PremiumTaper;
+  blend?: BlendWeights;
+};
 
 export type FreightQuoteInput = {
   cargoMt: number;
@@ -32,6 +41,7 @@ export type FreightQuoteInput = {
   iranWarRisk?: boolean;
   iranPremiumPerMt?: number;
   fixtureBand?: FixtureBand | null;
+  pricing?: PricingOverrides;
 };
 
 export type FreightQuote = {
@@ -82,13 +92,15 @@ export function quoteFreight(input: FreightQuoteInput): FreightQuote {
   const voyageCost = bunkerCost + canalCost + portCost + agencyCost;
   const timeCost = totalDays * hire;
   const baseRate = (voyageCost + timeCost) / input.cargoMt;
-  const originPremium = ORIGIN_PREMIUMS[input.loadRegion] ?? 0;
-  const rawPremium = input.cargoPremium + originPremium + SEASONAL_PREMIUM;
-  const taper = premiumTaper(input.distanceNm, input.canal);
+  const pricing = input.pricing ?? {};
+  const originPremium = (pricing.originPremiums ?? ORIGIN_PREMIUMS)[input.loadRegion] ?? 0;
+  const seasonalPremium = pricing.seasonalPremium ?? SEASONAL_PREMIUM;
+  const rawPremium = input.cargoPremium + originPremium + seasonalPremium;
+  const taper = premiumTaper(input.distanceNm, input.canal, pricing.taper);
   const iranPremium = input.iranWarRisk ? (input.iranPremiumPerMt ?? DEFAULT_IRAN_PREMIUM) : 0;
   const totalPremium = rawPremium * taper + iranPremium;
   const algorithmRate = baseRate + totalPremium;
-  const blend = blendRate(algorithmRate, input.fixtureBand ?? null);
+  const blend = blendRate(algorithmRate, input.fixtureBand ?? null, pricing.blend);
   const quotedRate = blend.displayRate;
   const grossRevenue = quotedRate * input.cargoMt;
 
@@ -108,7 +120,7 @@ export function quoteFreight(input: FreightQuoteInput): FreightQuote {
     timeCost,
     baseRate,
     originPremium,
-    seasonalPremium: SEASONAL_PREMIUM,
+    seasonalPremium,
     taper,
     rawPremium,
     iranPremium,
@@ -137,6 +149,7 @@ export type FreightRequest = {
   iranEnabled?: boolean;
   iranPremiumPerMt?: number;
   fixtureBand?: FixtureBand | null;
+  pricing?: PricingOverrides;
 };
 
 export type FreightResult = FreightQuote & {
@@ -165,6 +178,7 @@ export function calculateFreight(request: FreightRequest): FreightResult {
     iranWarRisk: iranApplied,
     iranPremiumPerMt: request.iranPremiumPerMt,
     fixtureBand: request.fixtureBand,
+    pricing: request.pricing,
   });
   return { ...quote, route, iranApplied };
 }

@@ -18,7 +18,14 @@ export const NETBACK_CONSTANTS = {
   cargoPremium: 5,
   seasonalPremium: 2.5,
   afrmmRate: 0.0025,
+  haulageLocal: 15,
+  haulageRegional: 25,
+  haulageRemote: 40,
 };
+
+export type NetbackCosts = typeof NETBACK_CONSTANTS;
+
+export type NetbackOrigin = { key: string; label: string; port: string; region: string; fob: number; lat: number; lon: number };
 
 export type Basis = "cfr" | "exw" | "local" | "regional" | "remote";
 
@@ -41,22 +48,13 @@ const ORIGIN_FREIGHT_PREMIUM: Record<string, number> = {
 };
 
 /**
- * Granular urea FOB midpoints for week 28 2026, the series the live hub
- * ranks against. These replace the plugin fallbacks (Iran and China at 0,
- * and the older regional defaults) once a nitrogen file has been loaded.
- * Freight is still calculated; these figures are only the commercial FOB input.
+ * Granular urea FOB midpoints for week 28 2026 (priced 9 Jul), the built-in
+ * set until the admin loads a nitrogen file or edits prices. Freight is still
+ * calculated; these figures are only the commercial FOB input.
  */
-export const BENCHMARK_WEEK = "28 2026";
+export const BENCHMARK_DATE = "2026-07-09";
 
-export const BENCHMARK_ORIGINS: Array<{
-  key: string;
-  label: string;
-  port: string;
-  region: string;
-  fob: number;
-  lat: number;
-  lon: number;
-}> = [
+export const BENCHMARK_ORIGINS: NetbackOrigin[] = [
   { key: "egypt", label: "Egypt (Europe)", port: "Port Said", region: "North Africa", fob: 440, lat: 32.1, lon: 31.8 },
   { key: "algeria", label: "Algeria", port: "Arzew", region: "North Africa", fob: 430, lat: 35.85, lon: -0.32 },
   { key: "nigeria", label: "Nigeria", port: "Onne", region: "West Africa", fob: 395, lat: 4.72, lon: 7.2 },
@@ -68,23 +66,23 @@ export const BENCHMARK_ORIGINS: Array<{
   { key: "china", label: "China", port: "Shanghai", region: "East Asia", fob: 395, lat: 31.23, lon: 121.47 },
 ];
 
-export function basisCosts(basis: Basis): BasisCosts {
+export function basisCosts(basis: Basis, costs: NetbackCosts = NETBACK_CONSTANTS): BasisCosts {
   switch (basis) {
     case "cfr":
       return { haulage: 0, includeDischarge: false, includeMargin: false, includePackaging: true };
     case "local":
-      return { haulage: 15, includeDischarge: true, includeMargin: true, includePackaging: true };
+      return { haulage: costs.haulageLocal, includeDischarge: true, includeMargin: true, includePackaging: true };
     case "regional":
-      return { haulage: 25, includeDischarge: true, includeMargin: true, includePackaging: true };
+      return { haulage: costs.haulageRegional, includeDischarge: true, includeMargin: true, includePackaging: true };
     case "remote":
-      return { haulage: 40, includeDischarge: true, includeMargin: true, includePackaging: true };
+      return { haulage: costs.haulageRemote, includeDischarge: true, includeMargin: true, includePackaging: true };
     default:
       return { haulage: 0, includeDischarge: true, includeMargin: true, includePackaging: true };
   }
 }
 
-export function lcFactor(): number {
-  return (NETBACK_CONSTANTS.lcRate / 365) * NETBACK_CONSTANTS.lcDays;
+export function lcFactor(costs: NetbackCosts = NETBACK_CONSTANTS): number {
+  return (costs.lcRate / 365) * costs.lcDays;
 }
 
 function netbackWaypoints(labels: string[]): string {
@@ -94,27 +92,24 @@ function netbackWaypoints(labels: string[]): string {
   return source.join(" → ").replaceAll("Strait of Malacca", "Malacca");
 }
 
-export function estimateNetbackFreight(origin: PortPoint, destination: PortPoint, cargoMt: number) {
+export function estimateNetbackFreight(origin: PortPoint, destination: PortPoint, cargoMt: number, costs: NetbackCosts = NETBACK_CONSTANTS) {
   const vessel = cargoMt >= 45000 ? "panamax" : "supramax";
   const specs =
     vessel === "panamax"
       ? { label: "Panamax", consumption: 38, speed: 12, bdiMult: 8 }
       : { label: "Supramax", consumption: 32, speed: 12.5, bdiMult: 7.5 };
   const routed = buildRoute(origin, destination);
-  const hire = NETBACK_CONSTANTS.hireBase * specs.bdiMult;
+  const hire = costs.hireBase * specs.bdiMult;
   const seaDays = routed.nauticalMiles / (specs.speed * 24);
-  const loadDays = cargoMt / NETBACK_CONSTANTS.loadRate;
-  const dischargeDays = cargoMt / NETBACK_CONSTANTS.dischargeRate;
-  const totalDays = seaDays + loadDays + dischargeDays + NETBACK_CONSTANTS.extraDays;
-  const bunkerCost = totalDays * specs.consumption * NETBACK_CONSTANTS.bunkerPrice;
+  const loadDays = cargoMt / costs.loadRate;
+  const dischargeDays = cargoMt / costs.dischargeRate;
+  const totalDays = seaDays + loadDays + dischargeDays + costs.extraDays;
+  const bunkerCost = totalDays * specs.consumption * costs.bunkerPrice;
   const canalRate = routed.canal === "suez" ? 4.5 : routed.canal === "panama" ? 5 : 0;
   const canalCost = cargoMt * canalRate;
-  const voyageCost = bunkerCost + canalCost + NETBACK_CONSTANTS.portAndAgency;
+  const voyageCost = bunkerCost + canalCost + costs.portAndAgency;
   const timeCost = totalDays * hire;
-  const premium =
-    NETBACK_CONSTANTS.cargoPremium +
-    (ORIGIN_FREIGHT_PREMIUM[origin.region] ?? 0) +
-    NETBACK_CONSTANTS.seasonalPremium;
+  const premium = costs.cargoPremium + (ORIGIN_FREIGHT_PREMIUM[origin.region] ?? 0) + costs.seasonalPremium;
   const freightMt = (voyageCost + timeCost) / cargoMt + premium;
   return {
     freightMt: Number(freightMt.toFixed(2)),
@@ -164,24 +159,26 @@ export function forwardOrigin(input: {
   dutyPercent: number;
   afrmm: boolean;
   inlandUsd: number;
+  costs?: NetbackCosts;
 }): ForwardOrigin {
-  const basis = basisCosts(input.basis);
+  const costs = input.costs ?? NETBACK_CONSTANTS;
+  const basis = basisCosts(input.basis, costs);
   const cfr = input.fob + input.freightMt;
-  const finCost = Number((cfr * lcFactor()).toFixed(2));
+  const finCost = Number((cfr * lcFactor(costs)).toFixed(2));
   const dutyCost =
     input.dutyEnabled && input.dutyPercent > 0
-      ? Number((((cfr + NETBACK_CONSTANTS.insurance) * input.dutyPercent) / 100).toFixed(2))
+      ? Number((((cfr + costs.insurance) * input.dutyPercent) / 100).toFixed(2))
       : 0;
-  const afrmmCost = input.afrmm ? Number((input.freightMt * NETBACK_CONSTANTS.afrmmRate).toFixed(2)) : 0;
-  const dischargeCost = basis.includeDischarge ? NETBACK_CONSTANTS.discharge : 0;
-  const marginCost = basis.includeMargin ? NETBACK_CONSTANTS.margin : 0;
-  const packCost = basis.includePackaging && input.packaging === "bagged" ? NETBACK_CONSTANTS.bagged : 0;
+  const afrmmCost = input.afrmm ? Number((input.freightMt * costs.afrmmRate).toFixed(2)) : 0;
+  const dischargeCost = basis.includeDischarge ? costs.discharge : 0;
+  const marginCost = basis.includeMargin ? costs.margin : 0;
+  const packCost = basis.includePackaging && input.packaging === "bagged" ? costs.bagged : 0;
   const delivery =
     dischargeCost +
     packCost +
     marginCost +
-    NETBACK_CONSTANTS.inspection +
-    NETBACK_CONSTANTS.insurance +
+    costs.inspection +
+    costs.insurance +
     finCost +
     basis.haulage +
     dutyCost +
@@ -244,22 +241,17 @@ export function reverseOrigin(input: {
   dutyPercent: number;
   afrmm: boolean;
   inlandUsd: number;
+  costs?: NetbackCosts;
 }): ReverseOrigin {
-  const basis = basisCosts(input.basis);
-  const dischargeCost = basis.includeDischarge ? NETBACK_CONSTANTS.discharge : 0;
-  const marginCost = basis.includeMargin ? NETBACK_CONSTANTS.margin : 0;
-  const packCost = basis.includePackaging && input.packaging === "bagged" ? NETBACK_CONSTANTS.bagged : 0;
-  const cash =
-    dischargeCost +
-    packCost +
-    marginCost +
-    NETBACK_CONSTANTS.inspection +
-    NETBACK_CONSTANTS.insurance +
-    basis.haulage +
-    input.inlandUsd;
-  const afrmmCost = input.afrmm ? Number((input.freightMt * NETBACK_CONSTANTS.afrmmRate).toFixed(2)) : 0;
+  const costs = input.costs ?? NETBACK_CONSTANTS;
+  const basis = basisCosts(input.basis, costs);
+  const dischargeCost = basis.includeDischarge ? costs.discharge : 0;
+  const marginCost = basis.includeMargin ? costs.margin : 0;
+  const packCost = basis.includePackaging && input.packaging === "bagged" ? costs.bagged : 0;
+  const cash = dischargeCost + packCost + marginCost + costs.inspection + costs.insurance + basis.haulage + input.inlandUsd;
+  const afrmmCost = input.afrmm ? Number((input.freightMt * costs.afrmmRate).toFixed(2)) : 0;
   const dutyRate = input.dutyEnabled ? input.dutyPercent / 100 : 0;
-  const impliedCfr = (input.farmUsd - cash - afrmmCost) / (1 + lcFactor() + dutyRate);
+  const impliedCfr = (input.farmUsd - cash - afrmmCost) / (1 + lcFactor(costs) + dutyRate);
   const impliedFob = Number((impliedCfr - input.freightMt).toFixed(2));
   const margin = Number((impliedFob - input.actualFob).toFixed(2));
   const status: ReverseOrigin["status"] =
@@ -273,7 +265,7 @@ export function reverseOrigin(input: {
     margin,
     impliedCfr: Number(impliedCfr.toFixed(2)),
     freightMt: input.freightMt,
-    impliedLc: Number((impliedCfr * lcFactor()).toFixed(2)),
+    impliedLc: Number((impliedCfr * lcFactor(costs)).toFixed(2)),
     impliedDuty: Number((impliedCfr * dutyRate).toFixed(2)),
     afrmmCost,
     nauticalMiles: input.nauticalMiles,
@@ -287,15 +279,11 @@ export function rankForward(
   destination: PortPoint,
   cargoMt: number,
   options: Omit<Parameters<typeof forwardOrigin>[0], "key" | "label" | "port" | "fob" | "freightMt" | "nauticalMiles" | "canal" | "waypoints" | "vessel">,
-  origins = BENCHMARK_ORIGINS,
+  origins: NetbackOrigin[] = BENCHMARK_ORIGINS,
 ): ForwardOrigin[] {
   return origins
     .map((origin) => {
-      const freight = estimateNetbackFreight(
-        { ...origin, name: origin.port },
-        destination,
-        cargoMt,
-      );
+      const freight = estimateNetbackFreight({ ...origin, name: origin.port }, destination, cargoMt, options.costs);
       return forwardOrigin({
         ...options,
         key: origin.key,
@@ -320,15 +308,11 @@ export function rankReverse(
     Parameters<typeof reverseOrigin>[0],
     "key" | "label" | "port" | "actualFob" | "freightMt" | "nauticalMiles" | "canal" | "waypoints" | "farmUsd"
   >,
-  origins = BENCHMARK_ORIGINS,
+  origins: NetbackOrigin[] = BENCHMARK_ORIGINS,
 ): ReverseOrigin[] {
   return origins
     .map((origin) => {
-      const freight = estimateNetbackFreight(
-        { ...origin, name: origin.port },
-        destination,
-        cargoMt,
-      );
+      const freight = estimateNetbackFreight({ ...origin, name: origin.port }, destination, cargoMt, options.costs);
       return reverseOrigin({
         ...options,
         key: origin.key,

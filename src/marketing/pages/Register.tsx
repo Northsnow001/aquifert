@@ -10,6 +10,7 @@ import { Button } from "@/marketing/components/ui/button";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { authInputCls, saveSignupPending } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
+import { checkSignupAddress } from "@/app/(auth)/signup-check";
 
 const errCls = "mt-1 text-[12px] text-red-700";
 
@@ -54,6 +55,14 @@ export default function Register() {
     if (!form.country.trim()) e.country = "Enter your country.";
     setErrors(e);
     if (Object.keys(e).length > 0) return;
+
+    setPending(true);
+    const allowed = await checkSignupAddress(form.email).catch(() => ({ ok: true as const }));
+    setPending(false);
+    if (!allowed.ok) {
+      setErrors({ email: allowed.message });
+      return;
+    }
 
     if (!isSupabaseBrowserConfigured()) {
       setErrors({

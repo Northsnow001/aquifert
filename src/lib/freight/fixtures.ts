@@ -6,6 +6,8 @@ export type FixtureBand = {
   rateMin: number;
   rateMax: number;
   rateMedian: number;
+  label?: string;
+  fixtureIds?: string[];
 };
 
 export type BlendResult = {
@@ -18,7 +20,11 @@ export type BlendResult = {
   hasFixtures: boolean;
 };
 
-export function blendRate(algorithmRate: number, band: FixtureBand | null): BlendResult {
+export type BlendWeights = { fixtureMax: number; algoMin: number };
+
+export const DEFAULT_BLEND: BlendWeights = { fixtureMax: 0.9, algoMin: 0.15 };
+
+export function blendRate(algorithmRate: number, band: FixtureBand | null, weights: BlendWeights = DEFAULT_BLEND): BlendResult {
   if (!band || band.sampleSize < 1) {
     return {
       displayRate: algorithmRate,
@@ -44,8 +50,8 @@ export function blendRate(algorithmRate: number, band: FixtureBand | null): Blen
     band.cargoMatchMode === "in_band" ? 1 : band.cargoMatchMode === "near_band" ? 0.85 : 0.6;
   const countFactor = band.sampleSize >= 5 ? 1 : band.sampleSize >= 3 ? 0.8 : band.sampleSize >= 1 ? 0.6 : 0;
   const rawWeight = tierFactor * recencyFactor * cargoFactor * countFactor;
-  const fixtureWeight = Math.min(0.9, rawWeight);
-  const algoWeight = Math.max(0.15, 1 - fixtureWeight);
+  const fixtureWeight = Math.min(weights.fixtureMax, rawWeight);
+  const algoWeight = Math.max(weights.algoMin, 1 - fixtureWeight);
   const inRange = algorithmRate >= band.rateMin && algorithmRate <= band.rateMax;
   const fixtureRate = Number.isFinite(band.rateMedian)
     ? band.rateMedian

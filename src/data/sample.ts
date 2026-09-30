@@ -1,8 +1,15 @@
-export const telex = [
+import type { Indicator, TelexItem } from "@/lib/content-types";
+
+export const telex: TelexItem[] = [
   {
     id: "tx-1",
-    date: "Mon · 28 Sep 2026",
-    title: "China fertiliser markets soften ahead of Golden Week. Urea holds; phosphates and potash slide.",
+    headline: "China fertiliser markets soften ahead of Golden Week. Urea holds; phosphates and potash slide.",
+    tags: ["Amsul", "China", "MAP", "Urea"],
+    access: "public",
+    status: "published",
+    author: "Phil Sunderland",
+    publishedAt: "2026-09-28T03:58",
+    updatedAt: "2026-09-28T03:58",
     paragraphs: [
       "Pre-holiday order pressure has pushed most domestic Chinese fertiliser prices lower in the days before the National Day break. The pattern is familiar: companies cut quotes to clear inventory, buyers take a little at reduced levels, then the market consolidates.",
       "Urea domestic prices edged down on small and medium granule routes as producers flexed to collect orders. The India standard announcement generated some speculation but limited directional impact.",
@@ -11,8 +18,13 @@ export const telex = [
   },
   {
     id: "tx-2",
-    date: "Fri · 26 Sep 2026",
-    title: "Brazil urea enquiry returns for October laycan.",
+    headline: "Brazil urea enquiry returns for October laycan.",
+    tags: ["Brazil", "Urea"],
+    access: "public",
+    status: "published",
+    author: "Phil Sunderland",
+    publishedAt: "2026-09-26T05:47",
+    updatedAt: "2026-09-26T05:47",
     paragraphs: [
       "Named buyers are back for October granular urea into Brazil. Arab Gulf sellers are holding offers above last week's range rather than chasing the first bid.",
       "Freight ideas on the AG–Brazil supramax are steady. The enquiry is real, but coverage is still hand to mouth.",
@@ -20,7 +32,7 @@ export const telex = [
   },
 ];
 
-export const indicators = [
+export const indicators: Indicator[] = [
   {
     name: "Nitrogen",
     value: 60,
@@ -58,25 +70,6 @@ export const freightCommentary = {
     "Markets heating up by destination: Bangladesh is the dominant corridor by enquiry count. Morocco, Jorf Lasfar and Casablanca remain the primary load origins.",
   ],
 };
-
-export const aquibotSessions = [
-  {
-    id: "s1",
-    title: "Brazil urea freight",
-    messages: [
-      { role: "user", text: "What was the Brazil freight talk last week?" },
-      { role: "assistant", text: "Sample reply. Live Aquibot answers are not connected in this build." },
-    ],
-  },
-  {
-    id: "s2",
-    title: "DAP Morocco",
-    messages: [
-      { role: "user", text: "DAP Morocco FOB this week?" },
-      { role: "assistant", text: "Sample reply drawn from the library layout, not a model response." },
-    ],
-  },
-];
 
 export const payments = [
   { date: "01 Sep 2026", description: "Growth plan", amount: "$249.00", status: "Paid" },

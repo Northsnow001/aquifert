@@ -21,6 +21,7 @@ const ISO: Record<string, string> = {
   Colombia: "CO",
   Comoros: "KM",
   "Costa Rica": "CR",
+  "Côte d'Ivoire": "CI",
   Croatia: "HR",
   Cuba: "CU",
   Cyprus: "CY",
@@ -118,6 +119,8 @@ const ISO: Record<string, string> = {
   Uruguay: "UY",
   Vietnam: "VN",
 };
+
+export const COUNTRIES = Object.keys(ISO).sort((a, b) => a.localeCompare(b));
 
 export function countryCode(country: string): string {
   return ISO[country] ?? "";

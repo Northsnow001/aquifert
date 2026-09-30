@@ -1,0 +1,92 @@
+import "server-only";
+
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
+import path from "path";
+import type { DeliverySettings } from "@/lib/desk-settings/types";
+
+export type MailKind = "order-applicant" | "order-admin" | "zero-applicant" | "zero-admin" | "test";
+
+export type OutboxEntry = {
+  id: string;
+  at: string;
+  kind: MailKind;
+  to: string;
+  subject: string;
+  /** Sent by the provider, refused by it, or kept here because no provider is connected. */
+  status: "sent" | "failed" | "held";
+  error?: string;
+  html: string;
+};
+
+const filePath = path.join(process.cwd(), "data", "outbox.json");
+const MAX_ENTRIES = 200;
+
+export function deliveryStatus() {
+  const from = process.env.EMAIL_FROM?.trim() || null;
+  const connected = Boolean(process.env.RESEND_API_KEY?.trim() && from);
+  return { connected, provider: connected ? ("Resend" as const) : null, from };
+}
+
+export function listOutbox(): OutboxEntry[] {
+  try {
+    const parsed = JSON.parse(readFileSync(filePath, "utf8"));
+    return Array.isArray(parsed) ? (parsed as OutboxEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOutbox(entries: OutboxEntry[]) {
+  mkdirSync(path.dirname(filePath), { recursive: true });
+  writeFileSync(`${filePath}.tmp`, `${JSON.stringify(entries.slice(0, MAX_ENTRIES), null, 2)}\n`, "utf8");
+  renameSync(`${filePath}.tmp`, filePath);
+}
+
+export function clearOutbox() {
+  saveOutbox([]);
+}
+
+async function sendWithResend(message: { to: string; subject: string; html: string; text: string }, delivery: DeliverySettings, from: string) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: delivery.fromName.trim() ? `${delivery.fromName.trim()} <${from}>` : from,
+      to: [message.to],
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+      ...(delivery.replyTo.trim() ? { reply_to: delivery.replyTo.trim() } : {}),
+    }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Resend returned ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`);
+  }
+}
+
+/** Sends one email and records it in the outbox. Never throws, so a mail failure cannot lose a submission. */
+export async function sendEmail(message: { kind: MailKind; to: string; subject: string; html: string; text: string }, delivery: DeliverySettings): Promise<OutboxEntry> {
+  const status = deliveryStatus();
+  const entry: OutboxEntry = {
+    id: `mail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: new Date().toISOString(),
+    kind: message.kind,
+    to: message.to,
+    subject: message.subject,
+    status: "held",
+    html: message.html,
+  };
+  if (status.connected && status.from) {
+    try {
+      await sendWithResend(message, delivery, status.from);
+      entry.status = "sent";
+    } catch (error) {
+      entry.status = "failed";
+      entry.error = error instanceof Error ? error.message : "Delivery failed.";
+    }
+  }
+  saveOutbox([entry, ...listOutbox()]);
+  return entry;
+}

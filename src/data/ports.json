@@ -5,7 +5,12 @@
     "region": "Middle East",
     "code": "QAMES",
     "lat": 24.99,
-    "lon": 51.55
+    "lon": 51.55,
+    "aliases": [
+      "mesaeed",
+      "qatar port",
+      "qp"
+    ]
   },
   {
     "name": "Ras Laffan",
@@ -13,7 +18,11 @@
     "region": "Middle East",
     "code": "QARL",
     "lat": 25.9,
-    "lon": 51.58
+    "lon": 51.58,
+    "aliases": [
+      "raslaffan",
+      "ras laffan"
+    ]
   },
   {
     "name": "Doha",
@@ -157,7 +166,10 @@
     "region": "Indian Subcontinent",
     "code": "INKND",
     "lat": 23.01,
-    "lon": 70.22
+    "lon": 70.22,
+    "aliases": [
+      "deendayal"
+    ]
   },
   {
     "name": "Mundra",
@@ -173,7 +185,12 @@
     "region": "Indian Subcontinent",
     "code": "INBOM",
     "lat": 18.92,
-    "lon": 72.85
+    "lon": 72.85,
+    "aliases": [
+      "bombay",
+      "nhava sheva",
+      "jnpt"
+    ]
   },
   {
     "name": "Nhava Sheva (JNPT)",
@@ -197,7 +214,10 @@
     "region": "Indian Subcontinent",
     "code": "INCOK",
     "lat": 9.96,
-    "lon": 76.24
+    "lon": 76.24,
+    "aliases": [
+      "kochi"
+    ]
   },
   {
     "name": "Tuticorin",
@@ -213,7 +233,10 @@
     "region": "Indian Subcontinent",
     "code": "INMAA",
     "lat": 13.1,
-    "lon": 80.3
+    "lon": 80.3,
+    "aliases": [
+      "madras"
+    ]
   },
   {
     "name": "Vizag",
@@ -221,7 +244,11 @@
     "region": "Indian Subcontinent",
     "code": "INVTZ",
     "lat": 17.68,
-    "lon": 83.3
+    "lon": 83.3,
+    "aliases": [
+      "visakhapatnam",
+      "vizag"
+    ]
   },
   {
     "name": "Kolkata",
@@ -229,7 +256,11 @@
     "region": "Indian Subcontinent",
     "code": "INCCU",
     "lat": 22.55,
-    "lon": 88.33
+    "lon": 88.33,
+    "aliases": [
+      "calcutta",
+      "haldia"
+    ]
   },
   {
     "name": "Haldia",
@@ -277,7 +308,12 @@
     "region": "East Africa",
     "code": "TZDAR",
     "lat": -6.82,
-    "lon": 39.28
+    "lon": 39.28,
+    "aliases": [
+      "dar es salaam",
+      "dar",
+      "dares"
+    ]
   },
   {
     "name": "Mombasa",
@@ -365,7 +401,12 @@
     "region": "West Africa",
     "code": "NGAPP",
     "lat": 6.45,
-    "lon": 3.38
+    "lon": 3.38,
+    "aliases": [
+      "lagos",
+      "apapa",
+      "tin can"
+    ]
   },
   {
     "name": "Onne",
@@ -390,6 +431,14 @@
     "code": "SNDRK",
     "lat": 14.68,
     "lon": -17.43
+  },
+  {
+    "name": "Abidjan",
+    "country": "Côte d'Ivoire",
+    "region": "West Africa",
+    "code": "CIABJ",
+    "lat": 5.35,
+    "lon": -4
   },
   {
     "name": "Tema",
@@ -661,7 +710,11 @@
     "region": "Northern Europe",
     "code": "NLRTM",
     "lat": 51.92,
-    "lon": 4.48
+    "lon": 4.48,
+    "aliases": [
+      "ams",
+      "amsterdam"
+    ]
   },
   {
     "name": "Antwerp",
@@ -733,7 +786,11 @@
     "region": "Atlantic Europe",
     "code": "FRNTS",
     "lat": 47.27,
-    "lon": -2.21
+    "lon": -2.21,
+    "aliases": [
+      "saint nazaire",
+      "nantes"
+    ]
   },
   {
     "name": "Bordeaux",
@@ -765,7 +822,11 @@
     "region": "Mediterranean",
     "code": "FRFOS",
     "lat": 43.43,
-    "lon": 4.95
+    "lon": 4.95,
+    "aliases": [
+      "fos",
+      "marseille fos"
+    ]
   },
   {
     "name": "Sète",
@@ -789,7 +850,11 @@
     "region": "Atlantic Europe",
     "code": "GBTIL",
     "lat": 51.46,
-    "lon": 0.36
+    "lon": 0.36,
+    "aliases": [
+      "port of tilbury",
+      "thames"
+    ]
   },
   {
     "name": "Southampton",
@@ -797,7 +862,11 @@
     "region": "Atlantic Europe",
     "code": "GBSOU",
     "lat": 50.9,
-    "lon": -1.4
+    "lon": -1.4,
+    "aliases": [
+      "southampton",
+      "portsmouth"
+    ]
   },
   {
     "name": "Immingham",
@@ -821,7 +890,11 @@
     "region": "Atlantic Europe",
     "code": "GBHUL",
     "lat": 53.74,
-    "lon": -0.33
+    "lon": -0.33,
+    "aliases": [
+      "kingston upon hull",
+      "humber"
+    ]
   },
   {
     "name": "Teesport",
@@ -829,7 +902,11 @@
     "region": "Atlantic Europe",
     "code": "GBTEE",
     "lat": 54.62,
-    "lon": -1.14
+    "lon": -1.14,
+    "aliases": [
+      "middlesbrough",
+      "tees"
+    ]
   },
   {
     "name": "Liverpool",
@@ -845,7 +922,11 @@
     "region": "Atlantic Europe",
     "code": "GBBRS",
     "lat": 51.5,
-    "lon": -2.7
+    "lon": -2.7,
+    "aliases": [
+      "avonmouth",
+      "bristol port"
+    ]
   },
   {
     "name": "Glasgow (Greenock)",
@@ -853,7 +934,12 @@
     "region": "Atlantic Europe",
     "code": "GBGRK",
     "lat": 55.95,
-    "lon": -4.77
+    "lon": -4.77,
+    "aliases": [
+      "greenock",
+      "clyde",
+      "glasgow"
+    ]
   },
   {
     "name": "Grangemouth",
@@ -861,7 +947,11 @@
     "region": "Atlantic Europe",
     "code": "GBGRG",
     "lat": 56.01,
-    "lon": -3.72
+    "lon": -3.72,
+    "aliases": [
+      "forth",
+      "edinburgh"
+    ]
   },
   {
     "name": "Aberdeen",
@@ -909,7 +999,11 @@
     "region": "Baltic",
     "code": "RULED",
     "lat": 59.95,
-    "lon": 30.22
+    "lon": 30.22,
+    "aliases": [
+      "saint petersburg",
+      "leningrad"
+    ]
   },
   {
     "name": "Tallinn",
@@ -1117,7 +1211,11 @@
     "region": "Southeast Asia",
     "code": "THLCH",
     "lat": 13.1,
-    "lon": 100.9
+    "lon": 100.9,
+    "aliases": [
+      "laem",
+      "thailand"
+    ]
   },
   {
     "name": "Ho Chi Minh City",
@@ -1125,7 +1223,11 @@
     "region": "Southeast Asia",
     "code": "VNSGN",
     "lat": 10.76,
-    "lon": 106.69
+    "lon": 106.69,
+    "aliases": [
+      "saigon",
+      "hcmc"
+    ]
   },
   {
     "name": "Hai Phong",
@@ -1141,7 +1243,11 @@
     "region": "Southeast Asia",
     "code": "IDJKT",
     "lat": -6.1,
-    "lon": 106.87
+    "lon": 106.87,
+    "aliases": [
+      "jakarta",
+      "tanjung priok"
+    ]
   },
   {
     "name": "Surabaya",
@@ -1357,7 +1463,12 @@
     "region": "Southeast Asia",
     "code": "BNMUA",
     "lat": 5.02,
-    "lon": 115.07
+    "lon": 115.07,
+    "aliases": [
+      "brunei",
+      "muara port",
+      "bandar seri begawan"
+    ]
   },
   {
     "name": "Seria",
@@ -1365,7 +1476,11 @@
     "region": "Southeast Asia",
     "code": "BNSER",
     "lat": 4.61,
-    "lon": 114.32
+    "lon": 114.32,
+    "aliases": [
+      "seria oil terminal",
+      "brunei seria"
+    ]
   },
   {
     "name": "Kaohsiung",
@@ -1373,7 +1488,11 @@
     "region": "East Asia",
     "code": "TWKHH",
     "lat": 22.62,
-    "lon": 120.27
+    "lon": 120.27,
+    "aliases": [
+      "kaohsiung",
+      "gaoxiong"
+    ]
   },
   {
     "name": "Taichung",
@@ -1389,7 +1508,10 @@
     "region": "East Asia",
     "code": "TWKEL",
     "lat": 25.13,
-    "lon": 121.74
+    "lon": 121.74,
+    "aliases": [
+      "chilung"
+    ]
   },
   {
     "name": "Yangon (Thilawa)",
@@ -1397,7 +1519,12 @@
     "region": "Southeast Asia",
     "code": "MMRGN",
     "lat": 16.77,
-    "lon": 96.2
+    "lon": 96.2,
+    "aliases": [
+      "rangoon",
+      "thilawa",
+      "myanmar"
+    ]
   },
   {
     "name": "Kyaukpyu",
@@ -1413,7 +1540,12 @@
     "region": "Southeast Asia",
     "code": "KHSIH",
     "lat": 10.62,
-    "lon": 103.52
+    "lon": 103.52,
+    "aliases": [
+      "preah sihanouk",
+      "kompong som",
+      "cambodia"
+    ]
   },
   {
     "name": "Fangchenggang",
@@ -1421,7 +1553,13 @@
     "region": "East Asia",
     "code": "CNFAN",
     "lat": 21.6,
-    "lon": 108.38
+    "lon": 108.38,
+    "aliases": [
+      "fangcheng",
+      "fangchenggang port",
+      "beibu gulf",
+      "guangxi"
+    ]
   },
   {
     "name": "Beihai",
@@ -1429,7 +1567,10 @@
     "region": "East Asia",
     "code": "CNBHV",
     "lat": 21.47,
-    "lon": 109.12
+    "lon": 109.12,
+    "aliases": [
+      "beihai port"
+    ]
   },
   {
     "name": "Zhoushan",
@@ -1437,7 +1578,11 @@
     "region": "East Asia",
     "code": "CNZOS",
     "lat": 29.99,
-    "lon": 122.21
+    "lon": 122.21,
+    "aliases": [
+      "zhoushan",
+      "ningbo zhoushan"
+    ]
   },
   {
     "name": "Lianyungang",
@@ -1445,7 +1590,11 @@
     "region": "East Asia",
     "code": "CNLYG",
     "lat": 34.73,
-    "lon": 119.47
+    "lon": 119.47,
+    "aliases": [
+      "lianyungang",
+      "jiangsu"
+    ]
   },
   {
     "name": "Rizhao",
@@ -1469,7 +1618,11 @@
     "region": "East Asia",
     "code": "CNCFD",
     "lat": 39.88,
-    "lon": 119.05
+    "lon": 119.05,
+    "aliases": [
+      "tangshan",
+      "caofeidian port"
+    ]
   },
   {
     "name": "Yingkou",
@@ -1525,7 +1678,10 @@
     "region": "East Asia",
     "code": "CNXMN",
     "lat": 24.45,
-    "lon": 118.07
+    "lon": 118.07,
+    "aliases": [
+      "amoy"
+    ]
   },
   {
     "name": "Cam Ranh",
@@ -1541,7 +1697,10 @@
     "region": "Southeast Asia",
     "code": "VNDAN",
     "lat": 16.07,
-    "lon": 108.22
+    "lon": 108.22,
+    "aliases": [
+      "danang"
+    ]
   },
   {
     "name": "Cai Lan",
@@ -1549,7 +1708,11 @@
     "region": "Southeast Asia",
     "code": "VNCAL",
     "lat": 20.95,
-    "lon": 107.08
+    "lon": 107.08,
+    "aliases": [
+      "quang ninh",
+      "cailan"
+    ]
   },
   {
     "name": "Balikpapan",
@@ -1581,7 +1744,11 @@
     "region": "Southeast Asia",
     "code": "IDBLW",
     "lat": 3.79,
-    "lon": 98.7
+    "lon": 98.7,
+    "aliases": [
+      "belawan",
+      "medan"
+    ]
   },
   {
     "name": "Cigading",
@@ -1605,7 +1772,10 @@
     "region": "Southeast Asia",
     "code": "PHGSO",
     "lat": 6.11,
-    "lon": 125.17
+    "lon": 125.17,
+    "aliases": [
+      "gensan"
+    ]
   },
   {
     "name": "Port Moresby",
@@ -1645,7 +1815,10 @@
     "region": "Oceania",
     "code": "NZLYT",
     "lat": -43.6,
-    "lon": 172.72
+    "lon": 172.72,
+    "aliases": [
+      "christchurch"
+    ]
   },
   {
     "name": "Hay Point",
@@ -1781,7 +1954,11 @@
     "region": "Mediterranean",
     "code": "MTMLA",
     "lat": 35.9,
-    "lon": 14.52
+    "lon": 14.52,
+    "aliases": [
+      "malta freeport",
+      "marsaxlokk"
+    ]
   },
   {
     "name": "Durres",
@@ -1821,7 +1998,11 @@
     "region": "Black Sea",
     "code": "UANLV",
     "lat": 46.97,
-    "lon": 32
+    "lon": 32,
+    "aliases": [
+      "nikolaev",
+      "mykolayiv"
+    ]
   },
   {
     "name": "Kherson",
@@ -1925,7 +2106,10 @@
     "region": "Caribbean",
     "code": "JMKIN",
     "lat": 17.98,
-    "lon": -76.78
+    "lon": -76.78,
+    "aliases": [
+      "kingston"
+    ]
   },
   {
     "name": "Freeport (Bahamas)",
@@ -1957,7 +2141,11 @@
     "region": "Central America",
     "code": "PACON",
     "lat": 9.36,
-    "lon": -79.9
+    "lon": -79.9,
+    "aliases": [
+      "panama colon",
+      "cristobal"
+    ]
   },
   {
     "name": "Balboa",
@@ -1965,7 +2153,10 @@
     "region": "Central America",
     "code": "PABAL",
     "lat": 8.96,
-    "lon": -79.57
+    "lon": -79.57,
+    "aliases": [
+      "panama balboa"
+    ]
   },
   {
     "name": "Barranquilla",
@@ -2005,7 +2196,11 @@
     "region": "South America",
     "code": "BRTUB",
     "lat": -20.27,
-    "lon": -40.25
+    "lon": -40.25,
+    "aliases": [
+      "tubarao",
+      "csa"
+    ]
   },
   {
     "name": "Ponta da Madeira",
@@ -2013,7 +2208,11 @@
     "region": "South America",
     "code": "BRPDM",
     "lat": -2.57,
-    "lon": -44.36
+    "lon": -44.36,
+    "aliases": [
+      "sao luis",
+      "vale terminal"
+    ]
   },
   {
     "name": "Praia Mole",
@@ -2061,7 +2260,11 @@
     "region": "East Africa",
     "code": "MGTMM",
     "lat": -18.14,
-    "lon": 49.4
+    "lon": 49.4,
+    "aliases": [
+      "tamatave",
+      "madagascar"
+    ]
   },
   {
     "name": "Libreville",
@@ -2077,7 +2280,10 @@
     "region": "West Africa",
     "code": "CMDLA",
     "lat": 4.05,
-    "lon": 9.7
+    "lon": 9.7,
+    "aliases": [
+      "cameroon"
+    ]
   },
   {
     "name": "Port Gentil",
@@ -2112,12 +2318,23 @@
     "lon": -10.8
   },
   {
+    "name": "San Pedro (CI)",
+    "country": "Côte d'Ivoire",
+    "region": "West Africa",
+    "code": "CISPY",
+    "lat": 4.75,
+    "lon": -6.64
+  },
+  {
     "name": "Walvis Bay",
     "country": "Namibia",
     "region": "Southern Africa",
     "code": "NAWBS",
     "lat": -22.96,
-    "lon": 14.51
+    "lon": 14.51,
+    "aliases": [
+      "namibia"
+    ]
   },
   {
     "name": "Tolanaro",
@@ -2133,7 +2350,11 @@
     "region": "Middle East",
     "code": "SAJED",
     "lat": 21.49,
-    "lon": 39.17
+    "lon": 39.17,
+    "aliases": [
+      "jiddah",
+      "jiddah islamic port"
+    ]
   },
   {
     "name": "Yanbu",
@@ -2165,7 +2386,10 @@
     "region": "North Africa",
     "code": "EGASK",
     "lat": 29.58,
-    "lon": 32.35
+    "lon": 32.35,
+    "aliases": [
+      "sokhna"
+    ]
   },
   {
     "name": "Port Qasim",
@@ -2173,7 +2397,11 @@
     "region": "Indian Subcontinent",
     "code": "PKPQZ",
     "lat": 24.79,
-    "lon": 67.31
+    "lon": 67.31,
+    "aliases": [
+      "qasim",
+      "port kasim"
+    ]
   },
   {
     "name": "Gwadar",
@@ -2189,7 +2417,11 @@
     "region": "Middle East",
     "code": "IQBSR",
     "lat": 30.5,
-    "lon": 47.79
+    "lon": 47.79,
+    "aliases": [
+      "basrah",
+      "al basra"
+    ]
   },
   {
     "name": "Mongla",
@@ -2205,7 +2437,12 @@
     "region": "East Asia",
     "code": "HKHKG",
     "lat": 22.3,
-    "lon": 114.17
+    "lon": 114.17,
+    "aliases": [
+      "hk",
+      "kwai tsing",
+      "hong kong port"
+    ]
   },
   {
     "name": "Foynes",
@@ -2213,7 +2450,12 @@
     "region": "Atlantic Europe",
     "code": "IEFOY",
     "lat": 52.61,
-    "lon": -9.11
+    "lon": -9.11,
+    "aliases": [
+      "foynes port",
+      "limerick",
+      "shannon foynes"
+    ]
   },
   {
     "name": "Waterford",
@@ -2253,7 +2495,12 @@
     "region": "Atlantic Europe",
     "code": "GBBIR",
     "lat": 53.39,
-    "lon": -3.02
+    "lon": -3.02,
+    "aliases": [
+      "birkenhead",
+      "mersey",
+      "liverpool birkenhead"
+    ]
   },
   {
     "name": "Manchester",
@@ -2261,7 +2508,11 @@
     "region": "Atlantic Europe",
     "code": "GBMAN",
     "lat": 53.47,
-    "lon": -2.25
+    "lon": -2.25,
+    "aliases": [
+      "salford quays",
+      "manchester ship canal"
+    ]
   },
   {
     "name": "Tyne (Newcastle)",
@@ -2269,7 +2520,12 @@
     "region": "Atlantic Europe",
     "code": "GBNTE",
     "lat": 54.97,
-    "lon": -1.59
+    "lon": -1.59,
+    "aliases": [
+      "newcastle",
+      "river tyne",
+      "tyne dock"
+    ]
   },
   {
     "name": "Sunderland",
@@ -2285,7 +2541,12 @@
     "region": "Atlantic Europe",
     "code": "GBLEI",
     "lat": 55.98,
-    "lon": -3.17
+    "lon": -3.17,
+    "aliases": [
+      "leith",
+      "edinburgh leith",
+      "forth ports"
+    ]
   },
   {
     "name": "Ipswich",
@@ -2309,7 +2570,11 @@
     "region": "Atlantic Europe",
     "code": "GBNPT",
     "lat": 51.55,
-    "lon": -2.99
+    "lon": -2.99,
+    "aliases": [
+      "newport wales",
+      "cardiff"
+    ]
   },
   {
     "name": "Workington",
@@ -2341,7 +2606,10 @@
     "region": "Baltic",
     "code": "DEROS",
     "lat": 54.09,
-    "lon": 12.13
+    "lon": 12.13,
+    "aliases": [
+      "rostock port"
+    ]
   },
   {
     "name": "Lübeck",
@@ -2349,7 +2617,10 @@
     "region": "Baltic",
     "code": "DELBC",
     "lat": 53.87,
-    "lon": 10.69
+    "lon": 10.69,
+    "aliases": [
+      "lubeck"
+    ]
   },
   {
     "name": "Brunsbüttel",
@@ -2357,7 +2628,11 @@
     "region": "Northern Europe",
     "code": "DEBRB",
     "lat": 53.9,
-    "lon": 9.14
+    "lon": 9.14,
+    "aliases": [
+      "brunsbuttel",
+      "kiel canal"
+    ]
   },
   {
     "name": "Emden",
@@ -2373,7 +2648,10 @@
     "region": "Northern Europe",
     "code": "DEUIR",
     "lat": 51.43,
-    "lon": 6.76
+    "lon": 6.76,
+    "aliases": [
+      "duisburg inland"
+    ]
   },
   {
     "name": "Flushing (Vlissingen)",
@@ -2381,7 +2659,12 @@
     "region": "Northern Europe",
     "code": "NLVLI",
     "lat": 51.44,
-    "lon": 3.57
+    "lon": 3.57,
+    "aliases": [
+      "vlissingen",
+      "flushing",
+      "zeeland"
+    ]
   },
   {
     "name": "Moerdijk",
@@ -2397,7 +2680,11 @@
     "region": "Northern Europe",
     "code": "BEZEE",
     "lat": 51.34,
-    "lon": 3.2
+    "lon": 3.2,
+    "aliases": [
+      "zeebrugge",
+      "bruges"
+    ]
   },
   {
     "name": "Stockholm",
@@ -2413,7 +2700,11 @@
     "region": "Baltic",
     "code": "SEMAL",
     "lat": 55.61,
-    "lon": 13
+    "lon": 13,
+    "aliases": [
+      "malmo",
+      "malmö"
+    ]
   },
   {
     "name": "Luleå",
@@ -2421,7 +2712,10 @@
     "region": "Baltic",
     "code": "SELUL",
     "lat": 65.58,
-    "lon": 22.16
+    "lon": 22.16,
+    "aliases": [
+      "lulea"
+    ]
   },
   {
     "name": "Oxelösund",
@@ -2461,7 +2755,11 @@
     "region": "Baltic",
     "code": "DKAAR",
     "lat": 56.15,
-    "lon": 10.22
+    "lon": 10.22,
+    "aliases": [
+      "aarhus",
+      "arhus"
+    ]
   },
   {
     "name": "Esbjerg",
@@ -2501,7 +2799,10 @@
     "region": "Northern Europe",
     "code": "NOTRD",
     "lat": 69.65,
-    "lon": 18.96
+    "lon": 18.96,
+    "aliases": [
+      "tromso"
+    ]
   },
   {
     "name": "Gdynia",
@@ -2525,7 +2826,11 @@
     "region": "Mediterranean",
     "code": "ESALG",
     "lat": 36.13,
-    "lon": -5.46
+    "lon": -5.46,
+    "aliases": [
+      "algeciras",
+      "strait of gibraltar"
+    ]
   },
   {
     "name": "Tarragona",
@@ -2541,7 +2846,11 @@
     "region": "Atlantic Europe",
     "code": "ESGIJ",
     "lat": 43.55,
-    "lon": -5.66
+    "lon": -5.66,
+    "aliases": [
+      "gijon",
+      "el musel"
+    ]
   },
   {
     "name": "Ferrol",
@@ -2565,7 +2874,12 @@
     "region": "Atlantic Europe",
     "code": "PTLEI",
     "lat": 41.19,
-    "lon": -8.7
+    "lon": -8.7,
+    "aliases": [
+      "leixoes",
+      "porto",
+      "oporto"
+    ]
   },
   {
     "name": "Setúbal",
@@ -2573,7 +2887,10 @@
     "region": "Atlantic Europe",
     "code": "PTSET",
     "lat": 38.52,
-    "lon": -8.89
+    "lon": -8.89,
+    "aliases": [
+      "setubal"
+    ]
   },
   {
     "name": "Venice",
@@ -2581,7 +2898,12 @@
     "region": "Mediterranean",
     "code": "ITVCE",
     "lat": 45.44,
-    "lon": 12.32
+    "lon": 12.32,
+    "aliases": [
+      "venezia",
+      "venice port",
+      "marghera"
+    ]
   },
   {
     "name": "Livorno",
@@ -2589,7 +2911,11 @@
     "region": "Mediterranean",
     "code": "ITLIV",
     "lat": 43.55,
-    "lon": 10.31
+    "lon": 10.31,
+    "aliases": [
+      "leghorn",
+      "livorno"
+    ]
   },
   {
     "name": "Savona",
@@ -2653,7 +2979,11 @@
     "region": "Mediterranean",
     "code": "GRHER",
     "lat": 35.34,
-    "lon": 25.13
+    "lon": 25.13,
+    "aliases": [
+      "crete",
+      "iraklio"
+    ]
   },
   {
     "name": "Iskenderun",
@@ -2661,7 +2991,11 @@
     "region": "Mediterranean",
     "code": "TRISK",
     "lat": 36.59,
-    "lon": 36.17
+    "lon": 36.17,
+    "aliases": [
+      "iskenderun",
+      "alexandretta"
+    ]
   },
   {
     "name": "Samsun",
@@ -2685,7 +3019,12 @@
     "region": "Mediterranean",
     "code": "MATAN",
     "lat": 35.88,
-    "lon": -5.5
+    "lon": -5.5,
+    "aliases": [
+      "tangier med",
+      "tanger",
+      "tangier"
+    ]
   },
   {
     "name": "Agadir",
@@ -2717,7 +3056,11 @@
     "region": "East Asia",
     "code": "JPKIJ",
     "lat": 33.88,
-    "lon": 130.88
+    "lon": 130.88,
+    "aliases": [
+      "kitakyushu",
+      "yahata"
+    ]
   },
   {
     "name": "Kashima",
@@ -2741,7 +3084,11 @@
     "region": "East Asia",
     "code": "KRKWA",
     "lat": 34.9,
-    "lon": 127.7
+    "lon": 127.7,
+    "aliases": [
+      "gwangyang",
+      "kwangyang"
+    ]
   },
   {
     "name": "Pohang",
@@ -2757,7 +3104,11 @@
     "region": "Indian Subcontinent",
     "code": "INENR",
     "lat": 13.22,
-    "lon": 80.32
+    "lon": 80.32,
+    "aliases": [
+      "ennore",
+      "kamarajar port"
+    ]
   },
   {
     "name": "Mormugao",
@@ -2765,7 +3116,12 @@
     "region": "Indian Subcontinent",
     "code": "INMRM2",
     "lat": 15.41,
-    "lon": 73.8
+    "lon": 73.8,
+    "aliases": [
+      "mormugao",
+      "goa",
+      "marmagao"
+    ]
   },
   {
     "name": "New Mangalore",
@@ -2773,7 +3129,11 @@
     "region": "Indian Subcontinent",
     "code": "INNML",
     "lat": 12.92,
-    "lon": 74.82
+    "lon": 74.82,
+    "aliases": [
+      "new mangalore",
+      "nmpt"
+    ]
   },
   {
     "name": "Krishnapatnam",
@@ -2789,7 +3149,11 @@
     "region": "Southeast Asia",
     "code": "MYBTU",
     "lat": 3.17,
-    "lon": 113.04
+    "lon": 113.04,
+    "aliases": [
+      "bintulu",
+      "sarawak lng"
+    ]
   },
   {
     "name": "Tanjung Pelepas",
@@ -2797,7 +3161,12 @@
     "region": "Southeast Asia",
     "code": "MYPGU2",
     "lat": 1.36,
-    "lon": 103.55
+    "lon": 103.55,
+    "aliases": [
+      "pelepas",
+      "ptp",
+      "johor"
+    ]
   },
   {
     "name": "Kota Kinabalu",
@@ -2805,7 +3174,11 @@
     "region": "Southeast Asia",
     "code": "MYKKA",
     "lat": 5.98,
-    "lon": 116.07
+    "lon": 116.07,
+    "aliases": [
+      "kota kinabalu",
+      "sabah"
+    ]
   },
   {
     "name": "Kuching",
@@ -2813,7 +3186,11 @@
     "region": "Southeast Asia",
     "code": "MYKCH",
     "lat": 1.55,
-    "lon": 110.34
+    "lon": 110.34,
+    "aliases": [
+      "kuching",
+      "sarawak"
+    ]
   },
   {
     "name": "San Lorenzo",
@@ -2821,7 +3198,11 @@
     "region": "South America",
     "code": "ARSNR",
     "lat": -32.74,
-    "lon": -60.73
+    "lon": -60.73,
+    "aliases": [
+      "san lorenzo",
+      "san martin parana"
+    ]
   },
   {
     "name": "Necochea",
@@ -2829,7 +3210,11 @@
     "region": "South America",
     "code": "ARNCO",
     "lat": -38.55,
-    "lon": -58.74
+    "lon": -58.74,
+    "aliases": [
+      "quequén",
+      "necochea"
+    ]
   },
   {
     "name": "Recife",
@@ -2853,7 +3238,11 @@
     "region": "South America",
     "code": "BRBEL",
     "lat": -1.45,
-    "lon": -48.5
+    "lon": -48.5,
+    "aliases": [
+      "belem",
+      "para"
+    ]
   },
   {
     "name": "Manaus",
@@ -2893,7 +3282,12 @@
     "region": "South America",
     "code": "BRBCA",
     "lat": -1.5,
-    "lon": -48.62
+    "lon": -48.62,
+    "aliases": [
+      "barcarena",
+      "hydro alunorte",
+      "alumar"
+    ]
   },
   {
     "name": "Portland (OR)",
@@ -2901,7 +3295,10 @@
     "region": "North America",
     "code": "USPDX",
     "lat": 45.53,
-    "lon": -122.67
+    "lon": -122.67,
+    "aliases": [
+      "portland oregon"
+    ]
   },
   {
     "name": "Tacoma",
@@ -2917,7 +3314,11 @@
     "region": "North America",
     "code": "USCBA",
     "lat": 39.22,
-    "lon": -76.59
+    "lon": -76.59,
+    "aliases": [
+      "curtis bay",
+      "coal pier"
+    ]
   },
   {
     "name": "Lake Charles",
@@ -2941,7 +3342,10 @@
     "region": "North America",
     "code": "CASJB",
     "lat": 45.27,
-    "lon": -66.07
+    "lon": -66.07,
+    "aliases": [
+      "saint john new brunswick"
+    ]
   },
   {
     "name": "Sept-Îles",
@@ -2949,7 +3353,11 @@
     "region": "North America",
     "code": "CASEP",
     "lat": 50.2,
-    "lon": -66.38
+    "lon": -66.38,
+    "aliases": [
+      "sept iles",
+      "seven islands"
+    ]
   },
   {
     "name": "Port Cartier",
@@ -2965,7 +3373,11 @@
     "region": "West Africa",
     "code": "GHTAK",
     "lat": 4.89,
-    "lon": -1.76
+    "lon": -1.76,
+    "aliases": [
+      "takoradi",
+      "western port ghana"
+    ]
   },
   {
     "name": "Pointe-Noire",
@@ -2973,7 +3385,11 @@
     "region": "West Africa",
     "code": "CGPNR",
     "lat": -4.77,
-    "lon": 11.86
+    "lon": 11.86,
+    "aliases": [
+      "pointe noire",
+      "brazzaville"
+    ]
   },
   {
     "name": "Malabo",
@@ -2981,7 +3397,11 @@
     "region": "West Africa",
     "code": "GQSSN",
     "lat": 3.75,
-    "lon": 8.78
+    "lon": 8.78,
+    "aliases": [
+      "equatorial guinea",
+      "malabo"
+    ]
   },
   {
     "name": "Banjul",
@@ -2997,7 +3417,10 @@
     "region": "East Africa",
     "code": "KMYVA",
     "lat": -11.7,
-    "lon": 43.26
+    "lon": 43.26,
+    "aliases": [
+      "comoros"
+    ]
   },
   {
     "name": "Dzaoudzi",
@@ -3005,7 +3428,10 @@
     "region": "East Africa",
     "code": "YTDZA",
     "lat": -12.78,
-    "lon": 45.27
+    "lon": 45.27,
+    "aliases": [
+      "mayotte"
+    ]
   },
   {
     "name": "Port Louis",
@@ -3013,7 +3439,11 @@
     "region": "Indian Subcontinent",
     "code": "MUPLU",
     "lat": -20.16,
-    "lon": 57.5
+    "lon": 57.5,
+    "aliases": [
+      "mauritius",
+      "port louis"
+    ]
   },
   {
     "name": "Port Victoria",
@@ -3021,7 +3451,11 @@
     "region": "Indian Subcontinent",
     "code": "SCPOV",
     "lat": -4.62,
-    "lon": 55.45
+    "lon": 55.45,
+    "aliases": [
+      "seychelles",
+      "mahe"
+    ]
   },
   {
     "name": "Port of Spain",
@@ -3029,7 +3463,12 @@
     "region": "Caribbean",
     "code": "TTPOS",
     "lat": 10.65,
-    "lon": -61.52
+    "lon": -61.52,
+    "aliases": [
+      "trinidad",
+      "tobago",
+      "point lisas"
+    ]
   },
   {
     "name": "Point Lisas",
@@ -3037,7 +3476,10 @@
     "region": "Caribbean",
     "code": "TTPLI",
     "lat": 10.41,
-    "lon": -61.47
+    "lon": -61.47,
+    "aliases": [
+      "point lisas industrial"
+    ]
   },
   {
     "name": "Paramaribo",
@@ -3053,7 +3495,11 @@
     "region": "South America",
     "code": "GYGEO",
     "lat": 6.8,
-    "lon": -58.16
+    "lon": -58.16,
+    "aliases": [
+      "guyana",
+      "demerara"
+    ]
   },
   {
     "name": "Santo Domingo",
@@ -3069,7 +3515,11 @@
     "region": "Caribbean",
     "code": "PRSJP",
     "lat": 18.47,
-    "lon": -66.11
+    "lon": -66.11,
+    "aliases": [
+      "puerto rico",
+      "san juan"
+    ]
   },
   {
     "name": "Poti",
@@ -3077,7 +3527,11 @@
     "region": "Black Sea",
     "code": "GEPOT",
     "lat": 42.15,
-    "lon": 41.67
+    "lon": 41.67,
+    "aliases": [
+      "poti port",
+      "georgia poti"
+    ]
   },
   {
     "name": "Kulevi",
@@ -3085,7 +3539,10 @@
     "region": "Black Sea",
     "code": "GEKUL",
     "lat": 42.29,
-    "lon": 41.64
+    "lon": 41.64,
+    "aliases": [
+      "kulevi oil terminal"
+    ]
   },
   {
     "name": "Baku",
@@ -3093,7 +3550,12 @@
     "region": "Black Sea",
     "code": "AZBAK",
     "lat": 40.38,
-    "lon": 49.89
+    "lon": 49.89,
+    "aliases": [
+      "baku port",
+      "caspian",
+      "alat"
+    ]
   },
   {
     "name": "Alat",
@@ -3101,7 +3563,11 @@
     "region": "Black Sea",
     "code": "AZALA",
     "lat": 40.02,
-    "lon": 49.41
+    "lon": 49.41,
+    "aliases": [
+      "alat port",
+      "baku alat"
+    ]
   },
   {
     "name": "Novorossiysk (Kavkaz)",
@@ -3109,7 +3575,11 @@
     "region": "Black Sea",
     "code": "RUKAV",
     "lat": 45.36,
-    "lon": 36.67
+    "lon": 36.67,
+    "aliases": [
+      "kavkaz",
+      "kerch strait"
+    ]
   },
   {
     "name": "Tuapse",
@@ -3133,7 +3603,11 @@
     "region": "Baltic",
     "code": "RUULL",
     "lat": 59.68,
-    "lon": 28.42
+    "lon": 28.42,
+    "aliases": [
+      "ust luga",
+      "primorsk"
+    ]
   },
   {
     "name": "Primorsk",
@@ -3157,7 +3631,11 @@
     "region": "East Asia",
     "code": "RUVAN",
     "lat": 48.85,
-    "lon": 140.25
+    "lon": 140.25,
+    "aliases": [
+      "vanino port",
+      "khabarovsk"
+    ]
   },
   {
     "name": "Magadan",
@@ -3173,7 +3651,11 @@
     "region": "East Asia",
     "code": "RUVOS",
     "lat": 42.76,
-    "lon": 133.08
+    "lon": 133.08,
+    "aliases": [
+      "vostochny",
+      "eastern port"
+    ]
   },
   {
     "name": "Pivdennyi",
@@ -3181,7 +3663,12 @@
     "region": "Black Sea",
     "code": "UAPIV",
     "lat": 46.62,
-    "lon": 31.17
+    "lon": 31.17,
+    "aliases": [
+      "pivdennyi",
+      "yuzhny",
+      "south ukraine"
+    ]
   },
   {
     "name": "Galati",
@@ -3189,7 +3676,11 @@
     "region": "Black Sea",
     "code": "ROGAT",
     "lat": 45.44,
-    "lon": 28.05
+    "lon": 28.05,
+    "aliases": [
+      "galati",
+      "danube"
+    ]
   },
   {
     "name": "Braila",
@@ -3197,7 +3688,11 @@
     "region": "Black Sea",
     "code": "ROBRA",
     "lat": 45.27,
-    "lon": 27.96
+    "lon": 27.96,
+    "aliases": [
+      "braila",
+      "danube port"
+    ]
   },
   {
     "name": "Tulcea",
@@ -3213,7 +3708,10 @@
     "region": "Black Sea",
     "code": "BOBUR",
     "lat": 42.5,
-    "lon": 27.47
+    "lon": 27.47,
+    "aliases": [
+      "bourgas"
+    ]
   },
   {
     "name": "Trabzon",
@@ -3229,7 +3727,12 @@
     "region": "Black Sea",
     "code": "TRDER",
     "lat": 40.74,
-    "lon": 29.82
+    "lon": 29.82,
+    "aliases": [
+      "derince",
+      "izmit",
+      "kocaeli"
+    ]
   },
   {
     "name": "Aliaga",
@@ -3237,7 +3740,11 @@
     "region": "Mediterranean",
     "code": "TRALI",
     "lat": 38.8,
-    "lon": 26.97
+    "lon": 26.97,
+    "aliases": [
+      "aliaga",
+      "izmir aliaga"
+    ]
   },
   {
     "name": "Dortyol",
@@ -3253,7 +3760,10 @@
     "region": "Mediterranean",
     "code": "ILASH",
     "lat": 31.82,
-    "lon": 34.64
+    "lon": 34.64,
+    "aliases": [
+      "ashdod port"
+    ]
   },
   {
     "name": "Eilat",
@@ -3261,7 +3771,12 @@
     "region": "Middle East",
     "code": "ILETH",
     "lat": 29.55,
-    "lon": 34.95
+    "lon": 34.95,
+    "aliases": [
+      "eilat",
+      "elat",
+      "red sea israel"
+    ]
   },
   {
     "name": "Adabiya",
@@ -3269,7 +3784,12 @@
     "region": "Middle East",
     "code": "EGADA",
     "lat": 29.86,
-    "lon": 32.47
+    "lon": 32.47,
+    "aliases": [
+      "adabiya",
+      "suez port",
+      "gulf of suez"
+    ]
   },
   {
     "name": "Safaga",
@@ -3277,7 +3797,11 @@
     "region": "Middle East",
     "code": "EGSAF",
     "lat": 26.73,
-    "lon": 33.93
+    "lon": 33.93,
+    "aliases": [
+      "safaga",
+      "red sea egypt"
+    ]
   },
   {
     "name": "Dahej",
@@ -3285,7 +3809,12 @@
     "region": "Indian Subcontinent",
     "code": "INDAH",
     "lat": 21.72,
-    "lon": 72.54
+    "lon": 72.54,
+    "aliases": [
+      "dahej",
+      "gujarat",
+      "pcpir"
+    ]
   },
   {
     "name": "Hazira",
@@ -3293,7 +3822,11 @@
     "region": "Indian Subcontinent",
     "code": "INHAZ",
     "lat": 21.12,
-    "lon": 72.64
+    "lon": 72.64,
+    "aliases": [
+      "hazira",
+      "surat"
+    ]
   },
   {
     "name": "Pipavav",
@@ -3301,7 +3834,11 @@
     "region": "Indian Subcontinent",
     "code": "INPIP",
     "lat": 20.91,
-    "lon": 71.51
+    "lon": 71.51,
+    "aliases": [
+      "pipavav",
+      "gujarat pipavav"
+    ]
   },
   {
     "name": "Gangavaram",
@@ -3325,7 +3862,11 @@
     "region": "Indian Subcontinent",
     "code": "LKTRR",
     "lat": 8.57,
-    "lon": 81.22
+    "lon": 81.22,
+    "aliases": [
+      "trincomalee",
+      "trinco"
+    ]
   },
   {
     "name": "Galle",
@@ -3341,7 +3882,11 @@
     "region": "Southeast Asia",
     "code": "MMMAR",
     "lat": 16.49,
-    "lon": 97.63
+    "lon": 97.63,
+    "aliases": [
+      "moulmein",
+      "mawlamyine"
+    ]
   },
   {
     "name": "Map Ta Phut",
@@ -3349,7 +3894,12 @@
     "region": "Southeast Asia",
     "code": "THMTP",
     "lat": 12.68,
-    "lon": 101.15
+    "lon": 101.15,
+    "aliases": [
+      "map ta phut",
+      "rayong",
+      "eastern seaboard"
+    ]
   },
   {
     "name": "Songkhla",
@@ -3365,7 +3915,11 @@
     "region": "Southeast Asia",
     "code": "VNVUT",
     "lat": 10.35,
-    "lon": 107.08
+    "lon": 107.08,
+    "aliases": [
+      "vung tau",
+      "ba ria"
+    ]
   },
   {
     "name": "Quy Nhon",
@@ -3381,7 +3935,11 @@
     "region": "Southeast Asia",
     "code": "IDGSK",
     "lat": -7.16,
-    "lon": 112.66
+    "lon": 112.66,
+    "aliases": [
+      "gresik",
+      "east java"
+    ]
   },
   {
     "name": "Panjang",
@@ -3389,7 +3947,11 @@
     "region": "Southeast Asia",
     "code": "IDPNJ",
     "lat": -5.47,
-    "lon": 105.3
+    "lon": 105.3,
+    "aliases": [
+      "panjang",
+      "bandar lampung"
+    ]
   },
   {
     "name": "Tarahan",
@@ -3397,7 +3959,10 @@
     "region": "Southeast Asia",
     "code": "IDTAR",
     "lat": -5.5,
-    "lon": 105.28
+    "lon": 105.28,
+    "aliases": [
+      "tarahan coal terminal"
+    ]
   },
   {
     "name": "Kuala Tanjung",
@@ -3405,7 +3970,11 @@
     "region": "Southeast Asia",
     "code": "IDKLT",
     "lat": 3.35,
-    "lon": 99.46
+    "lon": 99.46,
+    "aliases": [
+      "kuala tanjung",
+      "north sumatra"
+    ]
   },
   {
     "name": "Cagayan de Oro",
@@ -3413,7 +3982,11 @@
     "region": "Southeast Asia",
     "code": "PHCDO",
     "lat": 8.48,
-    "lon": 124.65
+    "lon": 124.65,
+    "aliases": [
+      "cdo",
+      "mindanao"
+    ]
   },
   {
     "name": "Davao",
@@ -3421,7 +3994,11 @@
     "region": "Southeast Asia",
     "code": "PHDVO",
     "lat": 7.09,
-    "lon": 125.63
+    "lon": 125.63,
+    "aliases": [
+      "davao port",
+      "mindanao davao"
+    ]
   },
   {
     "name": "Subic Bay",
@@ -3429,7 +4006,11 @@
     "region": "Southeast Asia",
     "code": "PHSFS",
     "lat": 14.79,
-    "lon": 120.27
+    "lon": 120.27,
+    "aliases": [
+      "subic",
+      "olongapo"
+    ]
   },
   {
     "name": "Chiba",
@@ -3437,7 +4018,11 @@
     "region": "East Asia",
     "code": "JPCHB",
     "lat": 35.55,
-    "lon": 140.06
+    "lon": 140.06,
+    "aliases": [
+      "chiba port",
+      "tokyo bay"
+    ]
   },
   {
     "name": "Kawasaki",
@@ -3477,7 +4062,11 @@
     "region": "East Asia",
     "code": "JPMIZ",
     "lat": 34.51,
-    "lon": 133.74
+    "lon": 133.74,
+    "aliases": [
+      "kurashiki",
+      "water island"
+    ]
   },
   {
     "name": "Ulsan",
@@ -3485,7 +4074,10 @@
     "region": "East Asia",
     "code": "KRULS",
     "lat": 35.54,
-    "lon": 129.39
+    "lon": 129.39,
+    "aliases": [
+      "ulsan port"
+    ]
   },
   {
     "name": "Pyeongtaek",
@@ -3493,7 +4085,11 @@
     "region": "East Asia",
     "code": "KRPTK",
     "lat": 36.97,
-    "lon": 126.85
+    "lon": 126.85,
+    "aliases": [
+      "pyeongtaek",
+      "osan"
+    ]
   },
   {
     "name": "Wuhan",
@@ -3501,7 +4097,11 @@
     "region": "East Asia",
     "code": "CNWUH",
     "lat": 30.58,
-    "lon": 114.27
+    "lon": 114.27,
+    "aliases": [
+      "wuhan",
+      "yangtze river"
+    ]
   },
   {
     "name": "Chongqing",
@@ -3509,7 +4109,10 @@
     "region": "East Asia",
     "code": "CNCKG",
     "lat": 29.56,
-    "lon": 106.55
+    "lon": 106.55,
+    "aliases": [
+      "chongqing inland"
+    ]
   },
   {
     "name": "Hualien",
@@ -3525,7 +4128,12 @@
     "region": "Oceania",
     "code": "AUWEI",
     "lat": -12.67,
-    "lon": 141.87
+    "lon": 141.87,
+    "aliases": [
+      "weipa",
+      "cape york",
+      "bauxite"
+    ]
   },
   {
     "name": "Townsville",
@@ -3565,7 +4173,11 @@
     "region": "Oceania",
     "code": "AUPKE",
     "lat": -34.48,
-    "lon": 150.9
+    "lon": 150.9,
+    "aliases": [
+      "port kembla",
+      "wollongong"
+    ]
   },
   {
     "name": "Whyalla",
@@ -3605,7 +4217,12 @@
     "region": "Oceania",
     "code": "NZBLU",
     "lat": -46.6,
-    "lon": 168.34
+    "lon": 168.34,
+    "aliases": [
+      "bluff",
+      "southland",
+      "invercargill"
+    ]
   },
   {
     "name": "Kimbe",
@@ -3629,7 +4246,10 @@
     "region": "West Africa",
     "code": "TGLOM",
     "lat": 6.13,
-    "lon": 1.28
+    "lon": 1.28,
+    "aliases": [
+      "lome togo container"
+    ]
   },
   {
     "name": "Kribi",
@@ -3637,7 +4257,10 @@
     "region": "West Africa",
     "code": "CMKBI",
     "lat": 2.94,
-    "lon": 9.91
+    "lon": 9.91,
+    "aliases": [
+      "kribi deep sea port"
+    ]
   },
   {
     "name": "Luanda",
@@ -3645,7 +4268,10 @@
     "region": "West Africa",
     "code": "AOLAD",
     "lat": -8.8,
-    "lon": 13.23
+    "lon": 13.23,
+    "aliases": [
+      "luanda angola"
+    ]
   },
   {
     "name": "Lobito",
@@ -3661,7 +4287,23 @@
     "region": "West Africa",
     "code": "AOMSZ",
     "lat": -15.2,
-    "lon": 12.15
+    "lon": 12.15,
+    "aliases": [
+      "mossamedes",
+      "namibe angola"
+    ]
+  },
+  {
+    "name": "Abidjan (Vridi)",
+    "country": "Côte d'Ivoire",
+    "region": "West Africa",
+    "code": "CIABV",
+    "lat": 5.26,
+    "lon": -4.02,
+    "aliases": [
+      "vridi",
+      "san pedro ci"
+    ]
   },
   {
     "name": "Bissau",
@@ -3669,7 +4311,10 @@
     "region": "West Africa",
     "code": "GWOXB",
     "lat": 11.86,
-    "lon": -15.59
+    "lon": -15.59,
+    "aliases": [
+      "guinea-bissau"
+    ]
   },
   {
     "name": "Djibouti (Doraleh)",
@@ -3677,7 +4322,11 @@
     "region": "East Africa",
     "code": "DJDOR",
     "lat": 11.54,
-    "lon": 43.11
+    "lon": 43.11,
+    "aliases": [
+      "doraleh",
+      "djibouti container"
+    ]
   },
   {
     "name": "Berbera (Somaliland)",
@@ -3685,7 +4334,10 @@
     "region": "East Africa",
     "code": "SOBER2",
     "lat": 10.44,
-    "lon": 45.02
+    "lon": 45.02,
+    "aliases": [
+      "berbera somaliland"
+    ]
   },
   {
     "name": "Mogadishu",
@@ -3701,7 +4353,11 @@
     "region": "East Africa",
     "code": "SOBSA",
     "lat": 11.28,
-    "lon": 49.18
+    "lon": 49.18,
+    "aliases": [
+      "bosaso",
+      "puntland"
+    ]
   },
   {
     "name": "Saldanha Bay",
@@ -3709,7 +4365,11 @@
     "region": "Southern Africa",
     "code": "ZASAL",
     "lat": -33.01,
-    "lon": 17.95
+    "lon": 17.95,
+    "aliases": [
+      "saldanha",
+      "iron ore terminal"
+    ]
   },
   {
     "name": "Coega (Ngqura)",
@@ -3717,7 +4377,12 @@
     "region": "Southern Africa",
     "code": "ZACOE",
     "lat": -33.79,
-    "lon": 25.65
+    "lon": 25.65,
+    "aliases": [
+      "ngqura",
+      "coega",
+      "port elizabeth new"
+    ]
   },
   {
     "name": "East London",
@@ -3733,7 +4398,11 @@
     "region": "North America",
     "code": "MXLZC",
     "lat": 17.95,
-    "lon": -102.17
+    "lon": -102.17,
+    "aliases": [
+      "lazaro cardenas",
+      "michoacan"
+    ]
   },
   {
     "name": "Topolobampo",
@@ -3781,7 +4450,11 @@
     "region": "Central America",
     "code": "GTPBR",
     "lat": 13.92,
-    "lon": -90.79
+    "lon": -90.79,
+    "aliases": [
+      "quetzal",
+      "guatemala"
+    ]
   },
   {
     "name": "Acajutla",
@@ -3789,7 +4462,10 @@
     "region": "Central America",
     "code": "SVACJ",
     "lat": 13.59,
-    "lon": -89.83
+    "lon": -89.83,
+    "aliases": [
+      "el salvador"
+    ]
   },
   {
     "name": "Puerto Limón",
@@ -3797,7 +4473,11 @@
     "region": "Central America",
     "code": "CRLIM",
     "lat": 9.99,
-    "lon": -83.02
+    "lon": -83.02,
+    "aliases": [
+      "limon",
+      "costa rica"
+    ]
   },
   {
     "name": "Moin",
@@ -3821,7 +4501,11 @@
     "region": "North Africa",
     "code": "TNGAE",
     "lat": 33.88,
-    "lon": 10.1
+    "lon": 10.1,
+    "aliases": [
+      "gabes",
+      "ghannouch"
+    ]
   },
   {
     "name": "Skhira",
@@ -3845,7 +4529,10 @@
     "region": "North Africa",
     "code": "LYMRA",
     "lat": 32.38,
-    "lon": 15.09
+    "lon": 15.09,
+    "aliases": [
+      "misurata"
+    ]
   },
   {
     "name": "Zueitina",

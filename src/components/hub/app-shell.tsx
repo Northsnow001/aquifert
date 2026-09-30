@@ -34,19 +34,13 @@ const NAV = [
 
 function Logo() {
   return (
-    <Link href="/hub" className="flex items-center gap-2 no-underline">
-      <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden>
-        <path d="M16 3c6 7 10 11 10 16a10 10 0 1 1-20 0c0-5 4-9 10-16z" fill="#2e6da4" />
-        <path d="M16 8c3.2 4 5.5 6.6 5.5 9.2a5.5 5.5 0 1 1-11 0C10.5 14.6 12.8 12 16 8z" fill="#7ec8e3" />
-      </svg>
-      <span className="text-[22px] font-semibold lowercase tracking-tight text-[#1a6b8a]">aquifert</span>
-      <span className="h-6 w-px bg-border" />
-      <span className="text-xl font-black uppercase tracking-wider text-ink">One</span>
+    <Link href="/hub" className="flex items-center gap-2.5 no-underline">
+      <img src="/brand/logo.png" alt="Aquifert" className="h-9 w-auto select-none" draggable={false} />
     </Link>
   );
 }
 
-export function AppShell({ user, children }: { user: SessionUser; children: React.ReactNode }) {
+export function AppShell({ user, admin = false, children }: { user: SessionUser; admin?: boolean; children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -88,7 +82,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
             {collapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
           </button>
         </div>
-        {NAV.map((item) => {
+        {(admin ? [...NAV, { href: "/admin", label: "Admin", icon: LayoutDashboard }] : NAV).map((item) => {
           const active = item.href === "/hub" ? pathname === "/hub" : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/hub/app-shell";
-import { getSession } from "@/lib/session";
+import { SuspendedNotice } from "@/components/hub/suspended-notice";
+import { isAdminUser } from "@/lib/admin-access";
+import { getSessionAccess } from "@/lib/session";
 
 export const metadata: Metadata = {
   title: "Aquifert ONE",
@@ -9,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HubLayout({ children }: { children: React.ReactNode }) {
-  const user = await getSession();
+  const { user, ban } = await getSessionAccess();
   if (!user) redirect("/login");
-  return <AppShell user={user}>{children}</AppShell>;
+  if (ban) return <SuspendedNotice email={user.email} />;
+  return <AppShell user={user} admin={isAdminUser(user)}>{children}</AppShell>;
 }
