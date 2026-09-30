@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 const PILOT_SLOTS = 12;
 
 export default async function ZeroAdminPage() {
-  const rows = listZeroRegistrations();
-  const settings = getDeskSettings();
+  const rows = await listZeroRegistrations();
+  const settings = await getDeskSettings();
   const quarterStart = (() => {
     const now = new Date();
     return new Date(Date.UTC(now.getUTCFullYear(), Math.floor(now.getUTCMonth() / 3) * 3, 1)).toISOString();

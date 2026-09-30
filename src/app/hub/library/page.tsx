@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
   const user = await getSession();
-  const { libraryDocuments, collections } = getHubContent();
+  const { libraryDocuments, collections } = await getHubContent();
   const open = collections.filter((item) => !item.private);
   const openIds = new Set(open.map((item) => item.id));
   const documents = libraryDocuments

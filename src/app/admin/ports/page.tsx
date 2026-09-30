@@ -7,8 +7,8 @@ import { getFreightDesk, listCalcLogs, seedPorts } from "@/lib/freight-desk/stor
 
 export const dynamic = "force-dynamic";
 
-export default function PortsAdminPage() {
-  const desk = getFreightDesk();
+export default async function PortsAdminPage() {
+  const desk = await getFreightDesk();
   const issues: Record<string, PortIssue[]> = Object.fromEntries(auditPorts(desk.ports));
   const usage: Record<string, { quotes: number; fixtures: number }> = {};
   const bump = (code: string, key: "quotes" | "fixtures") => {
@@ -16,7 +16,7 @@ export default function PortsAdminPage() {
     usage[code] ??= { quotes: 0, fixtures: 0 };
     usage[code][key] += 1;
   };
-  for (const log of listCalcLogs()) {
+  for (const log of await listCalcLogs()) {
     bump(log.load.code, "quotes");
     bump(log.discharge.code, "quotes");
   }

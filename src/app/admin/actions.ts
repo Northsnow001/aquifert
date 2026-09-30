@@ -1,6 +1,5 @@
 "use server";
 
-import { rmSync } from "fs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
@@ -27,7 +26,8 @@ import {
   type ExtractionRules,
 } from "@/lib/aquibot";
 import { syncKnowledgeLater } from "@/lib/aquibot-engine/indexer";
-import { libraryFileDir, updateHubContent } from "@/lib/hub-content";
+import { removeLibraryFiles } from "@/lib/data/files";
+import { updateHubContent } from "@/lib/hub-content";
 import { sanitizeRichText } from "@/lib/sanitize";
 import { getSession } from "@/lib/session";
 
@@ -83,7 +83,7 @@ export async function saveTelex(formData: FormData) {
     updatedAt: deskNow(),
   };
 
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     const index = content.telex.findIndex((entry) => entry.id === id);
     if (index >= 0) content.telex[index] = item;
     else content.telex.unshift(item);
@@ -96,7 +96,7 @@ export async function saveTelex(formData: FormData) {
 export async function deleteTelex(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id");
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.telex = content.telex.filter((item) => item.id !== id);
   });
   syncKnowledgeLater([`telex:${id}`]);
@@ -108,7 +108,7 @@ export async function duplicateTelex(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id");
   const copyId = newId("tx");
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     const source = content.telex.find((item) => item.id === id);
     if (source) content.telex.unshift({ ...source, id: copyId, status: "draft", publishedAt: deskNow(), updatedAt: deskNow() });
   });
@@ -122,7 +122,7 @@ export async function bulkTelex(formData: FormData) {
   const action = text(formData, "bulk");
   const back = text(formData, "back") || "/admin/telex";
   if (ids.size === 0 || !action) redirect(back);
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     if (action === "delete") {
       content.telex = content.telex.filter((item) => !ids.has(item.id));
       return;
@@ -142,7 +142,7 @@ export async function bulkTelex(formData: FormData) {
 export async function saveIndicatorReadings(readings: Indicator[]): Promise<{ ok: true; savedAt: string }> {
   await requireAdmin();
   const savedAt = deskNow();
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.indicators = content.indicators.map((item) => {
       const next = readings.find((entry) => entry.name === item.name);
       if (!next) return item;
@@ -201,7 +201,7 @@ export async function saveHedgeReport(report: HedgeReport): Promise<{ ok: true; 
   if (clean.sections.length === 0 && !clean.narrative) {
     return { ok: false, message: "Add a narrative or at least one priced month before saving." };
   }
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     const index = content.hedgeReports.findIndex((item) => item.id === clean.id);
     if (index >= 0) content.hedgeReports[index] = clean;
     else content.hedgeReports.unshift(clean);
@@ -212,7 +212,7 @@ export async function saveHedgeReport(report: HedgeReport): Promise<{ ok: true; 
 
 export async function deleteHedgeReport(id: string): Promise<{ ok: boolean }> {
   await requireAdmin();
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.hedgeReports = content.hedgeReports.filter((item) => item.id !== id);
   });
   refresh();
@@ -227,7 +227,7 @@ export async function saveCollection(formData: FormData) {
   const name = text(formData, "name");
   if (!name) redirect(`/admin/collections?error=1${text(formData, "id") ? `&edit=${id}` : ""}`);
 
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     const base = slugify(text(formData, "slug") || name) || "collection";
     let slug = base;
     let n = 2;
@@ -260,7 +260,7 @@ export async function saveCollection(formData: FormData) {
 export async function deleteCollection(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id");
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.collections = content.collections
       .filter((item) => item.id !== id)
       .map((item) => (item.parentId === id ? { ...item, parentId: null } : item));
@@ -275,18 +275,18 @@ export async function deleteCollection(formData: FormData) {
 
 /* ---------------- Library files ---------------- */
 
-function removeStoredFiles(ids: Iterable<string>) {
-  for (const id of ids) rmSync(libraryFileDir(id), { recursive: true, force: true });
+async function removeStoredFiles(ids: Iterable<string>) {
+  for (const id of ids) await removeLibraryFiles(id);
 }
 
 export async function deleteLibraryFile(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id");
   const back = text(formData, "back") || "/admin/library";
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.libraryDocuments = content.libraryDocuments.filter((item) => item.id !== id);
   });
-  removeStoredFiles([id]);
+  await removeStoredFiles([id]);
   syncKnowledgeLater([`file:${id}`]);
   refresh();
   redirect(`${back}${back.includes("?") ? "&" : "?"}saved=deleted`);
@@ -298,7 +298,7 @@ export async function bulkLibrary(formData: FormData) {
   const action = text(formData, "bulk");
   const back = text(formData, "back") || "/admin/library";
   if (ids.size === 0 || !action) redirect(back);
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     if (action === "delete") {
       content.libraryDocuments = content.libraryDocuments.filter((item) => !ids.has(item.id));
       return;
@@ -324,7 +324,7 @@ export async function bulkLibrary(formData: FormData) {
       return file;
     });
   });
-  if (action === "delete") removeStoredFiles(ids);
+  if (action === "delete") await removeStoredFiles(ids);
   syncKnowledgeLater(Array.from(ids, (id) => `file:${id}`));
   refresh();
   redirect(`${back}${back.includes("?") ? "&" : "?"}done=${encodeURIComponent(action)}&count=${ids.size}`);
@@ -336,7 +336,7 @@ export async function saveFreightBoard(board: FreightBoard): Promise<{ ok: true;
   await requireAdmin();
   const savedAt = deskNow();
   const cell = (value: unknown) => String(value ?? "").trim().slice(0, 120);
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.freight = {
       fixtures: board.fixtures
         .map((row) => ({
@@ -365,7 +365,7 @@ export async function saveToolsCommentary(html: string): Promise<{ ok: true; htm
   await requireAdmin();
   const clean = sanitizeRichText(String(html ?? ""));
   const savedAt = deskNow();
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.toolsCommentary = { html: clean, updatedAt: savedAt };
   });
   refresh();
@@ -381,7 +381,7 @@ export async function updateAquibotPrompt(action: PromptAction, test: string): P
   const draft = String(test ?? "").replace(/\r\n/g, "\n").trim().slice(0, 40000);
   const now = deskNow();
   let result: { ok: true; prompt: AquibotPrompt } | { ok: false; message: string } = { ok: false, message: "Unknown action" };
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     const prompt = { ...content.aquibot.prompt, test: draft, testSavedAt: now };
     if (action === "publish") {
       if (!draft) {
@@ -444,7 +444,7 @@ export async function saveAquibotSettings(settings: AquibotSettings): Promise<{ 
     answerModel: model(settings.answerModel, d.answerModel),
     rewriteModel: model(settings.rewriteModel, d.rewriteModel),
   };
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.aquibot = { ...content.aquibot, settings: clean, updatedAt: savedAt };
   });
   refresh();
@@ -461,7 +461,7 @@ export async function saveAquibotVocabulary(input: { synonyms: string; stopWords
     .join("\n")
     .slice(0, 50000);
   const stopWords = parseStopWords(String(input.stopWords ?? "")).words.join(",").slice(0, 20000);
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.aquibot = { ...content.aquibot, synonyms, stopWords, updatedAt: savedAt };
   });
   refresh();
@@ -477,7 +477,7 @@ export async function saveAquibotExtraction(rules: ExtractionRules): Promise<{ o
     image: rule(rules.image, DEFAULT_EXTRACTION.image),
     telex: rule(rules.telex, DEFAULT_EXTRACTION.telex),
   };
-  updateHubContent((content) => {
+  await updateHubContent((content) => {
     content.aquibot = { ...content.aquibot, extraction, updatedAt: savedAt };
   });
   refresh();

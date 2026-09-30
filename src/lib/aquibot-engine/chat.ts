@@ -69,7 +69,7 @@ export async function openChat(actor: Actor, input: { message: unknown; sessionI
   const status = await engineStatus();
   if (!status.ready) throw new ChatError("engine_unavailable", actor.isAdmin ? `Aquibot is not ready: ${status.problem}` : "Aquibot is being set up. Please try again shortly.", 503);
 
-  const content = getHubContent();
+  const content = await getHubContent();
   const config = content.aquibot;
   const usage = await usageFor(actor, config);
   if (!usage.unlimited && usage.used >= usage.limit) {
@@ -287,7 +287,7 @@ export async function* runChat(actor: Actor, opened: OpenedChat, signal: AbortSi
 
 /** Runs the retrieval half of a turn without generating, for the admin debug trace. */
 export async function traceQuestion(actor: Actor, input: { question: string; testMode: boolean }) {
-  const content = getHubContent();
+  const content = await getHubContent();
   const config = content.aquibot;
   const now = Date.now();
   const stopWords = parseStopWords(config.stopWords).words;

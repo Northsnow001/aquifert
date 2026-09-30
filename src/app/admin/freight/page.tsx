@@ -4,8 +4,8 @@ import { getHubContent } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
-export default function FreightAdminPage() {
-  const { freight } = getHubContent();
+export default async function FreightAdminPage() {
+  const { freight } = await getHubContent();
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader

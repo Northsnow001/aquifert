@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { refreshBdi, refreshBunkerPrices } from "@/lib/freight-desk/market";
 import { cleanFixture, fixtureProblem } from "@/lib/freight-desk/parse";
-import { deleteCalcLogs, getFreightDesk, updateFreightDesk } from "@/lib/freight-desk/store";
+import { clearFreightDebug as clearDebugLog, deleteCalcLogs, getFreightDesk, logFreightDebug, updateFreightDesk } from "@/lib/freight-desk/store";
 import {
   DEFAULT_FREIGHT_SETTINGS,
   type BunkerHub,
@@ -76,7 +76,7 @@ function cleanSettings(input: FreightSettings): FreightSettings {
 export async function saveFreightSettings(input: FreightSettings): Promise<{ ok: true; settings: FreightSettings; savedAt: string }> {
   await requireAdmin();
   const settings = cleanSettings(input);
-  const desk = updateFreightDesk((draft) => {
+  const desk = await updateFreightDesk((draft) => {
     draft.settings = settings;
   });
   refresh();
@@ -96,7 +96,7 @@ export async function saveBunkerPrices(prices: BunkerHub[]): Promise<Result> {
   if ([...byCity.values()].some((price) => !Number.isFinite(price) || price < 50 || price > 3000)) {
     return { ok: false, message: "Bunker prices must be between $50 and $3,000 per tonne." };
   }
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     desk.bunker = {
       ...desk.bunker,
       prices: desk.bunker.prices.map((hub) => ({ city: hub.city, price: Math.round((byCity.get(hub.city) ?? hub.price) * 100) / 100 })),
@@ -119,7 +119,7 @@ export async function saveManualBdi(value: number, tradeDate: string): Promise<R
   const bdi = Math.round(Number(value));
   if (!Number.isFinite(bdi) || bdi < 1 || bdi > 20_000) return { ok: false, message: "The BDI must be a whole number between 1 and 20,000." };
   if (tradeDate && !/^\d{4}-\d{2}-\d{2}$/.test(tradeDate)) return { ok: false, message: "Use a YYYY-MM-DD trade date." };
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     desk.bdi = { ...desk.bdi, value: bdi, tradeDate: tradeDate || null, source: "manual", manualAt: now() };
   });
   refresh();
@@ -132,7 +132,7 @@ export async function saveFixture(input: FixtureInput, fixtureId?: string): Prom
   const problem = fixtureProblem(clean);
   if (problem) return { ok: false, message: problem };
   const out: { fixture?: Fixture } = {};
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     const existing = fixtureId ? desk.fixtures.find((item) => item.id === fixtureId) : undefined;
     const stamp = now();
     const fixture: Fixture = existing
@@ -149,7 +149,7 @@ export async function setFixtureStatus(ids: string[], status: FixtureStatus): Pr
   await requireAdmin();
   const selected = new Set(ids);
   let count = 0;
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     desk.fixtures = desk.fixtures.map((item) => {
       if (!selected.has(item.id) || item.status === status) return item;
       count += 1;
@@ -163,7 +163,7 @@ export async function setFixtureStatus(ids: string[], status: FixtureStatus): Pr
 export async function deleteFixtures(ids: string[] | "all" | "imported"): Promise<Result<{ count: number }>> {
   await requireAdmin();
   let count = 0;
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     const selected = Array.isArray(ids) ? new Set(ids) : null;
     const keep = desk.fixtures.filter((item) => (selected ? !selected.has(item.id) : ids === "imported" ? item.origin === "manual" : false));
     count = desk.fixtures.length - keep.length;
@@ -178,7 +178,7 @@ export async function deleteFixtures(ids: string[] | "all" | "imported"): Promis
 export async function clearFixtureBatch(batchId: string): Promise<Result<{ count: number }>> {
   await requireAdmin();
   let count = 0;
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     const keep = desk.fixtures.filter((item) => item.batchId !== batchId);
     count = desk.fixtures.length - keep.length;
     desk.fixtures = keep;
@@ -205,35 +205,30 @@ export async function importFixtures(rows: FixtureInput[], origin: FixtureBatch[
     fixtures.push({ ...clean, id: id("fix"), origin, batchId, confidence: clean.confidence ?? 0.8, excerpt: clean.excerpt ?? "", status: "active", createdAt: stamp, updatedAt: stamp });
   }
   if (!fixtures.length) return { ok: false, message: "None of the rows had a route and a rate." };
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     desk.fixtures = [...fixtures, ...desk.fixtures];
     desk.batches = [{ id: batchId, origin, label: String(label ?? "").slice(0, 120) || (origin === "ai" ? "AI import" : "Pasted sheet"), count: fixtures.length, createdAt: stamp }, ...desk.batches].slice(0, 50);
-    desk.debug = [
-      ...desk.debug,
-      { at: stamp, level: "info" as const, message: `${origin === "ai" ? "AI" : "Sheet"} fixtures imported`, context: { batch: batchId, imported: fixtures.length, skipped } },
-    ].slice(-200);
   });
+  await logFreightDebug("info", `${origin === "ai" ? "AI" : "Sheet"} fixtures imported`, { batch: batchId, imported: fixtures.length, skipped });
   refresh();
   return { ok: true, count: fixtures.length, skipped, batchId };
 }
 
 export async function deleteCalculationLogs(ids: string[]): Promise<Result<{ count: number }>> {
   await requireAdmin();
-  const count = deleteCalcLogs(ids.map(String));
+  const count = await deleteCalcLogs(ids.map(String));
   refresh();
   return { ok: true, count };
 }
 
 export async function clearFreightDebug(): Promise<Result> {
   await requireAdmin();
-  updateFreightDesk((desk) => {
-    desk.debug = [];
-  });
+  await clearDebugLog();
   refresh();
   return { ok: true };
 }
 
 export async function lastExtractionRows() {
   await requireAdmin();
-  return getFreightDesk().lastExtraction;
+  return (await getFreightDesk()).lastExtraction;
 }

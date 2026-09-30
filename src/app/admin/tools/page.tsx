@@ -5,8 +5,8 @@ import { getHubContent } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
-export default function ToolsCommentaryAdminPage() {
-  const { toolsCommentary } = getHubContent();
+export default async function ToolsCommentaryAdminPage() {
+  const { toolsCommentary } = await getHubContent();
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader

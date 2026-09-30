@@ -12,19 +12,15 @@ import { liveOrigins } from "@/lib/netback-desk/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
 import { listZeroRegistrations } from "@/lib/zero-interest";
 
-export function AdminShell({ user, children }: { user: SessionUser; children: React.ReactNode }) {
-  const content = getHubContent();
-  const inbox = listInbox();
+export async function AdminShell({ user, children }: { user: SessionUser; children: React.ReactNode }) {
+  const [content, inbox, desk, netback, zero, banList] = await Promise.all([getHubContent(), listInbox(), getFreightDesk(), getNetbackDesk(), listZeroRegistrations(), listBans()]);
   const drafts = content.telex.filter((item) => item.status === "draft").length;
-  const desk = getFreightDesk();
   const portIssues = auditPorts(desk.ports).size;
   const marketIssue = desk.bunker.lastError || desk.bdi.lastError ? "check" : desk.bdi.source === "default" ? "no BDI" : undefined;
-  const netback = getNetbackDesk();
   const netbackAge = ageInDays(netback.date);
   const netbackBadge = !liveOrigins(netback.benchmarks).length ? "no prices" : netbackAge === null || netbackAge > 14 ? "stale" : netback.week ? `wk ${netback.week}` : undefined;
-  const zero = listZeroRegistrations();
   const zeroNew = zero.filter((row) => row.status === "new").length;
-  const bans = listBans().length;
+  const bans = banList.length;
 
   const groups: NavGroup[] = [
     { title: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }] },

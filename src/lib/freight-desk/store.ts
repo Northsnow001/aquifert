@@ -1,7 +1,9 @@
 import "server-only";
 
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
-import path from "path";
+import { cache } from "react";
+import { readDocument, updateDocument } from "@/lib/data/documents";
+import { clearRecords, countRecords, listRecords, putRecords, removeRecords, trimRecords } from "@/lib/data/records";
+import { FREIGHT_DEBUG, FREIGHT_LOGS } from "@/lib/data/tables";
 import { PORTS, type PortRecord } from "@/lib/ports";
 import {
   BDI_SOURCE,
@@ -17,31 +19,13 @@ import {
   type PortEntry,
 } from "@/lib/freight-desk/types";
 
-const deskPath = path.join(process.cwd(), "data", "freight-desk.json");
-const logsPath = path.join(process.cwd(), "data", "freight-logs.json");
-const MAX_DEBUG = 200;
 const MAX_LOGS = 5000;
 
-type StoredDesk = Omit<FreightDesk, "ports" | "portsCustomized"> & { ports: PortEntry[] | null };
+type StoredDesk = Omit<FreightDesk, "ports" | "portsCustomized" | "debug"> & { ports: PortEntry[] | null };
 
 export const seedPorts = (): PortEntry[] => PORTS.map((port) => ({ ...port, aliases: port.aliases ?? [], active: true }));
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-
-function writeJson(file: string, value: unknown) {
-  mkdirSync(path.dirname(file), { recursive: true });
-  const temp = `${file}.tmp`;
-  writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-  renameSync(temp, file);
-}
-
-function readJson(file: string): unknown {
-  try {
-    return JSON.parse(readFileSync(file, "utf8"));
-  } catch {
-    return null;
-  }
-}
 
 function normalizeSettings(raw: unknown): FreightSettings {
   const value = isRecord(raw) ? (raw as Partial<FreightSettings>) : {};
@@ -54,8 +38,9 @@ function normalizeSettings(raw: unknown): FreightSettings {
   };
 }
 
-function load(): StoredDesk {
-  const raw = readJson(deskPath);
+const load = async () => fromStored(await readDocument("freight-desk"));
+
+function fromStored(raw: unknown): StoredDesk {
   const value = isRecord(raw) ? (raw as Partial<StoredDesk>) : {};
   return {
     ports: Array.isArray(value.ports) ? value.ports : null,
@@ -65,74 +50,69 @@ function load(): StoredDesk {
     bdi: { ...DEFAULT_BDI_STATE, ...(isRecord(value.bdi) ? value.bdi : {}), sourceUrl: BDI_SOURCE },
     settings: normalizeSettings(value.settings),
     lastExtraction: isRecord(value.lastExtraction) ? (value.lastExtraction as StoredDesk["lastExtraction"]) : null,
-    debug: Array.isArray(value.debug) ? value.debug : [],
     updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null,
   };
 }
 
-export function getFreightDesk(): FreightDesk {
-  const stored = load();
-  return { ...stored, ports: stored.ports ?? seedPorts(), portsCustomized: stored.ports !== null };
+const expand = (stored: StoredDesk, debug: DebugEntry[]): FreightDesk => ({ ...stored, ports: stored.ports ?? seedPorts(), portsCustomized: stored.ports !== null, debug });
+
+const cachedDesk = cache(async () => expand(await load(), await listFreightDebug()));
+
+/** Read once per request; each caller gets its own copy. `debug` runs oldest to newest. */
+export async function getFreightDesk(): Promise<FreightDesk> {
+  return structuredClone(await cachedDesk());
 }
 
-/** Mutates a working copy. Setting `ports` keeps an explicit registry; leave it untouched to stay on the seed. */
-export function updateFreightDesk(mutate: (desk: FreightDesk) => void) {
-  const stored = load();
-  const desk: FreightDesk = { ...stored, ports: stored.ports ?? seedPorts(), portsCustomized: stored.ports !== null };
-  const before = desk.ports;
-  mutate(desk);
-  const { ports, portsCustomized, ...rest } = desk;
-  const next: StoredDesk = { ...rest, ports: portsCustomized || ports !== before ? ports : null, updatedAt: new Date().toISOString() };
-  writeJson(deskPath, next);
-  return getFreightDesk();
+/** Mutates a working copy. Setting `ports` keeps an explicit registry; leave it untouched to stay on the seed. Debug entries are written through `logFreightDebug`. */
+export async function updateFreightDesk(mutate: (desk: FreightDesk) => void) {
+  const next = await updateDocument("freight-desk", (raw): StoredDesk => {
+    const desk = expand(fromStored(raw), []);
+    const before = desk.ports;
+    mutate(desk);
+    const { ports, portsCustomized, debug: _debug, ...rest } = desk;
+    void _debug;
+    return { ...rest, ports: portsCustomized || ports !== before ? ports : null, updatedAt: new Date().toISOString() };
+  });
+  return expand(next, await listFreightDebug());
 }
 
 /** Returns the registry to the canonical seed list. */
-export function resetPortsToSeed() {
-  const stored = load();
-  writeJson(deskPath, { ...stored, ports: null, updatedAt: new Date().toISOString() });
+export async function resetPortsToSeed() {
+  await updateDocument("freight-desk", (raw): StoredDesk => ({ ...fromStored(raw), ports: null, updatedAt: new Date().toISOString() }));
   return seedPorts().length;
 }
 
-export function logFreightDebug(level: DebugLevel, message: string, context: Record<string, unknown> = {}) {
-  updateFreightDesk((desk) => {
-    const entry: DebugEntry = { at: new Date().toISOString(), level, message, context };
-    desk.debug = [...desk.debug, entry].slice(-MAX_DEBUG);
-  });
+async function listFreightDebug() {
+  return (await listRecords(FREIGHT_DEBUG, { limit: FREIGHT_DEBUG.max })).reverse();
 }
 
-export function activePorts(desk = getFreightDesk()): PortRecord[] {
+export async function logFreightDebug(level: DebugLevel, message: string, context: Record<string, unknown> = {}) {
+  await putRecords(FREIGHT_DEBUG, [{ at: new Date().toISOString(), level, message, context }]);
+}
+
+export const clearFreightDebug = () => clearRecords(FREIGHT_DEBUG);
+
+export function activePorts(desk: FreightDesk): PortRecord[] {
   return desk.ports
     .filter((port) => port.active)
     .map(({ code, name, country, region, lat, lon, aliases }) => ({ code, name, country, region, lat, lon, ...(aliases.length ? { aliases } : {}) }));
 }
 
-export function listCalcLogs(): CalcLog[] {
-  const raw = readJson(logsPath);
-  return Array.isArray(raw) ? (raw as CalcLog[]) : [];
+export const listCalcLogs = (): Promise<CalcLog[]> => listRecords(FREIGHT_LOGS, { limit: MAX_LOGS });
+
+export async function recordCalcLog(entry: CalcLog) {
+  await putRecords(FREIGHT_LOGS, [entry]);
+  await trimRecords(FREIGHT_LOGS, MAX_LOGS, monthStart());
 }
 
-export function recordCalcLog(entry: CalcLog) {
-  const month = monthKey(new Date().toISOString());
-  writeJson(
-    logsPath,
-    [entry, ...listCalcLogs()].filter((log, index) => index < MAX_LOGS || monthKey(log.at) === month),
-  );
-}
-
-export function deleteCalcLogs(ids: string[]) {
-  const drop = new Set(ids);
-  const logs = listCalcLogs();
-  const kept = logs.filter((log) => !drop.has(log.id));
-  writeJson(logsPath, kept);
-  return logs.length - kept.length;
-}
+export const deleteCalcLogs = (ids: string[]) => removeRecords(FREIGHT_LOGS, ids);
 
 export const monthKey = (iso: string) => iso.slice(0, 7);
 
+const monthStart = (now = new Date()) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+
 export function monthlyUsage(userId: string, now = new Date()) {
-  const month = monthKey(now.toISOString());
-  return listCalcLogs().filter((log) => log.user.id === userId && monthKey(log.at) === month).length;
+  return countRecords(FREIGHT_LOGS, { userId, since: monthStart(now) });
 }
 
 export function nextReset(now = new Date()) {

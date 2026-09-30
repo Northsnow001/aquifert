@@ -456,7 +456,7 @@ export const GUIDE: GuideSection[] = [
     title: "Settings",
     icon: "settings",
     href: "/admin/settings",
-    summary: "The emails the Order Desk and Aquifert Zero send, who may register, and how email leaves the platform.",
+    summary: "The emails the Order Desk and Aquifert Zero send, who may register, how email leaves the platform, and where data is stored.",
     tasks: [
       {
         title: "Edit an email",
@@ -482,6 +482,14 @@ export const GUIDE: GuideSection[] = [
           "The status card shows whether the email service is connected. Until it is, emails are held here instead of sent.",
           "Set the sender name and the reply-to address members' replies go to.",
           "The outbox lists recent emails as sent, held or failed. Open one to see it exactly as it was rendered.",
+        ],
+      },
+      {
+        title: "Data storage",
+        steps: [
+          "Every module saves to Supabase: content and settings, calculation logs, enquiries, Zero registrations, bans, the outbox and library files.",
+          "Data storage checks each table and the library bucket live. A red line names what is missing.",
+          "When a table is missing, run supabase/migrations/003_app_data.sql in the Supabase SQL editor and reload the page.",
         ],
       },
     ],

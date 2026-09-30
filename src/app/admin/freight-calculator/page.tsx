@@ -30,8 +30,8 @@ const LOG_PAGE = 50;
 export default async function FreightCalculatorAdminPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const tab: Tab = TABS.some((item) => item.key === params.tab) ? (params.tab as Tab) : "data";
-  const desk = getFreightDesk();
-  const logs = listCalcLogs();
+  const desk = await getFreightDesk();
+  const logs = await listCalcLogs();
   const now = new Date();
   const thisMonth = monthKey(now.toISOString());
   const monthLogs = logs.filter((log) => monthKey(log.at) === thisMonth);
@@ -148,7 +148,7 @@ export default async function FreightCalculatorAdminPage({ searchParams }: { sea
   );
 }
 
-function logsTab(params: Params, logs: ReturnType<typeof listCalcLogs>) {
+function logsTab(params: Params, logs: Awaited<ReturnType<typeof listCalcLogs>>) {
   const filters = readLogFilters(params);
   const matching = filterLogs(logs, filters);
   const pages = Math.max(1, Math.ceil(matching.length / LOG_PAGE));

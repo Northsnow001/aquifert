@@ -7,10 +7,10 @@ import { findZeroRegistration } from "@/lib/zero-interest";
 
 export default async function OrderDeskPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const [{ tab }, user] = await Promise.all([searchParams, getSession()]);
-  const settings = getDeskSettings();
+  const settings = await getDeskSettings();
   const showZero = settings.zero.showOnHub;
   const zero = showZero && tab === "zero";
-  const registration = zero && user ? findZeroRegistration(user) : null;
+  const registration = zero && user ? await findZeroRegistration(user) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">

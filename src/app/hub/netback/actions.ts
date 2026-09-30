@@ -2,7 +2,7 @@
 
 import { logCalculation } from "@/app/hub/log-actions";
 import { isAdminUser } from "@/lib/admin-access";
-import { activePorts, nextReset } from "@/lib/freight-desk/store";
+import { activePorts, getFreightDesk, nextReset } from "@/lib/freight-desk/store";
 import { cleanRequest, computeNetback, type NetbackRequest } from "@/lib/netback-desk/run";
 import { getNetbackDesk, netbackUsage, recordNetbackLog } from "@/lib/netback-desk/store";
 import { liveOrigins, planLimit, weekLabel } from "@/lib/netback-desk/types";
@@ -17,16 +17,16 @@ export async function runNetback(raw: Partial<NetbackRequest>): Promise<NetbackR
   const user = await getSession();
   if (!user) return { ok: false, message: "Your session has ended. Sign in again to calculate." };
   const admin = isAdminUser(user);
-  const desk = getNetbackDesk();
+  const desk = await getNetbackDesk();
   const limit = admin ? 0 : planLimit(desk.settings, user.plan);
-  const used = netbackUsage(user.id);
+  const used = await netbackUsage(user.id);
   const usage = { used, limit, resetsOn: nextReset() };
   if (limit > 0 && used >= limit) {
     return { ok: false, message: `You have used all ${limit} netback calculations for this month. Your allowance resets on ${usage.resetsOn}.`, usage };
   }
 
   const request = cleanRequest(raw);
-  const destination = findPort(request.port, activePorts());
+  const destination = findPort(request.port, activePorts(await getFreightDesk()));
   if (!destination) return { ok: false, message: "Choose a destination port from the list.", usage };
   const origins = liveOrigins(desk.benchmarks);
   if (!origins.length) return { ok: false, message: "Benchmark prices are being updated. Try again shortly.", usage };
@@ -40,7 +40,7 @@ export async function runNetback(raw: Partial<NetbackRequest>): Promise<NetbackR
   const top = request.mode === "forward" ? forward[0] : reverse[0];
   if (!top || !ranking[0]) return { ok: false, message: "No origins could be priced for this destination.", usage };
 
-  recordNetbackLog(
+  await recordNetbackLog(
     {
       id: `nb-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
       at: new Date().toISOString(),

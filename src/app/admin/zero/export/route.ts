@@ -11,7 +11,7 @@ export async function GET() {
   const user = await getSession();
   if (!user || !isAdminUser(user)) return new Response("Sign in as an admin.", { status: 401 });
   const header = ["Registered (UTC)", "Name", "Email", "Company", "Annual volume (MT)", "Primary product", "Notes", "Status", "Admin note"];
-  const rows = listZeroRegistrations().map((row) => [row.at.slice(0, 16).replace("T", " "), row.name, row.email, row.company, row.annualVolume, row.product, row.notes, ZERO_STATUS_LABEL[row.status], row.adminNote]);
+  const rows = (await listZeroRegistrations()).map((row) => [row.at.slice(0, 16).replace("T", " "), row.name, row.email, row.company, row.annualVolume, row.product, row.notes, ZERO_STATUS_LABEL[row.status], row.adminNote]);
   const csv = [header, ...rows].map((line) => line.map((value) => cell(String(value ?? ""))).join(",")).join("\r\n");
   return new Response(`\uFEFF${csv}`, {
     headers: {

@@ -11,7 +11,7 @@ const cell = (value: unknown) => {
 export async function GET() {
   const user = await getSession();
   if (!user || !isAdminUser(user)) return new Response("Sign in as an admin.", { status: 401 });
-  const rows = getFreightDesk().ports.map((port) => [port.code, port.name, port.country, port.region, port.lat, port.lon, port.aliases.join("; "), port.active ? "yes" : "no"]);
+  const rows = (await getFreightDesk()).ports.map((port) => [port.code, port.name, port.country, port.region, port.lat, port.lon, port.aliases.join("; "), port.active ? "yes" : "no"]);
   const csv = [["Code", "Name", "Country", "Region", "Latitude", "Longitude", "Aliases", "Active"], ...rows].map((row) => row.map(cell).join(",")).join("\r\n");
   return new Response(`\uFEFF${csv}`, {
     headers: {

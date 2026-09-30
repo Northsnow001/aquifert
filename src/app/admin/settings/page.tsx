@@ -3,7 +3,9 @@ import { ArrowUpRight } from "lucide-react";
 import { DeliveryPanel } from "@/components/admin/settings/delivery-panel";
 import { FormEmailsPanel } from "@/components/admin/settings/form-emails-panel";
 import { MembersPanel } from "@/components/admin/settings/members-panel";
+import { StoragePanel } from "@/components/admin/settings/storage-panel";
 import { PageHeader } from "@/components/admin/ui";
+import { storageStatus } from "@/lib/data/status";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { DEFAULT_DESK_SETTINGS } from "@/lib/desk-settings/types";
 import { listInbox } from "@/lib/inbox";
@@ -19,6 +21,7 @@ const TABS = [
   { key: "zero", label: "Aquifert Zero emails" },
   { key: "members", label: "Sign-up rules" },
   { key: "delivery", label: "Email delivery" },
+  { key: "storage", label: "Data storage" },
 ] as const;
 
 type Tab = (typeof TABS)[number]["key"];
@@ -32,12 +35,18 @@ const LIMITS = [
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const params = await searchParams;
   const tab: Tab = TABS.some((item) => item.key === params.tab) ? (params.tab as Tab) : "order";
-  const [user, settings] = [await getSession(), getDeskSettings()];
+  const [user, settings, outbox, inbox, registrations, bans, storage] = await Promise.all([
+    getSession(),
+    getDeskSettings(),
+    listOutbox(),
+    listInbox(),
+    listZeroRegistrations(),
+    listBans(),
+    storageStatus(),
+  ]);
   const status = deliveryStatus();
-  const outbox = listOutbox();
-  const orders = listInbox().filter((item) => item.table === "order_enquiries").length;
-  const registrations = listZeroRegistrations();
-  const bans = listBans();
+  const orders = inbox.filter((item) => item.table === "order_enquiries").length;
+  const storageFailing = storage.backend === "local" ? storage.hosted : storage.checks.some((check) => !check.ok);
   const failed = outbox.filter((entry) => entry.status === "failed").length;
   const { orderDesk, zero, members } = settings;
   const describe = (form: typeof orderDesk) =>
@@ -68,11 +77,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     },
   ];
 
-  const badge: Partial<Record<Tab, string>> = { delivery: failed ? String(failed) : !status.connected ? "off" : undefined };
+  const badge: Partial<Record<Tab, string>> = {
+    delivery: failed ? String(failed) : !status.connected ? "off" : undefined,
+    storage: storageFailing ? "!" : storage.backend === "local" ? "local" : undefined,
+  };
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Settings" description="The emails the Order Desk and Aquifert Zero send, who may register, and how email leaves the platform." />
+      <PageHeader title="Settings" description="The emails the Order Desk and Aquifert Zero send, who may register, how email leaves the platform, and where data is stored." />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
@@ -104,7 +116,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             >
               {item.label}
               {badge[item.key] ? (
-                <span className={`rounded-full px-1.5 py-px font-mono text-[10.5px] ${failed && item.key === "delivery" ? "bg-[#fdecec] text-[#b42318]" : "bg-[#fff6e5] text-[#9a5b00]"}`}>
+                <span
+                  className={`rounded-full px-1.5 py-px font-mono text-[10.5px] ${(failed && item.key === "delivery") || (storageFailing && item.key === "storage") ? "bg-[#fdecec] text-[#b42318]" : "bg-[#fff6e5] text-[#9a5b00]"}`}
+                >
                   {badge[item.key]}
                 </span>
               ) : null}
@@ -135,6 +149,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           outbox={outbox.map((entry) => ({ id: entry.id, at: entry.at, kind: entry.kind, to: entry.to, subject: entry.subject, status: entry.status, error: entry.error }))}
         />
       ) : null}
+      {tab === "storage" ? <StoragePanel status={storage} /> : null}
 
       <section className="mt-8 rounded-2xl border border-border bg-surface p-5">
         <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim">Limits live with each tool</p>

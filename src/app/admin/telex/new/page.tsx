@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function NewTelexPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
   const user = await getSession();
-  const knownTags = Array.from(new Set(getHubContent().telex.flatMap((item) => item.tags))).sort((a, b) => a.localeCompare(b));
+  const knownTags = Array.from(new Set((await getHubContent()).telex.flatMap((item) => item.tags))).sort((a, b) => a.localeCompare(b));
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="New Telex message" crumbs={[{ href: "/admin/telex", label: "Telex" }]} />

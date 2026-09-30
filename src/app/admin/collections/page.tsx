@@ -25,7 +25,7 @@ function descendants(collections: Collection[], id: string): Set<string> {
 
 export default async function CollectionsPage({ searchParams }: { searchParams: Promise<{ edit?: string; q?: string; saved?: string; error?: string }> }) {
   const params = await searchParams;
-  const { collections, libraryDocuments } = getHubContent();
+  const { collections, libraryDocuments } = await getHubContent();
   const editing = collections.find((item) => item.id === params.edit);
   const blocked = editing ? descendants(collections, editing.id) : new Set<string>();
   const q = (params.q ?? "").trim().toLowerCase();

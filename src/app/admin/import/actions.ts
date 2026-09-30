@@ -34,10 +34,10 @@ const noExport: Failure = { ok: false, message: "Upload the WordPress export fil
 
 export async function previewWpImport(options: ImportOptions): Promise<{ ok: true; sections: SectionPlan[] } | Failure> {
   await requireAdmin();
-  const data = loadExport();
+  const data = await loadExport();
   if (!data) return noExport;
   try {
-    return { ok: true, sections: planImport(data, cleanOptions(options, data)) };
+    return { ok: true, sections: await planImport(data, cleanOptions(options, data)) };
   } catch (error) {
     return failure(error);
   }
@@ -45,13 +45,13 @@ export async function previewWpImport(options: ImportOptions): Promise<{ ok: tru
 
 export async function runWpImport(options: ImportOptions): Promise<{ ok: true; sections: SectionPlan[]; pending: PendingFile[] } | Failure> {
   await requireAdmin();
-  const data = loadExport();
+  const data = await loadExport();
   if (!data) return noExport;
   try {
     const clean = cleanOptions(options, data);
-    const sections = applyImport(data, clean);
+    const sections = await applyImport(data, clean);
     refresh();
-    return { ok: true, sections, pending: clean.sections.library ? pendingFiles(data) : [] };
+    return { ok: true, sections, pending: clean.sections.library ? await pendingFiles(data) : [] };
   } catch (error) {
     return failure(error);
   }
@@ -59,7 +59,7 @@ export async function runWpImport(options: ImportOptions): Promise<{ ok: true; s
 
 export async function downloadWpFile(id: number): Promise<{ ok: true; title: string; bytes: number } | Failure> {
   await requireAdmin();
-  const data = loadExport();
+  const data = await loadExport();
   if (!data) return noExport;
   try {
     const result = await downloadFile(data, Number(id));
@@ -77,7 +77,7 @@ export async function finishWpDownloads(): Promise<{ ok: true }> {
 
 export async function discardWpImport(): Promise<{ ok: true }> {
   await requireAdmin();
-  discardExport();
+  await discardExport();
   revalidatePath("/admin/import");
   return { ok: true };
 }

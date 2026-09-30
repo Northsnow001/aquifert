@@ -17,7 +17,7 @@ type Result = { ok: true; updatedAt: string | null } | { ok: false; message: str
 export async function saveZeroRegistration(id: string, input: { status: ZeroStatus; adminNote: string }): Promise<Result> {
   await requireAdmin();
   if (!ZERO_STATUSES.includes(input.status)) return { ok: false, message: "Choose a status." };
-  const row = updateZeroRegistration(id, { status: input.status, adminNote: String(input.adminNote ?? "").trim().slice(0, 2000) });
+  const row = await updateZeroRegistration(id, { status: input.status, adminNote: String(input.adminNote ?? "").trim().slice(0, 2000) });
   if (!row) return { ok: false, message: "That registration no longer exists." };
   revalidatePath("/admin", "layout");
   return { ok: true, updatedAt: row.updatedAt };
@@ -25,7 +25,7 @@ export async function saveZeroRegistration(id: string, input: { status: ZeroStat
 
 export async function removeZeroRegistration(id: string): Promise<{ ok: boolean }> {
   await requireAdmin();
-  const ok = deleteZeroRegistration(id);
+  const ok = await deleteZeroRegistration(id);
   revalidatePath("/admin", "layout");
   return { ok };
 }

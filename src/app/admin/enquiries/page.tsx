@@ -27,7 +27,7 @@ const LABELS: Record<string, string> = {
 
 export default async function EnquiriesAdminPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
   const params = await searchParams;
-  const all = listInbox();
+  const all = await listInbox();
   const type = params.type === "order" ? "order_enquiries" : params.type === "contact" ? "contact_messages" : null;
   const items = type ? all.filter((item) => item.table === type) : all;
   const tabs = [

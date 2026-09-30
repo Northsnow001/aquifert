@@ -5,12 +5,12 @@ import { defaultOptions, loadExport, loadState, pendingFiles, planImport, summar
 export const maxDuration = 300;
 
 export default async function ImportPage() {
-  const data = loadExport();
-  const state = loadState();
+  const data = await loadExport();
+  const state = await loadState();
   let ready = null;
   if (data) {
     const options = defaultOptions(data, state);
-    ready = { summary: summarize(data, state), options, sections: planImport(data, options), pending: pendingFiles(data) };
+    ready = { summary: summarize(data, state), options, sections: await planImport(data, options), pending: await pendingFiles(data) };
   }
 
   return (

@@ -15,7 +15,7 @@ const MAX_IN_WINDOW = 5;
 export async function registerZeroInterest(input: { name: string; email: string; company: string; annualVolume: string; product: string; notes: string; website?: string }) {
   const user = await getSession();
   if (!user) return { ok: false as const, message: "Your session has ended. Sign in again to register." };
-  if (!getDeskSettings().zero.showOnHub) return { ok: false as const, message: "Aquifert Zero registrations are closed right now." };
+  if (!(await getDeskSettings()).zero.showOnHub) return { ok: false as const, message: "Aquifert Zero registrations are closed right now." };
   if (input.website?.trim()) return { ok: true as const, at: new Date().toISOString() };
 
   const text = (value: unknown, max = 200) => String(value ?? "").trim().slice(0, max);
@@ -31,10 +31,10 @@ export async function registerZeroInterest(input: { name: string; email: string;
   if (!(ZERO_PRODUCTS as readonly string[]).includes(product)) return { ok: false as const, message: "Choose the product you are most interested in." };
 
   const since = Date.now() - WINDOW_MS;
-  const recent = listZeroRegistrations().filter((row) => row.userId === user.id && Date.parse(row.at) > since).length;
+  const recent = (await listZeroRegistrations()).filter((row) => row.userId === user.id && Date.parse(row.at) > since).length;
   if (recent >= MAX_IN_WINDOW) return { ok: false as const, message: "You have registered several times in the last few minutes. Wait a little, then try again." };
 
-  const row = addZeroRegistration({ userId: user.id, name, email, company, annualVolume, product, notes });
+  const row = await addZeroRegistration({ userId: user.id, name, email, company, annualVolume, product, notes });
   const submission = { name, email, company, annualVolume, product, notes, submittedAt: row.at };
   await notifySubmission("zero", { vars: zeroVars(submission), sections: zeroSections(submission), applicantEmail: email, adminPath: "/admin/zero" });
   revalidatePath("/admin", "layout");

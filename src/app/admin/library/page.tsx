@@ -38,7 +38,7 @@ function doneMessage(done: string | undefined, count: number) {
 
 export default async function LibraryAdminPage({ searchParams }: { searchParams: Promise<Search> }) {
   const params = await searchParams;
-  const { libraryDocuments, collections } = getHubContent();
+  const { libraryDocuments, collections } = await getHubContent();
   const editing = libraryDocuments.find((file) => file.id === params.edit);
   const showForm = Boolean(editing || params.new);
   const byId = new Map(collections.map((item) => [item.id, item]));

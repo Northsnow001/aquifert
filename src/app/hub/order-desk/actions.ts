@@ -43,7 +43,7 @@ export async function submitOrderEnquiry(input: OrderInput) {
 
   const account = user.email.toLowerCase();
   const since = Date.now() - WINDOW_MS;
-  const recent = listInbox().filter((item) => item.table === "order_enquiries" && item.payload.account === account && Date.parse(item.at) > since).length;
+  const recent = (await listInbox()).filter((item) => item.table === "order_enquiries" && item.payload.account === account && Date.parse(item.at) > since).length;
   if (recent >= MAX_IN_WINDOW) return { ok: false as const, message: "You have sent several enquiries in the last few minutes. Wait a little, then try again." };
 
   const submission: OrderSubmission = { ...order, submittedAt: new Date().toISOString() };

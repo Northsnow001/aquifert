@@ -1,7 +1,7 @@
 import "server-only";
 
-import { mkdirSync, readFileSync, writeFileSync } from "fs";
-import path from "path";
+import { cache } from "react";
+import { readDocument, updateDocument } from "@/lib/data/documents";
 import { indicators as seedIndicators, telex as seedTelex } from "@/data/sample";
 import { freightBoard as seedFreight, toolsCommentary as seedToolsCommentary } from "@/data/desk";
 import { collections as seedCollections, hedgeReports as seedHedge, libraryDocuments as seedLibrary } from "@/data/library";
@@ -34,8 +34,6 @@ export type HubContent = {
   aquibot: AquibotConfig;
   updatedAt: string | null;
 };
-
-const filePath = path.join(process.cwd(), "data", "hub-content.json");
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -178,25 +176,22 @@ function normalize(raw: Record<string, unknown>): HubContent {
   };
 }
 
-export function getHubContent(): HubContent {
-  try {
-    return normalize(JSON.parse(readFileSync(filePath, "utf8")) as Record<string, unknown>);
-  } catch {
-    return seed();
-  }
+const fromStored = (raw: unknown) => (isRecord(raw) ? normalize(raw) : seed());
+
+const cachedHubContent = cache(async () => fromStored(await readDocument("hub-content")));
+
+/** Read once per request; each caller gets its own copy to change. */
+export async function getHubContent(): Promise<HubContent> {
+  return clone(await cachedHubContent());
 }
 
-export function saveHubContent(content: HubContent) {
-  const next = { ...content, updatedAt: new Date().toISOString() };
-  mkdirSync(path.dirname(filePath), { recursive: true });
-  writeFileSync(filePath, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  return next;
-}
-
-export function updateHubContent(mutate: (content: HubContent) => void) {
-  const content = getHubContent();
-  mutate(content);
-  return saveHubContent(content);
+/** Changes the saved content. `mutate` can run more than once if another save lands first, so it must only change `content`. */
+export function updateHubContent(mutate: (content: HubContent) => void | Promise<void>) {
+  return updateDocument("hub-content", async (raw) => {
+    const content = fromStored(raw);
+    await mutate(content);
+    return { ...content, updatedAt: new Date().toISOString() };
+  });
 }
 
 export function sortTelex(items: TelexItem[]) {
@@ -205,16 +200,4 @@ export function sortTelex(items: TelexItem[]) {
 
 export function sortHedge(items: HedgeReport[]) {
   return [...items].sort((a, b) => b.date.localeCompare(a.date));
-}
-
-const libraryRoot = path.join(process.cwd(), "data", "library");
-
-export function libraryFileDir(id: string) {
-  const dir = path.join(libraryRoot, path.basename(id));
-  if (!dir.startsWith(libraryRoot + path.sep)) throw new Error("Invalid file id");
-  return dir;
-}
-
-export function libraryFilePath(file: Pick<LibraryDocument, "id" | "storedName">) {
-  return file.storedName ? path.join(libraryFileDir(file.id), path.basename(file.storedName)) : null;
 }

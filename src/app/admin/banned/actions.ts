@@ -27,15 +27,15 @@ export async function banMemberAction(input: { email: string; name: string; user
   if (!EMAIL_PATTERN.test(email)) return { ok: false, message: "Enter the member's full email address." };
   if (isAdminUser({ email })) return { ok: false, message: "Admin accounts cannot be banned. Remove the address from the admin list first." };
   if (reason.length < 3) return { ok: false, message: "Add a short reason so the rest of the team knows why." };
-  if (findBan({ email })) return { ok: false, message: `${email} is already banned.` };
-  banMember({ email, name: String(input.name ?? "").slice(0, 120), userId: input.userId ?? null, reason }, admin.email);
+  if (await findBan({ email })) return { ok: false, message: `${email} is already banned.` };
+  await banMember({ email, name: String(input.name ?? "").slice(0, 120), userId: input.userId ?? null, reason }, admin.email);
   refresh();
   return { ok: true };
 }
 
 export async function reinstateMemberAction(email: string, note: string): Promise<Result> {
   const admin = await requireAdmin();
-  const record = reinstateMember(String(email ?? ""), admin.email, String(note ?? "").slice(0, 1000));
+  const record = await reinstateMember(String(email ?? ""), admin.email, String(note ?? "").slice(0, 1000));
   if (!record) return { ok: false, message: "That member is not banned." };
   refresh();
   return { ok: true };

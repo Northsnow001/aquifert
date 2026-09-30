@@ -11,7 +11,7 @@ import { listZeroRegistrations } from "@/lib/zero-interest";
 export const dynamic = "force-dynamic";
 
 /** Everyone who has left a trace on the hub, newest activity first, so a ban can be picked instead of typed. */
-function knownMembers(): KnownMember[] {
+async function knownMembers(): Promise<KnownMember[]> {
   const seen = new Map<string, KnownMember & { counts: Map<string, number> }>();
   const note = (email: string | undefined, name: string | undefined, userId: string | null, at: string, activity: string) => {
     const key = email?.trim().toLowerCase();
@@ -23,10 +23,11 @@ function knownMembers(): KnownMember[] {
     entry.counts.set(activity, (entry.counts.get(activity) ?? 0) + 1);
     seen.set(key, entry);
   };
-  for (const log of listCalcLogs()) note(log.user.email, log.user.name, log.user.id, log.at, "freight");
-  for (const log of listNetbackLogs()) note(log.user.email, log.user.name, log.user.id, log.at, "netback");
-  for (const row of listZeroRegistrations()) note(row.email, row.name, row.userId, row.at, "zero");
-  for (const item of listInbox()) note(item.payload.account || item.payload.email, item.payload.name, null, item.at, item.table === "order_enquiries" ? "enquiry" : "message");
+  const [freight, netback, zero, inbox] = await Promise.all([listCalcLogs(), listNetbackLogs(), listZeroRegistrations(), listInbox()]);
+  for (const log of freight) note(log.user.email, log.user.name, log.user.id, log.at, "freight");
+  for (const log of netback) note(log.user.email, log.user.name, log.user.id, log.at, "netback");
+  for (const row of zero) note(row.email, row.name, row.userId, row.at, "zero");
+  for (const item of inbox) note(item.payload.account || item.payload.email, item.payload.name, null, item.at, item.table === "order_enquiries" ? "enquiry" : "message");
   const words: Record<string, [string, string]> = {
     freight: ["freight calculation", "freight calculations"],
     netback: ["netback run", "netback runs"],
@@ -43,9 +44,7 @@ function knownMembers(): KnownMember[] {
 }
 
 export default async function BannedPage() {
-  const bans = listBans();
-  const history = listAccessHistory();
-  const members = knownMembers();
+  const [bans, history, members] = await Promise.all([listBans(), listAccessHistory(), knownMembers()]);
   const month = new Date().toISOString().slice(0, 7);
   const thisMonth = history.filter((event) => event.action === "banned" && event.at.startsWith(month)).length;
   const reinstated = history.filter((event) => event.action === "reinstated").length;

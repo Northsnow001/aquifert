@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if (!user || !isAdminUser(user)) return new Response("Sign in as an admin.", { status: 401 });
   const params = Object.fromEntries(new URL(request.url).searchParams);
   const filters = readLogFilters(params);
-  const csv = logsToCsv(filterLogs(listCalcLogs(), filters));
+  const csv = logsToCsv(filterLogs(await listCalcLogs(), filters));
   const name = `freight-calculations${filters.month ? `-${filters.month}` : ""}-${new Date().toISOString().slice(0, 10)}.csv`;
   return new Response(`\uFEFF${csv}`, {
     headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${name}"`, "cache-control": "no-store" },

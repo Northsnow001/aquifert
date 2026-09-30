@@ -39,7 +39,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const user = await getSession();
-  const content = getHubContent();
+  const content = await getHubContent();
   const { indicators, freight } = content;
   const readingsDay = content.indicatorsUpdatedAt ?? content.updatedAt;
   const plan = user?.plan ?? "core";

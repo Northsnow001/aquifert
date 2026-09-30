@@ -21,7 +21,7 @@ const DONE_LABEL: Record<string, string> = {
 
 export default async function TelexAdminPage({ searchParams }: { searchParams: Promise<Search> }) {
   const params = await searchParams;
-  const all = sortTelex(getHubContent().telex);
+  const all = sortTelex((await getHubContent()).telex);
   const status = (["published", "draft", "private"].includes(params.status ?? "") ? params.status : "all") as PublishStatus | "all";
   const q = (params.q ?? "").trim().toLowerCase();
   const tags = Array.from(new Set(all.flatMap((item) => item.tags))).sort((a, b) => a.localeCompare(b));

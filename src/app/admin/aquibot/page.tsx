@@ -37,7 +37,7 @@ const LOG_KINDS: LogKind[] = ["index", "connection", "chat"];
 export default async function AquibotAdminPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const tab: Tab = TABS.some((item) => item.key === params.tab) ? (params.tab as Tab) : "prompt";
-  const content = getHubContent();
+  const content = await getHubContent();
   const { aquibot } = content;
   const status = await engineStatus();
   const vocabularyIssues = parseSynonyms(aquibot.synonyms).issues.length;

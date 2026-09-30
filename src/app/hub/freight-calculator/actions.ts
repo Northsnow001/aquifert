@@ -19,9 +19,9 @@ export async function runFreightQuote(input: Partial<QuoteRequest>): Promise<Quo
   const user = await getSession();
   if (!user) return { ok: false, message: "Your session has ended. Sign in again to calculate." };
   const admin = isAdminUser(user);
-  const desk = getFreightDesk();
+  const desk = await getFreightDesk();
   const limit = admin ? 0 : planLimit(desk.settings, user.plan);
-  const used = monthlyUsage(user.id);
+  const used = await monthlyUsage(user.id);
   const usage = { used, limit, resetsOn: nextReset() };
   if (limit > 0 && used >= limit) {
     return { ok: false, message: `You have used all ${limit} freight calculations for this month. Your allowance resets on ${usage.resetsOn}.`, usage };
@@ -32,7 +32,7 @@ export async function runFreightQuote(input: Partial<QuoteRequest>): Promise<Quo
   const { quote } = outcome;
   const { result } = quote;
 
-  recordCalcLog({
+  await recordCalcLog({
     id: `calc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
     at: new Date().toISOString(),
     user: { id: user.id, name: user.name, email: user.email, plan: user.plan, admin },

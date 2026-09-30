@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function FreightPage() {
   const user = await getSession();
-  const desk = getFreightDesk();
+  const desk = await getFreightDesk();
   const { settings } = desk;
   after(() => refreshStaleMarketData());
   const limit = user && !isAdminUser(user) ? planLimit(settings, user.plan) : 0;
@@ -25,7 +25,7 @@ export default async function FreightPage() {
         bdi={desk.bdi.value}
         cargoPremiums={settings.cargoPremiums}
         iranLabel={settings.iranLabel}
-        usage={{ used: user ? monthlyUsage(user.id) : 0, limit, resetsOn: nextReset() }}
+        usage={{ used: user ? await monthlyUsage(user.id) : 0, limit, resetsOn: nextReset() }}
       />
     </Suspense>
   );

@@ -14,8 +14,8 @@ export async function GET(request: Request) {
   if (!user || !isAdminUser(user)) return new Response("Sign in as an admin.", { status: 401 });
   const history = new URL(request.url).searchParams.get("kind") === "history";
   const csv = history
-    ? toCsv([["When (UTC)", "Email", "Action", "By", "Reason or note"], ...listAccessHistory().map((event) => [event.at.slice(0, 16).replace("T", " "), event.email, event.action, event.by, event.reason])])
-    : toCsv([["Email", "Name", "Reason", "Banned (UTC)", "Banned by"], ...listBans().map((ban) => [ban.email, ban.name, ban.reason, ban.bannedAt.slice(0, 16).replace("T", " "), ban.bannedBy])]);
+    ? toCsv([["When (UTC)", "Email", "Action", "By", "Reason or note"], ...(await listAccessHistory()).map((event) => [event.at.slice(0, 16).replace("T", " "), event.email, event.action, event.by, event.reason])])
+    : toCsv([["Email", "Name", "Reason", "Banned (UTC)", "Banned by"], ...(await listBans()).map((ban) => [ban.email, ban.name, ban.reason, ban.bannedAt.slice(0, 16).replace("T", " "), ban.bannedBy])]);
   return new Response(`\uFEFF${csv}`, {
     headers: {
       "content-type": "text/csv; charset=utf-8",

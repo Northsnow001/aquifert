@@ -18,7 +18,7 @@ export async function siteOrigin() {
 
 /** Sends the member confirmation and the desk alert for a submission, as the Settings page configures them. */
 export async function notifySubmission(kind: TemplateKind, input: { vars: Record<string, string>; sections: DetailSection[]; applicantEmail: string; adminPath: string }) {
-  const settings = getDeskSettings();
+  const settings = await getDeskSettings();
   const form = kind === "order" ? settings.orderDesk : settings.zero;
   const sent: OutboxEntry[] = [];
   if (form.sendApplicant && EMAIL_PATTERN.test(input.applicantEmail)) {

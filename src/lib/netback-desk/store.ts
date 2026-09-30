@@ -1,7 +1,9 @@
 import "server-only";
 
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
-import path from "path";
+import { cache } from "react";
+import { readDocument, updateDocument } from "@/lib/data/documents";
+import { countRecords, listRecords, pruneRecords, putRecords, removeRecords, trimRecords } from "@/lib/data/records";
+import { NETBACK_LOGS } from "@/lib/data/tables";
 import { NETBACK_CONSTANTS } from "@/lib/netback/calculate";
 import {
   DEFAULT_DUTIES,
@@ -14,27 +16,10 @@ import {
   type NetbackSettings,
 } from "@/lib/netback-desk/types";
 
-const deskPath = path.join(process.cwd(), "data", "netback-desk.json");
-const logsPath = path.join(process.cwd(), "data", "netback-logs.json");
 const MAX_LOGS = 5000;
 const DAY = 86_400_000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-
-function writeJson(file: string, value: unknown) {
-  mkdirSync(path.dirname(file), { recursive: true });
-  const temp = `${file}.tmp`;
-  writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-  renameSync(temp, file);
-}
-
-function readJson(file: string): unknown {
-  try {
-    return JSON.parse(readFileSync(file, "utf8"));
-  } catch {
-    return null;
-  }
-}
 
 function normalizeSettings(raw: unknown): NetbackSettings {
   const value = isRecord(raw) ? (raw as Partial<NetbackSettings>) : {};
@@ -54,8 +39,7 @@ function normalizeBenchmarks(raw: unknown): Benchmark[] {
   });
 }
 
-export function getNetbackDesk(): NetbackDesk {
-  const raw = readJson(deskPath);
+function fromStored(raw: unknown): NetbackDesk {
   const value = isRecord(raw) ? (raw as Partial<NetbackDesk>) : {};
   return {
     benchmarks: normalizeBenchmarks(value.benchmarks),
@@ -69,49 +53,43 @@ export function getNetbackDesk(): NetbackDesk {
   };
 }
 
+const cachedDesk = cache(async () => fromStored(await readDocument("netback-desk")));
+
+/** Read once per request; each caller gets its own copy. */
+export async function getNetbackDesk(): Promise<NetbackDesk> {
+  return structuredClone(await cachedDesk());
+}
+
 export function updateNetbackDesk(mutate: (desk: NetbackDesk) => void) {
-  const desk = getNetbackDesk();
-  mutate(desk);
-  const next = { ...desk, updatedAt: new Date().toISOString() };
-  writeJson(deskPath, next);
-  return next;
+  return updateDocument("netback-desk", (raw) => {
+    const desk = fromStored(raw);
+    mutate(desk);
+    return { ...desk, updatedAt: new Date().toISOString() };
+  });
 }
 
-export function listNetbackLogs(): NetbackLog[] {
-  const raw = readJson(logsPath);
-  return Array.isArray(raw) ? (raw as NetbackLog[]) : [];
-}
+export const listNetbackLogs = (): Promise<NetbackLog[]> => listRecords(NETBACK_LOGS, { limit: MAX_LOGS });
 
-const thisMonth = (log: NetbackLog, now: number) => log.at.startsWith(new Date(now).toISOString().slice(0, 7));
+const monthStart = (now: number) => {
+  const date = new Date(now);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)).toISOString();
+};
 
-/** Keeps logs inside the retention window, and always the current month's, since usage limits count them. */
-const withinRetention = (logs: NetbackLog[], days: number, now = Date.now()) => logs.filter((log) => now - Date.parse(log.at) <= days * DAY || thisMonth(log, now));
+/** Logs inside the retention window stay, and always the current month's, since usage limits count them. */
+const retentionCutoff = (days: number, now = Date.now()) => new Date(Math.min(now - days * DAY, Date.parse(monthStart(now)))).toISOString();
 
-export function recordNetbackLog(entry: NetbackLog, retentionDays: number) {
+export async function recordNetbackLog(entry: NetbackLog, retentionDays: number) {
   const now = Date.now();
-  writeJson(
-    logsPath,
-    withinRetention([entry, ...listNetbackLogs()], retentionDays, now).filter((log, index) => index < MAX_LOGS || thisMonth(log, now)),
-  );
+  await putRecords(NETBACK_LOGS, [entry]);
+  await pruneRecords(NETBACK_LOGS, retentionCutoff(retentionDays, now));
+  await trimRecords(NETBACK_LOGS, MAX_LOGS, monthStart(now));
 }
 
 /** Drops logs older than the retention window. Returns how many were removed. */
-export function pruneNetbackLogs(retentionDays: number) {
-  const logs = listNetbackLogs();
-  const kept = withinRetention(logs, retentionDays);
-  if (kept.length !== logs.length) writeJson(logsPath, kept);
-  return logs.length - kept.length;
-}
+export const pruneNetbackLogs = (retentionDays: number) => pruneRecords(NETBACK_LOGS, retentionCutoff(retentionDays));
 
-export function deleteNetbackLogs(ids: string[]) {
-  const drop = new Set(ids);
-  const logs = listNetbackLogs();
-  const kept = logs.filter((log) => !drop.has(log.id));
-  writeJson(logsPath, kept);
-  return logs.length - kept.length;
-}
+export const deleteNetbackLogs = (ids: string[]) => removeRecords(NETBACK_LOGS, ids);
 
 export function netbackUsage(userId: string, now = new Date()) {
-  const month = now.toISOString().slice(0, 7);
-  return listNetbackLogs().filter((log) => log.user.id === userId && log.at.startsWith(month)).length;
+  return countRecords(NETBACK_LOGS, { userId, since: monthStart(now.getTime()) });
 }

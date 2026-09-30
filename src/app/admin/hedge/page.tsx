@@ -20,7 +20,7 @@ function blankReport(): HedgeReport {
 
 export default async function HedgeAdminPage({ searchParams }: { searchParams: Promise<{ id?: string; new?: string; paste?: string }> }) {
   const params = await searchParams;
-  const reports = sortHedge(getHubContent().hedgeReports);
+  const reports = sortHedge((await getHubContent()).hedgeReports);
   const selected = params.new ? undefined : reports.find((item) => item.id === params.id) ?? reports[0];
   const initial = selected ?? blankReport();
 

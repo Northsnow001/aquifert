@@ -1,13 +1,12 @@
 import "server-only";
 
-import { createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "fs";
 import path from "path";
-import { Readable } from "stream";
-import { pipeline } from "stream/promises";
-import type { ReadableStream as WebReadableStream } from "stream/web";
 import { syncKnowledgeLater } from "@/lib/aquibot-engine/indexer";
 import { deskNow, formatBytes, type HedgeReport, type LibraryDocument, type TelexAccess, type TelexItem } from "@/lib/content-types";
-import { getHubContent, libraryFileDir, libraryFilePath, saveHubContent, sortHedge, sortTelex, type HubContent } from "@/lib/hub-content";
+import { dataBackend } from "@/lib/data/db";
+import { deleteDocument, readDocument, writeDocument } from "@/lib/data/documents";
+import { putLibraryFile, removeLibraryFiles, safeFileName } from "@/lib/data/files";
+import { getHubContent, sortHedge, sortTelex, updateHubContent, type HubContent } from "@/lib/hub-content";
 import { listInbox, mergeInbox, type InboxItem } from "@/lib/inbox";
 import { sanitizeRichText } from "@/lib/sanitize";
 import {
@@ -26,10 +25,6 @@ import {
   wpId,
   type WpExport,
 } from "./map";
-
-const root = path.join(process.cwd(), "data", "wp-import");
-const exportPath = path.join(root, "export.json");
-const statePath = path.join(root, "state.json");
 
 export const SECTION_KEYS = ["telex", "indicators", "hedge", "freight", "tools", "library", "enquiries"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
@@ -88,21 +83,10 @@ export type PendingFile = { id: number; title: string; bytes: number };
 
 /* ---------------- Stored export ---------------- */
 
-function readJson<T>(file: string): T | null {
-  try {
-    return JSON.parse(readFileSync(file, "utf8")) as T;
-  } catch {
-    return null;
-  }
-}
+const writeState = (state: ImportState) => writeDocument("wp-import-state", state);
 
-function writeState(state: ImportState) {
-  mkdirSync(root, { recursive: true });
-  writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
-}
-
-export function loadExport(): WpExport | null {
-  const raw = readJson<unknown>(exportPath);
+export async function loadExport(): Promise<WpExport | null> {
+  const raw = await readDocument("wp-import-export");
   if (!raw) return null;
   try {
     return parseExport(raw);
@@ -111,12 +95,12 @@ export function loadExport(): WpExport | null {
   }
 }
 
-export function loadState(): ImportState | null {
-  return readJson<ImportState>(statePath);
+export async function loadState(): Promise<ImportState | null> {
+  return ((await readDocument("wp-import-state")) as ImportState | null) ?? null;
 }
 
 /** Validates and stores an uploaded export, replacing any earlier one. */
-export function saveExport(text: string, fileName: string) {
+export async function saveExport(text: string, fileName: string) {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -124,16 +108,14 @@ export function saveExport(text: string, fileName: string) {
     throw new Error("The file is not valid JSON. Download the export again from WordPress.");
   }
   const data = parseExport(raw);
-  mkdirSync(root, { recursive: true });
-  writeFileSync(exportPath, JSON.stringify(raw), "utf8");
-  const previous = loadState();
-  writeState({ uploadedAt: new Date().toISOString(), fileName, lastRun: previous?.lastRun ?? null, files: previous?.files ?? {} });
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) throw new Error("The file is not an Aquifert export.");
+  await writeDocument("wp-import-export", raw);
+  const previous = await loadState();
+  await writeState({ uploadedAt: new Date().toISOString(), fileName, lastRun: previous?.lastRun ?? null, files: previous?.files ?? {} });
   return data;
 }
 
-export function discardExport() {
-  rmSync(exportPath, { force: true });
-}
+export const discardExport = () => deleteDocument("wp-import-export");
 
 export function summarize(data: WpExport, state: ImportState | null): ExportSummary {
   const perProduct = new Map<number, number>();
@@ -339,62 +321,63 @@ function build(data: WpExport, options: ImportOptions, content: HubContent, inbo
   return { content, inbox: nextInbox, sections, removedFileIds, changedFileIds };
 }
 
-export function planImport(data: WpExport, options: ImportOptions) {
-  return build(data, options, getHubContent(), listInbox()).sections;
+export async function planImport(data: WpExport, options: ImportOptions) {
+  return build(data, options, await getHubContent(), await listInbox()).sections;
 }
 
-export function applyImport(data: WpExport, options: ImportOptions) {
-  const current = getHubContent();
-  const oldKeys = [...current.telex.map((item) => `telex:${item.id}`), ...current.libraryDocuments.map((item) => `file:${item.id}`)];
-  const result = build(data, options, current, listInbox());
-  saveHubContent(result.content);
-  if (result.inbox) mergeInbox(result.inbox);
+export async function applyImport(data: WpExport, options: ImportOptions) {
+  const inbox = await listInbox();
+  let oldKeys: string[] = [];
+  let result: Build | null = null;
+  await updateHubContent((content) => {
+    oldKeys = [...content.telex.map((item) => `telex:${item.id}`), ...content.libraryDocuments.map((item) => `file:${item.id}`)];
+    result = build(data, options, content, inbox);
+  });
+  const done = result as Build | null;
+  if (!done) throw new Error("The import did not run.");
+  if (done.inbox) await mergeInbox(done.inbox);
 
-  for (const id of result.removedFileIds) {
-    try {
-      rmSync(libraryFileDir(id), { recursive: true, force: true });
-    } catch {
-      /* the folder is already gone */
-    }
+  for (const id of done.removedFileIds) {
+    await removeLibraryFiles(id).catch(() => undefined);
   }
 
-  const kept = new Set([...result.content.telex.map((item) => `telex:${item.id}`), ...result.content.libraryDocuments.map((item) => `file:${item.id}`)]);
+  const kept = new Set([...done.content.telex.map((item) => `telex:${item.id}`), ...done.content.libraryDocuments.map((item) => `file:${item.id}`)]);
   syncKnowledgeLater(oldKeys.filter((key) => !kept.has(key)));
 
-  const state = loadState() ?? { uploadedAt: new Date().toISOString(), fileName: "", lastRun: null, files: {} };
-  state.lastRun = { at: new Date().toISOString(), options, sections: result.sections };
-  writeState(state);
-  return result.sections;
+  const state = (await loadState()) ?? { uploadedAt: new Date().toISOString(), fileName: "", lastRun: null, files: {} };
+  state.lastRun = { at: new Date().toISOString(), options, sections: done.sections };
+  await writeState(state);
+  return done.sections;
 }
 
 /* ---------------- Library file downloads ---------------- */
 
-export function pendingFiles(data: WpExport): PendingFile[] {
-  const state = loadState();
-  const docs = new Map(getHubContent().libraryDocuments.map((item) => [item.id, item]));
+export async function pendingFiles(data: WpExport): Promise<PendingFile[]> {
+  const state = await loadState();
+  const docs = new Map((await getHubContent()).libraryDocuments.map((item) => [item.id, item]));
   return data.library
     .filter((file) => {
       if (file.missing) return false;
       const doc = docs.get(wpId.file(file.id));
       if (!doc) return false;
-      const stored = libraryFilePath(doc);
-      if (!stored || !existsSync(stored)) return true;
+      if (!doc.storedName) return true;
       const seen = state?.files[String(file.id)];
       return !seen || seen.bytes !== file.bytes || seen.modified !== file.modified;
     })
     .map((file) => ({ id: file.id, title: file.title || file.filename, bytes: file.bytes }));
 }
 
-const MAX_FILE_BYTES = 500 * 1024 * 1024;
+/** Supabase Storage takes 50 MB per file; a local disk takes more. */
+const maxFileBytes = () => (dataBackend() === "supabase" ? 50 : 500) * 1024 * 1024;
 
 export async function downloadFile(data: WpExport, wpFileId: number) {
   const file = data.library.find((item) => item.id === wpFileId);
   if (!file) throw new Error("That file is not in the export.");
   const docId = wpId.file(file.id);
-  if (!getHubContent().libraryDocuments.some((item) => item.id === docId)) throw new Error("Import the library first, then download its files.");
+  if (!(await getHubContent()).libraryDocuments.some((item) => item.id === docId)) throw new Error("Import the library first, then download its files.");
   if (!data.download.endpoint || !data.download.token) throw new Error("The export has no download link. Update the Aquifert Export plugin and export again.");
   if (Date.parse(data.download.expiresAt) < Date.now()) throw new Error("The export's download link has expired. Download a new export in WordPress and upload it here.");
-  if (file.bytes > MAX_FILE_BYTES) throw new Error(`${file.title} is larger than ${formatBytes(MAX_FILE_BYTES)}. Upload it by hand in Library.`);
+  if (file.bytes > maxFileBytes()) throw new Error(`${file.title} is larger than ${formatBytes(maxFileBytes())}. Upload it by hand in Library.`);
 
   const response = await fetch(`${data.download.endpoint}${file.id}`, {
     headers: { "X-Aquifert-Export-Token": data.download.token },
@@ -412,33 +395,25 @@ export async function downloadFile(data: WpExport, wpFileId: number) {
     throw new Error(message);
   }
 
-  const name = path.basename(file.filename).replace(/[^\w.\- ()&]+/g, "_") || `file-${file.id}`;
-  const dir = libraryFileDir(docId);
-  mkdirSync(dir, { recursive: true });
-  const temp = path.join(dir, `.download-${Date.now()}`);
-  try {
-    await pipeline(Readable.fromWeb(response.body as unknown as WebReadableStream), createWriteStream(temp));
-  } catch (error) {
-    rmSync(temp, { force: true });
-    throw error;
-  }
-  const bytes = statSync(temp).size;
-  for (const entry of readdirSync(dir)) if (path.join(dir, entry) !== temp) rmSync(path.join(dir, entry), { force: true });
-  renameSync(temp, path.join(dir, name));
+  const name = safeFileName(file.filename, `file-${file.id}`);
+  const body = new Uint8Array(await response.arrayBuffer());
+  const bytes = body.byteLength;
+  await putLibraryFile(docId, name, body, response.headers.get("content-type") || "application/octet-stream");
 
-  const content = getHubContent();
-  const doc = content.libraryDocuments.find((item) => item.id === docId);
-  if (doc) {
+  let title = file.title;
+  await updateHubContent((content) => {
+    const doc = content.libraryDocuments.find((item) => item.id === docId);
+    if (!doc) return;
     doc.storedName = name;
     doc.size = formatBytes(bytes);
     const ext = path.extname(name).slice(1);
     if (ext) doc.type = ext.toUpperCase();
-    saveHubContent(content);
-  }
+    title = doc.title;
+  });
 
-  const state = loadState() ?? { uploadedAt: new Date().toISOString(), fileName: "", lastRun: null, files: {} };
+  const state = (await loadState()) ?? { uploadedAt: new Date().toISOString(), fileName: "", lastRun: null, files: {} };
   state.files[String(file.id)] = { bytes: file.bytes, modified: file.modified, at: new Date().toISOString() };
-  writeState(state);
+  await writeState(state);
   syncKnowledgeLater([`file:${docId}`]);
-  return { title: doc?.title ?? file.title, bytes };
+  return { title, bytes };
 }

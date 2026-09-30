@@ -30,8 +30,8 @@ const STALE_DAYS = 14;
 export default async function NetbackAdminPage({ searchParams }: { searchParams: Promise<Params> }) {
   const params = await searchParams;
   const tab: Tab = TABS.some((item) => item.key === params.tab) ? (params.tab as Tab) : "pricing";
-  const desk = getNetbackDesk();
-  const logs = listNetbackLogs();
+  const desk = await getNetbackDesk();
+  const logs = await listNetbackLogs();
   const now = new Date();
   const thisMonth = now.toISOString().slice(0, 7);
   const monthLogs = logs.filter((log) => log.at.startsWith(thisMonth));
@@ -91,7 +91,7 @@ export default async function NetbackAdminPage({ searchParams }: { searchParams:
 
   const current = `${desk.week}|${desk.date}`;
   const previous = [...desk.history].reverse().find((entry) => `${entry.week}|${entry.date}` !== current) ?? null;
-  const freight = getFreightDesk();
+  const freight = await getFreightDesk();
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -182,7 +182,7 @@ export default async function NetbackAdminPage({ searchParams }: { searchParams:
   );
 }
 
-function logsTab(params: Params, logs: ReturnType<typeof listNetbackLogs>) {
+function logsTab(params: Params, logs: Awaited<ReturnType<typeof listNetbackLogs>>) {
   const filters = readNetbackFilters(params);
   const matching = filterNetbackLogs(logs, filters);
   const pages = Math.max(1, Math.ceil(matching.length / LOG_PAGE));

@@ -48,7 +48,7 @@ export async function savePort(input: PortEntry, originalCode?: string): Promise
   const port = cleanPort(input);
   if (typeof port === "string") return { ok: false, message: port };
   const out: { error?: string } = {};
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     const existing = originalCode ? desk.ports.find((item) => item.code === originalCode) : undefined;
     if (originalCode && !existing) {
       out.error = `${originalCode} is no longer in the registry. Reload and try again.`;
@@ -83,7 +83,7 @@ export async function setPortsActive(codes: string[], active: boolean): Promise<
   await requireAdmin();
   const selected = new Set(codes);
   let count = 0;
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     desk.ports = desk.ports.map((port) => {
       if (!selected.has(port.code) || port.active === active) return port;
       count += 1;
@@ -99,7 +99,7 @@ export async function setPortsRegion(codes: string[], region: string): Promise<R
   if (!(REGIONS as readonly string[]).includes(region)) return { ok: false, message: "Choose a trading region." };
   const selected = new Set(codes);
   let count = 0;
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     desk.ports = desk.ports.map((port) => {
       if (!selected.has(port.code) || port.region === region) return port;
       count += 1;
@@ -114,7 +114,7 @@ export async function deletePorts(codes: string[]): Promise<Result<{ count: numb
   await requireAdmin();
   const selected = new Set(codes);
   let count = 0;
-  updateFreightDesk((desk) => {
+  await updateFreightDesk((desk) => {
     const keep = desk.ports.filter((port) => !selected.has(port.code));
     count = desk.ports.length - keep.length;
     desk.ports = keep;
@@ -125,7 +125,7 @@ export async function deletePorts(codes: string[]): Promise<Result<{ count: numb
 
 export async function resetPortsFromSeed(): Promise<Result<{ count: number }>> {
   await requireAdmin();
-  const count = resetPortsToSeed();
+  const count = await resetPortsToSeed();
   refresh();
   return { ok: true, count };
 }

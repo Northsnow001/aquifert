@@ -1,10 +1,8 @@
 import "server-only";
 
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
-import path from "path";
+import { cache } from "react";
+import { readDocument, updateDocument } from "@/lib/data/documents";
 import { DEFAULT_DESK_SETTINGS, type DeskSettings, type EmailTemplate, type FormEmails } from "@/lib/desk-settings/types";
-
-const filePath = path.join(process.cwd(), "data", "desk-settings.json");
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown, fallback: string) => (typeof value === "string" ? value : fallback);
@@ -29,13 +27,7 @@ function form<T extends FormEmails>(raw: unknown, fallback: T): T {
   };
 }
 
-export function getDeskSettings(): DeskSettings {
-  let raw: unknown = null;
-  try {
-    raw = JSON.parse(readFileSync(filePath, "utf8"));
-  } catch {
-    raw = null;
-  }
+function normalize(raw: unknown): DeskSettings {
   const value = isRecord(raw) ? raw : {};
   const zero = isRecord(value.zero) ? value.zero : {};
   const members = isRecord(value.members) ? value.members : {};
@@ -50,12 +42,17 @@ export function getDeskSettings(): DeskSettings {
   };
 }
 
-export function updateDeskSettings(mutate: (settings: DeskSettings) => void): DeskSettings {
-  const settings = getDeskSettings();
-  mutate(settings);
-  const next = { ...settings, updatedAt: new Date().toISOString() };
-  mkdirSync(path.dirname(filePath), { recursive: true });
-  writeFileSync(`${filePath}.tmp`, `${JSON.stringify(next, null, 2)}\n`, "utf8");
-  renameSync(`${filePath}.tmp`, filePath);
-  return next;
+const cachedSettings = cache(async () => normalize(await readDocument("desk-settings")));
+
+/** Read once per request; each caller gets its own copy. */
+export async function getDeskSettings(): Promise<DeskSettings> {
+  return structuredClone(await cachedSettings());
+}
+
+export function updateDeskSettings(mutate: (settings: DeskSettings) => void): Promise<DeskSettings> {
+  return updateDocument("desk-settings", (raw) => {
+    const settings = normalize(raw);
+    mutate(settings);
+    return { ...settings, updatedAt: new Date().toISOString() };
+  });
 }

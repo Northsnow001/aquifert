@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function AquibotPage({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
   const { chat } = await searchParams;
   const user = await getSession();
-  const config = getHubContent().aquibot;
+  const config = (await getHubContent()).aquibot;
   const isAdmin = isAdminUser(user);
   const status = await engineStatus();
   const limit = planLimit(config.settings, user?.plan ?? "core");

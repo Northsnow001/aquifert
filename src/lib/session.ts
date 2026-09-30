@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { isAdminUser } from "@/lib/admin-access";
 import { findBan, type BanRecord } from "@/lib/member-access";
 import { createClient } from "@/lib/supabase/server";
@@ -12,8 +13,10 @@ const DEMO_COOKIE = "aq_demo";
 export async function getSessionAccess(): Promise<{ user: SessionUser | null; ban: BanRecord | null }> {
   const user = await readSession();
   if (!user || isAdminUser(user)) return { user, ban: null };
-  return { user, ban: findBan(user) };
+  return { user, ban: await banFor(user.id, user.email) };
 }
+
+const banFor = cache((id: string, email: string) => findBan({ id, email }));
 
 /** The signed-in member, or null when signed out or banned, so every guarded page and action refuses a banned account. */
 export async function getSession(): Promise<SessionUser | null> {

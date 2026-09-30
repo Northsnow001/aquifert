@@ -48,7 +48,7 @@ export async function savePricing(input: PricingInput): Promise<Result<{ savedAt
   await requireAdmin();
   const date = cleanDate(input.date);
   if (!date) return { ok: false, message: "Enter the data date as a full date." };
-  const desk = updateNetbackDesk((draft) => {
+  const desk = await updateNetbackDesk((draft) => {
     keepOutgoing(draft);
     draft.week = cleanWeek(input.week);
     draft.date = date;
@@ -74,7 +74,7 @@ export async function applyPriceFile(input: { text: string; fileName: string }):
   const applied = Object.keys(matches).length;
   if (!applied) return { ok: false, message: "The file has prices, but none are FOB urea rows for the nine benchmark origins." };
   const date = cleanDate(parsed.priceDate);
-  const desk = updateNetbackDesk((draft) => {
+  const desk = await updateNetbackDesk((draft) => {
     keepOutgoing(draft);
     draft.benchmarks = draft.benchmarks.map((item) => {
       const match = matches[item.key];
@@ -100,7 +100,7 @@ export async function applyPriceFile(input: { text: string; fileName: string }):
 
 export async function resetBenchmarks(): Promise<Result> {
   await requireAdmin();
-  updateNetbackDesk((draft) => {
+  await updateNetbackDesk((draft) => {
     draft.benchmarks = seedBenchmarks();
     draft.week = DEFAULT_WEEK.week;
     draft.date = DEFAULT_WEEK.date;
@@ -129,7 +129,7 @@ export async function saveDuties(records: DutyRecord[]): Promise<Result<{ duties
     });
   }
   duties.sort((a, b) => a.country.localeCompare(b.country));
-  const desk = updateNetbackDesk((draft) => {
+  const desk = await updateNetbackDesk((draft) => {
     draft.duties = duties;
   });
   refresh();
@@ -172,10 +172,10 @@ export async function saveNetbackSettings(input: NetbackSettings): Promise<Resul
     retentionDays: Math.round(clamp(input.retentionDays, 30, 3650, base.retentionDays)),
     costs: cleanCosts(input.costs),
   };
-  const desk = updateNetbackDesk((draft) => {
+  const desk = await updateNetbackDesk((draft) => {
     draft.settings = settings;
   });
-  const pruned = pruneNetbackLogs(settings.retentionDays);
+  const pruned = await pruneNetbackLogs(settings.retentionDays);
   refresh();
   return { ok: true, settings, savedAt: desk.updatedAt, pruned };
 }
@@ -184,7 +184,7 @@ export async function removeNetbackLogs(ids: string[]): Promise<Result<{ count: 
   await requireAdmin();
   const list = Array.isArray(ids) ? ids.filter((id) => typeof id === "string").slice(0, 5000) : [];
   if (!list.length) return { ok: false, message: "Select at least one log." };
-  const count = deleteNetbackLogs(list);
+  const count = await deleteNetbackLogs(list);
   refresh();
   return { ok: true, count };
 }

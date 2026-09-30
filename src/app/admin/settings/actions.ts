@@ -46,7 +46,7 @@ export async function saveFormEmails(kind: TemplateKind, input: FormEmails & { s
   const admin = cleanTemplate(input.admin, "desk alert");
   if (typeof admin === "string") return { ok: false, message: admin };
   const form: FormEmails = { recipient, success, sendApplicant: Boolean(input.sendApplicant), sendAdmin: Boolean(input.sendAdmin), applicant, admin };
-  const saved = updateDeskSettings((draft) => {
+  const saved = await updateDeskSettings((draft) => {
     if (kind === "order") draft.orderDesk = form;
     else draft.zero = { ...form, showOnHub: Boolean(input.showOnHub) };
   });
@@ -63,7 +63,7 @@ export async function saveMemberRules(input: { requireWorkEmail: boolean; blocke
   };
   const overlap = rules.blocked.filter((entry) => rules.allowed.includes(entry));
   if (overlap.length) return { ok: false, message: `${overlap.join(", ")} is on both lists. Keep it on one.` };
-  const saved = updateDeskSettings((draft) => {
+  const saved = await updateDeskSettings((draft) => {
     draft.members = rules;
   });
   refresh();
@@ -74,7 +74,7 @@ export async function saveDelivery(input: DeskSettings["delivery"]): Promise<Res
   await requireAdmin();
   const replyTo = clip(input.replyTo, 200).trim().toLowerCase();
   if (replyTo && !EMAIL_PATTERN.test(replyTo)) return { ok: false, message: "Enter a full reply-to address, or leave it empty." };
-  const saved = updateDeskSettings((draft) => {
+  const saved = await updateDeskSettings((draft) => {
     draft.delivery = { fromName: clip(input.fromName, 80).trim(), replyTo };
   });
   refresh();
@@ -94,14 +94,14 @@ export async function sendTestEmail(kind: TemplateKind, audience: "applicant" | 
     sections: sample.sections,
     action: audience === "admin" ? { label: "Open in admin", href: `${origin}${kind === "order" ? "/admin/enquiries" : "/admin/zero"}` } : undefined,
   });
-  const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, getDeskSettings().delivery);
+  const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, (await getDeskSettings()).delivery);
   refresh();
   return { ok: true, status: entry.status, to: user.email, error: entry.error };
 }
 
 export async function emptyOutbox(): Promise<Result> {
   await requireAdmin();
-  clearOutbox();
+  await clearOutbox();
   refresh();
   return { ok: true };
 }

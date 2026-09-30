@@ -25,7 +25,7 @@ export default async function EditTelexPage({
   searchParams: Promise<{ saved?: string; error?: string }>;
 }) {
   const [{ id }, query, user] = await Promise.all([params, searchParams, getSession()]);
-  const telex = getHubContent().telex;
+  const telex = (await getHubContent()).telex;
   const item = telex.find((entry) => entry.id === id);
   if (!item) notFound();
   const knownTags = Array.from(new Set(telex.flatMap((entry) => entry.tags))).sort((a, b) => a.localeCompare(b));

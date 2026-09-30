@@ -26,7 +26,7 @@ const errorText = (error: unknown) =>
 
 export async function refreshBunkerPrices(): Promise<Outcome> {
   const attemptAt = new Date().toISOString();
-  const cities = getFreightDesk().bunker.prices.map((hub) => hub.city);
+  const cities = (await getFreightDesk()).bunker.prices.map((hub) => hub.city);
   try {
     const html = await fetchPage(BUNKER_SOURCE);
     const found = parseBunkerPrices(html, cities);
@@ -35,7 +35,7 @@ export async function refreshBunkerPrices(): Promise<Outcome> {
       throw new Error(`Could not find VLSFO prices on the page${title ? ` (page title: ${title})` : ""}. The layout may have changed.`);
     }
     const byCity = new Map(found.map((hub) => [hub.city, hub.price]));
-    updateFreightDesk((desk) => {
+    await updateFreightDesk((desk) => {
       desk.bunker = {
         ...desk.bunker,
         prices: desk.bunker.prices.map((hub) => ({ city: hub.city, price: byCity.get(hub.city) ?? hub.price })),
@@ -45,14 +45,14 @@ export async function refreshBunkerPrices(): Promise<Outcome> {
       };
     });
     const missing = cities.filter((city) => !byCity.has(city));
-    logFreightDebug("info", "Bunker prices refreshed", { found: found.length, missing });
+    await logFreightDebug("info", "Bunker prices refreshed", { found: found.length, missing });
     return { ok: true, message: missing.length ? `Updated ${found.length} hubs. ${missing.join(", ")} kept the previous price.` : `Updated all ${found.length} hubs.` };
   } catch (error) {
     const message = errorText(error);
-    updateFreightDesk((desk) => {
+    await updateFreightDesk((desk) => {
       desk.bunker = { ...desk.bunker, lastAttemptAt: attemptAt, lastError: message };
     });
-    logFreightDebug("error", "Bunker price refresh failed", { error: message });
+    await logFreightDebug("error", "Bunker price refresh failed", { error: message });
     return { ok: false, message };
   }
 }
@@ -86,17 +86,17 @@ export async function refreshBdi(): Promise<Outcome> {
     }
     if (!parsed) throw new Error(geminiKey() ? "The page did not show a readable BDI, and Gemini could not extract one." : "The page did not show a readable BDI.");
     const { value, tradeDate } = parsed;
-    updateFreightDesk((desk) => {
+    await updateFreightDesk((desk) => {
       desk.bdi = { ...desk.bdi, value, tradeDate, source, lastAttemptAt: attemptAt, lastSuccessAt: new Date().toISOString(), lastError: null };
     });
-    logFreightDebug("info", "BDI refreshed", { value, tradeDate, via: source === "fetched" ? "page" : "gemini" });
+    await logFreightDebug("info", "BDI refreshed", { value, tradeDate, via: source === "fetched" ? "page" : "gemini" });
     return { ok: true, message: `BDI ${value.toLocaleString()} for ${tradeDate}.` };
   } catch (error) {
     const message = errorText(error);
-    updateFreightDesk((desk) => {
+    await updateFreightDesk((desk) => {
       desk.bdi = { ...desk.bdi, lastAttemptAt: attemptAt, lastError: message };
     });
-    logFreightDebug("error", "BDI refresh failed", { error: message });
+    await logFreightDebug("error", "BDI refresh failed", { error: message });
     return { ok: false, message };
   }
 }
@@ -106,13 +106,14 @@ let refreshing: Promise<unknown> | null = null;
 
 /** The daily refresh WordPress ran on cron: runs when a calculator page is opened and the last attempt is over a day old. */
 export function refreshStaleMarketData() {
-  if (refreshing) return refreshing;
-  const { bunker, bdi } = getFreightDesk();
-  const stale = (at: string | null) => !at || Date.now() - Date.parse(at) > DAY;
-  const jobs = [stale(bunker.lastAttemptAt) ? refreshBunkerPrices() : null, stale(bdi.lastAttemptAt) ? refreshBdi() : null].filter(Boolean);
-  if (!jobs.length) return Promise.resolve();
-  refreshing = Promise.allSettled(jobs).finally(() => {
-    refreshing = null;
-  });
+  refreshing ??= (async () => {
+    const { bunker, bdi } = await getFreightDesk();
+    const stale = (at: string | null) => !at || Date.now() - Date.parse(at) > DAY;
+    await Promise.allSettled([stale(bunker.lastAttemptAt) ? refreshBunkerPrices() : null, stale(bdi.lastAttemptAt) ? refreshBdi() : null]);
+  })()
+    .catch(() => undefined)
+    .finally(() => {
+      refreshing = null;
+    });
   return refreshing;
 }

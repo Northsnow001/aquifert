@@ -1,10 +1,10 @@
 import "server-only";
 import { createHash } from "crypto";
-import { readFileSync, statSync } from "fs";
 import { after } from "next/server";
 import type { ExtractionRules } from "@/lib/aquibot";
 import { formatTelexDay, isFileListed, telexHeadline, type LibraryDocument, type TelexAccess, type TelexItem } from "@/lib/content-types";
-import { getHubContent, libraryFilePath, type HubContent } from "@/lib/hub-content";
+import { readLibraryFile } from "@/lib/data/files";
+import { getHubContent, type HubContent } from "@/lib/hub-content";
 import { chunkText, WEEKLY_FILE } from "./chunking";
 import { weekRange } from "./dates";
 import { embedDocuments, extractWithGemini, GeminiError } from "./gemini";
@@ -110,12 +110,6 @@ export function knowledgeSources(content: HubContent): KnowledgeSource[] {
     .map((file) => {
       const ext = extension(file);
       const visibility = isFileListed(file, content.collections) ? "public" : "private";
-      let bytes = 0;
-      try {
-        bytes = statSync(libraryFilePath(file)!).size;
-      } catch {
-        bytes = -1;
-      }
       return {
         key: `file:${file.id}`,
         sourceType: "file",
@@ -125,8 +119,8 @@ export function knowledgeSources(content: HubContent): KnowledgeSource[] {
         access: file.access,
         visibility,
         fileType: ext.toUpperCase() || file.type,
-        fingerprint: hash(`${file.storedName}|${bytes}|${file.title}|${file.access}|${visibility}|${file.updated}|${ruleFor(ext, content.aquibot.extraction)}`),
-        unsupported: bytes < 0 ? "The uploaded file is missing from storage. Upload it again." : unsupportedReason(ext),
+        fingerprint: hash(`${file.storedName}|${file.size}|${file.title}|${file.access}|${visibility}|${file.updated}|${ruleFor(ext, content.aquibot.extraction)}`),
+        unsupported: unsupportedReason(ext),
         editHref: `/admin/library/${file.id}`,
       };
     });
@@ -134,8 +128,8 @@ export function knowledgeSources(content: HubContent): KnowledgeSource[] {
   return [...telex, ...files];
 }
 
-export async function knowledgeInventory(content = getHubContent()) {
-  const sources = knowledgeSources(content);
+export async function knowledgeInventory(given?: HubContent) {
+  const sources = knowledgeSources(given ?? (await getHubContent()));
   const documents = await listDocuments();
   const byId = new Map(documents.map((row) => [row.id, row]));
   const rows: KnowledgeRow[] = sources.map((source) => {
@@ -159,9 +153,9 @@ export async function knowledgeInventory(content = getHubContent()) {
 }
 
 async function readFileText(file: LibraryDocument, ext: string, rules: ExtractionRules) {
-  const filePath = libraryFilePath(file);
-  if (!filePath) throw new Error("This file has no upload.");
-  const data = readFileSync(filePath);
+  if (!file.storedName) throw new Error("This file has no upload.");
+  const data = await readLibraryFile(file);
+  if (!data) throw new Error("The uploaded file is missing from storage. Upload it again.");
   if (ext === "pdf") return { text: await extractWithGemini({ data, mimeType: "application/pdf", prompt: rules.pdf, displayName: file.title }), maxChunks: MAX_CHUNKS.pdf };
   if (ext in IMAGE_MIME) return { text: await extractWithGemini({ data, mimeType: IMAGE_MIME[ext], prompt: rules.image, displayName: file.title }), maxChunks: MAX_CHUNKS.image };
   if (ext === "xlsx") return { text: xlsxText(data), maxChunks: MAX_CHUNKS.xlsx };
@@ -193,7 +187,7 @@ async function markDocument(source: KnowledgeSource, status: DocumentStatus, err
 
 /** Indexes one telex or file. Skips unchanged content unless `force` is set. */
 export async function indexSource(key: string, options: { force?: boolean; content?: HubContent } = {}): Promise<IndexResult> {
-  const content = options.content ?? getHubContent();
+  const content = options.content ?? (await getHubContent());
   const source = knowledgeSources(content).find((item) => item.key === key);
   if (!source) {
     await deleteDocument(key).catch(() => undefined);
@@ -272,7 +266,7 @@ export function syncKnowledgeLater(keys: string[]) {
     try {
       const status = await engineStatus();
       if (!status.ready) return;
-      const content = getHubContent();
+      const content = await getHubContent();
       for (const key of keys) await indexSource(key, { content });
     } catch (error) {
       await writeLog("index", "error", `Automatic indexing failed: ${error instanceof Error ? error.message : "unknown error"}`, { keys });

@@ -4,8 +4,8 @@ import { getHubContent } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
-export default function IndicatorsAdminPage() {
-  const { indicators, indicatorsUpdatedAt } = getHubContent();
+export default async function IndicatorsAdminPage() {
+  const { indicators, indicatorsUpdatedAt } = await getHubContent();
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader

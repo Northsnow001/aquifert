@@ -1,51 +1,21 @@
 import "server-only";
 
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
-import path from "path";
+import { findRecord, getRecord, listRecords, putRecords, removeRecords } from "@/lib/data/records";
+import { ACCESS_EVENTS, BANS, type AccessRow, type BanRow } from "@/lib/data/tables";
 
-export type BanRecord = {
-  email: string;
-  userId: string | null;
-  name: string;
-  reason: string;
-  bannedAt: string;
-  bannedBy: string;
-};
+export type BanRecord = BanRow;
+export type AccessEvent = AccessRow;
 
-export type AccessEvent = { at: string; email: string; action: "banned" | "reinstated"; by: string; reason: string };
+export const listBans = (): Promise<BanRecord[]> => listRecords(BANS);
+export const listAccessHistory = (): Promise<AccessEvent[]> => listRecords(ACCESS_EVENTS);
 
-type AccessFile = { bans: BanRecord[]; history: AccessEvent[] };
-
-const filePath = path.join(process.cwd(), "data", "member-access.json");
-const MAX_HISTORY = 500;
-
-function read(): AccessFile {
-  try {
-    const parsed = JSON.parse(readFileSync(filePath, "utf8")) as Partial<AccessFile>;
-    return { bans: Array.isArray(parsed.bans) ? parsed.bans : [], history: Array.isArray(parsed.history) ? parsed.history : [] };
-  } catch {
-    return { bans: [], history: [] };
-  }
+export function findBan(user: { id?: string | null; email?: string | null }): Promise<BanRecord | null> {
+  return findRecord(BANS, { userId: user.id ?? null, email: user.email ?? null });
 }
 
-function write(value: AccessFile) {
-  mkdirSync(path.dirname(filePath), { recursive: true });
-  writeFileSync(`${filePath}.tmp`, `${JSON.stringify({ ...value, history: value.history.slice(0, MAX_HISTORY) }, null, 2)}\n`, "utf8");
-  renameSync(`${filePath}.tmp`, filePath);
-}
+export const isBannedEmail = async (email: string) => Boolean(await findBan({ email }));
 
-export const listBans = () => read().bans.sort((a, b) => b.bannedAt.localeCompare(a.bannedAt));
-export const listAccessHistory = () => read().history;
-
-export function findBan(user: { id?: string | null; email?: string | null }): BanRecord | null {
-  const email = user.email?.trim().toLowerCase();
-  return read().bans.find((ban) => (email && ban.email === email) || (user.id && ban.userId === user.id)) ?? null;
-}
-
-export const isBannedEmail = (email: string) => Boolean(findBan({ email }));
-
-export function banMember(input: { email: string; userId?: string | null; name?: string; reason: string }, by: string): BanRecord {
-  const data = read();
+export async function banMember(input: { email: string; userId?: string | null; name?: string; reason: string }, by: string): Promise<BanRecord> {
   const email = input.email.trim().toLowerCase();
   const record: BanRecord = {
     email,
@@ -55,21 +25,16 @@ export function banMember(input: { email: string; userId?: string | null; name?:
     bannedAt: new Date().toISOString(),
     bannedBy: by,
   };
-  write({
-    bans: [record, ...data.bans.filter((ban) => ban.email !== email)],
-    history: [{ at: record.bannedAt, email, action: "banned", by, reason: record.reason }, ...data.history],
-  });
+  await putRecords(BANS, [record]);
+  await putRecords<AccessEvent>(ACCESS_EVENTS, [{ at: record.bannedAt, email, action: "banned", by, reason: record.reason }]);
   return record;
 }
 
-export function reinstateMember(email: string, by: string, note = ""): BanRecord | null {
-  const data = read();
+export async function reinstateMember(email: string, by: string, note = ""): Promise<BanRecord | null> {
   const key = email.trim().toLowerCase();
-  const record = data.bans.find((ban) => ban.email === key) ?? null;
+  const record = await getRecord(BANS, key);
   if (!record) return null;
-  write({
-    bans: data.bans.filter((ban) => ban.email !== key),
-    history: [{ at: new Date().toISOString(), email: key, action: "reinstated", by, reason: note.trim() }, ...data.history],
-  });
+  await removeRecords(BANS, [key]);
+  await putRecords<AccessEvent>(ACCESS_EVENTS, [{ at: new Date().toISOString(), email: key, action: "reinstated", by, reason: note.trim() }]);
   return record;
 }

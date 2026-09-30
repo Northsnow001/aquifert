@@ -68,8 +68,8 @@ function greeting() {
 
 export default async function AdminHomePage() {
   const user = await getSession();
-  const content = getHubContent();
-  const inbox = listInbox();
+  const content = await getHubContent();
+  const inbox = await listInbox();
   const telex = sortTelex(content.telex);
   const published = telex.filter((item) => item.status === "published");
   const drafts = telex.filter((item) => item.status === "draft");

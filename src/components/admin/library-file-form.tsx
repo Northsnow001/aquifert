@@ -11,21 +11,67 @@ type Upload = { file: File; progress: number; state: "waiting" | "sending" | "do
 const ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.zip";
 const ACCESS_HINT: Record<TelexAccess, string> = { public: "Every member", growth: "Growth and Enterprise", enterprise: "Enterprise only" };
 
-function send(body: FormData, onProgress: (value: number) => void) {
-  return new Promise<{ ok: boolean; id?: string; message?: string }>((resolve) => {
+type Result = { ok: boolean; id?: string; message?: string };
+type Prepared = { ok: true; id: string; storedName: string; upload: { url: string } | null } | { ok: false; message: string };
+
+function request(method: string, url: string, body: FormData, onProgress: (value: number) => void, headers: Record<string, string> = {}) {
+  return new Promise<{ status: number; text: string } | null>((resolve) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/admin/library/upload");
+    xhr.open(method, url);
+    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
     xhr.upload.onprogress = (event) => event.lengthComputable && onProgress(Math.round((event.loaded / event.total) * 100));
-    xhr.onload = () => {
-      try {
-        resolve(JSON.parse(xhr.responseText));
-      } catch {
-        resolve({ ok: false, message: `Upload failed (${xhr.status}).` });
-      }
-    };
-    xhr.onerror = () => resolve({ ok: false, message: "Network error. Check your connection and try again." });
+    xhr.onload = () => resolve({ status: xhr.status, text: xhr.responseText });
+    xhr.onerror = () => resolve(null);
     xhr.send(body);
   });
+}
+
+const NETWORK_ERROR = "Network error. Check your connection and try again.";
+
+async function send(body: FormData, onProgress: (value: number) => void): Promise<Result> {
+  const response = await request("POST", "/admin/library/upload", body, onProgress);
+  if (!response) return { ok: false, message: NETWORK_ERROR };
+  try {
+    return JSON.parse(response.text) as Result;
+  } catch {
+    return { ok: false, message: `Upload failed (${response.status}).` };
+  }
+}
+
+/** Sends the file straight to storage when the server hands out a signed link, then saves the details. */
+async function sendWithFile(base: FormData, file: File, onProgress: (value: number) => void): Promise<Result> {
+  const ask = new FormData();
+  ask.set("intent", "prepare");
+  ask.set("name", file.name);
+  ask.set("size", String(file.size));
+  const id = base.get("id");
+  if (id) ask.set("id", String(id));
+  const prepared = (await send(ask, () => undefined)) as Prepared;
+  if (!prepared.ok) return prepared;
+  if (!prepared.upload) {
+    base.set("file", file);
+    return send(base, onProgress);
+  }
+  const payload = new FormData();
+  payload.append("cacheControl", "3600");
+  payload.append("", file);
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const stored = await request("PUT", prepared.upload.url, payload, (value) => onProgress(Math.min(value, 99)), { "x-upsert": "true", ...(anonKey ? { apikey: anonKey } : {}) });
+  if (!stored) return { ok: false, message: NETWORK_ERROR };
+  if (stored.status >= 300) {
+    let detail = "";
+    try {
+      detail = (JSON.parse(stored.text) as { message?: string; error?: string }).message ?? "";
+    } catch {
+      /* not JSON */
+    }
+    return { ok: false, message: `Storage refused the file (${stored.status})${detail ? `: ${detail}` : "."}` };
+  }
+  base.delete("file");
+  base.set("uploadId", prepared.id);
+  base.set("storedName", prepared.storedName);
+  base.set("originalName", file.name);
+  return send(base, () => undefined);
 }
 
 export function LibraryFileForm({
@@ -90,9 +136,8 @@ export function LibraryFileForm({
         body.delete("title");
         body.delete("filename");
       }
-      body.set("file", uploads[i].file);
       patchUpload(i, { state: "sending", progress: 0 });
-      const result = await send(body, (progress) => patchUpload(i, { progress }));
+      const result = await sendWithFile(body, uploads[i].file, (progress) => patchUpload(i, { progress }));
       if (result.ok) patchUpload(i, { state: "done", progress: 100 });
       else {
         failed += 1;

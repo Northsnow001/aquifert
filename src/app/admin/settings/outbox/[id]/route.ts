@@ -1,12 +1,12 @@
 import { isAdminUser } from "@/lib/admin-access";
-import { listOutbox } from "@/lib/mailer";
+import { getOutboxEntry } from "@/lib/mailer";
 import { getSession } from "@/lib/session";
 
 export async function GET(_request: Request, ctx: RouteContext<"/admin/settings/outbox/[id]">) {
   const user = await getSession();
   if (!user || !isAdminUser(user)) return new Response("Sign in as an admin.", { status: 401 });
   const { id } = await ctx.params;
-  const entry = listOutbox().find((item) => item.id === id);
+  const entry = await getOutboxEntry(id);
   if (!entry) return new Response("That email is no longer in the outbox.", { status: 404 });
   return new Response(entry.html, {
     headers: {
