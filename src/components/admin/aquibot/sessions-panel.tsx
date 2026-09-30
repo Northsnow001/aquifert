@@ -77,7 +77,7 @@ export function SessionsPanel({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="aq-card">
           <form
             className="flex gap-2 border-b border-border p-3"
             onSubmit={(event) => {
@@ -138,7 +138,7 @@ export function SessionsPanel({
           ) : null}
         </section>
 
-        <section className="min-h-[420px] rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="min-h-[420px] aq-card">
           {selected ? (
             <>
               <header className="flex flex-wrap items-start gap-3 border-b border-border px-5 py-3.5">

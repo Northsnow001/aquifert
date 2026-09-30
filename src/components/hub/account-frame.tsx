@@ -13,7 +13,7 @@ const LINKS = [
 ];
 
 function titleFor(pathname: string) {
-  if (pathname.startsWith("/hub/account/plan")) return "Change Your Plan";
+  if (pathname.startsWith("/hub/account/plan")) return "Change your plan";
   if (pathname.startsWith("/hub/account/subscriptions")) return "Subscriptions";
   if (pathname.startsWith("/hub/account/payments")) return "Payments";
   if (pathname.startsWith("/hub/account/password")) return "Password";
@@ -25,20 +25,21 @@ export function AccountFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="max-w-6xl">
-      <h1 className="mb-6 text-2xl font-bold leading-none tracking-tight text-ink md:text-4xl">{titleFor(pathname)}</h1>
-      <nav aria-label="Account navigation">
-        <div className="flex w-full flex-wrap gap-6 border-b border-border">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-dim">Account</p>
+      <h1 className="mt-1 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[30px]">{titleFor(pathname)}</h1>
+      <nav aria-label="Account navigation" className="-mx-4 mt-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="inline-flex gap-1 rounded-full bg-black/[.05] p-1">
           {LINKS.map((link) => {
-            const active =
-              link.href.endsWith("/profile")
-                ? pathname === "/hub/account" || pathname.startsWith("/hub/account/profile")
-                : pathname.startsWith(link.href);
+            const active = link.href.endsWith("/profile")
+              ? pathname === "/hub/account" || pathname.startsWith("/hub/account/profile")
+              : pathname.startsWith(link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`inline-flex items-center border-b-2 pb-3 text-sm font-semibold no-underline transition-colors ${
-                  active ? "border-teal text-ink" : "border-transparent text-mid hover:border-border hover:text-ink"
+                aria-current={active ? "page" : undefined}
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-semibold no-underline transition ${
+                  active ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid hover:text-ink"
                 }`}
               >
                 {link.label}

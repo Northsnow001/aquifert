@@ -31,8 +31,6 @@ import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-const DIAL_COLORS = ["#16a34a", "#d97706", "#dc2626"];
-
 type Module = { title: string; body: string; icon: LucideIcon; href?: string };
 
 const MODULES: Module[] = [
@@ -54,9 +52,9 @@ const MODULES: Module[] = [
 ];
 
 function stance(value: number) {
-  if (value > 66) return "Bullish";
-  if (value >= 34) return "Neutral";
-  return "Bearish";
+  if (value > 66) return { label: "Bullish", color: "#1f9d60" };
+  if (value >= 34) return { label: "Neutral", color: "#c98712" };
+  return { label: "Bearish", color: "#d14b3f" };
 }
 
 function greeting() {
@@ -148,17 +146,19 @@ export default async function AdminHomePage() {
           <Link
             key={stat.href}
             href={stat.href}
-            className="group rounded-2xl border border-border bg-surface p-4 no-underline shadow-[0_1px_2px_rgba(26,58,92,0.05)] transition hover:-translate-y-px hover:border-blue/40 hover:shadow-md"
+            className="aq-card aq-lift group p-4 no-underline"
           >
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-mid">
-                <stat.icon className="h-4 w-4 text-blue" />
+              <span className="flex items-center gap-2.5 text-[13px] font-semibold text-mid">
+                <span className="aq-chip aq-chip-blue flex h-7 w-7 items-center justify-center rounded-[9px] text-white">
+                  <stat.icon className="h-3.5 w-3.5" strokeWidth={2.2} />
+                </span>
                 {stat.label}
               </span>
               <ArrowRight className="h-4 w-4 text-dim transition group-hover:translate-x-0.5 group-hover:text-blue" />
             </div>
             <p className="mt-3 flex items-baseline gap-1.5">
-              <span className="text-[30px] font-bold leading-none tracking-tight text-ink">{stat.value}</span>
+              <span className="text-[30px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink">{stat.value}</span>
               <span className="text-[13px] text-mid">{stat.unit}</span>
             </p>
             <p className="mt-2 truncate text-[12.5px] text-dim">{stat.detail}</p>
@@ -182,7 +182,7 @@ export default async function AdminHomePage() {
               <li key={item.id} className="border-b border-border last:border-b-0">
                 <Link href={`/admin/telex/${item.id}`} className="flex items-start gap-4 px-5 py-3.5 no-underline transition hover:bg-s2/60">
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-1 text-[13.5px] font-semibold uppercase tracking-wide text-ink">{telexHeadline(item)}</p>
+                    <p className="line-clamp-1 text-[13.5px] font-semibold text-ink">{telexHeadline(item)}</p>
                     <p className="mt-0.5 line-clamp-1 text-[12.5px] text-mid">{excerpt(item.paragraphs, 18)}</p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
@@ -206,14 +206,14 @@ export default async function AdminHomePage() {
             }
           />
           <div className="space-y-4 px-5 py-4">
-            {content.indicators.map((item, index) => {
-              const color = DIAL_COLORS[index] ?? "#2e6da4";
+            {content.indicators.map((item) => {
+              const { label, color } = stance(item.value);
               return (
                 <div key={item.name}>
                   <div className="flex items-baseline justify-between">
                     <span className="text-[13px] font-semibold text-ink">{item.name}</span>
                     <span className="font-mono text-[12px]" style={{ color }}>
-                      {item.value} · {stance(item.value)}
+                      {item.value} · {label}
                     </span>
                   </div>
                   <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-s2">
@@ -227,16 +227,16 @@ export default async function AdminHomePage() {
         </Card>
       </div>
 
-      <h2 className="mb-3 mt-8 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-dim">Quick actions</h2>
+      <h2 className="mb-3 mt-8 text-[15px] font-semibold text-ink">Quick actions</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {actions.map((action) => (
           <Link
             key={action.href}
             href={action.href}
-            className="group flex flex-col gap-2 rounded-2xl border border-dashed border-border bg-surface/60 p-4 no-underline transition hover:border-solid hover:border-blue/40 hover:bg-surface"
+            className="aq-card aq-lift group flex flex-col gap-2 p-4 no-underline"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-light text-blue transition group-hover:bg-blue group-hover:text-white">
-              <action.icon className="h-4 w-4" />
+            <span className="aq-chip flex h-9 w-9 items-center justify-center rounded-[11px] text-white">
+              <action.icon className="h-4 w-4" strokeWidth={2.2} />
             </span>
             <span className="text-[13.5px] font-semibold text-ink">{action.title}</span>
             <span className="text-[12px] text-mid">{action.body}</span>
@@ -245,7 +245,7 @@ export default async function AdminHomePage() {
       </div>
 
       <div className="mb-3 mt-8 flex items-baseline justify-between gap-3">
-        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-dim">Desk modules</h2>
+        <h2 className="text-[15px] font-semibold text-ink">Desk modules</h2>
         <p className="font-mono text-[11px] text-dim">
           {MODULES.filter((item) => item.href).length} of {MODULES.length} live
         </p>
@@ -256,7 +256,7 @@ export default async function AdminHomePage() {
             <>
               <span
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                  item.href ? "bg-blue-light text-blue transition group-hover:bg-blue group-hover:text-white" : "bg-s2 text-dim"
+                  item.href ? "bg-blue-light text-blue transition-colors group-hover:bg-blue group-hover:text-white" : "bg-s2 text-dim"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -280,7 +280,7 @@ export default async function AdminHomePage() {
             <Link
               key={item.title}
               href={item.href}
-              className="group flex items-start gap-3 rounded-2xl border border-border bg-surface p-4 no-underline transition hover:-translate-y-px hover:border-blue/40 hover:shadow-md"
+              className="aq-card aq-lift group flex items-start gap-3 p-4 no-underline"
             >
               {body}
             </Link>

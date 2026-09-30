@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import { CheckCircle2, CircleAlert } from "lucide-react";
 import { updateProfile, type ProfileState } from "@/app/(auth)/actions";
+import { btnPrimary, fieldClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
 import type { SessionUser } from "@/lib/session-shared";
 
 const COUNTRIES = [
@@ -39,9 +41,6 @@ const COUNTRIES = [
   "United States",
 ];
 
-const inputClass =
-  "block w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm text-ink placeholder:text-dim focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/20";
-
 function splitName(user: SessionUser) {
   if (user.firstName || user.lastName) {
     return { first: user.firstName ?? "", last: user.lastName ?? "" };
@@ -50,80 +49,79 @@ function splitName(user: SessionUser) {
   return { first: parts[0] ?? "", last: parts.slice(1).join(" ") };
 }
 
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className={labelClass}>{label}</span>
+      {children}
+    </label>
+  );
+}
+
 export function ProfileForm({ user, saved }: { user: SessionUser; saved: boolean }) {
   const [state, action, pending] = useActionState(updateProfile, {} as ProfileState);
   const name = splitName(user);
 
   return (
-    <div className="max-w-6xl rounded-xl border border-border bg-white shadow-sm">
-      <div className="p-5 md:p-7">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-ink">Profile Details</h2>
-          <p className="mt-1 text-sm text-mid">Manage your contact details and billing profile.</p>
+    <form action={action} className="flex max-w-3xl flex-col gap-5">
+      {saved ? (
+        <p className={noticeOk}>
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> Profile saved.
+        </p>
+      ) : null}
+      {state.error ? (
+        <p className={noticeError}>
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {state.error}
+        </p>
+      ) : null}
+
+      <section className="aq-card p-5 md:p-6">
+        <h2 className="text-[16px] font-semibold text-ink">Profile details</h2>
+        <p className="mt-0.5 text-[13.5px] text-mid">How the desk addresses you and where replies go.</p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <Field label="First name">
+            <input name="firstName" required autoComplete="given-name" defaultValue={name.first} className={fieldClass} />
+          </Field>
+          <Field label="Last name">
+            <input name="lastName" required autoComplete="family-name" defaultValue={name.last} className={fieldClass} />
+          </Field>
+          <Field label="Email" className="md:col-span-2">
+            <input name="email" type="email" required autoComplete="email" defaultValue={user.email} className={fieldClass} />
+          </Field>
         </div>
-        {saved ? (
-          <p className="mb-5 rounded-xl border border-border bg-bg px-4 py-3 text-sm text-teal">Profile saved.</p>
-        ) : null}
-        {state.error ? (
-          <p className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger">{state.error}</p>
-        ) : null}
-        <form action={action} className="space-y-6">
-          <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
-            <label className="space-y-3">
-              <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">First Name*</span>
-              <input name="firstName" required defaultValue={name.first} className={inputClass} />
-            </label>
-            <label className="space-y-3">
-              <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">Last Name*</span>
-              <input name="lastName" required defaultValue={name.last} className={inputClass} />
-            </label>
-          </div>
-          <label className="block space-y-3">
-            <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">Email*</span>
-            <input name="email" type="email" required defaultValue={user.email} className={inputClass} />
-          </label>
+      </section>
 
-          <div className="pt-6">
-            <div className="mb-5">
-              <h3 className="text-sm font-semibold text-ink">Billing and Additional Details</h3>
-              <p className="mt-1 text-sm text-mid">Keep your account information complete and up to date.</p>
-            </div>
-            <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
-              <label className="space-y-3">
-                <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">Address line 1*</span>
-                <input name="address1" required defaultValue={user.address1 ?? ""} className={inputClass} />
-              </label>
-              <label className="space-y-3">
-                <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">Address line 2</span>
-                <input name="address2" defaultValue={user.address2 ?? ""} className={inputClass} />
-              </label>
-              <label className="space-y-3">
-                <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">City*</span>
-                <input name="city" required defaultValue={user.city ?? ""} className={inputClass} />
-              </label>
-              <label className="space-y-3">
-                <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">Country*</span>
-                <select name="country" required defaultValue={user.country ?? ""} className={inputClass}>
-                  <option value="">Select a country</option>
-                  {COUNTRIES.map((country) => (
-                    <option key={country} value={country}>
-                      {country}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
+      <section className="aq-card p-5 md:p-6">
+        <h2 className="text-[16px] font-semibold text-ink">Billing address</h2>
+        <p className="mt-0.5 text-[13.5px] text-mid">Used on quotes and invoices.</p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <Field label="Address line 1">
+            <input name="address1" required autoComplete="address-line1" defaultValue={user.address1 ?? ""} className={fieldClass} />
+          </Field>
+          <Field label="Address line 2 (optional)">
+            <input name="address2" autoComplete="address-line2" defaultValue={user.address2 ?? ""} className={fieldClass} />
+          </Field>
+          <Field label="City">
+            <input name="city" required autoComplete="address-level2" defaultValue={user.city ?? ""} className={fieldClass} />
+          </Field>
+          <Field label="Country">
+            <select name="country" required autoComplete="country-name" defaultValue={user.country ?? ""} className={fieldClass}>
+              <option value="">Select a country</option>
+              {COUNTRIES.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      </section>
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-blue px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-dim disabled:opacity-60"
-          >
-            {pending ? "Saving…" : "Save Profile"}
-          </button>
-        </form>
+      <div className="flex justify-end">
+        <button type="submit" disabled={pending} className={`${btnPrimary} w-full sm:w-auto`}>
+          {pending ? "Saving…" : "Save profile"}
+        </button>
       </div>
-    </div>
+    </form>
   );
 }

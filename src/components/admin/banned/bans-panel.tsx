@@ -44,7 +44,7 @@ function BanForm({ members }: { members: KnownMember[] }) {
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+    <section className="aq-card">
       <div className="flex items-center gap-2.5 border-b border-border px-5 py-3.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#fdecec] text-[#b42318]">
           <Ban className="h-4 w-4" />
@@ -158,7 +158,7 @@ export function BansPanel({ bans, history, members }: { bans: BanRecord[]; histo
       <BanForm members={members.filter((member) => !banned.has(member.email))} />
 
       <div className="space-y-5">
-        <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="overflow-hidden aq-card">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
             <h2 className="text-[14px] font-bold text-ink">
               Banned now <span className="ml-1 font-mono text-[12px] font-normal text-dim">{bans.length}</span>
@@ -188,7 +188,7 @@ export function BansPanel({ bans, history, members }: { bans: BanRecord[]; histo
           )}
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="overflow-hidden aq-card">
           <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
             <h2 className="flex items-center gap-2 text-[14px] font-bold text-ink">
               <History className="h-4 w-4 text-blue" />

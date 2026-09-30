@@ -126,7 +126,7 @@ export function FreightEditor({ initial }: { initial: FreightBoard }) {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="min-w-0 space-y-5">
-          <section className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+          <section className="aq-card">
             <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
               <div>
                 <h2 className="text-[14px] font-bold text-ink">Vessel fixtures</h2>
@@ -242,7 +242,7 @@ export function FreightEditor({ initial }: { initial: FreightBoard }) {
         </div>
 
         <aside className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+          <div className="overflow-hidden aq-card">
             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
               <h2 className="text-[13px] font-bold text-ink">Hub preview</h2>
               <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-wide text-[#1f7a45]">

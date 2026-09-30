@@ -77,7 +77,8 @@
   --font-data: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@theme inline {
+/* Member-app palette. Not inline, so .aq-app can retune it without touching the marketing site. */
+@theme {
   --color-bg: #e8eef3;
   --color-surface: #ffffff;
   --color-s2: #f5f8fa;
@@ -91,6 +92,9 @@
   --color-mid: #4a6c80;
   --color-dim: #8faab8;
   --color-danger: #dc2626;
+}
+
+@theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -117,66 +121,315 @@ body::before {
   z-index: 0;
 }
 
-.one-grid {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) clamp(240px, 22vw, 320px);
-  grid-template-rows: 56px 1fr;
-  grid-template-areas:
-    "topbar topbar topbar"
-    "sidebar main panel";
-  height: 100dvh;
-  max-height: 100dvh;
+/* ============================================================
+   Aquifert ONE member app + admin (.aq-app wrapper).
+   hPanel shell: dark frame, rounded light canvas, soft rail.
+   ============================================================ */
+.aq-app {
+  --color-bg: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-s2: #f6f8fa;
+  --color-s3: #edf1f5;
+  --color-border: #e3e8ee;
+  --color-blue: #2f6fb3;
+  --color-blue-dim: #25598f;
+  --color-blue-light: #eaf2fb;
+  --color-teal: #5fa88a;
+  --color-ink: #10263b;
+  --color-mid: #4d6275;
+  --color-dim: #7d8fa0;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+  --aq-frame: #0b1e2d;
+  --aq-canvas: #f4f6f8;
+  --aq-rail: #eef1f4;
+  --aq-ai-gradient: linear-gradient(90deg, #5fa88a 0%, #2f6fb3 45%, #3ab0ff 100%);
+  --aq-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --aq-shadow-card: 0 1px 2px rgb(16 38 59 / 0.04), 0 10px 28px -18px rgb(16 38 59 / 0.18);
+  --aq-shadow-float: 0 2px 6px rgb(16 38 59 / 0.08), 0 28px 64px -20px rgb(11 30 45 / 0.38);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  scrollbar-color: rgb(16 38 59 / 0.2) transparent;
+}
+.aq-app ::selection {
+  background: rgb(47 111 179 / 0.18);
+}
+/* Surfaces sit in the components layer so utilities on the same element still win. */
+@layer components {
+.aq-frame {
+  background: #0b1e2d;
+}
+.aq-canvas {
+  background: var(--aq-canvas);
+}
+.aq-rail {
+  background: var(--aq-rail);
+}
+.aq-glass {
+  background: rgb(255 255 255 / 0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
+}
+.aq-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--aq-shadow-card);
+}
+.aq-lift {
+  transition: transform 0.25s var(--aq-ease), box-shadow 0.25s ease, border-color 0.2s ease;
+}
+.aq-lift:hover {
+  transform: translateY(-2px);
+  border-color: rgb(47 111 179 / 0.28);
+  box-shadow: 0 2px 4px rgb(16 38 59 / 0.05), 0 18px 40px -20px rgb(37 79 118 / 0.35);
+}
+.aq-float {
+  box-shadow: var(--aq-shadow-float);
+}
+.aq-ai-pill {
+  background: var(--aq-ai-gradient);
+  color: #fff;
+}
+.aq-ai-text {
+  background: var(--aq-ai-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+}
+
+/* 3D menu chips: logo-green face, glass highlight, soft drop; brighter when active. */
+.aq-chip {
+  position: relative;
   overflow: hidden;
+  background: linear-gradient(150deg, #7fb3a2 0%, #4f7f72 55%, #3c6a5f 100%);
+  box-shadow:
+    0 2px 3px rgb(14 32 49 / 0.2),
+    0 3px 8px -2px rgb(78 127 114 / 0.42),
+    inset 0 1.5px 0 rgb(255 255 255 / 0.45),
+    inset 0 -1.5px 0 rgb(14 32 49 / 0.22);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.aq-chip::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 55% 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.38), rgb(255 255 255 / 0));
+  pointer-events: none;
+}
+.aq-chip-blue {
+  background: linear-gradient(150deg, #6fa3d6 0%, #2f6fb3 55%, #245a8f 100%);
+}
+.aq-chip-amber {
+  background: linear-gradient(150deg, #f2c16b 0%, #d9951f 55%, #b87a12 100%);
+}
+.aq-chip-rose {
+  background: linear-gradient(150deg, #ee9a92 0%, #cf5a4f 55%, #a9443b 100%);
+}
+.aq-nav-link:hover .aq-chip {
+  transform: translateY(-1px);
+}
+.aq-nav-link[aria-current="page"] .aq-chip {
+  filter: saturate(1.15) brightness(1.06);
 }
 
-.one-grid.no-panel {
-  grid-template-columns: 220px minmax(0, 1fr);
-  grid-template-areas:
-    "topbar topbar"
-    "sidebar main";
+/* Aquibot avatar: gentle idle bob, wiggle on hover, nod while thinking. */
+.aq-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #eef2ee;
+  box-shadow: 0 1px 3px rgb(14 32 49 / 0.18), inset 0 0 0 1.5px rgb(78 127 114 / 0.55);
+}
+.aq-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: aq-avatar-idle 5.2s ease-in-out infinite;
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar img {
+  animation: aq-avatar-wiggle 0.9s ease-in-out infinite;
+}
+.aq-avatar-active img {
+  animation: aq-avatar-talk 1.6s ease-in-out infinite;
+}
+@keyframes aq-avatar-idle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4%) rotate(-1.6deg); }
+  55% { transform: translateY(1%) rotate(0deg); }
+  80% { transform: translateY(-2%) rotate(1.4deg); }
+}
+@keyframes aq-avatar-wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-5deg) scale(1.04); }
+  50% { transform: rotate(4deg) scale(1.06); }
+  75% { transform: rotate(-2.5deg) scale(1.03); }
+}
+@keyframes aq-avatar-talk {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-6%) scale(1.05) rotate(-2deg); }
+  60% { transform: translateY(2%) scale(0.98) rotate(1.5deg); }
 }
 
-.one-grid.collapsed {
-  grid-template-columns: 72px minmax(0, 1fr) clamp(240px, 22vw, 320px);
+/* Motion. Page entrance is opacity-only so fixed dialogs inside pages keep the viewport as their box. */
+@keyframes aq-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
-.one-grid.collapsed.no-panel {
-  grid-template-columns: 72px minmax(0, 1fr);
+@keyframes aq-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
 }
-
-.area-topbar { grid-area: topbar; }
-.area-sidebar { grid-area: sidebar; }
-.area-main { grid-area: main; }
-.area-panel { grid-area: panel; }
-
-.nav-item.active {
-  background: #e8f1f9;
-  color: #2e6da4;
-  font-weight: 600;
+@keyframes aq-drop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  to { opacity: 1; transform: none; }
 }
-
-@media (max-width: 1024px) {
-  .one-grid,
-  .one-grid.no-panel,
-  .one-grid.collapsed,
-  .one-grid.collapsed.no-panel {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "topbar"
-      "main";
+@keyframes aq-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes aq-drawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+@keyframes aq-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@keyframes aq-gauge {
+  from { stroke-dashoffset: var(--aq-arc); }
+}
+.aq-page {
+  animation: aq-fade 0.28s ease-out both;
+}
+.aq-rise {
+  animation: aq-rise 0.42s var(--aq-ease) both;
+}
+.aq-stagger > * {
+  animation: aq-rise 0.42s var(--aq-ease) both;
+}
+.aq-stagger > :nth-child(2) { animation-delay: 50ms; }
+.aq-stagger > :nth-child(3) { animation-delay: 100ms; }
+.aq-stagger > :nth-child(4) { animation-delay: 150ms; }
+.aq-stagger > :nth-child(5) { animation-delay: 200ms; }
+.aq-stagger > :nth-child(n + 6) { animation-delay: 250ms; }
+.aq-drop {
+  animation: aq-drop 0.18s var(--aq-ease) both;
+}
+.aq-sheet {
+  animation: aq-sheet-up 0.28s var(--aq-ease) both;
+}
+/* Sheets slide up on phones and settle in like a dialog on wider screens. */
+@media (min-width: 640px) {
+  .aq-sheet {
+    animation: aq-drop 0.2s var(--aq-ease) both;
   }
-  .area-sidebar,
-  .area-panel {
-    display: none;
+}
+.aq-drawer {
+  animation: aq-drawer-in 0.26s var(--aq-ease) both;
+}
+.aq-backdrop {
+  animation: aq-fade 0.2s ease-out both;
+}
+.aq-gauge-arc {
+  animation: aq-gauge 0.9s var(--aq-ease) both;
+}
+.aq-skeleton {
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, #edf1f5 25%, #f7f9fb 37%, #edf1f5 63%);
+  background-size: 400% 100%;
+  animation: aq-shimmer 1.4s ease infinite;
+}
+.aq-safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Forms: base layer only fills gaps, so every existing utility class still wins. */
+@layer base {
+  .aq-app :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="submit"], [type="button"], [type="hidden"]), select, textarea) {
+    background-color: #fff;
+    border-color: var(--color-border);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   }
-  .area-sidebar.open {
-    display: flex;
-    position: fixed;
-    z-index: 40;
-    top: 56px;
-    bottom: 0;
-    left: 0;
-    width: min(84vw, 320px);
+  .aq-app :is(input, textarea)::placeholder {
+    color: #9aa8b6;
+  }
+  .aq-app :is(input[type="checkbox"], input[type="radio"]) {
+    accent-color: var(--color-blue);
+    cursor: pointer;
+  }
+  .aq-app :is(button, [role="button"], select, summary, label[for]):not(:disabled) {
+    cursor: pointer;
+  }
+  .aq-app button {
+    transition: transform 0.12s var(--aq-ease), background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+}
+.aq-app :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]), select, textarea)[class*="border"]:not([class*="border-0"], [class*="border-none"], [class*="border-transparent"]):focus {
+  border-color: rgb(47 111 179 / 0.6);
+  box-shadow: 0 0 0 4px rgb(47 111 179 / 0.12);
+  outline: none;
+}
+.aq-app :is(input, select, textarea)[aria-invalid="true"] {
+  border-color: rgb(220 38 38 / 0.6);
+}
+.aq-app button:not(:disabled, .aq-nopress):active {
+  transform: scale(0.98);
+}
+.aq-app :focus-visible:is(a, button, summary, [role="button"], [tabindex]) {
+  outline: 2px solid rgb(47 111 179 / 0.55);
+  outline-offset: 2px;
+}
+/* Phones zoom into any field under 16px; keep the page steady. */
+@media (max-width: 640px) {
+  .aq-app :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), select, textarea) {
+    font-size: 16px !important;
+  }
+}
+
+/* iOS-style switch for boolean settings: <input type="checkbox" class="aq-switch" /> */
+.aq-app input.aq-switch {
+  appearance: none;
+  position: relative;
+  width: 2.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: #d5dde6;
+  transition: background-color 0.2s ease;
+}
+.aq-app input.aq-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(16 38 59 / 0.3);
+  transition: transform 0.2s var(--aq-ease);
+}
+.aq-app input.aq-switch:checked {
+  background: #34c759;
+}
+.aq-app input.aq-switch:checked::after {
+  transform: translateX(1rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aq-page, .aq-rise, .aq-stagger > *, .aq-drop, .aq-sheet, .aq-drawer, .aq-backdrop, .aq-gauge-arc, .aq-skeleton, .aq-avatar img {
+    animation: none !important;
+  }
+  .aq-lift, .aq-lift:hover, .aq-app button:active {
+    transition: none !important;
+    transform: none !important;
   }
 }
 

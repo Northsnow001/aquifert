@@ -104,7 +104,7 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
           </p>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="overflow-hidden aq-card">
           <div className="flex items-center gap-2 border-b border-border bg-s2/50 px-5 py-2.5">
             <Eye className="h-4 w-4 text-blue" />
             <p className="text-[12.5px] font-semibold text-ink">Hub preview</p>

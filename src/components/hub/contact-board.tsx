@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import { CalendarClock, FileText, MessageSquare, Phone, Send, X } from "lucide-react";
+import { CalendarClock, CheckCircle2, CircleAlert, FileText, MessageSquare, Phone, Send, X } from "lucide-react";
 import { sendContactMessage } from "@/app/hub/contact/actions";
+import { areaClass, btnPrimary, fieldClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
 
 const WHATSAPP = "https://wa.me/?text=Hello%20Aquifert%20Support";
 const CALENDLY = "https://calendly.com/aquifert?hide_gdpr_banner=1";
@@ -25,54 +26,38 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
     return () => document.removeEventListener("keydown", onKey);
   }, [view]);
 
+  const tile = "aq-card aq-lift group flex flex-col gap-3 p-5 text-left no-underline";
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className="flex min-w-0 flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Contact Us</h1>
-        <p className="mt-1 text-sm text-mid">Choose how you want to reach the desk. Each option opens its own view.</p>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Contact Us</h1>
+        <p className="mt-1 text-[14px] text-mid">Choose how you want to reach the desk.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <a
-          href={WHATSAPP}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 no-underline"
-        >
+      <div className="aq-stagger grid gap-3 sm:grid-cols-2">
+        <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className={tile}>
+          <span className="aq-chip flex h-10 w-10 items-center justify-center rounded-xl text-white">
+            <MessageSquare className="h-[18px] w-[18px]" />
+          </span>
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-              <MessageSquare className="h-4 w-4 text-teal" />
-              Start a WhatsApp chat
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-mid">
-              Quick questions? Start a WhatsApp chat with our support team and get a fast reply.
-            </p>
+            <h2 className="text-[16px] font-semibold text-ink">Start a WhatsApp chat</h2>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Quick questions? Message the support team and get a fast reply.</p>
           </div>
-          <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white">
-            <Phone className="h-4 w-4" />
-            Start WhatsApp
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[#2f8a66]">
+            <Phone className="h-4 w-4" /> Start WhatsApp
           </span>
         </a>
 
-        <button
-          type="button"
-          onClick={() => setView("meeting")}
-          className={`flex flex-col justify-between rounded-xl border bg-surface p-5 text-left ${
-            view === "meeting" ? "border-blue ring-2 ring-blue/20" : "border-border"
-          }`}
-        >
+        <button type="button" onClick={() => setView("meeting")} className={`${tile} ${view === "meeting" ? "ring-2 ring-blue/30" : ""}`}>
+          <span className="aq-chip aq-chip-blue flex h-10 w-10 items-center justify-center rounded-xl text-white">
+            <CalendarClock className="h-[18px] w-[18px]" />
+          </span>
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-              <CalendarClock className="h-4 w-4 text-blue" />
-              Arrange a meeting
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-mid">
-              Schedule a time on our calendar to discuss your needs. Choose a slot that suits you.
-            </p>
+            <h2 className="text-[16px] font-semibold text-ink">Arrange a meeting</h2>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Pick a slot on the desk calendar that suits you.</p>
           </div>
-          <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white">
-            <CalendarClock className="h-4 w-4" />
-            Schedule a meeting
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-blue">
+            <CalendarClock className="h-4 w-4" /> Schedule a meeting
           </span>
         </button>
 
@@ -83,43 +68,37 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
             setError(null);
             setView("message");
           }}
-          className={`flex flex-col justify-between rounded-xl border bg-surface p-5 text-left ${
-            view === "message" ? "border-amber-500 ring-2 ring-amber-500/20" : "border-border"
-          }`}
+          className={`${tile} ${view === "message" ? "ring-2 ring-[#d9951f]/35" : ""}`}
         >
+          <span className="aq-chip aq-chip-amber flex h-10 w-10 items-center justify-center rounded-xl text-white">
+            <Send className="h-[18px] w-[18px]" />
+          </span>
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-              <Send className="h-4 w-4 text-amber-500" />
-              Send us a message
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-mid">Use our contact form to send your request and we will get back to you.</p>
+            <h2 className="text-[16px] font-semibold text-ink">Send us a message</h2>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Write to the desk and we reply by email.</p>
           </div>
-          <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white">
-            <Send className="h-4 w-4" />
-            Open contact form
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[#b87a12]">
+            <Send className="h-4 w-4" /> Open contact form
           </span>
         </button>
 
-        <Link href="/hub/order-desk" className="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 no-underline">
+        <Link href="/hub/order-desk" className={tile}>
+          <span className="aq-chip aq-chip-blue flex h-10 w-10 items-center justify-center rounded-xl text-white">
+            <FileText className="h-[18px] w-[18px]" />
+          </span>
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-              <FileText className="h-4 w-4 text-blue" />
-              Open Order Desk
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-mid">
-              Looking for pricing and availability? Submit your request in Order Desk and the Aquifert trading desk will respond with a quote.
-            </p>
+            <h2 className="text-[16px] font-semibold text-ink">Open Order Desk</h2>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Need pricing and availability? Submit a request and the trading desk responds with a quote.</p>
           </div>
-          <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-lg bg-blue px-4 py-2 text-sm font-semibold text-white">
-            <FileText className="h-4 w-4" />
-            Open Order Desk
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-blue">
+            <FileText className="h-4 w-4" /> Open Order Desk
           </span>
         </Link>
       </div>
 
       {view === "meeting" ? (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1a3a5c]/45 p-4"
+          className="aq-backdrop fixed inset-0 z-[80] flex items-end justify-center bg-[#0b1e2d]/45 sm:items-center sm:p-4"
           role="presentation"
           onClick={() => setView("cards")}
         >
@@ -127,12 +106,12 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="meeting-title"
-            className="flex h-[min(85vh,780px)] w-full max-w-[980px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
+            className="aq-sheet flex h-[92dvh] w-full max-w-[980px] flex-col overflow-hidden rounded-t-[22px] bg-surface shadow-2xl sm:h-[min(85vh,780px)] sm:rounded-[22px]"
             onClick={(event) => event.stopPropagation()}
           >
-            <header className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 id="meeting-title" className="text-base font-bold text-ink">Schedule a meeting</h2>
-              <button type="button" onClick={() => setView("cards")} className="rounded-lg border border-border p-1.5 text-mid" aria-label="Close scheduler">
+            <header className="flex items-center justify-between border-b border-border px-5 py-3.5">
+              <h2 id="meeting-title" className="text-[16px] font-semibold text-ink">Schedule a meeting</h2>
+              <button type="button" onClick={() => setView("cards")} className="rounded-full bg-s3 p-1.5 text-mid hover:text-ink" aria-label="Close scheduler">
                 <X className="h-4 w-4" />
               </button>
             </header>
@@ -146,22 +125,26 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
       ) : null}
 
       {view === "message" ? (
-        <section className="rounded-xl border border-border bg-surface p-5">
+        <section className="aq-card aq-rise max-w-3xl p-5 md:p-6">
           <header className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-ink">Contact Us</h2>
-            <button type="button" onClick={() => setView("cards")} className="rounded-lg border border-border p-1.5 text-mid" aria-label="Close contact form">
+            <div>
+              <h2 className="text-[16px] font-semibold text-ink">Send the desk a message</h2>
+              <p className="mt-0.5 text-[13.5px] text-mid">We reply to the email below.</p>
+            </div>
+            <button type="button" onClick={() => setView("cards")} className="rounded-full bg-s3 p-1.5 text-mid hover:text-ink" aria-label="Close contact form">
               <X className="h-4 w-4" />
             </button>
           </header>
           {sent ? (
-            <p className="mt-4 rounded-lg bg-s2 px-3 py-3 text-sm leading-relaxed text-ink">
+            <p className={`${noticeOk} mt-5`}>
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
               {sent === "remote"
                 ? "Message sent. The desk will reply to the email you entered."
                 : "Message captured in this preview. Connect Supabase to deliver it to the desk."}
             </p>
           ) : (
             <form
-              className="mt-4 grid gap-3 sm:grid-cols-2"
+              className="mt-5 grid gap-4 sm:grid-cols-2"
               onSubmit={(event) => {
                 event.preventDefault();
                 const data = new FormData(event.currentTarget);
@@ -181,26 +164,33 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
                 });
               }}
             >
-              <label className="block text-sm text-mid">
-                Name
-                <input name="name" required defaultValue={name} className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink" />
+              <label className="block">
+                <span className={labelClass}>Name</span>
+                <input name="name" required autoComplete="name" defaultValue={name} className={fieldClass} />
               </label>
-              <label className="block text-sm text-mid">
-                Email
-                <input name="email" type="email" required defaultValue={email} className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink" />
+              <label className="block">
+                <span className={labelClass}>Email</span>
+                <input name="email" type="email" required autoComplete="email" defaultValue={email} className={fieldClass} />
               </label>
-              <label className="block text-sm text-mid sm:col-span-2">
-                Company
-                <input name="company" className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink" />
+              <label className="block sm:col-span-2">
+                <span className={labelClass}>Company (optional)</span>
+                <input name="company" autoComplete="organization" className={fieldClass} />
               </label>
-              <label className="block text-sm text-mid sm:col-span-2">
-                Message
-                <textarea name="message" required rows={5} className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink" />
+              <label className="block sm:col-span-2">
+                <span className={labelClass}>Message</span>
+                <textarea name="message" required rows={5} placeholder="What can the desk help with?" className={areaClass} />
               </label>
-              {error ? <p className="text-sm text-danger sm:col-span-2">{error}</p> : null}
-              <button type="submit" disabled={pending} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2">
-                {pending ? "Sending..." : "Send message"}
-              </button>
+              {error ? (
+                <p className={`${noticeError} sm:col-span-2`}>
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+                </p>
+              ) : null}
+              <div className="flex justify-end sm:col-span-2">
+                <button type="submit" disabled={pending} className={`${btnPrimary} w-full sm:w-auto`}>
+                  <Send className="h-4 w-4" />
+                  {pending ? "Sending…" : "Send message"}
+                </button>
+              </div>
             </form>
           )}
         </section>

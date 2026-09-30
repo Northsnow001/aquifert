@@ -1,13 +1,20 @@
 "use client";
 
 import { useMemo, useState, useTransition, type ReactNode } from "react";
+import { CheckCircle2, CircleAlert, Send } from "lucide-react";
 import { submitOrderEnquiry } from "@/app/hub/order-desk/actions";
+import { areaClass, btnPrimary, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 
 const PRODUCTS = [
   "Amsul", "AN", "CAN", "Urea - Prilled", "Urea - Granular", "Urea - Technical", "DAP", "MAP", "TSP", "SSP", "MOP", "UAN", "NPK", "APP", "CN", "Kieserite", "Magnesium Nitrate", "MKP", "NOP", "Phos Acid", "SOP", "TMAP", "Other",
 ];
 const PACKAGING = ["Bulk", "25kg", "50kg", "500kg", "600kg", "1000kg", "Other"];
 const ORIGINS = ["Baltic", "Black Sea", "Arab Gulf", "North Africa", "China", "FSU", "USA", "No preference"];
+
+const chip = (on: boolean) =>
+  `inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-medium transition ${
+    on ? "border-blue bg-blue-light text-blue" : "border-border bg-white text-mid hover:border-[#cdd7e1] hover:text-ink"
+  }`;
 
 export function OrderDeskBoard({ name, email, success }: { name: string; email: string; success: string }) {
   const [product, setProduct] = useState("");
@@ -41,8 +48,11 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
   return (
     <div className="flex w-full flex-col gap-5">
       {sent ? (
-        <div className="rounded-xl border border-[#cdebd8] bg-[#f1faf4] px-5 py-5 text-sm leading-relaxed text-[#1f5f3a]">
-          <p className="font-semibold">{success}</p>
+        <div className="aq-card aq-rise flex flex-col items-center px-6 py-10 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#eaf7f0] text-[#1f9d60]">
+            <CheckCircle2 className="h-6 w-6" />
+          </span>
+          <p className="mt-4 max-w-md text-[15px] font-semibold leading-relaxed text-ink">{success}</p>
           <button
             type="button"
             onClick={() => {
@@ -51,14 +61,14 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
               setPackaging("");
               setPrice("");
             }}
-            className="mt-3 rounded-lg border border-[#cdebd8] bg-white px-3 py-1.5 text-xs font-semibold text-[#1f7a45]"
+            className="mt-5 h-10 rounded-full border border-border bg-white px-4 text-[13.5px] font-semibold text-ink hover:border-blue/35 hover:text-blue"
           >
             Send another enquiry
           </button>
         </div>
       ) : (
         <form
-          className="space-y-5 rounded-xl border border-border bg-surface p-5"
+          className="flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault();
             const data = new FormData(event.currentTarget);
@@ -99,45 +109,55 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
           }}
         >
           <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Name" name="name" defaultValue={name} required />
-            <Field label="Email" name="email" type="email" defaultValue={email} required />
-            <Field label="Company" name="company" className="sm:col-span-2" />
-          </div>
+
+          <Section title="Your details">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Name" name="name" defaultValue={name} autoComplete="name" required />
+              <Field label="Email" name="email" type="email" defaultValue={email} autoComplete="email" required />
+              <Field label="Company (optional)" name="company" autoComplete="organization" className="sm:col-span-2" />
+            </div>
+          </Section>
 
           <Section title="Product">
-            <label className="block text-sm text-mid">
-              Product *
-              <select name="product" required value={product} onChange={(event) => setProduct(event.target.value)} className={inputClass}>
-                <option value="">Select a product...</option>
-                {PRODUCTS.map((item) => <option key={item}>{item}</option>)}
-              </select>
-            </label>
-            {product === "Other" ? <Field label="Specify product" name="otherProduct" required /> : null}
-            {product && product !== "Other" ? <Field label="Grade / specification" name="grade" /> : null}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className={labelClass}>Product</span>
+                <select name="product" required value={product} onChange={(event) => setProduct(event.target.value)} className={fieldClass}>
+                  <option value="">Select a product…</option>
+                  {PRODUCTS.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+              {product === "Other" ? <Field label="Specify product" name="otherProduct" required /> : null}
+              {product && product !== "Other" ? <Field label="Grade / specification (optional)" name="grade" /> : null}
+            </div>
           </Section>
 
           <Section title="Quantity and packaging">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Quantity (MT) *" name="quantity" type="number" required />
-              <label className="block text-sm text-mid">
-                Packaging *
-                <select name="packaging" required value={packaging} onChange={(event) => setPackaging(event.target.value)} className={inputClass}>
-                  <option value="">Select...</option>
-                  {PACKAGING.map((item) => <option key={item}>{item}</option>)}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Quantity (MT)" name="quantity" type="number" inputMode="decimal" required />
+              <label className="block">
+                <span className={labelClass}>Packaging</span>
+                <select name="packaging" required value={packaging} onChange={(event) => setPackaging(event.target.value)} className={fieldClass}>
+                  <option value="">Select…</option>
+                  {PACKAGING.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
                 </select>
               </label>
+              {packaging === "Other" ? <Field label="Specify packaging" name="packagingOther" required /> : null}
             </div>
-            {packaging === "Other" ? <Field label="Specify packaging" name="packagingOther" required /> : null}
-            <fieldset className="mt-2">
-              <legend className="text-xs text-mid">Pallets required?</legend>
-              <div className="mt-2 flex gap-2">
+            <fieldset className="mt-4">
+              <legend className={labelClass}>Pallets required?</legend>
+              <div className="inline-flex gap-1 rounded-full bg-black/[.05] p-1">
                 {(["yes", "no"] as const).map((value) => (
                   <button
                     key={value}
                     type="button"
+                    aria-pressed={pallets === value}
                     onClick={() => setPallets(value)}
-                    className={`rounded-full border px-3 py-1 text-xs capitalize ${pallets === value ? "border-blue bg-blue-light text-ink" : "border-border bg-surface text-mid"}`}
+                    className={`h-8 rounded-full px-5 text-[13px] font-semibold capitalize transition ${pallets === value ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid"}`}
                   >
                     {value}
                   </button>
@@ -149,7 +169,7 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
           <Section title="Origin preference">
             <div className="flex flex-wrap gap-2">
               {ORIGINS.map((origin) => (
-                <label key={origin} className={`cursor-pointer rounded-full border px-3 py-1 text-xs ${origins.includes(origin) ? "border-blue bg-blue-light text-ink" : "border-border text-mid"}`}>
+                <label key={origin} className={chip(origins.includes(origin))}>
                   <input type="checkbox" className="sr-only" checked={origins.includes(origin)} onChange={() => toggleOrigin(origin)} />
                   {origin}
                 </label>
@@ -158,46 +178,59 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
           </Section>
 
           <Section title="Delivery">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm text-mid">
-                FOB or CFR destination *
-                <input name="destination" required value={destination} onChange={(event) => setDestination(event.target.value)} className={inputClass} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className={labelClass}>FOB or CFR destination</span>
+                <input name="destination" required value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="Port or city" className={fieldClass} />
               </label>
-              <label className="block text-sm text-mid">
-                Incoterms
-                <select name="incoterm" value={incoterm} onChange={(event) => setIncoterm(event.target.value)} className={inputClass}>
+              <label className="block">
+                <span className={labelClass}>Incoterms</span>
+                <select name="incoterm" value={incoterm} onChange={(event) => setIncoterm(event.target.value)} className={fieldClass}>
                   <option>CFR</option>
                   <option>CIF</option>
                   <option>FOB</option>
                 </select>
               </label>
-              <Field label="Shipping period — from *" name="shipFrom" type="date" required />
-              <Field label="Shipping period — to *" name="shipTo" type="date" required />
+              <Field label="Shipping period from" name="shipFrom" type="date" required />
+              <Field label="Shipping period to" name="shipTo" type="date" required />
             </div>
           </Section>
 
           <Section title="Price and payment">
-            <label className="block text-sm text-mid">
-              Target price *
-              <span className="mt-1 flex gap-2">
-                <select value={currency} onChange={(event) => setCurrency(event.target.value)} className="rounded-lg border border-border px-3 py-2 text-sm text-ink">
+            <label className="block">
+              <span className={labelClass}>Target price</span>
+              <span className="flex gap-2">
+                <select value={currency} onChange={(event) => setCurrency(event.target.value)} aria-label="Currency" className={`${fieldClass} w-24 shrink-0`}>
                   <option>USD</option>
                   <option>EUR</option>
                   <option>GBP</option>
                 </select>
-                <input name="targetPrice" type="number" min="0" step="0.01" required placeholder="e.g. 485" value={price} onChange={(event) => setPrice(event.target.value)} className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink" />
+                <input
+                  name="targetPrice"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  required
+                  placeholder="e.g. 485"
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value)}
+                  className={fieldClass}
+                />
               </span>
-              <span className="mt-1 block text-xs text-dim">{priceLine}</span>
+              <span className={`${hintClass} font-mono`}>{priceLine}</span>
             </label>
-            <label className="mt-3 block text-sm text-mid">
-              Prepayment — <span className="font-semibold text-ink">{prepay}%</span>
-              <input type="range" min={0} max={100} step={10} value={prepay} onChange={(event) => setPrepay(Number(event.target.value))} className="mt-2 w-full accent-[#2e6da4]" />
-              <span className="mt-1 block text-xs text-dim">A price discount is available for large prepayments. New clients typically start at 20%.</span>
+            <label className="mt-5 block">
+              <span className={`${labelClass} flex items-center justify-between`}>
+                Prepayment <span className="rounded-full bg-blue-light px-2 py-0.5 font-mono text-[12px] font-semibold text-blue">{prepay}%</span>
+              </span>
+              <input type="range" min={0} max={100} step={10} value={prepay} onChange={(event) => setPrepay(Number(event.target.value))} className="mt-1 w-full accent-[#2f6fb3]" />
+              <span className={hintClass}>A price discount is available for large prepayments. New clients typically start at 20%.</span>
             </label>
-            <label className="mt-3 block text-sm text-mid">
-              Payment terms *
-              <select name="payment" required className={inputClass}>
-                <option value="">Select...</option>
+            <label className="mt-4 block">
+              <span className={labelClass}>Payment terms</span>
+              <select name="payment" required className={fieldClass}>
+                <option value="">Select…</option>
                 <option value="100% TT against copy shipping documents">100% TT against copy shipping documents</option>
                 <option value="LC at sight">LC at sight</option>
                 <option value="Open account (existing clients only)">Open account (existing clients only)</option>
@@ -206,25 +239,30 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
           </Section>
 
           <Section title="Additional information">
-            <label className="block text-sm text-mid">
-              Purchase frequency
-              <select name="frequency" className={inputClass}>
-                <option value="">Select...</option>
+            <label className="block">
+              <span className={labelClass}>Purchase frequency (optional)</span>
+              <select name="frequency" className={fieldClass}>
+                <option value="">Select…</option>
                 <option value="Spot / one-off">Spot / one-off</option>
                 <option value="Monthly">Monthly</option>
                 <option value="Quarterly">Quarterly</option>
                 <option value="Annual contract">Annual contract</option>
               </select>
             </label>
-            <label className="mt-3 block text-sm text-mid">
-              Additional notes
-              <textarea name="notes" rows={4} className={inputClass} />
+            <label className="mt-4 block">
+              <span className={labelClass}>Additional notes (optional)</span>
+              <textarea name="notes" rows={4} placeholder="Specs, destinations, timing…" className={areaClass} />
             </label>
           </Section>
 
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
-          <button type="submit" disabled={pending} className="w-full rounded-lg bg-blue px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
-            {pending ? "Submitting..." : "Submit enquiry to trading desk"}
+          {error ? (
+            <p className={noticeError}>
+              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+            </p>
+          ) : null}
+          <button type="submit" disabled={pending} className={`${btnPrimary} w-full`}>
+            <Send className="h-4 w-4" />
+            {pending ? "Submitting…" : "Submit enquiry to trading desk"}
           </button>
         </form>
       )}
@@ -232,21 +270,37 @@ export function OrderDeskBoard({ name, email, success }: { name: string; email: 
   );
 }
 
-const inputClass = "mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink";
-
-function Field({ label, name, type = "text", defaultValue, required, className = "" }: { label: string; name: string; type?: string; defaultValue?: string; required?: boolean; className?: string }) {
+function Field({
+  label,
+  name,
+  type = "text",
+  defaultValue,
+  required,
+  autoComplete,
+  inputMode,
+  className = "",
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  defaultValue?: string;
+  required?: boolean;
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  className?: string;
+}) {
   return (
-    <label className={`block text-sm text-mid ${className}`}>
-      {label}
-      <input name={name} type={type} required={required} defaultValue={defaultValue} className={inputClass} />
+    <label className={`block ${className}`}>
+      <span className={labelClass}>{label}</span>
+      <input name={name} type={type} required={required} defaultValue={defaultValue} autoComplete={autoComplete} inputMode={inputMode} className={fieldClass} />
     </label>
   );
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-3 rounded-lg bg-s2 p-4">
-      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">{title}</p>
+    <section className="aq-card p-5">
+      <h2 className="mb-4 text-[14px] font-semibold text-ink">{title}</h2>
       {children}
     </section>
   );

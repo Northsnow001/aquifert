@@ -4,19 +4,19 @@ import type { PublishStatus } from "@/lib/content-types";
 
 /** Size-free field, for inline controls that set their own height and width. */
 export const field =
-  "rounded-lg border border-border bg-white px-3 text-[13.5px] text-ink outline-none transition placeholder:text-dim focus:border-blue/50 focus:ring-2 focus:ring-blue/15";
+  "rounded-xl border border-border bg-white px-3 text-[13.5px] text-ink shadow-[inset_0_1px_2px_rgb(16_38_59/0.04)] outline-none transition placeholder:text-dim hover:border-[#cdd7e1]";
 export const input = `${field} h-10 w-full`;
 export const textarea =
-  "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-[13.5px] leading-relaxed text-ink outline-none transition placeholder:text-dim focus:border-blue/50 focus:ring-2 focus:ring-blue/15";
-export const label = "block text-[11px] font-semibold uppercase tracking-[0.08em] text-mid";
+  "w-full rounded-xl border border-border bg-white px-3 py-2.5 text-[13.5px] leading-relaxed text-ink shadow-[inset_0_1px_2px_rgb(16_38_59/0.04)] outline-none transition placeholder:text-dim hover:border-[#cdd7e1]";
+export const label = "block text-[12.5px] font-medium text-mid";
 export const btnPrimary =
-  "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue px-3.5 text-[13px] font-semibold text-white no-underline shadow-sm transition hover:bg-blue-dim disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-blue px-4 text-[13px] font-semibold text-white no-underline shadow-[0_6px_14px_-8px_rgb(47_111_179/0.7)] transition hover:bg-blue-dim disabled:cursor-not-allowed disabled:opacity-50";
 export const btnSecondary =
-  "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border bg-white px-3.5 text-[13px] font-semibold text-ink no-underline transition hover:border-blue/40 hover:text-blue disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border bg-white px-4 text-[13px] font-semibold text-ink no-underline transition hover:border-blue/40 hover:text-blue disabled:cursor-not-allowed disabled:opacity-50";
 export const btnDanger =
-  "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3.5 text-[13px] font-semibold text-danger no-underline transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-red-200 bg-white px-4 text-[13px] font-semibold text-danger no-underline transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
 export const btnGhost =
-  "inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-[12.5px] font-semibold text-mid no-underline transition hover:bg-s2 hover:text-ink";
+  "inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-2.5 text-[12.5px] font-semibold text-mid no-underline transition hover:bg-black/[.05] hover:text-ink";
 
 export function PageHeader({
   title,
@@ -44,7 +44,7 @@ export function PageHeader({
             ))}
           </nav>
         ) : null}
-        <h1 className="text-[26px] font-bold leading-tight tracking-tight text-ink">{title}</h1>
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[28px]">{title}</h1>
         {description ? <p className="mt-1.5 max-w-2xl text-[13.5px] leading-relaxed text-mid">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
@@ -53,14 +53,14 @@ export function PageHeader({
 }
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)] ${className}`}>{children}</section>;
+  return <section className={`aq-card ${className}`}>{children}</section>;
 }
 
 export function CardHeader({ title, meta, actions }: { title: string; meta?: React.ReactNode; actions?: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
       <div className="min-w-0">
-        <h2 className="text-[14px] font-bold text-ink">{title}</h2>
+        <h2 className="text-[14.5px] font-semibold text-ink">{title}</h2>
         {meta ? <p className="mt-0.5 text-[12px] text-dim">{meta}</p> : null}
       </div>
       {actions}
@@ -90,7 +90,7 @@ export function Pill({ children, tone = "neutral" }: { children: React.ReactNode
     teal: "bg-[#eaf5f0] text-[#2f6f57]",
     amber: "bg-[#fff6e5] text-[#9a5b00]",
   };
-  return <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${tones[tone]}`}>{children}</span>;
+  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${tones[tone]}`}>{children}</span>;
 }
 
 export function Flash({ saved, error, message }: { saved?: string; error?: string; message?: string }) {

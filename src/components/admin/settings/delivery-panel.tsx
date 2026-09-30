@@ -125,7 +125,7 @@ export function DeliveryPanel({
         </Panel>
       </div>
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+      <section className="overflow-hidden aq-card">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
           <div className="flex items-center gap-2.5">
             <Inbox className="h-4 w-4 text-blue" />

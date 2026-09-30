@@ -15,30 +15,28 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Order Desk</h1>
-        <p className="mt-1 text-sm text-mid">
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Order Desk</h1>
+        <p className="mt-1 text-[14px] text-mid">
           {zero ? "Supplier-cost buying with a fixed operations fee. Register now for the pilot." : "Your enquiry goes directly to the Aquifert trading desk."}
         </p>
       </div>
 
       {showZero ? (
-        <nav className="flex gap-1 rounded-xl border border-border bg-surface p-1" aria-label="Order Desk sections">
+        <nav className="flex gap-1 rounded-full bg-black/[.05] p-1" aria-label="Order Desk sections">
           {[
             { href: "/hub/order-desk", label: "Trading Desk", active: !zero },
-            { href: "/hub/order-desk?tab=zero", label: "Aquifert Zero", active: zero, badge: "Coming soon" },
+            { href: "/hub/order-desk?tab=zero", label: "Aquifert Zero", active: zero, badge: "Soon" },
           ].map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={item.active ? "page" : undefined}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold no-underline transition ${
-                item.active ? "bg-blue text-white shadow-sm" : "text-mid hover:bg-s2 hover:text-ink"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-[13.5px] font-semibold no-underline transition ${
+                item.active ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid hover:text-ink"
               }`}
             >
               {item.label}
-              {item.badge ? (
-                <span className={`rounded-full px-1.5 py-px font-mono text-[10px] uppercase tracking-wide ${item.active ? "bg-white/20 text-white" : "bg-[#fff4de] text-[#9a5b00]"}`}>{item.badge}</span>
-              ) : null}
+              {item.badge ? <span className="rounded-full bg-[#fff4de] px-1.5 py-px font-mono text-[10px] uppercase tracking-wide text-[#9a5b00]">{item.badge}</span> : null}
             </Link>
           ))}
         </nav>

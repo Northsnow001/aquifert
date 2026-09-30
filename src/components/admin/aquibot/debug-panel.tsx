@@ -230,7 +230,7 @@ export function DebugPanel({ hasTestPrompt }: { hasTestPrompt: boolean }) {
             )}
           </Panel>
 
-          <details className="group rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+          <details className="group aq-card">
             <summary className="flex cursor-pointer list-none items-center gap-2 px-5 py-3.5">
               <ChevronDown className="h-4 w-4 text-dim transition group-open:rotate-180" />
               <span className="text-[14px] font-bold text-ink">Full system prompt sent to Gemini</span>

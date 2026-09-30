@@ -185,7 +185,7 @@ export function RichTextEditor({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+    <div className="overflow-hidden aq-card">
       <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-border bg-surface/95 px-3 py-2 backdrop-blur">
         <select
           value={block}

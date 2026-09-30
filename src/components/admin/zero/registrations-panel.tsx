@@ -154,7 +154,7 @@ export function ZeroRegistrationsPanel({ rows }: { rows: ZeroRegistration[] }) {
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+    <section className="overflow-hidden aq-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
         <div className="flex flex-wrap gap-1" role="tablist" aria-label="Filter by stage">
           {(["all", ...ZERO_STATUSES] as const).map((key) => (

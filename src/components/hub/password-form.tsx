@@ -1,58 +1,61 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
+import { CheckCircle2, CircleAlert, Eye, EyeOff } from "lucide-react";
 import { updatePassword, type PasswordState } from "@/app/(auth)/actions";
-
-const inputClass =
-  "block w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm text-ink placeholder:text-dim focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/20";
+import { btnPrimary, btnSecondary, fieldClass, hintClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
 
 export function PasswordForm() {
   const [state, action, pending] = useActionState(updatePassword, {} as PasswordState);
+  const [show, setShow] = useState(false);
 
   return (
-    <div className="max-w-2xl rounded-xl border border-border bg-white shadow-sm">
-      <div className="p-5 md:p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-ink">Update Password</h2>
-          <p className="mt-1 text-sm text-mid">Choose a strong password to keep your account secure.</p>
+    <form action={action} className="flex max-w-xl flex-col gap-5">
+      {state.error ? (
+        <p className={noticeError}>
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {state.error}
+        </p>
+      ) : null}
+      {state.saved ? (
+        <p className={noticeOk}>
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          {state.preview ? "Password accepted in this preview. It is not stored until sign-in is connected." : "Password updated."}
+        </p>
+      ) : null}
+      <section className="aq-card p-5 md:p-6">
+        <h2 className="text-[16px] font-semibold text-ink">Update password</h2>
+        <p className="mt-0.5 text-[13.5px] text-mid">Choose a strong password to keep your account secure.</p>
+        <div className="mt-5 flex flex-col gap-4">
+          <label className="block">
+            <span className={labelClass}>New password</span>
+            <div className="relative">
+              <input name="password" type={show ? "text" : "password"} required autoComplete="new-password" className={`${fieldClass} pr-11`} />
+              <button
+                type="button"
+                onClick={() => setShow((value) => !value)}
+                aria-label={show ? "Hide passwords" : "Show passwords"}
+                className="aq-nopress absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-dim hover:bg-s3 hover:text-ink"
+              >
+                {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <span className={hintClass}>Use at least 8 characters. A short phrase is easier to remember.</span>
+          </label>
+          <label className="block">
+            <span className={labelClass}>Confirm new password</span>
+            <input name="confirm" type={show ? "text" : "password"} required autoComplete="new-password" className={fieldClass} />
+          </label>
         </div>
-        {state.error ? (
-          <p className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger">{state.error}</p>
-        ) : null}
-        {state.saved ? (
-          <p className="mb-5 rounded-xl border border-border bg-bg px-4 py-3 text-sm text-teal">
-            {state.preview
-              ? "Password accepted in this preview. It is not stored until sign-in is connected."
-              : "Password updated."}
-          </p>
-        ) : null}
-        <form action={action} className="space-y-5">
-          <label className="block space-y-2">
-            <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">New Password</span>
-            <input name="password" type="password" required autoComplete="new-password" className={inputClass} />
-          </label>
-          <label className="block space-y-2">
-            <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-dim">Confirm New Password</span>
-            <input name="confirm" type="password" required autoComplete="new-password" className={inputClass} />
-          </label>
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={pending}
-              className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-blue px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-dim disabled:opacity-60"
-            >
-              {pending ? "Updating…" : "Update Password"}
-            </button>
-            <Link
-              href="/hub/account/profile"
-              className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-ink no-underline transition-colors hover:border-blue hover:text-blue"
-            >
-              Cancel
-            </Link>
-          </div>
-        </form>
+      </section>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Link href="/hub/account/profile" className={btnSecondary}>
+          Cancel
+        </Link>
+        <button type="submit" disabled={pending} className={btnPrimary}>
+          {pending ? "Updating…" : "Update password"}
+        </button>
       </div>
-    </div>
+    </form>
   );
 }

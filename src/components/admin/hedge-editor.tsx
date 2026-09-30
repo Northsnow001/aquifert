@@ -251,7 +251,7 @@ export function HedgeEditor({ initial, reports, openPaste }: { initial: HedgeRep
             />
           </section>
 
-          <section className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+          <section className="aq-card">
             <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-4 py-3">
               {[{ id: "all", label: "All", count: totalRows }, ...report.sections.map((s) => ({ id: s.id, label: s.label || "Section", count: hedgeRowCount(s) }))].map((tab) => (
                 <button
@@ -466,7 +466,7 @@ export function HedgeEditor({ initial, reports, openPaste }: { initial: HedgeRep
 
         {showPreview ? (
           <aside className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-            <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+            <div className="overflow-hidden aq-card">
               <div className="flex items-center justify-between border-b border-border bg-s2/50 px-4 py-2.5">
                 <p className="flex items-center gap-2 text-[12.5px] font-semibold text-ink">
                   <Eye className="h-4 w-4 text-blue" />

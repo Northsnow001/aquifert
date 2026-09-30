@@ -42,6 +42,7 @@ export function AquibotChat({
   engine,
   isAdmin,
   hasTestPrompt,
+  draft = "",
 }: {
   sessions: SessionSummary[];
   session: { id: string; title: string; messages: ChatMessage[] } | null;
@@ -50,13 +51,15 @@ export function AquibotChat({
   engine: { ready: boolean; problem: string | null };
   isAdmin: boolean;
   hasTestPrompt: boolean;
+  /** Question handed over from the home prompt bar or search; filled in, not sent. */
+  draft?: string;
 }) {
   const router = useRouter();
   const [sessions, setSessions] = useState(initialSessions);
   const [sessionId, setSessionId] = useState(session?.id ?? null);
   const [title, setTitle] = useState(session?.title ?? "New chat");
   const [messages, setMessages] = useState<ChatMessage[]>(session?.messages ?? []);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(draft);
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState<keyof typeof STAGE_LABEL | null>(null);
   const [usage, setUsage] = useState(initialUsage);

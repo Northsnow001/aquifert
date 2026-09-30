@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { BadgeCheck, Clock3, ShieldCheck, Users, Zap } from "lucide-react";
 import { registerZeroInterest } from "@/app/hub/order-desk/zero-actions";
+import { areaClass, btnPrimary, fieldClass, noticeError } from "@/components/app/form";
 import { ZERO_PRODUCTS } from "@/lib/desk-settings/types";
 
 const PROMISES = [
@@ -18,7 +19,7 @@ const BANDS = [
   { band: "Band 3", shipments: "3 shipments", volume: "601 – 1,500 MT", tone: "bg-[#f3ecfb] text-[#6b3fa0]" },
 ];
 
-const inputClass = "mt-1 w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-ink";
+const inputClass = `${fieldClass} mt-1.5`;
 
 type Registration = { at: string; product: string; annualVolume: string; company: string };
 
@@ -32,8 +33,8 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
   const [pending, start] = useTransition();
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface">
-      <header className="relative overflow-hidden bg-[#0f2a47] px-6 py-7 text-white">
+    <div className="aq-card overflow-hidden">
+      <header className="relative overflow-hidden bg-[#0f2a47] bg-[radial-gradient(120%_120%_at_100%_0%,#1e5b8f_0%,transparent_55%)] px-6 py-7 text-white">
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#1463a5]/40 blur-3xl" />
         <span className="relative inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em]">
           <span className="relative flex h-2 w-2">
@@ -97,7 +98,7 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
           </p>
         </section>
 
-        <section className="rounded-lg border border-border bg-s2/40 p-5">
+        <section className="rounded-2xl border border-border bg-s2 p-5">
           <h3 className="text-base font-semibold text-ink">Register your interest</h3>
           {done ? (
             <div className="mt-3 rounded-lg border border-[#cdebd8] bg-[#f1faf4] px-4 py-4 text-sm text-[#1f5f3a]">
@@ -144,24 +145,24 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
               >
                 <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block text-sm text-mid">
+                  <label className="block text-[13px] font-medium text-mid">
                     Full name *
                     <input name="name" required defaultValue={name} className={inputClass} />
                   </label>
-                  <label className="block text-sm text-mid">
+                  <label className="block text-[13px] font-medium text-mid">
                     Company *
                     <input name="company" required defaultValue={last?.company} placeholder="Company name" className={inputClass} />
                   </label>
-                  <label className="block text-sm text-mid">
+                  <label className="block text-[13px] font-medium text-mid">
                     Email *
                     <input name="email" type="email" required defaultValue={email} className={inputClass} />
                   </label>
-                  <label className="block text-sm text-mid">
+                  <label className="block text-[13px] font-medium text-mid">
                     Estimated annual volume (MT) *
                     <input name="annualVolume" type="number" min="1" step="1" required defaultValue={last?.annualVolume} placeholder="e.g. 5000" className={inputClass} />
                   </label>
                 </div>
-                <label className="block text-sm text-mid">
+                <label className="block text-[13px] font-medium text-mid">
                   Primary product interest *
                   <select name="product" required defaultValue={last?.product ?? ""} className={inputClass}>
                     <option value="">Select a product...</option>
@@ -170,13 +171,13 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
                     ))}
                   </select>
                 </label>
-                <label className="block text-sm text-mid">
+                <label className="block text-[13px] font-medium text-mid">
                   Anything we should know
-                  <textarea name="notes" rows={3} placeholder="Destinations, timing, current suppliers…" className={inputClass} />
+                  <textarea name="notes" rows={3} placeholder="Destinations, timing, current suppliers…" className={`${areaClass} mt-1.5`} />
                 </label>
-                {error ? <p className="text-sm text-danger">{error}</p> : null}
-                <button type="submit" disabled={pending} className="w-full rounded-lg bg-blue px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
-                  {pending ? "Registering..." : "Register interest"}
+                {error ? <p className={noticeError}>{error}</p> : null}
+                <button type="submit" disabled={pending} className={`${btnPrimary} w-full`}>
+                  {pending ? "Registering…" : "Register interest"}
                 </button>
               </form>
             </>

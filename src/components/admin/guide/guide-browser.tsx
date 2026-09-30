@@ -101,7 +101,7 @@ export function GuideBrowser({ sections }: { sections: GuideSection[] }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
-      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:self-start lg:overflow-y-auto">
+      <aside className="lg:sticky lg:top-6 lg:max-h-[calc(100dvh-9rem)] lg:self-start lg:overflow-y-auto">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-dim" />
           <input

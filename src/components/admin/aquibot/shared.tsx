@@ -123,7 +123,7 @@ export function NumberField({
 
 export function Panel({ title, description, icon, actions, children }: { title: string; description?: string; icon?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+    <section className="aq-card">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-3.5">
         <div className="flex min-w-0 items-start gap-3">
           {icon ? <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-light text-blue">{icon}</span> : null}

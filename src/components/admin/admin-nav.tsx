@@ -22,8 +22,9 @@ import {
   Table2,
   Zap,
 } from "lucide-react";
+import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 
-const ICONS = {
+export const ADMIN_ICONS = {
   zero: Zap,
   banned: ShieldBan,
   settings: Settings,
@@ -44,40 +45,54 @@ const ICONS = {
   inbox: Inbox,
 };
 
-export type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: string | number };
+export type NavItem = { href: string; label: string; icon: keyof typeof ADMIN_ICONS; badge?: string | number };
 export type NavGroup = { title: string; items: NavItem[] };
 
-function isActive(pathname: string, href: string) {
+const GROUP_TONE: Record<string, string> = {
+  Overview: "aq-chip-blue",
+  Calculators: "aq-chip-blue",
+  Desk: "aq-chip-amber",
+  Members: "aq-chip-rose",
+};
+
+export function isAdminActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminNav({ groups }: { groups: NavGroup[] }) {
+export function AdminNavIcon({ item, tone = "", size = 26 }: { item: NavItem; tone?: string; size?: number }) {
+  if (item.icon === "aquibot") return <AquibotAvatar size={size} />;
+  const Icon = ADMIN_ICONS[item.icon];
+  return (
+    <span className={`aq-chip ${tone} inline-flex shrink-0 items-center justify-center rounded-[8px] text-white`} style={{ width: size, height: size }}>
+      <Icon className="h-[13px] w-[13px]" strokeWidth={2.2} />
+    </span>
+  );
+}
+
+export function AdminNav({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:gap-5 lg:overflow-visible lg:pb-0">
+    <nav aria-label="Admin" className="flex flex-col gap-4 px-3 pb-4 pt-1">
       {groups.map((group) => (
-        <div key={group.title} className="flex shrink-0 gap-1 lg:flex-col">
-          <p className="hidden px-3 pb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-dim lg:block">{group.title}</p>
+        <div key={group.title} className="flex flex-col gap-0.5">
+          <p className="px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim">{group.title}</p>
           {group.items.map((item) => {
-            const Icon = ICONS[item.icon];
-            const active = isActive(pathname, item.href);
+            const active = isAdminActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] font-medium no-underline transition ${
-                  active ? "bg-blue text-white shadow-sm" : "text-mid hover:bg-s2 hover:text-ink"
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                className={`aq-nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-[6px] text-[13.5px] no-underline transition-colors ${
+                  active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"
                 }`}
               >
-                <Icon className={`h-4 w-4 shrink-0 ${active ? "text-white" : "text-dim group-hover:text-blue"}`} />
-                <span className="flex-1 whitespace-nowrap">{item.label}</span>
+                <AdminNavIcon item={item} tone={GROUP_TONE[group.title]} />
+                <span className="min-w-0 flex-1 truncate">{item.label}</span>
                 {item.badge !== undefined && item.badge !== 0 ? (
-                  <span
-                    className={`rounded-full px-1.5 py-px font-mono text-[10.5px] font-semibold ${
-                      active ? "bg-white/20 text-white" : "bg-s2 text-mid group-hover:bg-blue-light group-hover:text-blue"
-                    }`}
-                  >
+                  <span className={`shrink-0 rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums ${active ? "bg-blue-light text-blue" : "bg-black/[.05] text-mid"}`}>
                     {item.badge}
                   </span>
                 ) : null}

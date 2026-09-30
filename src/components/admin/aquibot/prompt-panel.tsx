@@ -110,7 +110,7 @@ export function PromptPanel({ initial }: { initial: AquibotPrompt }) {
       </ol>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <section className="min-w-0 rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="min-w-0 aq-card">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
             <div>
               <h2 className="text-[14px] font-bold text-ink">Test prompt</h2>
@@ -163,7 +163,7 @@ export function PromptPanel({ initial }: { initial: AquibotPrompt }) {
           </div>
         </section>
 
-        <section className="min-w-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+        <section className="min-w-0 overflow-hidden aq-card">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
             <div>
               <h2 className="text-[14px] font-bold text-ink">Changes</h2>

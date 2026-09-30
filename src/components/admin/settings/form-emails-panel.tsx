@@ -307,7 +307,7 @@ export function FormEmailsPanel({
           ))}
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)] xl:sticky xl:top-20">
+        <section className="overflow-hidden aq-card xl:sticky xl:top-20">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
             <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim">Preview · sample submission</p>
             <div className="flex rounded-lg bg-s2 p-0.5" role="tablist" aria-label="Preview audience">

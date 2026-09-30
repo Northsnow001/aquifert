@@ -8,8 +8,8 @@ import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-export default async function AquibotPage({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
-  const { chat } = await searchParams;
+export default async function AquibotPage({ searchParams }: { searchParams: Promise<{ chat?: string; q?: string }> }) {
+  const { chat, q } = await searchParams;
   const user = await getSession();
   const config = (await getHubContent()).aquibot;
   const isAdmin = isAdminUser(user);
@@ -44,7 +44,8 @@ export default async function AquibotPage({ searchParams }: { searchParams: Prom
 
   return (
     <AquibotChat
-      key={active?.id ?? "new"}
+      key={active?.id ?? `new-${q ?? ""}`}
+      draft={active ? "" : (q ?? "").slice(0, 500)}
       sessions={sessions}
       session={active}
       usage={usage}

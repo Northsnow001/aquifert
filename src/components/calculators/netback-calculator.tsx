@@ -197,7 +197,7 @@ export function NetbackCalculator({ ports, config, usage: initialUsage }: { port
       duty_rate: String(dutyPercent),
     });
     router.replace(`/hub/netback?${query.toString()}`);
-    void navigator.clipboard?.writeText(`${window.location.origin}/netback?${query.toString()}`);
+    void navigator.clipboard?.writeText(`${window.location.origin}/hub/netback?${query.toString()}`);
     setShared(true);
   }
 

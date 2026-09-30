@@ -49,7 +49,7 @@ export function ExtractionPanel({ initial }: { initial: ExtractionRules }) {
           const custom = value.trim() !== DEFAULT_EXTRACTION[rule.key];
           const showing = compare[rule.key] && custom;
           return (
-            <section key={rule.key} className="flex min-w-0 flex-col rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+            <section key={rule.key} className="flex min-w-0 flex-col aq-card">
               <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-3.5">
                 <div className="flex min-w-0 items-start gap-3">
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-light text-blue">{rule.icon}</span>
