@@ -4,22 +4,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpenCheck, ChevronDown, ChevronsLeft, ChevronsRight, LogOut, Menu, MoreHorizontal, Search, Sparkles, UserCircle, X } from "lucide-react";
+import { BookOpenCheck, ChevronDown, ChevronsLeft, ChevronsRight, Lock, LogOut, Menu, MoreHorizontal, Search, Sparkles, UserCircle, X } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
 import { InfoTip } from "@/components/app/info-tip";
 import { startTour, Tour } from "@/components/app/tour";
 import { useStoredFlag } from "@/components/app/use-stored-flag";
 import { ADMIN_LINK, HUB_NAV, isActive, pageTitle, SECTIONS, TAB_KEYS, type HubNavItem } from "@/components/hub/nav";
+import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
 
 const RAIL_KEY = "aq.rail.collapsed";
 
-function NavIcon({ item, size = 28 }: { item: HubNavItem; size?: number }) {
+function NavIcon({ item, size = 28, locked = false }: { item: HubNavItem; size?: number; locked?: boolean }) {
   if (item.icon === "aquibot") return <AquibotAvatar size={size} />;
   const Icon = item.icon;
   return (
-    <span className="aq-chip inline-flex shrink-0 items-center justify-center rounded-[9px] text-white" style={{ width: size, height: size }}>
+    <span
+      className={`aq-chip ${item.tone ? `aq-chip-${item.tone}` : ""} inline-flex shrink-0 items-center justify-center rounded-[9px] text-white ${locked ? "opacity-60 saturate-50" : ""}`}
+      style={{ width: size, height: size }}
+    >
       <Icon className="h-[14px] w-[14px]" strokeWidth={2.2} />
     </span>
   );
@@ -37,31 +41,55 @@ function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function NavList({ pathname, collapsed, admin, onNavigate }: { pathname: string; collapsed: boolean; admin: boolean; onNavigate?: () => void }) {
+const SECTION_NOTE: Partial<Record<string, string>> = {
+  "AQ1 Free plan": "Included with every account",
+  "AQ Analytics": "Deeper data, unlocked by plan",
+};
+
+function NavList({
+  pathname,
+  collapsed,
+  admin,
+  unlocked,
+  onNavigate,
+}: {
+  pathname: string;
+  collapsed: boolean;
+  admin: boolean;
+  unlocked: string[];
+  onNavigate?: () => void;
+}) {
   return (
-    <nav aria-label="Hub" className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 pb-4 pt-2">
+    <nav aria-label="Hub" className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pb-4 pt-2">
       {SECTIONS.map((section) => (
-        <div key={section} className="flex flex-col gap-0.5">
+        <div key={section} className="flex flex-col gap-0.5" aria-label={section}>
           {collapsed ? (
             <div className="mx-auto mb-1 h-px w-6 bg-black/[.07] first:hidden" />
-          ) : (
-            <p className="px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim">{section}</p>
+          ) : section === "Main" ? null : (
+            <div className="mt-1 border-t border-black/[.06] px-2.5 pb-1 pt-3">
+              <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-teal-700">{section}</p>
+              {SECTION_NOTE[section] ? <p className="mt-0.5 text-[11px] text-dim">{SECTION_NOTE[section]}</p> : null}
+            </div>
           )}
           {HUB_NAV.filter((item) => item.section === section).map((item) => {
             const active = isActive(pathname, item.href);
+            const locked = Boolean(item.module && !unlocked.includes(item.module));
             return (
               <div key={item.key} data-tour={item.key} className="group relative flex items-center">
                 <Link
                   href={item.href}
                   onClick={onNavigate}
-                  title={collapsed ? item.label : undefined}
+                  title={collapsed ? `${item.label}${locked ? " (locked)" : ""}` : undefined}
                   aria-current={active ? "page" : undefined}
                   className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl py-[7px] text-[13.5px] no-underline transition-colors ${
                     collapsed ? "justify-center px-0" : "px-2.5 pr-8"
                   } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"}`}
                 >
-                  <NavIcon item={item} />
-                  {collapsed ? null : <span className="truncate">{item.label}</span>}
+                  <NavIcon item={item} locked={locked} />
+                  {collapsed ? null : <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+                  {!collapsed && locked ? (
+                    <Lock className="h-3.5 w-3.5 shrink-0 text-dim" aria-label="Locked, upgrade available" />
+                  ) : null}
                 </Link>
                 {collapsed ? null : (
                   <InfoTip label={item.label} text={item.tip} href={`/hub/guide#${item.key}`} className="absolute right-1 opacity-100 lg:opacity-0 lg:focus:opacity-100 lg:group-hover:opacity-100" />
@@ -132,7 +160,7 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
             <p className="truncate text-[14px] font-semibold text-ink">{user.name}</p>
             <p className="truncate text-[12px] text-dim">{user.email}</p>
             <span className="mt-2 inline-flex rounded-full bg-blue-light px-2 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wide text-blue">
-              {user.plan} plan
+              {PLAN_LABEL[user.plan]} plan
             </span>
           </div>
           <div className="h-px bg-border" />
@@ -172,7 +200,17 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
   );
 }
 
-export function AppShell({ user, admin = false, children }: { user: SessionUser; admin?: boolean; children: React.ReactNode }) {
+export function AppShell({
+  user,
+  admin = false,
+  unlocked = [],
+  children,
+}: {
+  user: SessionUser;
+  admin?: boolean;
+  unlocked?: string[];
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const [collapsed, toggleRail] = useStoredFlag(RAIL_KEY);
   const [drawer, setDrawer] = useState(false);
@@ -194,19 +232,18 @@ export function AppShell({ user, admin = false, children }: { user: SessionUser;
   const palette = useMemo<PaletteItem[]>(() => {
     const pages: PaletteItem[] = HUB_NAV.map((item) => ({
       href: item.href,
-      label: item.label,
-      group: item.section === "You" ? "Account" : item.section,
+      label: item.module && !unlocked.includes(item.module) ? `${item.label} (locked)` : item.label,
+      group: item.section === "You" ? "Account" : item.section === "Main" ? "Go to" : item.section,
       hint: item.tip.split(". ")[0],
       icon: item.icon === "aquibot" ? <AquibotAvatar size={20} /> : <item.icon />,
     }));
     const account: PaletteItem[] = [
       { href: "/hub/account/profile", label: "Profile details", group: "Account", icon: <UserCircle /> },
       { href: "/hub/account/password", label: "Change password", group: "Account", icon: <UserCircle /> },
-      { href: "/hub/account/plan", label: "Plan", group: "Account", icon: <UserCircle /> },
       { href: "#tour", label: "Replay the tour", group: "Help", icon: <Sparkles />, action: startTour },
     ];
     return [...pages, ...account, ...(admin ? [{ href: "/admin", label: "Admin console", group: "Help", icon: <ADMIN_LINK.icon /> }] : [])];
-  }, [admin]);
+  }, [admin, unlocked]);
 
   const tabs = TAB_KEYS.map((key) => HUB_NAV.find((item) => item.key === key)!);
 
@@ -225,7 +262,7 @@ export function AppShell({ user, admin = false, children }: { user: SessionUser;
           <div className={`flex h-16 shrink-0 items-center ${collapsed ? "justify-center" : "px-5"}`}>
             <Brand compact={collapsed} />
           </div>
-          <NavList pathname={pathname} collapsed={collapsed} admin={admin} />
+          <NavList pathname={pathname} collapsed={collapsed} admin={admin} unlocked={unlocked} />
           <div className="shrink-0 border-t border-black/[.06] p-3">
             <button
               type="button"
@@ -285,10 +322,11 @@ export function AppShell({ user, admin = false, children }: { user: SessionUser;
                 Ask Aquibot
               </Link>
               <Link
-                href="/hub/account/plan"
+                href="/hub/plan-usage"
+                title="Plan & Usage"
                 className="hidden rounded-full border border-black/[.08] bg-white px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wide text-mid no-underline hover:text-blue md:inline-flex"
               >
-                {user.plan}
+                {PLAN_LABEL[user.plan]}
               </Link>
               <AccountMenu user={user} admin={admin} />
             </div>
@@ -335,7 +373,7 @@ export function AppShell({ user, admin = false, children }: { user: SessionUser;
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <NavList pathname={pathname} collapsed={false} admin={admin} onNavigate={() => setDrawer(false)} />
+            <NavList pathname={pathname} collapsed={false} admin={admin} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
             <div className="aq-safe-bottom shrink-0 border-t border-black/[.06] px-4 pt-3">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12px] font-bold text-white">
@@ -343,7 +381,7 @@ export function AppShell({ user, admin = false, children }: { user: SessionUser;
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px] font-semibold text-ink">{user.name}</p>
-                  <p className="truncate font-mono text-[10.5px] uppercase tracking-wide text-dim">{user.plan} plan</p>
+                  <p className="truncate font-mono text-[10.5px] uppercase tracking-wide text-dim">{PLAN_LABEL[user.plan]} plan</p>
                 </div>
                 <form action="/api/logout" method="post">
                   <button type="submit" className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-semibold text-danger hover:bg-red-50">

@@ -14,7 +14,7 @@ import { DEFAULT_NETBACK_SETTINGS, type NetbackSettings } from "@/lib/netback-de
 const PLANS = [
   { key: "limitCore", plan: "Core" },
   { key: "limitGrowth", plan: "Growth" },
-  { key: "limitEnterprise", plan: "Enterprise" },
+  { key: "limitEnterprise", plan: "AQ Zero" },
 ] as const;
 
 const SAMPLE = { name: "Paranaguá", lat: -25.52, lon: -48.51, region: "South America" };

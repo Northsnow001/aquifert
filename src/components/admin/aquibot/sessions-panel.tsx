@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { deleteAquibotSession } from "@/app/admin/aquibot/actions";
 import { Markdown } from "@/components/hub/markdown";
 import { btnGhost, btnSecondary, field } from "@/components/admin/ui";
+import { planName } from "@/lib/aq-modules/types";
 import type { MessageRow, SessionRow } from "@/lib/aquibot-engine/store";
 
 function stamp(iso: string) {
@@ -145,7 +146,7 @@ export function SessionsPanel({
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate text-[14px] font-bold text-ink">{selected.session.title}</h2>
                   <p className="mt-0.5 text-[12px] text-mid">
-                    {selected.session.user_name} · {selected.session.user_email} · {selected.session.user_plan} · started {stamp(selected.session.created_at)}
+                    {selected.session.user_name} · {selected.session.user_email} · {planName(selected.session.user_plan)} · started {stamp(selected.session.created_at)}
                     {selected.session.test_mode ? " · test prompt" : ""}
                   </p>
                 </div>

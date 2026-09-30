@@ -21,7 +21,7 @@ const STATE: Record<KnowledgeState, { label: string; className: string }> = {
   unsupported: { label: "Can't be read", className: "bg-s2 text-dim" },
 };
 
-const ACCESS_LABEL = { public: "All members", growth: "Growth+", enterprise: "Enterprise" } as const;
+const ACCESS_LABEL = { public: "All members", growth: "Growth+", enterprise: "AQ Zero" } as const;
 
 function stamp(iso: string | null) {
   if (!iso) return "—";

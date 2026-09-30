@@ -106,7 +106,7 @@ export const GUIDE: GuideSection[] = [
           "Press New Telex, from the Telex page or the dashboard.",
           "Write the headline and the message. Leave the headline empty to use the first words of the message.",
           "Format with Markdown: **bold**, *italic*, headings, lists, quotes, links, code, --- rules, images from an https address, and pipe tables with :--- alignment. The Hub preview shows exactly how members read it.",
-          "Choose who can read it: Core, Growth and Enterprise members; Growth and Enterprise; or Enterprise only.",
+          "Choose who can read it: Core, Growth and AQ Zero members; Growth and AQ Zero; or AQ Zero only.",
           "Add tags. Suggestions come from tags you have used before, which keeps them consistent.",
           "Set the status to Published and save. Leave it as Draft to finish later, or Private to keep it from members.",
         ],

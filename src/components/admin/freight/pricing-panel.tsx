@@ -12,7 +12,7 @@ import { DEFAULT_FREIGHT_SETTINGS, type FreightSettings } from "@/lib/freight-de
 const PLANS = [
   { key: "limitCore", plan: "Core" },
   { key: "limitGrowth", plan: "Growth" },
-  { key: "limitEnterprise", plan: "Enterprise" },
+  { key: "limitEnterprise", plan: "AQ Zero" },
 ] as const;
 
 const TAPER_SAMPLES = [5000, 8000, 11000, 14000];

@@ -9,7 +9,7 @@ export default function LegalPage() {
       <p>
         Calculator outputs are estimates for orientation. They are not a freight fixture, a firm offer, or customs advice.
       </p>
-      <p>Plan changes and billing run through the Plan tab. Enterprise coverage is arranged with the desk.</p>
+      <p>Plan changes and billing run through the Plan tab. AQ Zero coverage is arranged with the desk.</p>
     </div>
   );
 }

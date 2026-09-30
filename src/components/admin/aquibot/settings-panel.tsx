@@ -32,7 +32,7 @@ function ModelSelect({ id, label: text, value, onChange, hint }: { id: string; l
 const PLANS = [
   { key: "limitCore", plan: "Core" },
   { key: "limitGrowth", plan: "Growth" },
-  { key: "limitEnterprise", plan: "Enterprise" },
+  { key: "limitEnterprise", plan: "AQ Zero" },
 ] as const;
 
 const chars = (value: number) => `${Math.round(value / 1000).toLocaleString()}k characters`;

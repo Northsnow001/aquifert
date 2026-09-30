@@ -5,8 +5,8 @@ export type TelexAccess = "public" | "growth" | "enterprise";
 
 export const TELEX_ACCESS: { value: TelexAccess; label: string; hint: string }[] = [
   { value: "public", label: "Public", hint: "Every member" },
-  { value: "growth", label: "Growth+", hint: "Growth and Enterprise" },
-  { value: "enterprise", label: "Enterprise", hint: "Enterprise only" },
+  { value: "growth", label: "Growth+", hint: "Growth and AQ Zero" },
+  { value: "enterprise", label: "AQ Zero", hint: "AQ Zero only" },
 ];
 
 export const PUBLISH_STATUS: { value: PublishStatus; label: string }[] = [
@@ -78,7 +78,7 @@ export type LibraryDocument = {
   storedName: string | null;
 };
 
-export const FILE_ACCESS_LABEL: Record<TelexAccess, string> = { public: "Free", growth: "Growth+", enterprise: "Enterprise" };
+export const FILE_ACCESS_LABEL: Record<TelexAccess, string> = { public: "Free", growth: "Growth+", enterprise: "AQ Zero" };
 
 export type FreightFixture = {
   id: string;

@@ -6,20 +6,28 @@ import {
   Anchor,
   BookOpen,
   Bot,
+  CalendarClock,
   Calculator,
+  ChartColumn,
+  ChartLine,
   CircleHelp,
+  FlaskConical,
   FolderTree,
   Gauge,
   Import,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   Library,
+  Newspaper,
+  NotebookPen,
   Radio,
   Scale,
   Settings,
   ShieldBan,
   Ship,
   Table2,
+  UserPlus,
   Zap,
 } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
@@ -43,6 +51,14 @@ export const ADMIN_ICONS = {
   library: Library,
   collections: FolderTree,
   inbox: Inbox,
+  access: KeyRound,
+  analysis: NotebookPen,
+  marketData: ChartLine,
+  calls: CalendarClock,
+  supplyDemand: ChartColumn,
+  briefing: Newspaper,
+  requests: UserPlus,
+  nitrogen: FlaskConical,
 };
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ADMIN_ICONS; badge?: string | number };
@@ -50,6 +66,7 @@ export type NavGroup = { title: string; items: NavItem[] };
 
 const GROUP_TONE: Record<string, string> = {
   Overview: "aq-chip-blue",
+  "AQ Modules": "aq-chip-blue",
   Calculators: "aq-chip-blue",
   Desk: "aq-chip-amber",
   Members: "aq-chip-rose",

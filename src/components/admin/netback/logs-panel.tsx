@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { removeNetbackLogs } from "@/app/admin/netback/actions";
 import { FlagMark } from "@/components/calculators/flag-mark";
 import { Card, EmptyState, Pill, btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
+import { planName } from "@/lib/aq-modules/types";
 import { formatStamp } from "@/lib/content-types";
 import { MODE_LABEL, type NetbackLogFilters } from "@/lib/netback-desk/logs";
 import type { NetbackLog } from "@/lib/netback-desk/types";
@@ -78,7 +79,7 @@ export function NetbackLogsPanel({ rows, total, page, pages, filters, months }: 
           <option value="">All plans</option>
           <option value="core">Core</option>
           <option value="growth">Growth</option>
-          <option value="enterprise">Enterprise</option>
+          <option value="enterprise">AQ Zero</option>
           <option value="admin">Admins</option>
         </select>
         <select name="month" aria-label="Month" defaultValue={filters.month} className={`${field} h-9`}>
@@ -167,7 +168,7 @@ export function NetbackLogsPanel({ rows, total, page, pages, filters, months }: 
                         <p className="font-semibold text-ink">{log.user.name || "Member"}</p>
                         <p className="flex items-center gap-1.5 text-[11.5px] text-dim">
                           <span className="max-w-[180px] truncate">{log.user.email}</span>
-                          <span className="capitalize">· {log.user.admin ? "admin" : log.user.plan}</span>
+                          <span className="capitalize">· {log.user.admin ? "admin" : planName(log.user.plan)}</span>
                         </p>
                       </td>
                       <td className="px-3 py-2.5">

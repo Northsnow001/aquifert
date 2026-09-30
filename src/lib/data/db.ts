@@ -29,7 +29,9 @@ export const isMissingTable = (error: { message: string; code?: string }) =>
   error.code === "42P01" || error.code === "PGRST205" || /does not exist|schema cache|relation/i.test(error.message);
 
 export function databaseError(action: string, error: { message: string; code?: string }) {
-  return new Error(isMissingTable(error) ? `Could not ${action}: the table is missing. Run supabase/migrations/003_app_data.sql in the Supabase SQL editor.` : `Could not ${action}: ${error.message}`);
+  return new Error(
+    isMissingTable(error) ? `Could not ${action}: the table is missing. Run the SQL files in supabase/migrations (003 onwards) in the Supabase SQL editor.` : `Could not ${action}: ${error.message}`,
+  );
 }
 
 const warned = new Set<string>();
@@ -42,7 +44,7 @@ export function readFallback<T>(table: string, error: { message: string; code?: 
   if (!isMissingTable(error)) throw databaseError(`read ${table}`, error);
   if (!warned.has(table)) {
     warned.add(table);
-    console.error(`[data] ${table} is missing. Run supabase/migrations/003_app_data.sql in the Supabase SQL editor.`);
+    console.error(`[data] ${table} is missing. Run the SQL files in supabase/migrations in the Supabase SQL editor.`);
   }
   return fallback;
 }

@@ -11,8 +11,9 @@ const CALENDLY = "https://calendly.com/aquifert?hide_gdpr_banner=1";
 
 type View = "cards" | "meeting" | "message";
 
-export function ContactBoard({ name, email }: { name: string; email: string }) {
-  const [view, setView] = useState<View>("cards");
+export function ContactBoard({ name, email, topic = "" }: { name: string; email: string; topic?: string }) {
+  const [view, setView] = useState<View>(topic ? "message" : "cards");
+  const [about, setAbout] = useState(topic);
   const [sent, setSent] = useState<"remote" | "local" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -150,11 +151,12 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
                 const data = new FormData(event.currentTarget);
                 setError(null);
                 startTransition(async () => {
+                  const body = String(data.get("message") ?? "");
                   const result = await sendContactMessage({
                     name: String(data.get("name") ?? ""),
                     email: String(data.get("email") ?? ""),
                     company: String(data.get("company") ?? ""),
-                    message: String(data.get("message") ?? ""),
+                    message: about && body.trim() ? `About: ${about}\n\n${body}` : body,
                   });
                   if (!result.ok) {
                     setError(result.message);
@@ -176,10 +178,31 @@ export function ContactBoard({ name, email }: { name: string; email: string }) {
                 <span className={labelClass}>Company (optional)</span>
                 <input name="company" autoComplete="organization" className={fieldClass} />
               </label>
-              <label className="block sm:col-span-2">
-                <span className={labelClass}>Message</span>
-                <textarea name="message" required rows={5} placeholder="What can the desk help with?" className={areaClass} />
-              </label>
+              <div className="sm:col-span-2">
+                <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                  <label htmlFor="contact-message" className="block text-[13px] font-medium text-mid">
+                    Message
+                  </label>
+                  {about ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-light py-0.5 pl-2.5 pr-1 text-[12px] font-semibold text-blue">
+                      About: {about}
+                      <button type="button" onClick={() => setAbout("")} aria-label={`Remove the ${about} topic`} className="rounded-full p-0.5 hover:bg-blue/10">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null}
+                </div>
+                <textarea
+                  id="contact-message"
+                  name="message"
+                  required
+                  rows={5}
+                  autoFocus={Boolean(topic)}
+                  placeholder={about ? `What would you like to ask about ${about.toLowerCase()}?` : "What can the desk help with?"}
+                  className={areaClass}
+                />
+                {about ? <p className="mt-1.5 text-[12px] text-dim">The topic is added to your message so it reaches the right person.</p> : null}
+              </div>
               {error ? (
                 <p className={`${noticeError} sm:col-span-2`}>
                   <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}

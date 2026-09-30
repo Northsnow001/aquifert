@@ -11,7 +11,7 @@ import { Panel, Switch } from "./shared";
 
 const AUDIENCES = [
   { value: "admin", label: "Admin (all content)" },
-  { value: "enterprise", label: "Enterprise member" },
+  { value: "enterprise", label: "AQ Zero member" },
   { value: "growth", label: "Growth member" },
   { value: "core", label: "Core member" },
 ] as const;

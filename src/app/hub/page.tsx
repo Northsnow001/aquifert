@@ -9,10 +9,17 @@ import { getSession } from "@/lib/session";
 
 const ARC = Math.PI * 46;
 
-function stance(value: number) {
-  if (value > 66) return { label: "Bullish", color: "#1f9d60", soft: "#eaf7f0" };
-  if (value >= 34) return { label: "Neutral", color: "#c98712", soft: "#fdf5e6" };
-  return { label: "Bearish", color: "#d14b3f", soft: "#fdeeec" };
+/** One colour per card, in order: nitrogen green, phosphate orange, potassium red. */
+const CARD_COLORS = [
+  { color: "#16a34a", soft: "#e9f7ee" },
+  { color: "#e8870e", soft: "#fdf1e2" },
+  { color: "#dc2626", soft: "#fdecec" },
+];
+
+function stance(value: number, index: number) {
+  const tone = CARD_COLORS[index % CARD_COLORS.length];
+  const label = value > 66 ? "Bullish" : value >= 34 ? "Neutral" : "Bearish";
+  return { label, ...tone };
 }
 
 function Gauge({ value, color }: { value: number; color: string }) {
@@ -59,8 +66,8 @@ export default async function HomePage() {
           {readingsDay ? <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatDay(readingsDay)}</p> : null}
         </div>
         <div className="aq-stagger grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {indicators.map((item) => {
-            const tone = stance(item.value);
+          {indicators.map((item, index) => {
+            const tone = stance(item.value, index);
             return (
               <article key={item.name} className="aq-card aq-lift flex flex-col px-4 pb-4 pt-3.5">
                 <div className="flex items-center justify-between gap-2">
@@ -130,9 +137,9 @@ export default async function HomePage() {
           </header>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
             {indicators.every((item) => !item.note) ? <p className="py-8 text-center text-sm text-mid">No commentary this week.</p> : null}
-            {indicators.map((item) => {
+            {indicators.map((item, index) => {
               if (!item.note) return null;
-              const tone = stance(item.value);
+              const tone = stance(item.value, index);
               return (
                 <div key={item.name}>
                   <p className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">

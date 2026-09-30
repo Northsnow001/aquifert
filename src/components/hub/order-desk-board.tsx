@@ -16,12 +16,22 @@ const chip = (on: boolean) =>
     on ? "border-blue bg-blue-light text-blue" : "border-border bg-white text-mid hover:border-[#cdd7e1] hover:text-ink"
   }`;
 
-export function OrderDeskBoard({ name, email, success }: { name: string; email: string; success: string }) {
-  const [product, setProduct] = useState("");
+export function OrderDeskBoard({
+  name,
+  email,
+  success,
+  initial,
+}: {
+  name: string;
+  email: string;
+  success: string;
+  initial?: { product?: string; destination?: string };
+}) {
+  const [product, setProduct] = useState(() => (initial?.product && PRODUCTS.includes(initial.product) ? initial.product : ""));
   const [packaging, setPackaging] = useState("");
   const [origins, setOrigins] = useState<string[]>(["No preference"]);
   const [incoterm, setIncoterm] = useState("CFR");
-  const [destination, setDestination] = useState("");
+  const [destination, setDestination] = useState(() => initial?.destination?.slice(0, 120) ?? "");
   const [currency, setCurrency] = useState("USD");
   const [price, setPrice] = useState("");
   const [prepay, setPrepay] = useState(20);

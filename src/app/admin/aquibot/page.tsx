@@ -67,7 +67,7 @@ export default async function AquibotAdminPage({ searchParams }: { searchParams:
     {
       label: "Monthly limits",
       value: `${limit(settings.limitCore)} · ${limit(settings.limitGrowth)} · ${limit(settings.limitEnterprise)}`,
-      meta: "Core · Growth · Enterprise",
+      meta: "Core · Growth · AQ Zero",
       href: "?tab=settings",
       tone: "text-ink",
     },

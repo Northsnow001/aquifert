@@ -14,7 +14,7 @@ export type GuideLimits = { label: string; core: number; growth: number; enterpr
 const PLANS: { key: Plan; label: string }[] = [
   { key: "core", label: "Core" },
   { key: "growth", label: "Growth" },
-  { key: "enterprise", label: "Enterprise" },
+  { key: "enterprise", label: "AQ Zero" },
 ];
 
 function SectionIcon({ icon, size = 36 }: { icon: GuideSection["icon"]; size?: number }) {
@@ -158,7 +158,10 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
             </div>
           ) : (
             sections.map((section) => (
-              <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className="aq-card scroll-mt-24 p-5 sm:p-6">
+              <section key={section.id} id={section.id} aria-labelledby={`${section.id}-title`} className="aq-card relative scroll-mt-24 p-5 sm:p-6">
+                {section.aliases?.map((alias) => (
+                  <span key={alias} id={alias} aria-hidden className="absolute top-0 scroll-mt-24" />
+                ))}
                 <div className="flex items-start gap-3.5">
                   <SectionIcon icon={section.icon} />
                   <div className="min-w-0 flex-1">

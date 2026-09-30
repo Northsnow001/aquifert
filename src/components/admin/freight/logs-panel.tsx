@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { deleteCalculationLogs } from "@/app/admin/freight-calculator/actions";
 import { FlagMark } from "@/components/calculators/flag-mark";
 import { Card, EmptyState, Pill, btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
+import { planName } from "@/lib/aq-modules/types";
 import { formatStamp } from "@/lib/content-types";
 import type { LogFilters } from "@/lib/freight-desk/logs";
 import type { CalcLog } from "@/lib/freight-desk/types";
@@ -73,7 +74,7 @@ export function LogsPanel({ rows, total, page, pages, filters, months }: { rows:
           <option value="">All plans</option>
           <option value="core">Core</option>
           <option value="growth">Growth</option>
-          <option value="enterprise">Enterprise</option>
+          <option value="enterprise">AQ Zero</option>
           <option value="admin">Admins</option>
         </select>
         <select name="month" aria-label="Month" defaultValue={filters.month} className={`${field} h-9`}>
@@ -162,7 +163,7 @@ export function LogsPanel({ rows, total, page, pages, filters, months }: { rows:
                         <p className="font-semibold text-ink">{log.user.name || "Member"}</p>
                         <p className="flex items-center gap-1.5 text-[11.5px] text-dim">
                           <span className="max-w-[180px] truncate">{log.user.email}</span>
-                          <span className="capitalize">· {log.user.admin ? "admin" : log.user.plan}</span>
+                          <span className="capitalize">· {log.user.admin ? "admin" : planName(log.user.plan)}</span>
                         </p>
                       </td>
                       <td className="px-3 py-2.5">

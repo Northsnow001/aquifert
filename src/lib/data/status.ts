@@ -25,6 +25,11 @@ const LABEL: Record<string, string> = {
   member_bans: "Banned members",
   member_access_events: "Ban and reinstate history",
   email_outbox: "Email outbox",
+  nitrogen_reports: "Nitrogen reports",
+  community_call_registrations: "Community Call registrations",
+  member_alerts: "Member price alerts",
+  member_prefs: "Member preferences",
+  membership_requests: "Membership requests",
 };
 
 const LEGACY_FILES = ["hub-content.json", "freight-desk.json", "freight-logs.json", "netback-desk.json", "netback-logs.json", "desk-settings.json", "inbox.json", "zero-interest.json", "member-access.json", "outbox.json"];

@@ -5,8 +5,8 @@ import { getDeskSettings } from "@/lib/desk-settings/store";
 import { getSession } from "@/lib/session";
 import { findZeroRegistration } from "@/lib/zero-interest";
 
-export default async function OrderDeskPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const [{ tab }, user] = await Promise.all([searchParams, getSession()]);
+export default async function OrderDeskPage({ searchParams }: { searchParams: Promise<{ tab?: string; product?: string; destination?: string }> }) {
+  const [{ tab, product, destination }, user] = await Promise.all([searchParams, getSession()]);
   const settings = await getDeskSettings();
   const showZero = settings.zero.showOnHub;
   const zero = showZero && tab === "zero";
@@ -15,7 +15,7 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Order Desk</h1>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Order Fertilizer Now</h1>
         <p className="mt-1 text-[14px] text-mid">
           {zero ? "Supplier-cost buying with a fixed operations fee. Register now for the pilot." : "Your enquiry goes directly to the Aquifert trading desk."}
         </p>
@@ -50,7 +50,12 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
           registered={registration ? { at: registration.at, product: registration.product, annualVolume: registration.annualVolume, company: registration.company } : null}
         />
       ) : (
-        <OrderDeskBoard name={user?.name ?? ""} email={user?.email ?? ""} success={settings.orderDesk.success} />
+        <OrderDeskBoard
+          name={user?.name ?? ""}
+          email={user?.email ?? ""}
+          success={settings.orderDesk.success}
+          initial={{ product: typeof product === "string" ? product : undefined, destination: typeof destination === "string" ? destination : undefined }}
+        />
       )}
     </div>
   );

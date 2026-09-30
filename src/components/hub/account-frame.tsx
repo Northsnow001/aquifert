@@ -2,20 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArrowUpRight } from "lucide-react";
 
 const LINKS = [
   { href: "/hub/account/profile", label: "Profile" },
-  { href: "/hub/account/plan", label: "Plan" },
-  { href: "/hub/account/subscriptions", label: "Subscriptions" },
-  { href: "/hub/account/payments", label: "Payments" },
   { href: "/hub/account/password", label: "Password" },
   { href: "/hub/account/legal", label: "Legal" },
 ];
 
+const ELSEWHERE = [
+  { href: "/hub/membership", label: "Membership" },
+  { href: "/hub/billing", label: "Billing" },
+];
+
 function titleFor(pathname: string) {
-  if (pathname.startsWith("/hub/account/plan")) return "Change your plan";
-  if (pathname.startsWith("/hub/account/subscriptions")) return "Subscriptions";
-  if (pathname.startsWith("/hub/account/payments")) return "Payments";
   if (pathname.startsWith("/hub/account/password")) return "Password";
   if (pathname.startsWith("/hub/account/legal")) return "Legal";
   return "Profile";
@@ -28,7 +28,7 @@ export function AccountFrame({ children }: { children: React.ReactNode }) {
       <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-dim">Account</p>
       <h1 className="mt-1 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[30px]">{titleFor(pathname)}</h1>
       <nav aria-label="Account navigation" className="-mx-4 mt-5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="inline-flex gap-1 rounded-full bg-black/[.05] p-1">
+        <div className="inline-flex items-center gap-1 rounded-full bg-black/[.05] p-1">
           {LINKS.map((link) => {
             const active = link.href.endsWith("/profile")
               ? pathname === "/hub/account" || pathname.startsWith("/hub/account/profile")
@@ -46,6 +46,13 @@ export function AccountFrame({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+          <span className="mx-1 h-4 w-px bg-black/10" aria-hidden />
+          {ELSEWHERE.map((link) => (
+            <Link key={link.href} href={link.href} className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold text-mid no-underline transition hover:text-blue">
+              {link.label}
+              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+          ))}
         </div>
       </nav>
       <div className="mt-6">{children}</div>

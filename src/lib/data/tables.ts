@@ -1,9 +1,10 @@
+import type { CallRegistration, MemberAlert, MemberPrefs, MembershipRequest, NitrogenReport } from "@/lib/aq-modules/member-types";
 import type { CalcLog, DebugEntry } from "@/lib/freight-desk/types";
 import type { NetbackLog } from "@/lib/netback-desk/types";
 import type { ZeroRegistration } from "@/lib/zero-types";
 
 /** Admin-edited documents: one JSON row each in `app_documents`, or `data/<key>.json` on a local machine. */
-export const DOCUMENT_KEYS = ["hub-content", "freight-desk", "netback-desk", "desk-settings", "wp-import-state", "wp-import-export"] as const;
+export const DOCUMENT_KEYS = ["hub-content", "freight-desk", "netback-desk", "desk-settings", "aq-modules", "wp-import-state", "wp-import-export"] as const;
 export type DocumentKey = (typeof DOCUMENT_KEYS)[number];
 
 export const LIBRARY_BUCKET = "library";
@@ -84,7 +85,51 @@ export const OUTBOX: RecordSpec<OutboxRow> = {
   max: 200,
 };
 
-export const RECORD_SPECS = [FREIGHT_LOGS, FREIGHT_DEBUG, NETBACK_LOGS, INBOX, ZERO, BANS, ACCESS_EVENTS, OUTBOX] as RecordSpec<unknown>[];
+export const NITROGEN_REPORTS: RecordSpec<NitrogenReport> = {
+  table: "nitrogen_reports",
+  file: "nitrogen-reports.json",
+  keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
+};
+
+export const CALL_REGISTRATIONS: RecordSpec<CallRegistration> = {
+  table: "community_call_registrations",
+  file: "community-call-registrations.json",
+  keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
+};
+
+export const MEMBER_ALERTS: RecordSpec<MemberAlert> = {
+  table: "member_alerts",
+  file: "member-alerts.json",
+  keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
+};
+
+export const MEMBER_PREFS: RecordSpec<MemberPrefs> = {
+  table: "member_prefs",
+  file: "member-prefs.json",
+  keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
+};
+
+export const MEMBERSHIP_REQUESTS: RecordSpec<MembershipRequest> = {
+  table: "membership_requests",
+  file: "membership-requests.json",
+  keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
+};
+
+export const RECORD_SPECS = [
+  FREIGHT_LOGS,
+  FREIGHT_DEBUG,
+  NETBACK_LOGS,
+  INBOX,
+  ZERO,
+  BANS,
+  ACCESS_EVENTS,
+  OUTBOX,
+  NITROGEN_REPORTS,
+  CALL_REGISTRATIONS,
+  MEMBER_ALERTS,
+  MEMBER_PREFS,
+  MEMBERSHIP_REQUESTS,
+] as RecordSpec<unknown>[];
 
 /** The row written to Supabase for one record. */
 export function toRow<T>(spec: RecordSpec<T>, item: T) {
