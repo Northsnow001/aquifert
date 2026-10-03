@@ -1,6 +1,6 @@
 "use client";
 
-const LOGO_ASPECT = 1024 / 299;
+const LOGO_ASPECT = 784 / 209;
 const MARK_ASPECT = 148 / 214;
 
 /**

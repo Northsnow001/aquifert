@@ -12,7 +12,7 @@ import { initials, type SessionUser } from "@/lib/session-shared";
 function Brand() {
   return (
     <Link href="/admin" aria-label="Admin dashboard" className="flex items-center gap-2 no-underline transition-opacity hover:opacity-80">
-      <Image src="/brand/logo.png" alt="Aquifert" width={1024} height={299} className="h-7 w-auto" priority />
+      <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-7 w-auto" priority />
       <span className="rounded-md bg-ink px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-white">Admin</span>
     </Link>
   );

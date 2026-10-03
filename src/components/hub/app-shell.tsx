@@ -39,7 +39,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
       {compact ? (
         <Image src="/brand/mark.png" alt="Aquifert" width={148} height={214} className="h-[30px] w-auto" priority />
       ) : (
-        <Image src="/brand/logo.png" alt="Aquifert" width={1024} height={299} className="h-8 w-auto" priority />
+        <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-8 w-auto" priority />
       )}
     </Link>
   );
