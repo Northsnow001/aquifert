@@ -237,43 +237,230 @@ body::before {
   filter: saturate(1.15) brightness(1.06);
 }
 
-/* Aquibot avatar: gentle idle bob, wiggle on hover, nod while thinking. */
+/* Aquibot avatar: a glass orb holding the Aquifert drop. At rest the orb beats like a
+   heart (a double "lub-dub" pulse with a glow and an outward ring), the drop floats and
+   turns, caustic light drifts through the glass and a glint twinkles. Hover lifts the
+   orb with a bounce and a ripple; while Aquibot is thinking the heartbeat quickens. */
 .aq-avatar {
+  position: relative;
   display: inline-flex;
   flex-shrink: 0;
-  overflow: hidden;
   border-radius: 9999px;
-  background: #eef2ee;
-  box-shadow: 0 1px 3px rgb(14 32 49 / 0.18), inset 0 0 0 1.5px rgb(78 127 114 / 0.55);
+  isolation: isolate;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.aq-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  animation: aq-avatar-idle 5.2s ease-in-out infinite;
+.aq-avatar::before {
+  content: "";
+  position: absolute;
+  inset: -32%;
+  z-index: -1;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(64 160 205 / 0.55) 0%, rgb(99 173 147 / 0.28) 42%, transparent 70%);
+  opacity: 0;
+  animation: aq-heart-glow 2.8s ease-out infinite;
+  pointer-events: none;
 }
-:is(button, a):is(:hover, :focus-visible) .aq-avatar img {
-  animation: aq-avatar-wiggle 0.9s ease-in-out infinite;
+.aq-avatar-glass {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 118%, rgb(99 173 147 / 0.38), transparent 58%),
+    radial-gradient(circle at 30% 16%, rgb(255 255 255 / 0.97), rgb(236 246 250 / 0.8) 42%, rgb(190 222 234 / 0.68) 100%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.95),
+    inset 0 -2px 5px rgb(18 98 150 / 0.22),
+    inset 0 0 0 1px rgb(255 255 255 / 0.6),
+    0 0 0 0.5px rgb(18 98 150 / 0.2),
+    0 3px 8px -2px rgb(14 62 98 / 0.35);
+  backdrop-filter: blur(6px) saturate(1.4);
+  transition: box-shadow 0.5s ease;
+  animation: aq-heartbeat 2.8s ease-in-out infinite;
 }
-.aq-avatar-active img {
-  animation: aq-avatar-talk 1.6s ease-in-out infinite;
+.aq-avatar-glass::before {
+  content: "";
+  position: absolute;
+  top: 5%;
+  left: 15%;
+  right: 15%;
+  height: 42%;
+  z-index: 2;
+  border-radius: 9999px 9999px 50% 50% / 100% 100% 60% 60%;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0));
+  pointer-events: none;
 }
-@keyframes aq-avatar-idle {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-4%) rotate(-1.6deg); }
-  55% { transform: translateY(1%) rotate(0deg); }
-  80% { transform: translateY(-2%) rotate(1.4deg); }
+.aq-avatar-glass::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 3;
+  background: linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.6) 50%, transparent 62%);
+  transform: translateX(-130%);
+  animation: aq-glass-shine 7s ease-in-out infinite;
+  pointer-events: none;
 }
-@keyframes aq-avatar-wiggle {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(-5deg) scale(1.04); }
-  50% { transform: rotate(4deg) scale(1.06); }
-  75% { transform: rotate(-2.5deg) scale(1.03); }
+.aq-avatar-drop {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: auto;
+  height: 66%;
+  transform-origin: 50% 85%;
+  filter: drop-shadow(0 1.5px 1.5px rgb(10 60 100 / 0.35)) drop-shadow(0 0 3px rgb(255 255 255 / 0.7));
+  animation: aq-drop-float 6s ease-in-out infinite;
 }
-@keyframes aq-avatar-talk {
+.aq-avatar-caustic {
+  position: absolute;
+  inset: -35%;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 32% 68%, rgb(99 173 147 / 0.42), transparent 34%),
+    radial-gradient(circle at 70% 34%, rgb(56 140 200 / 0.3), transparent 36%),
+    radial-gradient(circle at 60% 78%, rgb(255 255 255 / 0.55), transparent 22%);
+  animation: aq-caustic 16s linear infinite;
+  pointer-events: none;
+}
+.aq-avatar-glint {
+  position: absolute;
+  top: 17%;
+  right: 21%;
+  z-index: 4;
+  width: 18%;
+  height: 18%;
+  background: #fff;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  filter: drop-shadow(0 0 2px rgb(255 255 255 / 0.9));
+  opacity: 0;
+  animation: aq-glint 5.5s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+.aq-avatar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid rgb(77 160 190 / 0.6);
+  opacity: 0;
+  animation: aq-heart-ring 2.8s ease-out infinite;
+  pointer-events: none;
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar,
+.aq-avatar:hover {
+  transform: translateY(-1px) scale(1.08);
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar-glass,
+.aq-avatar:hover .aq-avatar-glass {
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.95),
+    inset 0 -2px 5px rgb(18 98 150 / 0.22),
+    inset 0 0 0 1px rgb(255 255 255 / 0.6),
+    0 0 0 3px rgb(99 173 190 / 0.16),
+    0 6px 14px -3px rgb(14 62 98 / 0.42);
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar-drop,
+.aq-avatar:hover .aq-avatar-drop {
+  animation: aq-drop-bounce 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), aq-drop-float 6s ease-in-out 0.9s infinite;
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar-glint,
+.aq-avatar:hover .aq-avatar-glint {
+  animation: aq-glint-once 0.8s ease-out 0.2s;
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar-ring,
+.aq-avatar:hover .aq-avatar-ring {
+  animation: aq-ripple 1.1s ease-out;
+}
+:is(button, a):is(:hover, :focus-visible) .aq-avatar-glass::after,
+.aq-avatar:hover .aq-avatar-glass::after {
+  animation: aq-glass-shine-once 0.9s ease-out;
+}
+:is(button, a):active .aq-avatar,
+.aq-avatar:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
+}
+.aq-avatar-active .aq-avatar-glass {
+  animation-duration: 1.5s;
+}
+.aq-avatar-active::before {
+  animation-duration: 1.5s;
+}
+.aq-avatar-active .aq-avatar-ring,
+.aq-avatar-active:hover .aq-avatar-ring {
+  animation: aq-ripple 1.8s ease-out infinite;
+}
+.aq-avatar-active .aq-avatar-drop,
+.aq-avatar-active:hover .aq-avatar-drop {
+  animation: aq-drop-think 1.8s ease-in-out infinite;
+}
+@keyframes aq-drop-float {
+  0%, 100% { transform: perspective(160px) translateY(2%) rotateY(-16deg) rotate(1.5deg) scale(1, 1); }
+  25% { transform: perspective(160px) translateY(-3%) rotateY(0deg) rotate(0deg) scale(1.025, 0.985); }
+  50% { transform: perspective(160px) translateY(-6%) rotateY(16deg) rotate(-1.5deg) scale(1, 1); }
+  75% { transform: perspective(160px) translateY(-1%) rotateY(0deg) rotate(0deg) scale(0.985, 1.025); }
+}
+@keyframes aq-drop-bounce {
+  0% { transform: perspective(160px) translateY(0) rotateY(0deg) rotate(0deg) scale(1, 1); }
+  30% { transform: perspective(160px) translateY(-12%) rotateY(0deg) rotate(0deg) scale(0.95, 1.07); }
+  55% { transform: perspective(160px) translateY(3%) rotateY(0deg) rotate(0deg) scale(1.07, 0.93); }
+  78% { transform: perspective(160px) translateY(-3%) rotateY(-8deg) rotate(0.8deg) scale(0.99, 1.02); }
+  100% { transform: perspective(160px) translateY(2%) rotateY(-16deg) rotate(1.5deg) scale(1, 1); }
+}
+@keyframes aq-caustic {
+  from { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.12); }
+  to { transform: rotate(360deg) scale(1); }
+}
+@keyframes aq-glint {
+  0%, 62%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  72% { opacity: 1; transform: scale(1) rotate(45deg); }
+  84% { opacity: 0; transform: scale(0.3) rotate(90deg); }
+}
+@keyframes aq-glint-once {
+  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1.1) rotate(45deg); }
+  100% { opacity: 0; transform: scale(0.3) rotate(90deg); }
+}
+@keyframes aq-heartbeat {
+  0%, 32%, 100% { transform: scale(1); }
+  8% { transform: scale(1.12); }
+  15% { transform: scale(0.97); }
+  23% { transform: scale(1.07); }
+}
+@keyframes aq-heart-glow {
+  0%, 60%, 100% { opacity: 0; transform: scale(0.85); }
+  8% { opacity: 0.95; transform: scale(1); }
+  15% { opacity: 0.45; transform: scale(0.97); }
+  23% { opacity: 0.8; transform: scale(1.06); }
+}
+@keyframes aq-heart-glow-soft {
+  0%, 60%, 100% { opacity: 0; }
+  8% { opacity: 0.8; }
+  15% { opacity: 0.35; }
+  23% { opacity: 0.65; }
+}
+@keyframes aq-heart-ring {
+  0%, 6% { opacity: 0; transform: scale(1); }
+  9% { opacity: 0.65; transform: scale(1.03); }
+  48%, 100% { opacity: 0; transform: scale(1.65); }
+}
+@keyframes aq-drop-think {
   0%, 100% { transform: translateY(0) scale(1); }
-  30% { transform: translateY(-6%) scale(1.05) rotate(-2deg); }
-  60% { transform: translateY(2%) scale(0.98) rotate(1.5deg); }
+  50% { transform: translateY(-4%) scale(1.07); }
+}
+@keyframes aq-ripple {
+  0% { opacity: 0.75; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.55); }
+}
+@keyframes aq-glass-shine {
+  0%, 74% { transform: translateX(-130%); }
+  90%, 100% { transform: translateX(130%); }
+}
+@keyframes aq-glass-shine-once {
+  from { transform: translateX(-130%); }
+  to { transform: translateX(130%); }
 }
 
 /* Motion. Page entrance is opacity-only so fixed dialogs inside pages keep the viewport as their box. */
@@ -431,8 +618,15 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .aq-page, .aq-rise, .aq-stagger > *, .aq-drop, .aq-sheet, .aq-drawer, .aq-dock, .aq-backdrop, .aq-gauge-arc, .aq-skeleton, .aq-avatar img {
+  .aq-page, .aq-rise, .aq-stagger > *, .aq-drop, .aq-sheet, .aq-drawer, .aq-dock, .aq-backdrop, .aq-gauge-arc, .aq-skeleton,
+  .aq-avatar-glass, .aq-avatar-drop, .aq-avatar-ring, .aq-avatar-glass::after, .aq-avatar-caustic, .aq-avatar-glint {
     animation: none !important;
+  }
+  .aq-avatar {
+    transition: none !important;
+  }
+  .aq-avatar::before {
+    animation-name: aq-heart-glow-soft;
   }
   .aq-lift, .aq-lift:hover, .aq-app button:active {
     transition: none !important;
