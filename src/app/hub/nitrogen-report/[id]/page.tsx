@@ -8,7 +8,7 @@ import { ReportActions } from "@/components/hub/nitrogen/report-actions";
 import { longDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getNitrogenReport } from "@/lib/aq-modules/members";
-import { EMPTY_ANSWERS, orderDeskHref } from "@/lib/nitrogen/engine";
+import { EMPTY_ANSWERS, firstName, generateNitrogenReport, orderDeskHref } from "@/lib/nitrogen/engine";
 
 export const metadata: Metadata = { title: "Nitrogen Report" };
 export const dynamic = "force-dynamic";
@@ -28,6 +28,9 @@ export default async function NitrogenReportView({ params }: { params: Promise<{
   if (!report) notFound();
 
   const where = [report.answers?.cropType, report.answers?.destinationCountry].filter(Boolean).join(" · ");
+  const text = report.answers
+    ? generateNitrogenReport({ ...EMPTY_ANSWERS, ...report.answers }, { preparedFor: report.preparedFor || firstName(user.name), date: new Date(report.at) })
+    : report.reportMd;
 
   return (
     <div className="flex flex-col gap-5 pb-2">
@@ -52,7 +55,7 @@ export default async function NitrogenReportView({ params }: { params: Promise<{
           <p className="font-mono text-[13.5px] font-semibold text-white/85">{report.refNo}</p>
         </header>
         <div className="px-6 py-7 sm:px-10 sm:py-9">
-          <Markdown text={report.reportMd} className={DOC} />
+          <Markdown text={text} className={DOC} />
         </div>
       </article>
 

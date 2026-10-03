@@ -9,7 +9,10 @@ export type NitrogenAnswers = {
   destinationCountry: string;
   destinationPort: string;
   preferredOrigin: string;
-  deliveryWindow: string;
+  /** Months as YYYY-MM, picked from the next twelve. */
+  preferredMonths: string[];
+  /** Reports saved before preferred months asked for a single delivery window instead. */
+  deliveryWindow?: string;
   packaging: string;
   nitrogenSources: string[];
   annualVolume: string;
@@ -48,7 +51,28 @@ export function orderDeskHref(a: Pick<NitrogenAnswers, "nitrogenSources" | "dest
 export const CROPS = ["Winter wheat", "Winter barley", "Oilseed rape", "Maize", "Sugar beet", "Potatoes", "Grassland (grazed)", "Grassland (silage)", "Other"];
 export const SOILS = ["Sandy", "Sandy loam", "Loam", "Clay loam", "Clay", "Peaty"];
 export const METHODS = ["Broadcast (granular)", "Liquid injection", "Fertigation", "Foliar feed", "Precision placement"];
-export const WINDOWS = ["Next 2 weeks", "2–6 weeks", "6–12 weeks", "Next quarter", "Flexible / spot"];
+
+/** The current month and the eleven after it, as YYYY-MM in UTC so server and browser agree. */
+export function upcomingMonths(from = new Date(), count = 12): string[] {
+  return Array.from({ length: count }, (_, n) => {
+    const month = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + n, 1));
+    return `${month.getUTCFullYear()}-${String(month.getUTCMonth() + 1).padStart(2, "0")}`;
+  });
+}
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+export function monthLabel(value: string, style: "short" | "long" = "short") {
+  const [year, month] = value.split("-").map(Number);
+  const name = MONTH_NAMES[month - 1];
+  if (!year || !name) return value;
+  return `${style === "short" ? name.slice(0, 3) : name} ${year}`;
+}
+
+/** Preferred months for display, falling back to the delivery window older reports stored. */
+export function deliveryText(a: Pick<NitrogenAnswers, "preferredMonths" | "deliveryWindow">, style: "short" | "long" = "short") {
+  return a.preferredMonths?.length ? a.preferredMonths.map((month) => monthLabel(month, style)).join(", ") : (a.deliveryWindow ?? "");
+}
 export const ADDITIVES = ["Urease inhibitor", "Nitrification inhibitor", "Sulphur blend", "None"];
 export const PRIORITIES: { value: NitrogenPriority; label: string; hint: string }[] = [
   { value: "COST", label: "Lowest cost", hint: "Urea backbone, shoulder-season buying" },
@@ -60,7 +84,7 @@ export const EMPTY_ANSWERS: NitrogenAnswers = {
   destinationCountry: "",
   destinationPort: "",
   preferredOrigin: "",
-  deliveryWindow: "",
+  preferredMonths: [],
   packaging: "",
   nitrogenSources: [],
   annualVolume: "",
@@ -121,8 +145,8 @@ export function rateBand(crop: string, soil: string): [number, number] | null {
 export function stepProblem(step: number, a: NitrogenAnswers): string | null {
   if (step === 0) {
     if (!a.destinationCountry.trim()) return "Add the destination country.";
-    if (!a.deliveryWindow) return "Choose a delivery window.";
-    if (!a.packaging) return "Choose a packaging format.";
+    if (!a.preferredMonths.length) return "Choose at least one preferred month.";
+    if (!a.packaging) return "Choose the shipment packing.";
   }
   if (step === 1) {
     if (!a.nitrogenSources.length) return "Pick at least one nitrogen source.";
@@ -137,7 +161,12 @@ export function stepProblem(step: number, a: NitrogenAnswers): string | null {
   return null;
 }
 
-export function generateNitrogenReport(a: NitrogenAnswers, refNo: string, date = new Date()): string {
+export const firstName = (name: string | null | undefined) => name?.trim().split(/\s+/)[0] ?? "";
+
+/** Markdown table rows must sit on consecutive lines, so each table is one block. */
+const table = (rows: [string, string][]) => ["| Parameter | Value |", "|---|---|", ...rows.map(([name, value]) => `| ${name} | ${value.replace(/\|/g, "/")} |`)].join("\n");
+
+export function generateNitrogenReport(a: NitrogenAnswers, { preparedFor = "", date = new Date() }: { preparedFor?: string; date?: Date } = {}): string {
   const area = parseNumber(a.areaHectares);
   const soil = SOIL_ADJ[a.soilTexture] ?? SOIL_ADJ.Loam;
   const [adjLo, adjHi] = rateBand(a.cropType || "Other", a.soilTexture) ?? [120, 180];
@@ -167,33 +196,35 @@ export function generateNitrogenReport(a: NitrogenAnswers, refNo: string, date =
   const capacity = parseNumber(a.warehouseCapacity) || 50;
   const shipments = Math.max(1, Math.min(6, Math.round(annualVol / Math.max(25, capacity)) || 1));
 
+  const months = deliveryText(a, "long");
+  const title = [a.destinationCountry || "Destination", a.destinationPort, sources.join(", ")].filter(Boolean).join(" / ");
+
   return [
-    `# Nitrogen Assessment, ${a.destinationCountry || "Destination"}`,
-    `**Reference:** ${refNo}`,
-    `**Prepared by:** Aquifert Trading Desk`,
+    `# Nitrogen Assessment: ${title}`,
+    preparedFor.trim() ? `**Prepared for:** ${preparedFor.trim()}` : "",
     `**Date:** ${date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`,
     `---`,
     `## 1. Agronomic nitrogen allocation`,
-    `| Parameter | Value |`,
-    `|---|---|`,
-    `| Crop | ${a.cropType || "Not given"} |`,
-    `| Area | ${a.areaHectares || "Not given"} ha |`,
-    `| Soil texture | ${a.soilTexture || "Not given"} |`,
-    `| Application method | ${a.applicationMethod || "Not given"} |`,
-    `| Indicative N rate | ${adjLo}–${adjHi} kg N/ha |`,
-    totalLo != null ? `| Total seasonal N requirement | ${totalLo}–${totalHi} t N |` : `| Total seasonal N requirement | Not computed, area not given |`,
+    table([
+      ["Crop", a.cropType || "Not given"],
+      ["Area", a.areaHectares ? `${a.areaHectares} ha` : "Not given"],
+      ["Soil texture", a.soilTexture || "Not given"],
+      ["Application method", a.applicationMethod || "Not given"],
+      ["Indicative N rate", `${adjLo}–${adjHi} kg N/ha`],
+      ["Total seasonal N requirement", totalLo != null ? `${totalLo}–${totalHi} t N` : "Not computed, area not given"],
+    ]),
     `The indicative band for **${a.cropType || "your crop"}** is adjusted for your soils: ${soil.note}. ${METHOD_NOTE[a.applicationMethod] ?? ""}`.trim(),
     `## 2. Sourcing and delivery schedule`,
-    `| Parameter | Value |`,
-    `|---|---|`,
-    `| Preferred sources | ${sources.join(", ")} |`,
-    `| Annual volume | ${a.annualVolume || "Not given"} t |`,
-    `| Destination | ${[a.destinationCountry, a.destinationPort].filter(Boolean).join(", ") || "Not given"} |`,
-    `| Preferred origin | ${a.preferredOrigin || "Open"} |`,
-    `| Delivery window | ${a.deliveryWindow || "Not given"} |`,
-    `| Packaging | ${a.packaging || "Not given"} |`,
-    `| Warehouse capacity | ${a.warehouseCapacity ? `${a.warehouseCapacity} t` : "Not given"} |`,
-    `Given the stated warehouse capacity, the desk would structure this as **${shipments} shipment${shipments > 1 ? "s" : ""}** across the delivery window, protecting you against a single delayed vessel and smoothing working capital. ${
+    table([
+      ["Preferred sources", sources.join(", ")],
+      ["Annual volume", a.annualVolume ? `${a.annualVolume} t` : "Not given"],
+      ["Destination", [a.destinationPort, a.destinationCountry].filter(Boolean).join(", ") || "Not given"],
+      ["Preferred origin", a.preferredOrigin || "Open"],
+      [a.preferredMonths?.length ? "Preferred months" : "Delivery window", months || "Not given"],
+      ["Shipment packing", a.packaging || "Not given"],
+      ["Warehouse capacity", a.warehouseCapacity ? `${a.warehouseCapacity} t` : "Not given"],
+    ]),
+    `Given the stated warehouse capacity, the desk would structure this as **${shipments} shipment${shipments > 1 ? "s" : ""}** across ${a.preferredMonths?.length ? "your preferred months" : "the delivery window"}, protecting you against a single delayed vessel and smoothing working capital. ${
       a.preferredOrigin
         ? `Your origin preference (${a.preferredOrigin}) is noted; the desk quotes it alongside at least one alternative so you can see the freight-adjusted spread.`
         : "No origin preference was given, so the desk quotes the two or three most competitive origins on a freight-adjusted basis."

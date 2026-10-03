@@ -9,6 +9,8 @@ export type NitrogenReport = {
   at: string;
   userId: string;
   email: string;
+  /** Member's first name at the time; reports saved earlier lack it. */
+  preparedFor?: string;
   answers: NitrogenAnswers;
   reportMd: string;
 };

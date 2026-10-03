@@ -11,6 +11,7 @@ import {
   ADDITIVES,
   CROPS,
   EMPTY_ANSWERS,
+  firstName,
   generateNitrogenReport,
   METHODS,
   PACKAGING,
@@ -18,7 +19,7 @@ import {
   SOILS,
   SOURCES,
   stepProblem,
-  WINDOWS,
+  upcomingMonths,
   type NitrogenAnswers,
 } from "@/lib/nitrogen/engine";
 import { resolvePort } from "@/lib/ports";
@@ -36,7 +37,7 @@ function clean(input: Partial<NitrogenAnswers>): NitrogenAnswers {
     destinationCountry: text(input.destinationCountry, 80),
     destinationPort: text(input.destinationPort, 80),
     preferredOrigin: text(input.preferredOrigin, 80),
-    deliveryWindow: option(input.deliveryWindow, WINDOWS),
+    preferredMonths: options(input.preferredMonths, upcomingMonths()),
     packaging: option(input.packaging, PACKAGING),
     nitrogenSources: options(input.nitrogenSources, SOURCES),
     annualVolume: text(input.annualVolume, 20),
@@ -87,15 +88,16 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
       };
     }
     const now = new Date();
-    const refNo = refNumber(now);
+    const preparedFor = firstName(user.name);
     const row: NitrogenReport = {
       id: `nr-${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
-      refNo,
+      refNo: refNumber(now),
       at: now.toISOString(),
       userId: user.id,
       email: user.email.trim().toLowerCase(),
+      preparedFor,
       answers,
-      reportMd: generateNitrogenReport(answers, refNo, now),
+      reportMd: generateNitrogenReport(answers, { preparedFor, date: now }),
     };
     await saveNitrogenReport(row, admin ? 0 : limitFor(modules.limits.savedReports, user.plan));
     revalidatePath("/hub/nitrogen-report");

@@ -5,7 +5,7 @@ import { Markdown } from "@/components/hub/markdown";
 import { formatStamp } from "@/lib/content-types";
 import { getRecord } from "@/lib/data/records";
 import { NITROGEN_REPORTS } from "@/lib/data/tables";
-import { PRIORITIES } from "@/lib/nitrogen/engine";
+import { deliveryText, EMPTY_ANSWERS, generateNitrogenReport, PRIORITIES } from "@/lib/nitrogen/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,7 @@ export default async function NitrogenReportAdminPage({ params }: { params: Prom
   if (!report) notFound();
   const answers = report.answers ?? ({} as Partial<typeof report.answers>);
   const list = (values: string[] | undefined) => (values?.length ? values.join(", ") : "");
+  const text = report.answers ? generateNitrogenReport({ ...EMPTY_ANSWERS, ...report.answers }, { preparedFor: report.preparedFor, date: new Date(report.at) }) : report.reportMd;
   const facts: [string, string][] = [
     ["Crop", answers.cropType ?? ""],
     ["Area (ha)", answers.areaHectares ?? ""],
@@ -25,8 +26,8 @@ export default async function NitrogenReportAdminPage({ params }: { params: Prom
     ["Priority", PRIORITIES.find((item) => item.value === answers.priority)?.label ?? String(answers.priority ?? "")],
     ["Destination", [answers.destinationPort, answers.destinationCountry].filter(Boolean).join(", ")],
     ["Preferred origin", answers.preferredOrigin ?? ""],
-    ["Delivery window", answers.deliveryWindow ?? ""],
-    ["Packaging", answers.packaging ?? ""],
+    [answers.preferredMonths?.length || !answers.deliveryWindow ? "Preferred months" : "Delivery window", deliveryText({ preferredMonths: answers.preferredMonths ?? [], deliveryWindow: answers.deliveryWindow })],
+    ["Shipment packing", answers.packaging ?? ""],
     ["Annual volume", answers.annualVolume ?? ""],
     ["Warehouse capacity", answers.warehouseCapacity ?? ""],
   ];
@@ -63,7 +64,7 @@ export default async function NitrogenReportAdminPage({ params }: { params: Prom
         </Card>
         <Card className="overflow-hidden">
           <CardHeader title="Report" meta="Exactly as the member sees it." />
-          <div className="px-6 py-5">{report.reportMd ? <Markdown text={report.reportMd} /> : <p className="text-[13px] text-dim">This report has no text.</p>}</div>
+          <div className="px-6 py-5">{text ? <Markdown text={text} /> : <p className="text-[13px] text-dim">This report has no text.</p>}</div>
         </Card>
       </div>
     </div>

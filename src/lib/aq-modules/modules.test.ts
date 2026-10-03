@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { EMPTY_ANSWERS, generateNitrogenReport, orderDeskHref, rateBand } from "../nitrogen/engine";
+import { deliveryText, EMPTY_ANSWERS, generateNitrogenReport, monthLabel, orderDeskHref, rateBand, upcomingMonths } from "../nitrogen/engine";
 import { evaluateAlerts } from "./alerts";
 import type { MemberAlert } from "./member-types";
 import { parsePoints, signalFor } from "./signal";
@@ -73,13 +73,35 @@ test("modules unlock by plan rank, and admins see everything", () => {
   assert.equal(unlockedModules(DEFAULT_ACCESS, { plan: "enterprise" }).length, 7);
 });
 
-test("the nitrogen report adjusts the rate band for soil and carries the reference", () => {
+test("the nitrogen report adjusts the rate band for soil and is addressed to the member", () => {
   assert.deepEqual(rateBand("Winter wheat", "Loam"), [170, 220]);
   assert.deepEqual(rateBand("Winter wheat", "Sandy"), [180, 230]);
   assert.equal(rateBand("", "Loam"), null);
-  const report = generateNitrogenReport({ ...EMPTY_ANSWERS, destinationCountry: "Kenya", cropType: "Winter wheat", soilTexture: "Loam", areaHectares: "200" }, "NR-TEST-1", new Date("2026-09-30"));
-  assert.match(report, /NR-TEST-1/);
-  assert.match(report, /Kenya/);
+  const answers = {
+    ...EMPTY_ANSWERS,
+    destinationCountry: "Kenya",
+    destinationPort: "Mombasa",
+    nitrogenSources: ["Urea", "CAN"],
+    preferredMonths: ["2026-11", "2027-01"],
+    packaging: "Bulk",
+    cropType: "Winter wheat",
+    soilTexture: "Loam",
+    areaHectares: "200",
+  };
+  const report = generateNitrogenReport(answers, { preparedFor: "Kayode", date: new Date("2026-09-30") });
+  assert.match(report, /^# Nitrogen Assessment: Kenya \/ Mombasa \/ Urea, CAN$/m);
+  assert.match(report, /\*\*Prepared for:\*\* Kayode/);
+  assert.doesNotMatch(report, /Reference|Prepared by/);
+  assert.match(report, /\| Parameter \| Value \|\n\|---\|---\|\n\| Crop \| Winter wheat \|/);
+  assert.match(report, /\| Preferred months \| November 2026, January 2027 \|/);
+  assert.match(report, /\| Shipment packing \| Bulk \|/);
+  assert.match(generateNitrogenReport({ ...answers, destinationPort: "" }), /^# Nitrogen Assessment: Kenya \/ Urea, CAN$/m);
+});
+
+test("preferred months run twelve months from the current one and older reports keep their window", () => {
+  assert.deepEqual(upcomingMonths(new Date("2026-11-15T12:00:00Z"), 3), ["2026-11", "2026-12", "2027-01"]);
+  assert.equal(monthLabel("2027-01"), "Jan 2027");
+  assert.equal(deliveryText({ preferredMonths: [], deliveryWindow: "Next quarter" }), "Next quarter");
 });
 
 test("a report's quote link fills in the order desk product and destination", () => {

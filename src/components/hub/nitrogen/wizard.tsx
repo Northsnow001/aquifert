@@ -12,15 +12,17 @@ import { WORLD_COUNTRIES, type CountryOption } from "@/lib/countries";
 import {
   ADDITIVES,
   CROPS,
+  deliveryText,
   EMPTY_ANSWERS,
   METHODS,
+  monthLabel,
   PACKAGING,
   PRIORITIES,
   rateBand,
   SOILS,
   SOURCES,
   stepProblem,
-  WINDOWS,
+  upcomingMonths,
   type NitrogenAnswers,
 } from "@/lib/nitrogen/engine";
 import { sameCountry, type PortRecord } from "@/lib/ports";
@@ -86,7 +88,23 @@ function PillRadio({ name, legend, required, options, value, onChange }: { name:
   );
 }
 
-function ChipPick({ legend, hint, required, options, values, onChange }: { legend: string; hint?: string; required?: boolean; options: string[]; values: string[]; onChange: (values: string[]) => void }) {
+function ChipPick({
+  legend,
+  hint,
+  required,
+  options,
+  values,
+  onChange,
+  label = (item) => item,
+}: {
+  legend: string;
+  hint?: string;
+  required?: boolean;
+  options: string[];
+  values: string[];
+  onChange: (values: string[]) => void;
+  label?: (item: string) => string;
+}) {
   return (
     <fieldset>
       <legend className={labelClass}>
@@ -98,9 +116,14 @@ function ChipPick({ legend, hint, required, options, values, onChange }: { legen
           const active = values.includes(item);
           return (
             <label key={item} className={pill(active)}>
-              <input type="checkbox" checked={active} onChange={() => onChange(active ? values.filter((value) => value !== item) : [...values, item])} className="sr-only" />
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={() => onChange(active ? values.filter((value) => value !== item) : [...values, item])}
+                className="sr-only"
+              />
               {active ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden /> : null}
-              {item}
+              {label(item)}
             </label>
           );
         })}
@@ -174,7 +197,8 @@ function Preview({ answers }: { answers: NitrogenAnswers }) {
   const priority = PRIORITIES.find((item) => item.value === answers.priority);
   const rows: [string, string | null][] = [
     ["Destination", [answers.destinationCountry, answers.destinationPort].filter(Boolean).join(", ") || null],
-    ["Delivery", [answers.deliveryWindow, answers.packaging].filter(Boolean).join(" · ") || null],
+    ["Months", deliveryText(answers) || null],
+    ["Packing", answers.packaging || null],
     ["Sources", answers.nitrogenSources.join(", ") || null],
     ["Shipments", shipments ? `${shipments.count} of about ${tonnes(shipments.per)} t` : null],
     ["Crop", [answers.cropType, answers.soilTexture && `${answers.soilTexture.toLowerCase()} soil`].filter(Boolean).join(" on ") || null],
@@ -222,6 +246,7 @@ export function NitrogenWizard({ ports, onClose, onReset, blocked }: { ports: Po
   const band = rateBand(answers.cropType, answers.soilTexture);
   const total = seasonalN(answers);
   const shipments = shipmentPlan(answers);
+  const months = useMemo(() => upcomingMonths(), []);
   const countryPorts = useMemo(
     () => (answers.destinationCountry ? ports.filter((port) => sameCountry(port.country, answers.destinationCountry)).sort((a, b) => a.name.localeCompare(b.name)) : []),
     [answers.destinationCountry, ports],
@@ -370,8 +395,16 @@ export function NitrogenWizard({ ports, onClose, onReset, blocked }: { ports: Po
                   />
                 </Field>
               </div>
-              <PillRadio name="n-window" legend="Delivery window" required options={WINDOWS} value={answers.deliveryWindow} onChange={(value) => set("deliveryWindow", value)} />
-              <PillRadio name="n-packaging" legend="Packaging" required options={PACKAGING} value={answers.packaging} onChange={(value) => set("packaging", value)} />
+              <ChipPick
+                legend="Preferred month"
+                required
+                hint="Pick every month you could take delivery. More months give the desk more room on price."
+                options={months}
+                values={answers.preferredMonths}
+                onChange={(values) => set("preferredMonths", months.filter((month) => values.includes(month)))}
+                label={(month) => monthLabel(month)}
+              />
+              <PillRadio name="n-packaging" legend="Shipment packing" required options={PACKAGING} value={answers.packaging} onChange={(value) => set("packaging", value)} />
             </>
           ) : null}
 
