@@ -34,14 +34,14 @@ function sectionText(section: GuideSection) {
 function LimitsTable({ limits, plan }: { limits: GuideLimits; plan: Plan | null }) {
   return (
     <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-      <table className="w-full min-w-[420px] text-left text-[13.5px]">
+      <table className="w-full min-w-[420px] text-left text-[15px]">
         <thead>
-          <tr className="bg-s2 text-[12px] text-mid">
+          <tr className="bg-s2 text-[13px] text-mid">
             <th className="px-4 py-2.5 font-medium">Per month</th>
             {PLANS.map((p) => (
               <th key={p.key} className={`px-4 py-2.5 font-semibold ${p.key === plan ? "bg-blue-light text-blue" : "text-ink"}`}>
                 {p.label}
-                {p.key === plan ? <span className="ml-1.5 text-[11px] font-medium">· yours</span> : null}
+                {p.key === plan ? <span className="ml-1.5 text-[12px] font-medium">· yours</span> : null}
               </th>
             ))}
           </tr>
@@ -101,9 +101,9 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-blue">Help</p>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-blue">Help</p>
           <h1 className="mt-1 text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">User Guide</h1>
-          <p className="mt-1 max-w-xl text-[14px] leading-relaxed text-mid">
+          <p className="mt-1 max-w-xl text-[15.5px] leading-relaxed text-mid">
             Every part of Aquifert ONE explained, including what the numbers mean, not just where the buttons are.
           </p>
         </div>
@@ -135,7 +135,7 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
                   href={`#${section.id}`}
                   onClick={() => setCurrent(section.id)}
                   aria-current={active ? "location" : undefined}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] no-underline transition-colors lg:rounded-xl lg:px-3 ${
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[14.5px] no-underline transition-colors lg:rounded-xl lg:px-3 ${
                     active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08)]" : "bg-white/60 text-mid hover:bg-white hover:text-ink lg:bg-transparent"
                   }`}
                 >
@@ -150,8 +150,8 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
           {sections.length === 0 ? (
             <div className="aq-card flex flex-col items-center gap-3 px-6 py-12 text-center">
               <AquibotAvatar size={44} />
-              <p className="text-[15px] font-semibold text-ink">Nothing in the guide matches “{query}”.</p>
-              <p className="text-[13.5px] text-mid">Aquibot can answer questions about the market and the platform.</p>
+              <p className="text-[16.5px] font-semibold text-ink">Nothing in the guide matches “{query}”.</p>
+              <p className="text-[15px] text-mid">Aquibot can answer questions about the market and the platform.</p>
               <Link href={`/hub/aquibot?q=${encodeURIComponent(query)}`} className={`${btnPrimary} mt-1`}>
                 Ask Aquibot
               </Link>
@@ -168,13 +168,13 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
                     <h2 id={`${section.id}-title`} className="text-[18px] font-semibold tracking-[-0.01em] text-ink">
                       {section.title}
                     </h2>
-                    <p className="mt-0.5 text-[13.5px] text-mid">{section.summary}</p>
+                    <p className="mt-0.5 text-[15px] text-mid">{section.summary}</p>
                   </div>
                   {section.href ? (
                     <Link
                       href={section.href}
                       aria-label={`Open ${section.title}`}
-                      className="hidden shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[12.5px] font-semibold text-ink no-underline transition hover:border-blue/35 hover:text-blue sm:inline-flex"
+                      className="hidden shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-[13.5px] font-semibold text-ink no-underline transition hover:border-blue/35 hover:text-blue sm:inline-flex"
                     >
                       Open
                       <ArrowUpRight className="h-3.5 w-3.5" />
@@ -182,7 +182,7 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
                   ) : null}
                 </div>
 
-                <div className="mt-4 space-y-3 text-[14.5px] leading-[1.7] text-ink/85">
+                <div className="mt-4 space-y-3 text-[16px] leading-[1.7] text-ink/85">
                   {section.body.map((paragraph) => (
                     <p key={paragraph.slice(0, 32)}>{paragraph}</p>
                   ))}
@@ -192,8 +192,8 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
                   <dl className="mt-4 grid gap-2 sm:grid-cols-3">
                     {section.points.map((point) => (
                       <div key={point.term} className="rounded-xl bg-s2 px-3.5 py-3">
-                        <dt className="text-[13px] font-semibold text-ink">{point.term}</dt>
-                        <dd className="mt-0.5 text-[13px] leading-relaxed text-mid">{point.text}</dd>
+                        <dt className="text-[14.5px] font-semibold text-ink">{point.term}</dt>
+                        <dd className="mt-0.5 text-[14.5px] leading-relaxed text-mid">{point.text}</dd>
                       </div>
                     ))}
                   </dl>
@@ -202,14 +202,14 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
                 {section.id === "plans" ? <LimitsTable limits={limits} plan={plan} /> : null}
 
                 {section.tip ? (
-                  <p className="mt-4 flex items-start gap-2.5 rounded-xl bg-blue-light px-3.5 py-3 text-[13.5px] leading-relaxed text-ink">
+                  <p className="mt-4 flex items-start gap-2.5 rounded-xl bg-blue-light px-3.5 py-3 text-[15px] leading-relaxed text-ink">
                     <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-blue" />
                     {section.tip}
                   </p>
                 ) : null}
 
                 {section.href ? (
-                  <Link href={section.href} className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue no-underline sm:hidden">
+                  <Link href={section.href} className="mt-4 inline-flex items-center gap-1 text-[15px] font-semibold text-blue no-underline sm:hidden">
                     Open {section.title}
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </Link>
@@ -217,7 +217,7 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
               </section>
             ))
           )}
-          <p className="px-1 text-[12.5px] text-dim">
+          <p className="px-1 text-[13.5px] text-dim">
             Still stuck?{" "}
             <Link href="/hub/contact" className="font-semibold text-blue no-underline">
               Contact the desk

@@ -45,13 +45,13 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
 
       {files.length > 0 ? (
         <div className="mt-4 flex min-h-8 flex-wrap items-center justify-between gap-2">
-          <p role="status" className="text-[13px] text-mid">
+          <p role="status" className="text-[14.5px] text-mid">
             {matched.length} {matched.length === 1 ? "file" : "files"}
             {filtered ? " match your filters" : " in the library"}
             {pages > 1 ? ` · page ${page} of ${pages}` : ""}
           </p>
           {filtered ? (
-            <Link href={clearHref} className="inline-flex items-center gap-1 text-[13px] font-semibold text-blue no-underline hover:underline">
+            <Link href={clearHref} className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-blue no-underline hover:underline">
               <X className="h-3.5 w-3.5" aria-hidden />
               Clear filters
             </Link>

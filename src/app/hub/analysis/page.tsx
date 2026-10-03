@@ -35,7 +35,7 @@ function NoteTags({ item }: { item: NoteView }) {
         </Tag>
       ))}
       {item.note.regions.slice(0, 2).map((region) => (
-        <span key={region} className="rounded-full border border-border px-2 py-0.5 text-[10.5px] font-medium text-mid">
+        <span key={region} className="rounded-full border border-border px-2 py-0.5 text-[11.5px] font-medium text-mid">
           {region}
         </span>
       ))}
@@ -63,7 +63,7 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
         href={product ? `/hub/analysis?p=${product}` : "/hub/analysis"}
         aria-current={on ? "page" : undefined}
         scroll={false}
-        className={`inline-flex min-h-9 items-center rounded-full border px-3 py-1 text-[12.5px] font-semibold no-underline transition-colors ${
+        className={`inline-flex min-h-9 items-center rounded-full border px-3 py-1 text-[13.5px] font-semibold no-underline transition-colors ${
           on ? "border-teal-600 bg-teal-600 text-white shadow-sm" : "border-border bg-white text-mid hover:border-teal-500/60 hover:text-ink"
         }`}
       >
@@ -126,10 +126,10 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
             <div className="flex flex-col p-5 sm:p-6">
               <NoteTags item={featured} />
               <h2 className="mt-2.5 text-[21px] font-semibold leading-snug tracking-[-0.015em] text-ink group-hover:text-blue md:text-[24px]">{featured.note.title}</h2>
-              <p className="mt-2 text-[14px] leading-relaxed text-mid">{featured.summary}</p>
+              <p className="mt-2 text-[15.5px] leading-relaxed text-mid">{featured.summary}</p>
               <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-4">
-                <p className="text-[12.5px] text-dim">{byline(featured.note)}</p>
-                <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-blue">
+                <p className="text-[13.5px] text-dim">{byline(featured.note)}</p>
+                <span className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-blue">
                   Read the note <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </div>
@@ -143,9 +143,9 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
                   <FeedThumb product={item.product} size={64} />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <NoteTags item={item} />
-                    <h2 className="mt-2 text-[16px] font-semibold leading-snug text-ink group-hover:text-blue">{item.note.title}</h2>
-                    <p className="mt-1 line-clamp-3 text-[13px] leading-relaxed text-mid">{item.summary}</p>
-                    <p className="mt-auto pt-3 text-[12px] text-dim">{byline(item.note)}</p>
+                    <h2 className="mt-2 text-[17px] font-semibold leading-snug text-ink group-hover:text-blue">{item.note.title}</h2>
+                    <p className="mt-1 line-clamp-3 text-[14.5px] leading-relaxed text-mid">{item.summary}</p>
+                    <p className="mt-auto pt-3 text-[13px] text-dim">{byline(item.note)}</p>
                   </div>
                 </Link>
               ))}

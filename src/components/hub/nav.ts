@@ -27,6 +27,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ModuleKey } from "@/lib/aq-modules/types";
+import type { Plan } from "@/lib/session-shared";
 
 export type HubSection = "Main" | "AQ ONE Free plan" | "AQ Analytics" | "Desk tools" | "You";
 
@@ -43,6 +44,8 @@ export type HubNavItem = {
   module?: ModuleKey;
   /** Chip colour, so each section reads at a glance. */
   tone?: "blue" | "amber" | "rose";
+  /** Hidden from members on the free AQ ONE plan. */
+  paidOnly?: boolean;
 };
 
 export const HUB_NAV: HubNavItem[] = [
@@ -53,6 +56,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Dashboard",
     icon: LayoutDashboard,
     section: "Main",
+    paidOnly: true,
     tip: "Your day at a glance: ask Aquibot, see your usage and recent requests, the latest Telex with what moved, and a plain-language briefing tuned to how you buy.",
   },
   {
@@ -67,8 +71,8 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "library",
     href: "/hub/library",
-    label: "Library",
-    short: "Library",
+    label: "Weekly Report & Analysis",
+    short: "Reports",
     icon: Archive,
     section: "Main",
     tip: "Every weekly report and research note the desk has published. Filter by collection, year or access, read the summary and open the file in one click.",
@@ -316,8 +320,17 @@ export const ADMIN_LINK = { href: "/admin", label: "Admin console", icon: Layout
 
 export const SECTIONS: HubSection[] = ["Main", "AQ ONE Free plan", "AQ Analytics", "Desk tools", "You"];
 
+export const hasPaidPages = (plan: Plan, admin: boolean) => admin || plan !== "core";
+
+export function navFor(plan: Plan, admin: boolean) {
+  const paid = hasPaidPages(plan, admin);
+  return HUB_NAV.filter((item) => paid || !item.paidOnly);
+}
+
 /** Phone tab bar: the four most-used places plus "More", which opens the full menu. */
-export const TAB_KEYS = ["dashboard", "home", "telex", "aquibot"];
+export function tabKeysFor(plan: Plan, admin: boolean) {
+  return hasPaidPages(plan, admin) ? ["dashboard", "home", "telex", "aquibot"] : ["home", "library", "telex", "aquibot"];
+}
 
 export const TOUR_STOPS: { key: string; title: string; body: string }[] = [
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },

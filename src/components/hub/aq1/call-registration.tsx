@@ -108,8 +108,8 @@ export function CallRegistration({
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#1f7a45]" aria-hidden />
           <div className="min-w-0">
-            <p className="text-[15px] font-semibold text-ink">You&apos;re registered for this call</p>
-            <p className="mt-0.5 text-[13px] leading-relaxed text-mid">
+            <p className="text-[16.5px] font-semibold text-ink">You&apos;re registered for this call</p>
+            <p className="mt-0.5 text-[14.5px] leading-relaxed text-mid">
               Your place is saved under {email}. Add the call to your calendar so the time and link are to hand.
             </p>
           </div>
@@ -122,7 +122,7 @@ export function CallRegistration({
         </div>
         <div className="mt-4 border-t border-[#cdebd8] pt-3">
           {confirming ? (
-            <div className="flex flex-wrap items-center gap-2 text-[13px]">
+            <div className="flex flex-wrap items-center gap-2 text-[14.5px]">
               <span className="text-mid">Cancel your place on this call?</span>
               <button type="button" onClick={cancel} disabled={pending} className="inline-flex items-center gap-1.5 rounded-full bg-danger px-3.5 py-1.5 font-semibold text-white disabled:opacity-60">
                 {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} Yes, cancel
@@ -132,7 +132,7 @@ export function CallRegistration({
               </button>
             </div>
           ) : (
-            <button type="button" onClick={() => setConfirming(true)} className="inline-flex items-center gap-1 text-[13px] font-semibold text-mid hover:text-danger">
+            <button type="button" onClick={() => setConfirming(true)} className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-mid hover:text-danger">
               <X className="h-3.5 w-3.5" /> Cancel registration
             </button>
           )}
@@ -206,10 +206,10 @@ export function CallRegistration({
           aria-describedby="cc-question-hint cc-question-count"
         />
         <div className="mt-1.5 flex items-start justify-between gap-3">
-          <p id="cc-question-hint" className="text-[12px] leading-relaxed text-dim">
+          <p id="cc-question-hint" className="text-[13px] leading-relaxed text-dim">
             The desk groups questions by theme and answers the most requested ones live.
           </p>
-          <p id="cc-question-count" className={`shrink-0 text-[12px] tabular-nums ${nearLimit ? "font-semibold text-[#9a5b00]" : "text-dim"}`} aria-live={nearLimit ? "polite" : "off"}>
+          <p id="cc-question-count" className={`shrink-0 text-[13px] tabular-nums ${nearLimit ? "font-semibold text-[#9a5b00]" : "text-dim"}`} aria-live={nearLimit ? "polite" : "off"}>
             {question.length} / {MAX_QUESTION}
           </p>
         </div>
@@ -218,8 +218,8 @@ export function CallRegistration({
       <label htmlFor="cc-reminders" className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border bg-s2/50 px-3.5 py-3">
         <input id="cc-reminders" type="checkbox" checked={reminders} onChange={(event) => setReminders(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-teal-600" />
         <span>
-          <span className="block text-[13.5px] font-medium text-ink">Send me reminders</span>
-          <span className="block text-[12px] leading-relaxed text-dim">The desk reminds you by email before the call starts.</span>
+          <span className="block text-[15px] font-medium text-ink">Send me reminders</span>
+          <span className="block text-[13px] leading-relaxed text-dim">The desk reminds you by email before the call starts.</span>
         </span>
       </label>
 
@@ -234,7 +234,7 @@ export function CallRegistration({
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {pending ? "Registering" : "Register for the call"}
         </button>
-        <p className="text-[12px] text-dim">Free for every member. Only the Aquifert desk sees your details.</p>
+        <p className="text-[13px] text-dim">Free for every member. Only the Aquifert desk sees your details.</p>
       </div>
     </form>
   );
@@ -261,7 +261,7 @@ export function QuickRegister({ callId, registered, defaults }: { callId: string
       disabled={pending}
       aria-pressed={isRegistered}
       title={isRegistered ? "Select to cancel your place" : undefined}
-      className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-semibold transition-colors disabled:opacity-60 ${
+      className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-semibold transition-colors disabled:opacity-60 ${
         isRegistered ? "border-[#cdebd8] bg-[#f1faf4] text-[#1f7a45] hover:border-red-200 hover:bg-red-50 hover:text-danger" : "border-border bg-white text-ink hover:border-blue/35 hover:text-blue"
       }`}
     >

@@ -44,8 +44,8 @@ export function BriefEmailToggle({ initial, email }: { initial: boolean; email: 
         <Mail className="h-4 w-4" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[14px] font-semibold text-ink">Email me each issue</p>
-        <p className="mt-0.5 text-[12.5px] leading-relaxed text-mid">
+        <p className="text-[15.5px] font-semibold text-ink">Email me each issue</p>
+        <p className="mt-0.5 text-[13.5px] leading-relaxed text-mid">
           {on ? `We'll send each issue to ${email} once email delivery is switched on for your account.` : "Get every issue in your inbox as well as here."}
         </p>
       </div>

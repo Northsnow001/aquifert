@@ -47,7 +47,7 @@ export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk" }: { id
         {copied ? <Check className="h-4 w-4 text-teal-600" /> : <Link2 className="h-4 w-4" />} {copied ? "Copied" : "Copy link"}
       </button>
       {confirming ? (
-        <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 p-1 pl-3 text-[13px] text-danger">
+        <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 p-1 pl-3 text-[14.5px] text-danger">
           Delete for good?
           <button type="button" onClick={remove} disabled={pending} className="h-9 rounded-full bg-danger px-3.5 font-semibold text-white disabled:opacity-60">
             {pending ? "Deleting…" : "Delete"}

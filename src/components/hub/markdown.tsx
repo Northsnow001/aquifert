@@ -8,7 +8,7 @@ type Align = "left" | "center" | "right";
  * quotes, lists, links, rules and pipe tables with alignment. Images render only when `images` is set,
  * so model output can never load third-party URLs.
  */
-export function Markdown({ text, className = "text-[14px]", images = false }: { text: string; className?: string; images?: boolean }) {
+export function Markdown({ text, className = "text-[15.5px]", images = false }: { text: string; className?: string; images?: boolean }) {
   return <div className={`space-y-2.5 leading-relaxed ${className}`}>{blocks(text, { images })}</div>;
 }
 
@@ -33,7 +33,7 @@ function inline(text: string, keyBase: string, options: Options = { images: fals
         ),
       );
     } else if (token.startsWith("**") || token.startsWith("__")) out.push(<strong key={key} className="font-semibold text-ink">{inline(token.slice(2, -2), key, options)}</strong>);
-    else if (token.startsWith("`")) out.push(<code key={key} className="rounded bg-s2 px-1 py-px font-mono text-[12.5px]">{token.slice(1, -1)}</code>);
+    else if (token.startsWith("`")) out.push(<code key={key} className="rounded bg-s2 px-1 py-px font-mono text-[13.5px]">{token.slice(1, -1)}</code>);
     else if (token.startsWith("[")) {
       const label = token.slice(1, token.indexOf("]("));
       out.push(
@@ -87,7 +87,7 @@ function blocks(text: string, options: Options): ReactNode[] {
       while (i < lines.length && !lines[i].trim().startsWith("```")) code.push(lines[i++]);
       i += 1;
       out.push(
-        <pre key={key++} className="overflow-x-auto rounded-lg bg-s2 px-3 py-2 font-mono text-[12.5px]">
+        <pre key={key++} className="overflow-x-auto rounded-lg bg-s2 px-3 py-2 font-mono text-[13.5px]">
           {code.join("\n")}
         </pre>,
       );
@@ -102,7 +102,7 @@ function blocks(text: string, options: Options): ReactNode[] {
 
     const heading = line.match(/^(#{1,6})\s+(.*)$/);
     if (heading) {
-      const size = heading[1].length <= 2 ? "text-[15.5px]" : "text-[14.5px]";
+      const size = heading[1].length <= 2 ? "text-[17px]" : "text-[16px]";
       out.push(
         <p key={key++} className={`pt-1 font-bold text-ink ${size}`}>
           {inline(heading[2], `h${key}`, options)}
@@ -120,7 +120,7 @@ function blocks(text: string, options: Options): ReactNode[] {
       while (i < lines.length && isTableRow(lines[i])) rows.push(cells(lines[i++]));
       out.push(
         <div key={key++} className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-left text-[13px]">
+          <table className="w-full text-left text-[14.5px]">
             <thead className="bg-s2">
               <tr>
                 {head.map((cell, c) => (

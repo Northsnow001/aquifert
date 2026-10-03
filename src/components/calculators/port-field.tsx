@@ -1,14 +1,15 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { CountrySelect } from "@/components/app/country-select";
 import { FlagMark } from "@/components/calculators/flag-mark";
 import { portCountries } from "@/lib/countries";
 import { searchPorts, type PortRecord } from "@/lib/ports";
 
-const labelClass = "mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid";
-const countryClass =
+const LABEL_CLASS = "mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid";
+const COUNTRY_CLASS =
   "flex w-full items-center gap-2.5 rounded-lg border border-border bg-white px-3 py-2.5 text-start text-sm text-ink outline-none transition hover:border-[#cdd7e1] focus-visible:border-blue";
+const INPUT_CLASS = "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-blue";
 
 const portLabel = (port: PortRecord) => `${port.name} (${port.code})`;
 
@@ -18,6 +19,10 @@ export function PortField({
   value,
   onSelect,
   ports,
+  labelClass = LABEL_CLASS,
+  inputClass = INPUT_CLASS,
+  countryClass = COUNTRY_CLASS,
+  hint,
 }: {
   label: string;
   /** Shows a country dropdown above the port search and narrows it to that country. */
@@ -25,6 +30,10 @@ export function PortField({
   value: PortRecord | null;
   onSelect: (port: PortRecord | null) => void;
   ports: PortRecord[];
+  labelClass?: string;
+  inputClass?: string;
+  countryClass?: string;
+  hint?: ReactNode;
 }) {
   const id = useId();
   const [country, setCountry] = useState(value?.country ?? "");
@@ -37,7 +46,11 @@ export function PortField({
     [country, ports],
   );
   const typing = query.trim().length >= 2 && !(value && query === portLabel(value));
-  const matches = useMemo(() => (typing ? searchPorts(query, scoped, 20) : country ? scoped : []), [typing, query, scoped, country]);
+  const matches = useMemo(() => {
+    if (!typing) return country ? scoped : [];
+    const local = searchPorts(query, scoped, 20);
+    return local.length || !country ? local : searchPorts(query, ports, 20);
+  }, [typing, query, scoped, country, ports]);
   const countryName = countries.find((option) => option.value === country)?.label ?? country;
 
   function changeCountry(next: string) {
@@ -77,10 +90,11 @@ export function PortField({
           value={query}
           autoComplete="off"
           placeholder={country ? `Search ports in ${countryName}…` : "Search port, LOCODE, country..."}
-          className="w-full rounded-lg border border-border bg-white px-3 py-2.5 pr-12 text-sm text-ink outline-none focus:border-blue"
+          className={`${inputClass} pr-12`}
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
+            if (value) onSelect(null);
           }}
           onFocus={() => setOpen(true)}
           onClick={() => setOpen(true)}
@@ -120,6 +134,7 @@ export function PortField({
           ))}
         </div>
       ) : null}
+      {hint}
     </div>
   );
 }

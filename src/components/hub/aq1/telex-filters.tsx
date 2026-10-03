@@ -13,7 +13,7 @@ const sameSet = (a: TelexProduct[], b: TelexProduct[]) => a.length === b.length 
 const describe = (list: TelexProduct[]) => (list.length ? ordered(list).join(", ") : "every product");
 
 const chipClass = (active: boolean) =>
-  `inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-[12.5px] font-semibold transition-colors ${
+  `inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-[13.5px] font-semibold transition-colors ${
     active ? "border-teal-600 bg-teal-600 text-white shadow-sm" : "border-border bg-white text-mid hover:border-teal-500/60 hover:text-ink"
   }`;
 
@@ -103,7 +103,7 @@ export function TelexFilters({
           return (
             <button key={product} type="button" aria-pressed={active} onClick={() => toggle(product)} className={chipClass(active)}>
               {product}
-              <span className={`rounded-full px-1.5 text-[10.5px] tabular-nums ${active ? "bg-white/25 text-white" : "bg-s3 text-dim"}`} aria-hidden>
+              <span className={`rounded-full px-1.5 text-[11.5px] tabular-nums ${active ? "bg-white/25 text-white" : "bg-s3 text-dim"}`} aria-hidden>
                 {counts[product]}
               </span>
               <span className="sr-only">, {counts[product]} flashes</span>
@@ -132,7 +132,7 @@ export function TelexFilters({
             maxLength={120}
             onChange={(event) => onType(event.target.value)}
             placeholder="Search headlines, tags and text, e.g. India tender"
-            className="block h-11 w-full rounded-xl border border-border bg-white pl-10 pr-10 text-[14px] text-ink shadow-[inset_0_1px_2px_rgb(16_38_59/0.04)] outline-none placeholder:text-dim hover:border-[#cdd7e1] [&::-webkit-search-cancel-button]:hidden"
+            className="block h-11 w-full rounded-xl border border-border bg-white pl-10 pr-10 text-[15.5px] text-ink shadow-[inset_0_1px_2px_rgb(16_38_59/0.04)] outline-none placeholder:text-dim hover:border-[#cdd7e1] [&::-webkit-search-cancel-button]:hidden"
           />
           {text ? (
             <button
@@ -154,7 +154,7 @@ export function TelexFilters({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-[12.5px]">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 text-[13.5px]">
         <p className="text-mid" aria-live="polite">
           {pending ? (
             <span className="inline-flex items-center gap-1.5">

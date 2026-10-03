@@ -55,17 +55,17 @@ export default async function MarketDataPage({ searchParams }: { searchParams: P
                 </div>
               ) : null}
               <PriceChart key={selected.id} title={`${selected.label} ${selected.basis}`} unit={selected.unit} points={sortedPoints(selected)} />
-              <p className="mt-3 text-[12px] text-dim">Hover or tap the chart to read any week. With the chart focused, the arrow keys step through each price.</p>
+              <p className="mt-3 text-[13px] text-dim">Hover or tap the chart to read any week. With the chart focused, the arrow keys step through each price.</p>
             </Panel>
           ) : null}
 
           {groups.map(({ group, items }) => (
             <Panel key={group} title={group} sub={`${items.length} series · select one to chart it`} icon={Layers} className="aq-rise">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[340px] text-[13px]">
+                <table className="w-full min-w-[340px] text-[14.5px]">
                   <caption className="sr-only">{group} price series: latest price, week-on-week change, four-week change, high and low</caption>
                   <thead>
-                    <tr className="border-b border-border bg-s2 text-left font-mono text-[10px] uppercase tracking-wider text-mid">
+                    <tr className="border-b border-border bg-s2 text-left font-mono text-[11px] uppercase tracking-wider text-mid">
                       <th scope="col" className="px-4 py-2.5 font-semibold">Series</th>
                       <th scope="col" className="px-3 py-2.5 text-right font-semibold">Latest</th>
                       <th scope="col" className="px-3 py-2.5 text-right font-semibold">W/W</th>
@@ -86,7 +86,7 @@ export default async function MarketDataPage({ searchParams }: { searchParams: P
                           <th scope="row" className="px-4 py-3 text-left font-normal">
                             <Link href={`?s=${encodeURIComponent(item.id)}#chart`} aria-current={active ? "true" : undefined} className="group block no-underline">
                               <span className="block font-semibold text-ink group-hover:text-blue">{item.label}</span>
-                              <span className="block text-[12px] text-dim">
+                              <span className="block text-[13px] text-dim">
                                 {item.basis} · {item.unit}
                               </span>
                             </Link>
@@ -103,7 +103,7 @@ export default async function MarketDataPage({ searchParams }: { searchParams: P
                               </td>
                             </>
                           ) : (
-                            <td colSpan={6} className="px-3 py-3 text-right text-[12.5px] text-dim">
+                            <td colSpan={6} className="px-3 py-3 text-right text-[13.5px] text-dim">
                               No prices yet
                             </td>
                           )}

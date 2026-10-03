@@ -50,7 +50,7 @@ export function PriceChart({ title, unit, points, initialRange = "1Y", height = 
   }, [points, range]);
 
   if (points.length < 2) {
-    return <p className="rounded-2xl border border-dashed border-border px-5 py-10 text-center text-[13px] text-mid">The desk needs at least two prices on this series to draw a chart.</p>;
+    return <p className="rounded-2xl border border-dashed border-border px-5 py-10 text-center text-[14.5px] text-mid">The desk needs at least two prices on this series to draw a chart.</p>;
   }
 
   const n = visible.length;
@@ -95,13 +95,13 @@ export function PriceChart({ title, unit, points, initialRange = "1Y", height = 
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[12px] font-medium text-mid">
+          <p className="text-[13px] font-medium text-mid">
             {formatDay(first.date)} to {formatDay(last.date)}
           </p>
           <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-ink">
             <span className="text-[24px] font-semibold tabular-nums tracking-[-0.02em]">{num(last.value)}</span>
-            <span className="text-[12.5px] text-dim">{unit}</span>
-            <span className={`text-[13px] font-semibold tabular-nums ${TONE_TEXT[tone]}`}>{signedPct(changePct)} over the range</span>
+            <span className="text-[13.5px] text-dim">{unit}</span>
+            <span className={`text-[14.5px] font-semibold tabular-nums ${TONE_TEXT[tone]}`}>{signedPct(changePct)} over the range</span>
           </p>
         </div>
         <div className={segWrap} role="group" aria-label="Chart range">
@@ -153,7 +153,7 @@ export function PriceChart({ title, unit, points, initialRange = "1Y", height = 
           </svg>
 
           {ticks.map((tick) => (
-            <span key={tick} className="pointer-events-none absolute left-full ml-2 -translate-y-1/2 font-mono text-[10.5px] tabular-nums text-dim" style={{ top: `${y(tick) / 10}%` }}>
+            <span key={tick} className="pointer-events-none absolute left-full ml-2 -translate-y-1/2 font-mono text-[11.5px] tabular-nums text-dim" style={{ top: `${y(tick) / 10}%` }}>
               {num(tick)}
             </span>
           ))}
@@ -166,7 +166,7 @@ export function PriceChart({ title, unit, points, initialRange = "1Y", height = 
             .map((mark) => (
               <span
                 key={mark.text}
-                className={`pointer-events-none absolute whitespace-nowrap rounded-md bg-white/90 px-1.5 py-0.5 text-[10.5px] font-semibold tabular-nums shadow-sm ring-1 ring-border ${mark.above ? "text-[#1b7a47]" : "text-[#b53a2f]"}`}
+                className={`pointer-events-none absolute whitespace-nowrap rounded-md bg-white/90 px-1.5 py-0.5 text-[11.5px] font-semibold tabular-nums shadow-sm ring-1 ring-border ${mark.above ? "text-[#1b7a47]" : "text-[#b53a2f]"}`}
                 style={{ left: `${x(mark.i) / 10}%`, top: `calc(${y(values[mark.i]) / 10}% ${mark.above ? "- 26px" : "+ 8px"})`, transform: anchor(x(mark.i) / 10) }}
               >
                 {mark.text}
@@ -183,12 +183,12 @@ export function PriceChart({ title, unit, points, initialRange = "1Y", height = 
                 className="pointer-events-none absolute top-1 z-10 min-w-[128px] rounded-xl border border-border bg-white/95 px-3 py-2 shadow-[var(--aq-shadow-card)] backdrop-blur"
                 style={{ left: `${x(activeIndex) / 10}%`, transform: anchor(x(activeIndex) / 10) }}
               >
-                <p className="font-mono text-[10.5px] uppercase tracking-wide text-dim">{formatDay(active.date)}</p>
-                <p className="text-[15px] font-semibold tabular-nums text-ink">
-                  {num(active.value)} <span className="text-[11px] font-medium text-dim">{unit}</span>
+                <p className="font-mono text-[11.5px] uppercase tracking-wide text-dim">{formatDay(active.date)}</p>
+                <p className="text-[16.5px] font-semibold tabular-nums text-ink">
+                  {num(active.value)} <span className="text-[12px] font-medium text-dim">{unit}</span>
                 </p>
                 {activeIndex > 0 ? (
-                  <p className="text-[11px] tabular-nums text-mid">{signedPct(first.value ? Math.round(((active.value - first.value) / first.value) * 1000) / 10 : 0)} since range start</p>
+                  <p className="text-[12px] tabular-nums text-mid">{signedPct(first.value ? Math.round(((active.value - first.value) / first.value) * 1000) / 10 : 0)} since range start</p>
                 ) : null}
               </div>
             </>
@@ -199,7 +199,7 @@ export function PriceChart({ title, unit, points, initialRange = "1Y", height = 
           {xLabels.map((i, k) => (
             <span
               key={i}
-              className={`absolute whitespace-nowrap font-mono text-[10.5px] text-dim ${k % 2 === 1 ? "hidden sm:block" : ""}`}
+              className={`absolute whitespace-nowrap font-mono text-[11.5px] text-dim ${k % 2 === 1 ? "hidden sm:block" : ""}`}
               style={{ left: `${x(i) / 10}%`, transform: i === 0 ? "translateX(0)" : i === n - 1 ? "translateX(-100%)" : "translateX(-50%)" }}
             >
               {shortDay(visible[i].date, spanDays > 300)}

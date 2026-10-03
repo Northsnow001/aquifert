@@ -15,7 +15,7 @@ import { LanguageMenu } from "@/components/app/language-menu";
 import { startTour, Tour } from "@/components/app/tour";
 import { useStoredFlag } from "@/components/app/use-stored-flag";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
-import { ADMIN_LINK, HUB_NAV, isActive, pageTitle, SECTIONS, TAB_KEYS, type HubNavItem } from "@/components/hub/nav";
+import { ADMIN_LINK, HUB_NAV, isActive, navFor, pageTitle, SECTIONS, tabKeysFor, TOUR_STOPS, type HubNavItem } from "@/components/hub/nav";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
 
@@ -52,12 +52,14 @@ const SECTION_NOTE: Partial<Record<string, string>> = { "AQ ONE Free plan": "not
 function NavList({
   pathname,
   collapsed,
+  items,
   admin,
   unlocked,
   onNavigate,
 }: {
   pathname: string;
   collapsed: boolean;
+  items: HubNavItem[];
   admin: boolean;
   unlocked: string[];
   onNavigate?: () => void;
@@ -71,11 +73,11 @@ function NavList({
             <div className="mx-auto mb-1 h-px w-6 bg-black/[.07] first:hidden" />
           ) : section === "Main" ? null : (
             <div className="mt-1 border-t border-black/[.06] px-2.5 pb-1 pt-3">
-              <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-teal-700">{t(`section.${SECTION_KEY[section]}`)}</p>
-              {SECTION_NOTE[section] ? <p className="mt-0.5 text-[11px] text-dim">{t(SECTION_NOTE[section])}</p> : null}
+              <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-teal-700">{t(`section.${SECTION_KEY[section]}`)}</p>
+              {SECTION_NOTE[section] ? <p className="mt-0.5 text-[12px] text-dim">{t(SECTION_NOTE[section])}</p> : null}
             </div>
           )}
-          {HUB_NAV.filter((item) => item.section === section).map((item) => {
+          {items.filter((item) => item.section === section).map((item) => {
             const active = isActive(pathname, item.href);
             const locked = Boolean(item.module && !unlocked.includes(item.module));
             const label = t(`nav.${item.key}`);
@@ -86,12 +88,12 @@ function NavList({
                   onClick={onNavigate}
                   title={collapsed ? `${label}${locked ? " (locked)" : ""}` : undefined}
                   aria-current={active ? "page" : undefined}
-                  className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl py-[7px] text-[13.5px] no-underline transition-colors ${
+                  className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl py-[7px] text-[14.5px] no-underline transition-colors ${
                     collapsed ? "justify-center px-0" : "px-2.5 pr-8"
                   } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"}`}
                 >
                   <NavIcon item={item} locked={locked} />
-                  {collapsed ? null : <span className="min-w-0 flex-1 truncate">{label}</span>}
+                  {collapsed ? null : <span className="line-clamp-2 min-w-0 flex-1 leading-snug">{label}</span>}
                   {!collapsed && locked ? (
                     <Lock className="h-3.5 w-3.5 shrink-0 text-dim" aria-label="Locked, upgrade available" />
                   ) : null}
@@ -107,7 +109,7 @@ function NavList({
               href={ADMIN_LINK.href}
               onClick={onNavigate}
               title={collapsed ? t("top.admin") : undefined}
-              className={`aq-nav-link flex items-center gap-3 rounded-xl py-[7px] text-[13.5px] font-medium text-mid no-underline transition-colors hover:bg-white/70 hover:text-ink ${
+              className={`aq-nav-link flex items-center gap-3 rounded-xl py-[7px] text-[15px] font-medium text-mid no-underline transition-colors hover:bg-white/70 hover:text-ink ${
                 collapsed ? "justify-center px-0" : "px-2.5"
               }`}
             >
@@ -144,7 +146,7 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
     };
   }, [open]);
 
-  const item = "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-ink no-underline hover:bg-s2";
+  const item = "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[15px] font-medium text-ink no-underline hover:bg-s2";
   return (
     <div ref={box} className="relative">
       <button
@@ -155,7 +157,7 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
         aria-label={t("top.account")}
         className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-black/[.05] sm:pr-2"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[11.5px] font-bold text-white shadow-sm">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12.5px] font-bold text-white shadow-sm">
           {initials(user.name)}
         </span>
         <ChevronDown className={`hidden h-3.5 w-3.5 text-dim transition-transform sm:block ${open ? "rotate-180" : ""}`} />
@@ -163,9 +165,9 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
       {open ? (
         <div role="menu" className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-64 rounded-2xl border border-border bg-white p-1.5">
           <div translate="no" className="px-2.5 pb-2.5 pt-2">
-            <p className="truncate text-[14px] font-semibold text-ink">{user.name}</p>
-            <p className="truncate text-[12px] text-dim">{user.email}</p>
-            <span className="mt-2 inline-flex rounded-full bg-blue-light px-2 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wide text-blue">
+            <p className="truncate text-[15.5px] font-semibold text-ink">{user.name}</p>
+            <p className="truncate text-[13px] text-dim">{user.email}</p>
+            <span className="mt-2 inline-flex rounded-full bg-blue-light px-2 py-0.5 font-mono text-[11.5px] font-semibold uppercase tracking-wide text-blue">
               {PLAN_LABEL[user.plan]}
             </span>
           </div>
@@ -241,8 +243,11 @@ export function AppShell({
     };
   }, [drawer]);
 
+  const nav = useMemo(() => navFor(user.plan, admin), [user.plan, admin]);
+  const tourStops = useMemo(() => TOUR_STOPS.filter((stop) => nav.some((item) => item.key === stop.key)), [nav]);
+
   const palette = useMemo<PaletteItem[]>(() => {
-    const pages: PaletteItem[] = HUB_NAV.map((item) => ({
+    const pages: PaletteItem[] = nav.map((item) => ({
       href: item.href,
       label: item.module && !unlocked.includes(item.module) ? `${t(`nav.${item.key}`)} (locked)` : t(`nav.${item.key}`),
       group: item.section === "You" ? "Account" : item.section === "Main" ? "Go to" : item.section,
@@ -255,9 +260,9 @@ export function AppShell({
       { href: "#tour", label: t("top.tour"), group: "Help", icon: <Sparkles />, action: startTour },
     ];
     return [...pages, ...account, ...(admin ? [{ href: "/admin", label: t("top.admin"), group: "Help", icon: <ADMIN_LINK.icon /> }] : [])];
-  }, [admin, unlocked, t]);
+  }, [nav, admin, unlocked, t]);
 
-  const tabs = TAB_KEYS.map((key) => HUB_NAV.find((item) => item.key === key)!);
+  const tabs = tabKeysFor(user.plan, admin).map((key) => HUB_NAV.find((item) => item.key === key)!);
 
   return (
     <div className="aq-app aq-frame h-dvh overflow-hidden lg:p-2.5 xl:flex xl:gap-2.5">
@@ -269,18 +274,18 @@ export function AppShell({
       </a>
       <div className="aq-canvas flex h-full min-w-0 overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)] xl:flex-1">
         <aside
-          className={`aq-rail hidden shrink-0 flex-col border-r border-black/[.06] transition-[width] duration-200 lg:flex ${collapsed ? "w-[76px]" : "w-[256px]"}`}
+          className={`aq-rail hidden shrink-0 flex-col border-r border-black/[.06] transition-[width] duration-200 lg:flex ${collapsed ? "w-[76px]" : "w-[272px]"}`}
         >
           <div className={`flex h-16 shrink-0 items-center ${collapsed ? "justify-center" : "px-5"}`}>
             <Brand compact={collapsed} />
           </div>
-          <NavList pathname={pathname} collapsed={collapsed} admin={admin} unlocked={unlocked} />
+          <NavList pathname={pathname} collapsed={collapsed} items={nav} admin={admin} unlocked={unlocked} />
           <div className="shrink-0 border-t border-black/[.06] p-3">
             <button
               type="button"
               onClick={dockOpen && !railPinned ? closeAquibot : toggleRail}
               aria-label={collapsed ? t("top.expand") : t("top.collapse")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-dim transition hover:bg-white hover:text-ink hover:shadow-sm"
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium text-dim transition hover:bg-white hover:text-ink hover:shadow-sm"
             >
               {collapsed ? (
                 <ChevronsRight className="h-4 w-4" />
@@ -306,7 +311,7 @@ export function AppShell({
             <div className="lg:hidden">
               <Brand />
             </div>
-            <div className="hidden min-w-0 items-center gap-2 text-[14px] lg:flex" aria-label="Current page">
+            <div className="hidden min-w-0 items-center gap-2 text-[15.5px] lg:flex" aria-label="Current page">
               <span className="text-dim">Aquifert ONE</span>
               <span className="text-[#c5cfd9]">/</span>
               <span className="truncate font-semibold text-ink">{title}</span>
@@ -317,11 +322,11 @@ export function AppShell({
                 type="button"
                 onClick={openPalette}
                 aria-label="Search"
-                className="hidden h-9 w-56 items-center gap-2 rounded-full border border-black/[.08] bg-black/[.03] px-3.5 text-[13px] text-dim transition hover:bg-black/[.05] md:flex"
+                className="hidden h-9 w-56 items-center gap-2 rounded-full border border-black/[.08] bg-black/[.03] px-3.5 text-[14.5px] text-dim transition hover:bg-black/[.05] md:flex"
               >
                 <Search className="h-3.5 w-3.5" />
                 <span className="flex-1 text-start">{t("top.search")}</span>
-                <kbd className="rounded border border-black/10 px-1 font-mono text-[10px] font-semibold">Ctrl K</kbd>
+                <kbd className="rounded border border-black/10 px-1 font-mono text-[11px] font-semibold">Ctrl K</kbd>
               </button>
               <button type="button" onClick={openPalette} aria-label="Search" className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-black/[.05] md:hidden">
                 <Search className="h-[18px] w-[18px]" />
@@ -331,7 +336,7 @@ export function AppShell({
                 onClick={() => (onAquibotPage ? document.getElementById("aquibot-input")?.focus() : toggleAquibot())}
                 aria-expanded={dockOpen}
                 aria-controls="aquibot-dock"
-                className={`aq-ai-pill hidden h-9 items-center gap-1.5 rounded-full pl-1 pr-3.5 text-[12.5px] font-semibold shadow-[0_6px_16px_-8px_rgb(47_111_179/0.7)] transition hover:brightness-110 sm:inline-flex ${
+                className={`aq-ai-pill hidden h-9 items-center gap-1.5 rounded-full pl-1 pr-3.5 text-[13.5px] font-semibold shadow-[0_6px_16px_-8px_rgb(47_111_179/0.7)] transition hover:brightness-110 sm:inline-flex ${
                   dockOpen ? "ring-2 ring-blue/30 ring-offset-2 ring-offset-white" : ""
                 }`}
               >
@@ -341,7 +346,7 @@ export function AppShell({
               <Link
                 href="/hub/plan-usage"
                 title={t("nav.plan-usage")}
-                className="hidden rounded-full border border-black/[.08] bg-white px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wide text-mid no-underline hover:text-blue md:inline-flex"
+                className="hidden rounded-full border border-black/[.08] bg-white px-2.5 py-1 font-mono text-[11.5px] font-semibold uppercase tracking-wide text-mid no-underline hover:text-blue md:inline-flex"
               >
                 {PLAN_LABEL[user.plan]}
               </Link>
@@ -370,14 +375,14 @@ export function AppShell({
               href={item.href}
               data-tour={item.key}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[10.5px] font-semibold no-underline ${active ? "text-blue" : "text-dim"}`}
+              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[11.5px] font-semibold no-underline ${active ? "text-blue" : "text-dim"}`}
             >
               {Icon === "aquibot" ? <AquibotAvatar size={24} /> : <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />}
-              {item.key === "telex" ? t("short.telex") : t(`nav.${item.key}`)}
+              {item.key === "telex" || item.key === "library" ? t(`short.${item.key}`) : t(`nav.${item.key}`)}
             </Link>
           );
         })}
-        <button type="button" onClick={() => setDrawer(true)} className="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[10.5px] font-semibold text-dim">
+        <button type="button" onClick={() => setDrawer(true)} className="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[11.5px] font-semibold text-dim">
           <MoreHorizontal className="h-6 w-6" strokeWidth={1.8} />
           {t("top.more")}
         </button>
@@ -393,18 +398,18 @@ export function AppShell({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <NavList pathname={pathname} collapsed={false} admin={admin} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
+            <NavList pathname={pathname} collapsed={false} items={nav} admin={admin} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
             <div className="aq-safe-bottom shrink-0 border-t border-black/[.06] px-4 pt-3">
               <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12px] font-bold text-white">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[13px] font-bold text-white">
                   {initials(user.name)}
                 </span>
                 <div translate="no" className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-semibold text-ink">{user.name}</p>
-                  <p className="truncate font-mono text-[10.5px] uppercase tracking-wide text-dim">{PLAN_LABEL[user.plan]}</p>
+                  <p className="truncate text-[15px] font-semibold text-ink">{user.name}</p>
+                  <p className="truncate font-mono text-[11.5px] uppercase tracking-wide text-dim">{PLAN_LABEL[user.plan]}</p>
                 </div>
                 <form action="/api/logout" method="post">
-                  <button type="submit" className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-semibold text-danger hover:bg-red-50">
+                  <button type="submit" className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-semibold text-danger hover:bg-red-50">
                     <LogOut className="h-4 w-4" /> {t("top.signOut")}
                   </button>
                 </form>
@@ -414,7 +419,7 @@ export function AppShell({
         </div>
       ) : null}
 
-      <Tour />
+      <Tour stops={tourStops} />
       <CommandPalette items={palette} />
       <AutoTranslate />
     </div>

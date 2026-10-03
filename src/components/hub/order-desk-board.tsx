@@ -4,6 +4,9 @@ import { useMemo, useState, useTransition, type ReactNode } from "react";
 import { CheckCircle2, CircleAlert, Send } from "lucide-react";
 import { submitOrderEnquiry } from "@/app/hub/order-desk/actions";
 import { areaClass, btnPrimary, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
+import { countryTriggerClass } from "@/components/app/country-select";
+import { PortField } from "@/components/calculators/port-field";
+import { portText, type PortRecord } from "@/lib/ports";
 
 const PRODUCTS = [
   "Amsul", "AN", "CAN", "Urea - Prilled", "Urea - Granular", "Urea - Technical", "DAP", "MAP", "TSP", "SSP", "MOP", "UAN", "NPK", "APP", "CN", "Kieserite", "Magnesium Nitrate", "MKP", "NOP", "Phos Acid", "SOP", "TMAP", "Other",
@@ -12,7 +15,7 @@ const PACKAGING = ["Bulk", "25kg", "50kg", "500kg", "600kg", "1000kg", "Other"];
 const ORIGINS = ["Baltic", "Black Sea", "Arab Gulf", "North Africa", "China", "FSU", "USA", "No preference"];
 
 const chip = (on: boolean) =>
-  `inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-medium transition ${
+  `inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[14.5px] font-medium transition ${
     on ? "border-blue bg-blue-light text-blue" : "border-border bg-white text-mid hover:border-[#cdd7e1] hover:text-ink"
   }`;
 
@@ -20,18 +23,21 @@ export function OrderDeskBoard({
   name,
   email,
   success,
+  ports,
   initial,
 }: {
   name: string;
   email: string;
   success: string;
-  initial?: { product?: string; destination?: string };
+  ports: PortRecord[];
+  initial?: { product?: string; destination?: PortRecord };
 }) {
   const [product, setProduct] = useState(() => (initial?.product && PRODUCTS.includes(initial.product) ? initial.product : ""));
   const [packaging, setPackaging] = useState("");
   const [origins, setOrigins] = useState<string[]>(["No preference"]);
   const [incoterm, setIncoterm] = useState("CFR");
-  const [destination, setDestination] = useState(() => initial?.destination?.slice(0, 120) ?? "");
+  const [port, setPort] = useState<PortRecord | null>(initial?.destination ?? null);
+  const destination = port ? portText(port) : "";
   const [currency, setCurrency] = useState("USD");
   const [price, setPrice] = useState("");
   const [prepay, setPrepay] = useState(20);
@@ -43,7 +49,7 @@ export function OrderDeskBoard({
   const priceLine = useMemo(() => {
     if (price && destination) return `Price: ${currency} ${Number(price).toFixed(2)} ${incoterm} ${destination}`;
     if (destination) return `Price will be quoted ${incoterm} ${destination}`;
-    return "Enter your destination and price above";
+    return "Choose your destination port and enter a price above";
   }, [currency, destination, incoterm, price]);
 
   function toggleOrigin(value: string) {
@@ -62,7 +68,7 @@ export function OrderDeskBoard({
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#eaf7f0] text-[#1f9d60]">
             <CheckCircle2 className="h-6 w-6" />
           </span>
-          <p className="mt-4 max-w-md text-[15px] font-semibold leading-relaxed text-ink">{success}</p>
+          <p className="mt-4 max-w-md text-[16.5px] font-semibold leading-relaxed text-ink">{success}</p>
           <button
             type="button"
             onClick={() => {
@@ -71,7 +77,7 @@ export function OrderDeskBoard({
               setPackaging("");
               setPrice("");
             }}
-            className="mt-5 h-10 rounded-full border border-border bg-white px-4 text-[13.5px] font-semibold text-ink hover:border-blue/35 hover:text-blue"
+            className="mt-5 h-10 rounded-full border border-border bg-white px-4 text-[15px] font-semibold text-ink hover:border-blue/35 hover:text-blue"
           >
             Send another enquiry
           </button>
@@ -86,6 +92,10 @@ export function OrderDeskBoard({
             const productName = chosen === "Other" ? String(data.get("otherProduct") ?? "").trim() : chosen;
             const pack = String(data.get("packaging") ?? "");
             const text = (key: string) => String(data.get(key) ?? "").trim();
+            if (!port) {
+              setError("Choose a destination port from the list.");
+              return;
+            }
             setError(null);
             startTransition(async () => {
               const result = await submitOrderEnquiry({
@@ -98,7 +108,7 @@ export function OrderDeskBoard({
                 packaging: pack === "Other" ? text("packagingOther") : pack,
                 pallets,
                 origins: origins.join(", "),
-                destination: text("destination"),
+                destination: port.code,
                 incoterm,
                 shipFrom: text("shipFrom"),
                 shipTo: text("shipTo"),
@@ -167,7 +177,7 @@ export function OrderDeskBoard({
                     type="button"
                     aria-pressed={pallets === value}
                     onClick={() => setPallets(value)}
-                    className={`h-8 rounded-full px-5 text-[13px] font-semibold capitalize transition ${pallets === value ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid"}`}
+                    className={`h-8 rounded-full px-5 text-[14.5px] font-semibold capitalize transition ${pallets === value ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid"}`}
                   >
                     {value}
                   </button>
@@ -189,11 +199,20 @@ export function OrderDeskBoard({
 
           <Section title="Delivery">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className={labelClass}>FOB or CFR destination</span>
-                <input name="destination" required value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="Port or city" className={fieldClass} />
-              </label>
-              <label className="block">
+              <div className="sm:col-span-2">
+                <PortField
+                  countryLabel="Destination country"
+                  label="FOB or CFR destination port"
+                  value={port}
+                  onSelect={setPort}
+                  ports={ports}
+                  labelClass={labelClass}
+                  inputClass={fieldClass}
+                  countryClass={countryTriggerClass}
+                  hint={<span className={hintClass}>Ports come from the Aquifert port list. If yours is missing, pick the nearest one and add the detail in the notes.</span>}
+                />
+              </div>
+              <label className="block sm:col-span-2">
                 <span className={labelClass}>Incoterms</span>
                 <select name="incoterm" value={incoterm} onChange={(event) => setIncoterm(event.target.value)} className={fieldClass}>
                   <option>CFR</option>
@@ -232,7 +251,7 @@ export function OrderDeskBoard({
             </label>
             <label className="mt-5 block">
               <span className={`${labelClass} flex items-center justify-between`}>
-                Prepayment <span className="rounded-full bg-blue-light px-2 py-0.5 font-mono text-[12px] font-semibold text-blue">{prepay}%</span>
+                Prepayment <span className="rounded-full bg-blue-light px-2 py-0.5 font-mono text-[13px] font-semibold text-blue">{prepay}%</span>
               </span>
               <input type="range" min={0} max={100} step={10} value={prepay} onChange={(event) => setPrepay(Number(event.target.value))} className="mt-1 w-full accent-[#2f6fb3]" />
               <span className={hintClass}>A price discount is available for large prepayments. New clients typically start at 20%.</span>
@@ -310,7 +329,7 @@ function Field({
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="aq-card p-5">
-      <h2 className="mb-4 text-[14px] font-semibold text-ink">{title}</h2>
+      <h2 className="mb-4 text-[15.5px] font-semibold text-ink">{title}</h2>
       {children}
     </section>
   );

@@ -49,7 +49,7 @@ export function AllowanceRow({
         <span className={`aq-chip ${tone ? `aq-chip-${tone}` : ""} flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white`}>
           <Icon className="h-4 w-4" />
         </span>
-        <Link href={href} className="min-w-0 flex-1 text-[14px] font-semibold text-ink no-underline hover:text-blue">
+        <Link href={href} className="min-w-0 flex-1 text-[15.5px] font-semibold text-ink no-underline hover:text-blue">
           {label}
         </Link>
         {limit === 0 ? (
@@ -57,7 +57,7 @@ export function AllowanceRow({
             <InfinityIcon className="h-3 w-3" strokeWidth={2.6} aria-hidden /> Unlimited
           </Tag>
         ) : (
-          <span className="shrink-0 text-[14px] font-semibold tabular-nums text-ink">
+          <span className="shrink-0 text-[15.5px] font-semibold tabular-nums text-ink">
             {used.toLocaleString("en-GB")}
             <span className="font-normal text-dim"> / {limit.toLocaleString("en-GB")}</span>
           </span>
@@ -71,7 +71,7 @@ export function AllowanceRow({
             <div className={`h-full rounded-full transition-[width] duration-700 ${full ? "bg-danger" : low ? "bg-[#d9951f]" : "bg-teal-500"}`} style={{ width: `${Math.min(100, Math.max(3, pct))}%` }} />
           </div>
         )}
-        <p className="mt-1.5 text-[12.5px] leading-snug text-mid" role={full || low ? "status" : undefined}>
+        <p className="mt-1.5 text-[13.5px] leading-snug text-mid" role={full || low ? "status" : undefined}>
           {note}
         </p>
       </div>
@@ -87,8 +87,8 @@ export function IncludedRow({ label, detail, href, icon: Icon }: { label: string
           <Icon className="h-4 w-4" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-semibold text-ink group-hover:text-blue">{label}</span>
-          <span className="block text-[12.5px] text-mid">{detail}</span>
+          <span className="block text-[15.5px] font-semibold text-ink group-hover:text-blue">{label}</span>
+          <span className="block text-[13.5px] text-mid">{detail}</span>
         </span>
         <Tag tone="teal">Unlimited</Tag>
         <ArrowRight className="h-4 w-4 shrink-0 text-dim transition group-hover:translate-x-0.5 group-hover:text-blue" aria-hidden />

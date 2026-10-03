@@ -6,7 +6,7 @@ import { getHubAccess } from "@/lib/aq-modules/access";
 import { deleteNitrogenReport, nitrogenReportsThisMonth, saveNitrogenReport } from "@/lib/aq-modules/members";
 import type { NitrogenReport } from "@/lib/aq-modules/member-types";
 import { limitFor } from "@/lib/aq-modules/types";
-import { nextReset } from "@/lib/freight-desk/store";
+import { activePorts, getFreightDesk, nextReset } from "@/lib/freight-desk/store";
 import {
   ADDITIVES,
   CROPS,
@@ -21,6 +21,7 @@ import {
   WINDOWS,
   type NitrogenAnswers,
 } from "@/lib/nitrogen/engine";
+import { resolvePort } from "@/lib/ports";
 
 type Failure = { ok: false; message: string };
 
@@ -70,6 +71,11 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
     if (problem) return { ok: false, message: problem };
   }
   if (!PRIORITIES.some((item) => item.value === answers.priority)) return { ok: false, message: "Choose what matters most this season." };
+  if (answers.destinationPort) {
+    const port = resolvePort(`${answers.destinationPort}, ${answers.destinationCountry}`, activePorts(await getFreightDesk()));
+    if (!port) return { ok: false, message: "Choose the destination port from the list, or leave it as not sure yet." };
+    answers.destinationPort = port.name;
+  }
 
   const { user, admin, modules } = await getHubAccess();
   const limit = admin ? 0 : limitFor(modules.limits.nitrogenReports, user.plan);

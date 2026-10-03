@@ -18,11 +18,11 @@ export function FreightTable({ fixtures, compact = false }: { fixtures: FreightF
   const cell = compact ? "px-3 py-2" : "px-4 py-3";
   return (
     <div className="overflow-x-auto">
-      <table className={`w-full border-collapse ${compact ? "text-[12px]" : "text-[13px]"}`}>
+      <table className={`w-full border-collapse ${compact ? "text-[13px]" : "text-[14.5px]"}`}>
         <thead>
           <tr className="border-b border-border bg-s2">
             {COLUMNS.map((heading) => (
-              <th key={heading} className={`${compact ? "px-3 py-2" : "px-4 py-2.5"} whitespace-nowrap text-left font-mono text-[10px] font-semibold uppercase tracking-wider text-mid`}>
+              <th key={heading} className={`${compact ? "px-3 py-2" : "px-4 py-2.5"} whitespace-nowrap text-left font-mono text-[11px] font-semibold uppercase tracking-wider text-mid`}>
                 {heading}
               </th>
             ))}
@@ -31,7 +31,7 @@ export function FreightTable({ fixtures, compact = false }: { fixtures: FreightF
         <tbody>
           {fixtures.length === 0 ? (
             <tr>
-              <td colSpan={COLUMNS.length} className="px-4 py-8 text-center text-[13px] text-mid">
+              <td colSpan={COLUMNS.length} className="px-4 py-8 text-center text-[14.5px] text-mid">
                 No open freight enquiries right now.
               </td>
             </tr>
@@ -57,10 +57,10 @@ export function FreightCommentary({ text, compact = false }: { text: string; com
   const paragraphs = splitParagraphs(text);
   if (paragraphs.length === 0) return null;
   return (
-    <div className={`space-y-3 leading-relaxed text-ink ${compact ? "text-[12.5px]" : "text-[13.5px]"}`}>
+    <div className={`space-y-3 leading-relaxed text-ink ${compact ? "text-[13.5px]" : "text-[15px]"}`}>
       {paragraphs.map((paragraph, i) =>
         /^\*\*[^*]+\*\*$/.test(paragraph) ? (
-          <h4 key={i} className="text-[13px] font-bold uppercase tracking-wide">
+          <h4 key={i} className="text-[14.5px] font-bold uppercase tracking-wide">
             {paragraph.slice(2, -2)}
           </h4>
         ) : (

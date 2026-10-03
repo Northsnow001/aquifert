@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { ArrowLeft, ArrowRight, Check, CircleAlert, FlaskConical, Lightbulb, Loader2, RotateCcw, Ship, Sprout } from "lucide-react";
 import { toast } from "sonner";
 import { generateReport } from "@/app/hub/nitrogen-report/actions";
@@ -23,6 +23,7 @@ import {
   WINDOWS,
   type NitrogenAnswers,
 } from "@/lib/nitrogen/engine";
+import { sameCountry, type PortRecord } from "@/lib/ports";
 
 const STEPS = [
   {
@@ -62,7 +63,7 @@ const NOTES_MAX = 1000;
 const LAST = STEPS.length - 1;
 
 const pill = (active: boolean) =>
-  `inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-semibold transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${
+  `inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3.5 py-2 text-[14.5px] font-semibold transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${
     active ? "border-navy-700 bg-navy-700 text-white shadow-[0_4px_12px_-6px_rgb(16_38_59/0.6)]" : "border-border bg-white text-mid hover:border-blue/35 hover:text-ink"
   }`;
 
@@ -141,7 +142,7 @@ function Callout({ icon: Icon, title, children }: { icon: typeof Ship; title: st
       <span className="aq-chip flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white">
         <Icon className="h-4 w-4" />
       </span>
-      <div className="min-w-0 text-[13px] leading-relaxed text-mid">
+      <div className="min-w-0 text-[14.5px] leading-relaxed text-mid">
         <p className="font-semibold text-ink">{title}</p>
         {children}
       </div>
@@ -157,7 +158,7 @@ function RateBar({ band }: { band: [number, number] }) {
       <div className="relative h-2 rounded-full bg-white ring-1 ring-teal-200">
         <div className="absolute inset-y-0 rounded-full bg-teal-500 transition-all duration-500" style={{ left: `${(band[0] / max) * 100}%`, width: `${((band[1] - band[0]) / max) * 100}%` }} />
       </div>
-      <div className="mt-1 flex justify-between text-[10.5px] text-dim">
+      <div className="mt-1 flex justify-between text-[11.5px] text-dim">
         <span>0</span>
         <span>160</span>
         <span>320 kg N/ha</span>
@@ -185,15 +186,15 @@ function Preview({ answers }: { answers: NitrogenAnswers }) {
   return (
     <aside className="aq-card p-5 lg:sticky lg:top-24" aria-label="Live preview of your report">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">Live preview</p>
-        <span className="text-[11.5px] font-medium text-dim">
+        <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-teal-700">Live preview</p>
+        <span className="text-[12.5px] font-medium text-dim">
           {filled} of {rows.length} ready
         </span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-s3" aria-hidden>
         <div className="h-full rounded-full bg-teal-500 transition-[width] duration-500" style={{ width: `${Math.max(4, (filled / rows.length) * 100)}%` }} />
       </div>
-      <dl className="mt-4 divide-y divide-border text-[13px]">
+      <dl className="mt-4 divide-y divide-border text-[14.5px]">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-baseline justify-between gap-3 py-2">
             <dt className="shrink-0 text-dim">{label}</dt>
@@ -201,12 +202,12 @@ function Preview({ answers }: { answers: NitrogenAnswers }) {
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-[11.5px] leading-relaxed text-dim">This is what the report works from. Change any answer and the preview updates straight away.</p>
+      <p className="mt-3 text-[12.5px] leading-relaxed text-dim">This is what the report works from. Change any answer and the preview updates straight away.</p>
     </aside>
   );
 }
 
-export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => void; onReset: () => void; blocked: string | null }) {
+export function NitrogenWizard({ ports, onClose, onReset, blocked }: { ports: PortRecord[]; onClose: () => void; onReset: () => void; blocked: string | null }) {
   const router = useRouter();
   const top = useRef<HTMLDivElement>(null);
   const [answers, setAnswers] = useState<NitrogenAnswers>(EMPTY_ANSWERS);
@@ -221,6 +222,10 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
   const band = rateBand(answers.cropType, answers.soilTexture);
   const total = seasonalN(answers);
   const shipments = shipmentPlan(answers);
+  const countryPorts = useMemo(
+    () => (answers.destinationCountry ? ports.filter((port) => sameCountry(port.country, answers.destinationCountry)).sort((a, b) => a.name.localeCompare(b.name)) : []),
+    [answers.destinationCountry, ports],
+  );
 
   function goTo(target: number) {
     if (target > step) {
@@ -285,13 +290,13 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
                   <span className={`h-1.5 w-full rounded-full transition-colors ${current ? "bg-navy-700" : done ? "bg-teal-500" : "bg-s3 group-hover:bg-border"}`} />
                   <span className="flex items-center gap-1.5">
                     <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-bold ${
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold ${
                         current ? "bg-navy-700 text-white" : done ? "bg-teal-500 text-white" : "bg-s3 text-dim"
                       }`}
                     >
                       {done ? <Check className="h-3 w-3" strokeWidth={3} /> : index + 1}
                     </span>
-                    <span className={`hidden text-[12px] font-semibold sm:inline ${current ? "text-ink" : "text-dim group-hover:text-mid"}`}>{item.short}</span>
+                    <span className={`hidden text-[13px] font-semibold sm:inline ${current ? "text-ink" : "text-dim group-hover:text-mid"}`}>{item.short}</span>
                   </span>
                 </button>
               </li>
@@ -300,12 +305,12 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
         </ol>
 
         <div className="mt-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-700">
+          <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">
             Step {step + 1} of {STEPS.length}
           </p>
           <h2 className="mt-0.5 text-[19px] font-semibold tracking-[-0.01em] text-ink">{STEPS[step].title}</h2>
-          <p className="text-[13.5px] text-mid">{STEPS[step].desc}</p>
-          <p className="mt-3 flex items-start gap-2 rounded-xl bg-s2 px-3.5 py-2.5 text-[12.5px] leading-relaxed text-mid">
+          <p className="text-[15px] text-mid">{STEPS[step].desc}</p>
+          <p className="mt-3 flex items-start gap-2 rounded-xl bg-s2 px-3.5 py-2.5 text-[13.5px] leading-relaxed text-mid">
             <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-[#d9951f]" aria-hidden />
             <span>
               <strong className="font-semibold text-ink">Why we ask. </strong>
@@ -319,10 +324,39 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field id="n-country" label="Destination country" required>
-                  <CountrySelect id="n-country" value={answers.destinationCountry} onChange={(value) => set("destinationCountry", value)} options={WORLD_COUNTRIES} placeholder="Select a country" />
+                  <CountrySelect
+                    id="n-country"
+                    value={answers.destinationCountry}
+                    onChange={(value) => setAnswers((current) => ({ ...current, destinationCountry: value, destinationPort: value === current.destinationCountry ? current.destinationPort : "" }))}
+                    options={WORLD_COUNTRIES}
+                    placeholder="Select a country"
+                  />
                 </Field>
-                <Field id="n-port" label="Destination port" hint="Leave blank if you are not sure yet.">
-                  <input id="n-port" value={answers.destinationPort} onChange={(event) => set("destinationPort", event.target.value)} placeholder="e.g. Immingham" maxLength={80} className={fieldClass} />
+                <Field
+                  id="n-port"
+                  label="Destination port"
+                  hint={
+                    !answers.destinationCountry
+                      ? "Choose the country first to see its ports."
+                      : countryPorts.length
+                        ? "Keep “Not sure yet” if you have not decided."
+                        : `No ${answers.destinationCountry} ports are listed yet. The desk will suggest the best one.`
+                  }
+                >
+                  <select
+                    id="n-port"
+                    value={answers.destinationPort}
+                    disabled={!countryPorts.length}
+                    onChange={(event) => set("destinationPort", event.target.value)}
+                    className={`${fieldClass} ${answers.destinationPort ? "" : "text-dim"}`}
+                  >
+                    <option value="">Not sure yet</option>
+                    {countryPorts.map((port) => (
+                      <option key={port.code} value={port.name} className="text-ink">
+                        {port.name} ({port.code})
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <Field id="n-origin" label="Preferred origin" hint="The desk quotes it alongside at least one alternative.">
                   <CountrySelect
@@ -413,11 +447,11 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
                         className={`cursor-pointer rounded-2xl border p-3.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${active ? "border-navy-700 bg-navy-50 shadow-[0_0_0_1px_var(--color-navy-700)]" : "border-border bg-white hover:border-blue/35"}`}
                       >
                         <input type="radio" name="n-priority" value={item.value} checked={active} onChange={() => set("priority", item.value)} className="sr-only" />
-                        <span className="flex items-center justify-between gap-2 text-[14px] font-semibold text-ink">
+                        <span className="flex items-center justify-between gap-2 text-[15.5px] font-semibold text-ink">
                           {item.label}
                           {active ? <Check className="h-4 w-4 text-navy-700" strokeWidth={3} aria-hidden /> : null}
                         </span>
-                        <span className="mt-1 block text-[12px] leading-snug text-mid">{item.hint}</span>
+                        <span className="mt-1 block text-[13px] leading-snug text-mid">{item.hint}</span>
                       </label>
                     );
                   })}
@@ -479,7 +513,7 @@ export function NitrogenWizard({ onClose, onReset, blocked }: { onClose: () => v
             <button type="button" onClick={() => (step === 0 ? onClose() : goTo(step - 1))} className={`${btnSecondary} flex-1 sm:flex-none`}>
               <ArrowLeft className="h-4 w-4" /> {step === 0 ? "All reports" : "Back"}
             </button>
-            <button type="button" onClick={onReset} className="inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-dim transition hover:text-ink" title="Clear every answer and start again">
+            <button type="button" onClick={onReset} className="inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-[14.5px] font-semibold text-dim transition hover:text-ink" title="Clear every answer and start again">
               <RotateCcw className="h-4 w-4" /> Start over
             </button>
           </div>

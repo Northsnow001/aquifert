@@ -68,7 +68,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
       <TelexFilters selected={selected} query={query} saved={saved} counts={counts} matching={matches.length} total={telex.length} />
 
       <section className="aq-card mt-4 overflow-hidden" aria-label="Telex flashes">
-        <div className="flex items-start gap-2 border-b border-border bg-s2 px-5 py-2.5 text-[12px] leading-relaxed text-mid">
+        <div className="flex items-start gap-2 border-b border-border bg-s2 px-5 py-2.5 text-[13px] leading-relaxed text-mid">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" aria-hidden />
           <p>
             Preliminary market intel, filed as the desk hears it.
@@ -107,7 +107,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
 
         {matches.length > shown.length ? (
           <div className="border-t border-border px-5 py-3 text-center">
-            <Link href={`/hub/telex?${moreParams.toString()}`} scroll={false} className="inline-flex items-center gap-1 text-[13px] font-semibold text-blue no-underline hover:underline">
+            <Link href={`/hub/telex?${moreParams.toString()}`} scroll={false} className="inline-flex items-center gap-1 text-[14.5px] font-semibold text-blue no-underline hover:underline">
               Show older flashes ({matches.length - shown.length} more) <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>

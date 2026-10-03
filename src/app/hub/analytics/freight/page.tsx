@@ -35,7 +35,7 @@ export default async function FreightAnalyticsPage({ searchParams }: { searchPar
         description="Open fertilizer enquiries, lane benchmarks and the desk's read on freight and vessel supply, so your timing stops being guesswork."
         tip="Fixtures are open freight enquiries the desk is tracking. Lane benchmarks are desk freight rates per tonne on the major fertilizer routes. Use the Freight Calculator to price a specific voyage."
         actions={
-          <Link href="/hub/freight-calculator" className={`${btnPrimary} h-10 px-4 text-[13px]`}>
+          <Link href="/hub/freight-calculator" className={`${btnPrimary} h-10 px-4 text-[14.5px]`}>
             <Calculator className="h-4 w-4" aria-hidden /> Freight Calculator
           </Link>
         }
@@ -68,8 +68,8 @@ export default async function FreightAnalyticsPage({ searchParams }: { searchPar
                       className={`flex items-center gap-3 rounded-2xl border px-3.5 py-3 no-underline transition ${active ? "border-blue/40 bg-blue-light/50" : "border-border bg-white hover:border-blue/30"}`}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-ink">{item.basis}</p>
-                        <p className="text-[12px] tabular-nums text-dim">
+                        <p className="truncate text-[14.5px] font-semibold text-ink">{item.basis}</p>
+                        <p className="text-[13px] tabular-nums text-dim">
                           {row ? (
                             <>
                               {num(row.latest.value)} {item.unit} · <span className={TONE_TEXT[toneFor(row.weekPct)]}>{signedPct(row.weekPct)} w/w</span>
@@ -88,7 +88,7 @@ export default async function FreightAnalyticsPage({ searchParams }: { searchPar
           ) : null}
         </Panel>
       ) : (
-        <section className="aq-card flex items-start gap-3 p-5 text-[13.5px] text-mid">
+        <section className="aq-card flex items-start gap-3 p-5 text-[15px] text-mid">
           <Waves className="mt-0.5 h-4 w-4 shrink-0 text-blue" aria-hidden />
           <p>Lane benchmarks appear here once the desk publishes a freight series. The fixtures and commentary below are live now.</p>
         </section>
@@ -99,7 +99,7 @@ export default async function FreightAnalyticsPage({ searchParams }: { searchPar
           <FreightTable fixtures={fixtures} />
         </Panel>
         <Panel title="Desk commentary" sub="Freight and vessel supply" icon={MessageSquareText} className="xl:col-span-2" bodyClassName="px-5 py-4">
-          {hasCommentary ? <FreightCommentary text={freight.commentary} /> : <p className="py-6 text-center text-[13px] text-mid">The desk&apos;s next freight commentary lands here with the weekly update.</p>}
+          {hasCommentary ? <FreightCommentary text={freight.commentary} /> : <p className="py-6 text-center text-[14.5px] text-mid">The desk&apos;s next freight commentary lands here with the weekly update.</p>}
         </Panel>
       </div>
 
@@ -108,8 +108,8 @@ export default async function FreightAnalyticsPage({ searchParams }: { searchPar
           <Anchor className="h-[18px] w-[18px]" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-semibold text-ink">Price a specific voyage</p>
-          <p className="text-[13px] text-mid">The Freight Calculator works out a cargo&apos;s cost from the vessel, route and live bunker prices. Use it to check a quote against these benchmarks.</p>
+          <p className="text-[16px] font-semibold text-ink">Price a specific voyage</p>
+          <p className="text-[14.5px] text-mid">The Freight Calculator works out a cargo&apos;s cost from the vessel, route and live bunker prices. Use it to check a quote against these benchmarks.</p>
         </div>
         <ArrowRight className="h-4 w-4 shrink-0 text-blue" aria-hidden />
       </Link>

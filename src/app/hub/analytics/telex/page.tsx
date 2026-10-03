@@ -109,7 +109,7 @@ export default async function AqTelexPage({ searchParams }: { searchParams: Prom
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-[13px] text-mid" aria-live="polite">
+        <p className="text-[14.5px] text-mid" aria-live="polite">
           {matches.length ? (
             <>
               Showing <strong className="font-semibold text-ink">{shown.length}</strong> of <strong className="font-semibold text-ink">{matches.length}</strong> {matches.length === 1 ? "flash" : "flashes"}
@@ -132,7 +132,7 @@ export default async function AqTelexPage({ searchParams }: { searchParams: Prom
               <Link href={telexQuery(filter, { n: count + TELEX_PAGE })} scroll={false} className={btnSecondary}>
                 Load {Math.min(TELEX_PAGE, matches.length - shown.length)} more
               </Link>
-              <p className="text-[12px] text-dim">{matches.length - shown.length} older flashes in this view</p>
+              <p className="text-[13px] text-dim">{matches.length - shown.length} older flashes in this view</p>
             </div>
           ) : null}
         </Panel>

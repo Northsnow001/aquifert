@@ -40,12 +40,12 @@ export function startTour() {
 }
 
 /** First-run coach marks on the real menu items. Skippable, keyboard operable, resumable once, restartable from the guide. */
-export function Tour() {
+export function Tour({ stops = TOUR_STOPS }: { stops?: typeof TOUR_STOPS }) {
   const pathname = usePathname();
   const [step, setStep] = useState<number | null>(null);
   const [resume, setResume] = useState<number | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const total = TOUR_STOPS.length;
+  const total = stops.length;
 
   useEffect(() => {
     const restart = () => {
@@ -65,21 +65,21 @@ export function Tour() {
         setStep(0);
         save({ status: "running", step: 0 });
       } else if (saved.status === "running" && saved.step > 0 && !saved.offered) {
-        setResume(saved.step);
+        setResume(Math.min(saved.step, total - 1));
       }
     }, 900);
     return () => clearTimeout(timer);
-  }, [pathname]);
+  }, [pathname, total]);
 
   const measure = useCallback(() => {
     if (step === null) return;
-    const node = anchorFor(TOUR_STOPS[step].key);
+    const node = anchorFor(stops[step].key);
     setRect(node ? node.getBoundingClientRect() : null);
-  }, [step]);
+  }, [step, stops]);
 
   useEffect(() => {
     if (step === null) return;
-    anchorFor(TOUR_STOPS[step].key)?.scrollIntoView({ block: "nearest" });
+    anchorFor(stops[step].key)?.scrollIntoView({ block: "nearest" });
     const frame = requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
@@ -88,7 +88,7 @@ export function Tour() {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [step, measure]);
+  }, [step, stops, measure]);
 
   const finish = useCallback(
     (status: "done" | "skipped") => {
@@ -126,14 +126,14 @@ export function Tour() {
     return createPortal(
       <div className="aq-app">
         <div role="dialog" aria-label="Resume tour" className="aq-rise aq-float fixed bottom-24 right-4 z-[90] w-[min(320px,calc(100vw-2rem))] rounded-2xl border border-border bg-white p-4 lg:bottom-6 lg:right-6">
-          <p className="text-[14px] font-semibold text-ink">Pick up the tour where you left off?</p>
-          <p className="mt-1 text-[13px] text-mid">
+          <p className="text-[15.5px] font-semibold text-ink">Pick up the tour where you left off?</p>
+          <p className="mt-1 text-[14.5px] text-mid">
             You stopped at step {resume + 1} of {total}.
           </p>
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="h-9 rounded-full bg-blue px-4 text-[13px] font-semibold text-white"
+              className="h-9 rounded-full bg-blue px-4 text-[14.5px] font-semibold text-white"
               onClick={() => {
                 setStep(resume);
                 setResume(null);
@@ -144,7 +144,7 @@ export function Tour() {
             </button>
             <button
               type="button"
-              className="h-9 rounded-full px-4 text-[13px] font-semibold text-mid hover:bg-s3"
+              className="h-9 rounded-full px-4 text-[14.5px] font-semibold text-mid hover:bg-s3"
               onClick={() => {
                 save({ status: "skipped", step: resume, offered: true });
                 setResume(null);
@@ -159,7 +159,7 @@ export function Tour() {
     );
   }
 
-  const stop = TOUR_STOPS[step];
+  const stop = stops[step];
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   let style: React.CSSProperties;
@@ -192,30 +192,30 @@ export function Tour() {
       )}
       <div key={step} className="aq-drop aq-float absolute rounded-2xl bg-white p-4" style={{ ...style, width: `min(${CARD}px, calc(100vw - 24px))` }}>
         <div className="flex items-center justify-between">
-          <p className="font-mono text-[11px] font-semibold text-dim">
+          <p className="font-mono text-[12px] font-semibold text-dim">
             {step + 1} of {total}
           </p>
           <div className="flex gap-1" aria-hidden>
-            {TOUR_STOPS.map((item, index) => (
+            {stops.map((item, index) => (
               <span key={item.key} className={`h-1.5 rounded-full transition-all ${index === step ? "w-4 bg-blue" : "w-1.5 bg-[#d5dde6]"}`} />
             ))}
           </div>
         </div>
-        <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{stop.title}</h3>
-        <p className="mt-1 text-[13.5px] leading-relaxed text-mid">{stop.body}</p>
+        <h3 className="mt-1.5 text-[17px] font-semibold text-ink">{stop.title}</h3>
+        <p className="mt-1 text-[15px] leading-relaxed text-mid">{stop.body}</p>
         <div className="mt-4 flex items-center gap-2">
-          <button type="button" autoFocus onClick={() => go(step + 1)} className="h-9 rounded-full bg-blue px-4 text-[13px] font-semibold text-white hover:bg-blue-dim">
+          <button type="button" autoFocus onClick={() => go(step + 1)} className="h-9 rounded-full bg-blue px-4 text-[14.5px] font-semibold text-white hover:bg-blue-dim">
             {step + 1 === total ? "Finish" : "Next"}
           </button>
           <button
             type="button"
             onClick={() => go(step - 1)}
             disabled={step === 0}
-            className="h-9 rounded-full border border-border px-4 text-[13px] font-semibold text-ink disabled:opacity-40"
+            className="h-9 rounded-full border border-border px-4 text-[14.5px] font-semibold text-ink disabled:opacity-40"
           >
             Back
           </button>
-          <button type="button" onClick={() => finish("skipped")} className="ml-auto h-9 rounded-full px-3 text-[13px] font-semibold text-mid hover:bg-s3">
+          <button type="button" onClick={() => finish("skipped")} className="ml-auto h-9 rounded-full px-3 text-[14.5px] font-semibold text-mid hover:bg-s3">
             Skip
           </button>
         </div>

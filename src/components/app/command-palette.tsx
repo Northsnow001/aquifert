@@ -114,17 +114,17 @@ export function CommandPalette({ items, askHref = "/hub/aquibot" }: { items: Pal
             }}
             placeholder="Search pages and actions…"
             aria-label="Search pages and actions"
-            className="h-14 w-full bg-transparent text-[15px] text-ink outline-none"
+            className="h-14 w-full bg-transparent text-[16.5px] text-ink outline-none"
           />
-          <kbd className="hidden shrink-0 rounded-md border border-border bg-s2 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-dim sm:block">Esc</kbd>
+          <kbd className="hidden shrink-0 rounded-md border border-border bg-s2 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-dim sm:block">Esc</kbd>
         </div>
         <div ref={list} className="max-h-[min(52vh,420px)] overflow-y-auto p-2">
-          {results.length === 0 ? <p className="px-3 py-8 text-center text-[13.5px] text-dim">No pages match{askHref ? ". Ask Aquibot below." : "."}</p> : null}
+          {results.length === 0 ? <p className="px-3 py-8 text-center text-[15px] text-dim">No pages match{askHref ? ". Ask Aquibot below." : "."}</p> : null}
           {results.map((item, index) => {
             const heading = index === 0 || results[index - 1].group !== item.group ? item.group : null;
             return (
               <div key={`${item.group}-${item.href}-${item.label}`}>
-                {heading ? <p className="px-3 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim first:pt-1">{heading}</p> : null}
+                {heading ? <p className="px-3 pb-1 pt-3 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-dim first:pt-1">{heading}</p> : null}
                 <button
                   type="button"
                   data-index={index}
@@ -134,8 +134,8 @@ export function CommandPalette({ items, askHref = "/hub/aquibot" }: { items: Pal
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-s3 text-mid [&>svg]:h-4 [&>svg]:w-4">{item.icon ?? <Search />}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-semibold text-ink">{item.label}</span>
-                    {item.hint ? <span className="block truncate text-[12px] text-dim">{item.hint}</span> : null}
+                    <span className="block truncate text-[15.5px] font-semibold text-ink">{item.label}</span>
+                    {item.hint ? <span className="block truncate text-[13px] text-dim">{item.hint}</span> : null}
                   </span>
                   {index === active ? <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-blue" /> : <ChevronRight className="h-4 w-4 shrink-0 text-[#c5cfd9]" />}
                 </button>
@@ -145,8 +145,8 @@ export function CommandPalette({ items, askHref = "/hub/aquibot" }: { items: Pal
         </div>
         {askHref ? (
           <div className="flex items-center gap-3 border-t border-border bg-s2 px-4 py-2.5">
-            <p className="min-w-0 flex-1 truncate text-[12.5px] text-mid">{query.trim() ? `Ask Aquibot: “${query.trim()}”` : "Can't find it? Ask Aquibot."}</p>
-            <button type="button" onClick={ask} className="aq-ai-pill inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full pl-1 pr-3 text-[12.5px] font-semibold shadow-sm">
+            <p className="min-w-0 flex-1 truncate text-[13.5px] text-mid">{query.trim() ? `Ask Aquibot: “${query.trim()}”` : "Can't find it? Ask Aquibot."}</p>
+            <button type="button" onClick={ask} className="aq-ai-pill inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full pl-1 pr-3 text-[13.5px] font-semibold shadow-sm">
               <AquibotAvatar size={24} />
               Ask Aquibot
             </button>

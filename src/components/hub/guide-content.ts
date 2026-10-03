@@ -49,15 +49,15 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     points: [
       { term: "Search", text: "Press Ctrl K (⌘ K on Mac) or tap the search pill to jump to any page or ask Aquibot directly." },
       { term: "Ask Aquibot", text: "The gradient pill in the top bar opens Aquibot from anywhere." },
-      { term: "On a phone", text: "The tab bar holds Dashboard, Hub, Telex and Aquibot. More opens the full menu." },
+      { term: "On a phone", text: "The tab bar holds Hub, Telex and Aquibot, plus Dashboard on AQ Analytics and AQ ZERO or Library on the free plan. More opens the full menu." },
     ],
-    tip: "New here? Take the tour. It walks through the seven places that matter in under a minute.",
+    tip: "New here? Take the tour. It walks through the places that matter in under a minute.",
   },
   {
     id: "dashboard",
     title: "Dashboard",
     icon: LayoutDashboard,
-    summary: "Your day at a glance: usage, requests, the latest Telex and a briefing tuned to you.",
+    summary: "Your day at a glance: usage, requests, the latest Telex and a briefing tuned to you. Included with AQ Analytics and AQ ZERO.",
     href: "/hub/dashboard",
     body: [
       "The Dashboard opens with a prompt bar for Aquibot and four counters: your order requests, Nitrogen Reports this month against your allowance, calculator runs and active price alerts. Recent requests lists the enquiries you have sent the desk and their status.",
@@ -79,7 +79,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     body: [
       "The Hub is your morning read. It opens with three market indicators, one each for Nitrogen (green), Phosphate (orange) and Potassium (red). Each is scored from 0 to 100 with the date it was set and a stance. Hover a card for the desk's longer note.",
       "The Telex feed is the desk's running log of market events: tenders, price moves, plant outages, policy changes and cargoes on the move. Newest items sit at the top. Posts are marked Public, AQ Analytics or AQ ZERO and appear according to your plan. Treat Telex as preliminary intel and verify figures before trading.",
-      "Market Commentary explains each indicator in full. When the desk publishes forward curves, Direct Hedge | Paper Forward Curves shows bid and ask prices in USD/t by month for each product. Pick a report from the Published dropdown; arrows show whether each price moved higher, lower or held.",
+      "Market Analysis explains each indicator in full. When the desk publishes forward curves, Direct Hedge | Paper Forward Curves shows bid and ask prices in USD/t by month for each product. Pick a report from the Published dropdown; arrows show whether each price moved higher, lower or held.",
     ],
     points: [
       { term: "Bullish", text: "Score above 66." },

@@ -32,7 +32,7 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
     <div className="flex min-w-0 flex-col gap-6">
       <div>
         <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Contact Us</h1>
-        <p className="mt-1 text-[14px] text-mid">Choose how you want to reach the desk.</p>
+        <p className="mt-1 text-[15.5px] text-mid">Choose how you want to reach the desk.</p>
       </div>
 
       <div className="aq-stagger grid gap-3 sm:grid-cols-2">
@@ -41,10 +41,10 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
             <MessageSquare className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <h2 className="text-[16px] font-semibold text-ink">Start a WhatsApp chat</h2>
-            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Quick questions? Message the support team and get a fast reply.</p>
+            <h2 className="text-[17px] font-semibold text-ink">Start a WhatsApp chat</h2>
+            <p className="mt-1 text-[15px] leading-relaxed text-mid">Quick questions? Message the support team and get a fast reply.</p>
           </div>
-          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[#2f8a66]">
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#2f8a66]">
             <Phone className="h-4 w-4" /> Start WhatsApp
           </span>
         </a>
@@ -54,10 +54,10 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
             <CalendarClock className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <h2 className="text-[16px] font-semibold text-ink">Arrange a meeting</h2>
-            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Pick a slot on the desk calendar that suits you.</p>
+            <h2 className="text-[17px] font-semibold text-ink">Arrange a meeting</h2>
+            <p className="mt-1 text-[15px] leading-relaxed text-mid">Pick a slot on the desk calendar that suits you.</p>
           </div>
-          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-blue">
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[15px] font-semibold text-blue">
             <CalendarClock className="h-4 w-4" /> Schedule a meeting
           </span>
         </button>
@@ -75,10 +75,10 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
             <Send className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <h2 className="text-[16px] font-semibold text-ink">Send us a message</h2>
-            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Write to the desk and we reply by email.</p>
+            <h2 className="text-[17px] font-semibold text-ink">Send us a message</h2>
+            <p className="mt-1 text-[15px] leading-relaxed text-mid">Write to the desk and we reply by email.</p>
           </div>
-          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-[#b87a12]">
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#b87a12]">
             <Send className="h-4 w-4" /> Open contact form
           </span>
         </button>
@@ -88,10 +88,10 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
             <FileText className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <h2 className="text-[16px] font-semibold text-ink">Open Order Desk</h2>
-            <p className="mt-1 text-[13.5px] leading-relaxed text-mid">Need pricing and availability? Submit a request and the trading desk responds with a quote.</p>
+            <h2 className="text-[17px] font-semibold text-ink">Open Order Desk</h2>
+            <p className="mt-1 text-[15px] leading-relaxed text-mid">Need pricing and availability? Submit a request and the trading desk responds with a quote.</p>
           </div>
-          <span className="mt-auto inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-blue">
+          <span className="mt-auto inline-flex items-center gap-1.5 text-[15px] font-semibold text-blue">
             <FileText className="h-4 w-4" /> Open Order Desk
           </span>
         </Link>
@@ -111,7 +111,7 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
             onClick={(event) => event.stopPropagation()}
           >
             <header className="flex items-center justify-between border-b border-border px-5 py-3.5">
-              <h2 id="meeting-title" className="text-[16px] font-semibold text-ink">Schedule a meeting</h2>
+              <h2 id="meeting-title" className="text-[17px] font-semibold text-ink">Schedule a meeting</h2>
               <button type="button" onClick={() => setView("cards")} className="rounded-full bg-s3 p-1.5 text-mid hover:text-ink" aria-label="Close scheduler">
                 <X className="h-4 w-4" />
               </button>
@@ -129,8 +129,8 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
         <section className="aq-card aq-rise max-w-3xl p-5 md:p-6">
           <header className="flex items-center justify-between">
             <div>
-              <h2 className="text-[16px] font-semibold text-ink">Send the desk a message</h2>
-              <p className="mt-0.5 text-[13.5px] text-mid">We reply to the email below.</p>
+              <h2 className="text-[17px] font-semibold text-ink">Send the desk a message</h2>
+              <p className="mt-0.5 text-[15px] text-mid">We reply to the email below.</p>
             </div>
             <button type="button" onClick={() => setView("cards")} className="rounded-full bg-s3 p-1.5 text-mid hover:text-ink" aria-label="Close contact form">
               <X className="h-4 w-4" />
@@ -180,11 +180,11 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
               </label>
               <div className="sm:col-span-2">
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                  <label htmlFor="contact-message" className="block text-[13px] font-medium text-mid">
+                  <label htmlFor="contact-message" className="block text-[14.5px] font-medium text-mid">
                     Message
                   </label>
                   {about ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-light py-0.5 pl-2.5 pr-1 text-[12px] font-semibold text-blue">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-light py-0.5 pl-2.5 pr-1 text-[13px] font-semibold text-blue">
                       About: {about}
                       <button type="button" onClick={() => setAbout("")} aria-label={`Remove the ${about} topic`} className="rounded-full p-0.5 hover:bg-blue/10">
                         <X className="h-3 w-3" />
@@ -201,7 +201,7 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
                   placeholder={about ? `What would you like to ask about ${about.toLowerCase()}?` : "What can the desk help with?"}
                   className={areaClass}
                 />
-                {about ? <p className="mt-1.5 text-[12px] text-dim">The topic is added to your message so it reaches the right person.</p> : null}
+                {about ? <p className="mt-1.5 text-[13px] text-dim">The topic is added to your message so it reaches the right person.</p> : null}
               </div>
               {error ? (
                 <p className={`${noticeError} sm:col-span-2`}>

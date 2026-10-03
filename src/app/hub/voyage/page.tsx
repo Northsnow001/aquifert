@@ -10,9 +10,9 @@ export default function VoyagePage() {
         <h1 className="text-lg font-black">Voyage</h1>
         <p className="text-sm text-mid">Sample freight analytics. Live fixtures connect in a later phase.</p>
       </div>
-      <table className="w-full text-[13px]">
+      <table className="w-full text-[14.5px]">
         <thead>
-          <tr className="bg-s3 text-left font-mono text-[10px] uppercase tracking-wider text-mid">
+          <tr className="bg-s3 text-left font-mono text-[11px] uppercase tracking-wider text-mid">
             <th className="px-5 py-2">Lane</th>
             <th className="px-5 py-2">Vessel</th>
             <th className="px-5 py-2">Rate</th>

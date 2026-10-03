@@ -47,21 +47,21 @@ export default async function BriefingIssuePage({ params }: Props) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5 pb-2">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <Link href="/hub/analytics/briefing" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-blue no-underline hover:underline">
+        <Link href="/hub/analytics/briefing" className="inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-blue no-underline hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden /> All issues
         </Link>
         <PrintButton label="Print or save as PDF" />
       </div>
 
       <article className="aq-card aq-rise px-5 py-6 sm:px-9 sm:py-8 print:border-0 print:shadow-none">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-teal-700">The Briefing · AQ Analytics</p>
+        <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-teal-700">The Briefing · AQ Analytics</p>
         <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[30px]">{issue.title}</h1>
-        <p className="mt-2 inline-flex items-center gap-1.5 font-mono text-[11.5px] uppercase tracking-wide text-dim">
+        <p className="mt-2 inline-flex items-center gap-1.5 font-mono text-[12.5px] uppercase tracking-wide text-dim">
           <CalendarDays className="h-3.5 w-3.5" aria-hidden /> {formatDay(issue.date)}
         </p>
-        {issue.summary ? <p className="mt-5 border-l-2 border-teal-400 pl-4 text-[15.5px] leading-relaxed text-ink">{issue.summary}</p> : null}
+        {issue.summary ? <p className="mt-5 border-l-2 border-teal-400 pl-4 text-[17px] leading-relaxed text-ink">{issue.summary}</p> : null}
         <div className="mt-6 border-t border-border pt-6">
-          {issue.body.trim() ? <Markdown text={issue.body} className="text-[15px] text-ink" images /> : <p className="text-[14px] text-mid">This issue is a summary only.</p>}
+          {issue.body.trim() ? <Markdown text={issue.body} className="text-[16.5px] text-ink" images /> : <p className="text-[15.5px] text-mid">This issue is a summary only.</p>}
         </div>
         <div className="mt-8 border-t border-border pt-4">
           <Disclaimer />
@@ -71,25 +71,25 @@ export default async function BriefingIssuePage({ params }: Props) {
       <nav aria-label="More issues" className="grid grid-cols-1 gap-3 sm:grid-cols-2 print:hidden">
         {older ? (
           <Link href={`/hub/analytics/briefing/${encodeURIComponent(older.id)}`} className="aq-card aq-lift flex flex-col p-4 no-underline">
-            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-blue">
+            <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-blue">
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden /> Previous issue
             </span>
-            <span className="mt-1 line-clamp-2 text-[13.5px] font-semibold leading-snug text-ink">{older.title}</span>
-            <span className="mt-0.5 text-[12px] text-dim">{formatDay(older.date)}</span>
+            <span className="mt-1 line-clamp-2 text-[15px] font-semibold leading-snug text-ink">{older.title}</span>
+            <span className="mt-0.5 text-[13px] text-dim">{formatDay(older.date)}</span>
           </Link>
         ) : (
           <div className="hidden sm:block" />
         )}
         {newer ? (
           <Link href={`/hub/analytics/briefing/${encodeURIComponent(newer.id)}`} className="aq-card aq-lift flex flex-col p-4 text-right no-underline">
-            <span className="inline-flex items-center justify-end gap-1 text-[12px] font-semibold text-blue">
+            <span className="inline-flex items-center justify-end gap-1 text-[13px] font-semibold text-blue">
               Next issue <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </span>
-            <span className="mt-1 line-clamp-2 text-[13.5px] font-semibold leading-snug text-ink">{newer.title}</span>
-            <span className="mt-0.5 text-[12px] text-dim">{formatDay(newer.date)}</span>
+            <span className="mt-1 line-clamp-2 text-[15px] font-semibold leading-snug text-ink">{newer.title}</span>
+            <span className="mt-0.5 text-[13px] text-dim">{formatDay(newer.date)}</span>
           </Link>
         ) : (
-          <p className="flex items-center justify-center rounded-2xl border border-dashed border-border px-4 py-4 text-center text-[12.5px] text-mid">This is the latest issue. The next one lands with the weekly update.</p>
+          <p className="flex items-center justify-center rounded-2xl border border-dashed border-border px-4 py-4 text-center text-[13.5px] text-mid">This is the latest issue. The next one lands with the weekly update.</p>
         )}
       </nav>
 

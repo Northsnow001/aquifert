@@ -24,11 +24,11 @@ export default async function AnalyticsHome() {
           return (
             <Link key={item.key} href={item.href} className="aq-card aq-lift flex flex-col p-5 no-underline">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[15px] font-semibold text-ink">{item.label}</p>
+                <p className="text-[16.5px] font-semibold text-ink">{item.label}</p>
                 {open ? <Tag tone="green">Included</Tag> : <Tag tone="blue"><Lock className="h-3 w-3" aria-hidden /> {PLAN_LABEL[modules.access[item.key]]}</Tag>}
               </div>
-              <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-mid">{item.pitch}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-blue">
+              <p className="mt-1.5 flex-1 text-[14.5px] leading-relaxed text-mid">{item.pitch}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue">
                 {open ? "Open" : "See what it covers"} <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </span>
             </Link>

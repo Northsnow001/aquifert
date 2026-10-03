@@ -25,7 +25,7 @@ function stance(value: number, index: number) {
 function Gauge({ value, color }: { value: number; color: string }) {
   const drawn = (Math.min(100, Math.max(0, value)) / 100) * ARC;
   return (
-    <svg className="mx-auto h-[74px] w-full max-w-[168px]" viewBox="0 0 120 70" role="img" aria-label={`Score ${value} out of 100`}>
+    <svg className="mx-auto mt-2 w-full max-w-[190px]" viewBox="0 0 120 70" role="img" aria-label={`Score ${value} out of 100`}>
       <path d="M14 62 A 46 46 0 0 1 106 62" fill="none" stroke="#edf1f5" strokeWidth="9" strokeLinecap="round" />
       <path
         d="M14 62 A 46 46 0 0 1 106 62"
@@ -56,51 +56,56 @@ export default async function HomePage() {
   const hedgeReports = sortHedge(content.hedgeReports).filter((item) => item.status === "published");
   return (
     <div className="flex flex-col gap-6 pb-2">
-      <HomeHero name={user?.name ?? ""} />
-
-      <section aria-labelledby="indicators-title">
-        <div className="mb-3 flex items-baseline justify-between gap-4 px-1">
-          <h2 id="indicators-title" className="text-[15px] font-semibold tracking-tight text-ink">
-            Market Indicators
-          </h2>
-          {readingsDay ? <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatDay(readingsDay)}</p> : null}
-        </div>
-        <div className="aq-stagger grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {indicators.map((item, index) => {
-            const tone = stance(item.value, index);
-            return (
-              <article key={item.name} className="aq-card aq-lift flex flex-col px-4 pb-4 pt-3.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">{item.name}</p>
-                  <span className="rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em]" style={{ color: tone.color, background: tone.soft }}>
+      <div className={`grid grid-cols-1 gap-4 ${hedgeReports.length ? "xl:grid-cols-2" : ""}`}>
+        <section aria-labelledby="indicators-title" className="aq-card flex min-w-0 flex-col overflow-hidden xl:h-[500px]">
+          <header className="flex shrink-0 items-baseline justify-between gap-4 border-b border-border px-5 py-3.5">
+            <h2 id="indicators-title" className="text-[16.5px] font-semibold text-ink">
+              Market Indicators
+            </h2>
+            {readingsDay ? <p className="font-mono text-[12px] uppercase tracking-wide text-dim">{formatDay(readingsDay)}</p> : null}
+          </header>
+          <div className="aq-stagger grid flex-1 grid-cols-1 divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {indicators.map((item, index) => {
+              const tone = stance(item.value, index);
+              return (
+                <article key={item.name} className="flex min-w-0 flex-col items-center px-4 pb-5 pt-6 text-center">
+                  <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-mid">{item.name}</p>
+                  <Gauge value={item.value} color={tone.color} />
+                  <span className="mt-2 rounded-full px-2 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.1em]" style={{ color: tone.color, background: tone.soft }}>
                     {tone.label}
                   </span>
-                </div>
-                <Gauge value={item.value} color={tone.color} />
-                <p className="mt-2 border-t border-border pt-2.5 text-[13px] leading-5 text-ink" title={item.note || undefined}>
-                  <span className="line-clamp-2">{item.summary}</span>
-                </p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+                  <p className="mt-4 w-full border-t border-border pt-4 text-[15px] leading-[1.6] text-ink" title={item.note || undefined}>
+                    {item.summary}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+          <p className="shrink-0 border-t border-border bg-s2 px-5 py-2.5 text-center font-mono text-[11.5px] uppercase tracking-wide text-dim">
+            Score 0–100 · Bearish &lt;34 · Neutral 34–66 · Bullish &gt;66
+          </p>
+        </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:col-span-3 lg:h-[640px]">
+        <PaperForwardBrief reports={hedgeReports} className="xl:h-[500px]" />
+      </div>
+
+      <HomeHero name={user?.name ?? ""} />
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[640px]">
           <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-3.5">
             <span className="aq-chip aq-chip-blue flex h-8 w-8 items-center justify-center rounded-[10px] text-white">
               <Radio className="h-4 w-4" />
             </span>
             <div className="min-w-0">
               <div className="flex items-baseline gap-1.5">
-                <h2 className="text-[15px] font-semibold text-ink">Telex</h2>
-                <span className="text-[12.5px] text-dim">Intel feed</span>
+                <h2 className="text-[16.5px] font-semibold text-ink">Telex</h2>
+                <span className="text-[13.5px] text-dim">Intel feed</span>
               </div>
-              {telex[0] ? <p className="font-mono text-[11px] uppercase tracking-wide text-dim">Updated {formatStamp(telex[0].publishedAt)}</p> : null}
+              {telex[0] ? <p className="font-mono text-[12px] uppercase tracking-wide text-dim">Updated {formatStamp(telex[0].publishedAt)}</p> : null}
             </div>
           </header>
-          <div className="flex shrink-0 items-start gap-2 border-b border-border bg-s2 px-5 py-2.5 text-[12px] leading-relaxed text-mid">
+          <div className="flex shrink-0 items-start gap-2 border-b border-border bg-s2 px-5 py-2.5 text-[13px] leading-relaxed text-mid">
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" />
             <p>
               Preliminary market intel. Verify data before trading.{" "}
@@ -113,13 +118,13 @@ export default async function HomePage() {
             {telex.length === 0 ? <p className="px-5 py-12 text-center text-sm text-mid">No Telex messages for your plan yet.</p> : null}
             {telex.map((item) => (
               <article key={item.id} className="border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-s2/60">
-                <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatTelexDay(item.publishedAt)}</p>
-                <h3 className="mt-1.5 text-[15.5px] font-semibold leading-snug tracking-[-0.01em] text-ink">{telexHeadline(item)}</h3>
-                <Markdown text={item.paragraphs.join("\n\n")} images className="mt-2.5 text-[13.5px] text-ink" />
+                <p className="font-mono text-[12px] uppercase tracking-wide text-dim">{formatTelexDay(item.publishedAt)}</p>
+                <h3 className="mt-1.5 text-[17px] font-semibold leading-snug tracking-[-0.01em] text-ink">{telexHeadline(item)}</h3>
+                <Markdown text={item.paragraphs.join("\n\n")} images className="mt-2.5 text-[15px] text-ink" />
                 {item.tags.length ? (
                   <div className="mt-3 flex flex-wrap gap-1">
                     {item.tags.map((tag) => (
-                      <span key={tag} className="rounded-full bg-blue-light px-2 py-0.5 text-[11px] font-semibold text-blue">
+                      <span key={tag} className="rounded-full bg-blue-light px-2 py-0.5 text-[12px] font-semibold text-blue">
                         {tag}
                       </span>
                     ))}
@@ -130,10 +135,10 @@ export default async function HomePage() {
           </div>
         </article>
 
-        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:col-span-2 lg:h-[640px]">
+        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[640px]">
           <header className="shrink-0 border-b border-border px-5 py-3.5">
-            <h2 className="text-[15px] font-semibold text-ink">Market Commentary</h2>
-            {readingsDay ? <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatDay(readingsDay)}</p> : null}
+            <h2 className="text-[16.5px] font-semibold text-ink">Market Analysis</h2>
+            {readingsDay ? <p className="font-mono text-[12px] uppercase tracking-wide text-dim">{formatDay(readingsDay)}</p> : null}
           </header>
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
             {indicators.every((item) => !item.note) ? <p className="py-8 text-center text-sm text-mid">No commentary this week.</p> : null}
@@ -142,22 +147,20 @@ export default async function HomePage() {
               const tone = stance(item.value, index);
               return (
                 <div key={item.name}>
-                  <p className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">
+                  <p className="flex items-center gap-2 font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-mid">
                     <span className="h-2 w-2 rounded-full" style={{ background: tone.color }} />
                     {item.name}
                     <span className="normal-case tracking-normal" style={{ color: tone.color }}>
                       {tone.label}
                     </span>
                   </p>
-                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink">{item.note}</p>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{item.note}</p>
                 </div>
               );
             })}
           </div>
         </article>
       </section>
-
-      <PaperForwardBrief reports={hedgeReports} />
 
       {freight.showOnHome ? <FreightAnalytics fixtures={freight.fixtures.filter((row) => row.visible)} commentary={freight.commentary} /> : null}
     </div>

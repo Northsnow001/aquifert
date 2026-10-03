@@ -54,11 +54,11 @@ export default async function PlanUsagePage() {
               <Crown className="h-6 w-6" />
             </span>
             <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">Current plan</p>
+              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-teal-700">Current plan</p>
               <p className="text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
-                {PLAN_LABEL[user.plan]} <span className="text-[15px] font-medium text-dim">· {PLAN_PRICE[user.plan]}</span>
+                {PLAN_LABEL[user.plan]} <span className="text-[16.5px] font-medium text-dim">· {PLAN_PRICE[user.plan]}</span>
               </p>
-              <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-mid">
+              <p className="mt-0.5 flex items-center gap-1.5 text-[14.5px] text-mid">
                 <CalendarClock className="h-3.5 w-3.5" aria-hidden /> Allowances reset on {longDay(resetDate)}
               </p>
             </div>
@@ -72,7 +72,7 @@ export default async function PlanUsagePage() {
             </Link>
           </div>
         </div>
-        {admin ? <p className="relative mt-4 rounded-xl bg-blue-light px-3.5 py-2.5 text-[12.5px] text-blue">You are signed in as an admin, so every allowance below is unlimited for you.</p> : null}
+        {admin ? <p className="relative mt-4 rounded-xl bg-blue-light px-3.5 py-2.5 text-[13.5px] text-blue">You are signed in as an admin, so every allowance below is unlimited for you.</p> : null}
       </section>
 
       <div className="grid gap-4 lg:grid-cols-5">
@@ -101,11 +101,11 @@ export default async function PlanUsagePage() {
         <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-[18px] font-semibold tracking-[-0.01em] text-ink">AQ Analytics on your plan</h2>
-            <p className="text-[13px] text-mid">
+            <p className="text-[14.5px] text-mid">
               {MODULES.filter((item) => can(item.key)).length} of {MODULES.length} modules unlocked. Each one opens from the plan shown.
             </p>
           </div>
-          <Link href="/hub/membership" className="text-[13px] font-semibold text-blue no-underline hover:underline">
+          <Link href="/hub/membership" className="text-[14.5px] font-semibold text-blue no-underline hover:underline">
             Compare every plan
           </Link>
         </div>
@@ -125,9 +125,9 @@ export default async function PlanUsagePage() {
                   </span>
                   {open ? <Tag tone="green">Unlocked</Tag> : <Tag tone="neutral">From {PLAN_LABEL[from]}</Tag>}
                 </div>
-                <p className="text-[14.5px] font-semibold text-ink">{item.label}</p>
-                <p className="line-clamp-2 text-[12.5px] leading-snug text-mid">{item.pitch}</p>
-                <span className={`mt-auto inline-flex items-center gap-1 pt-1 text-[12.5px] font-semibold ${open ? "text-blue" : "text-teal-700"}`}>
+                <p className="text-[16px] font-semibold text-ink">{item.label}</p>
+                <p className="line-clamp-2 text-[13.5px] leading-snug text-mid">{item.pitch}</p>
+                <span className={`mt-auto inline-flex items-center gap-1 pt-1 text-[13.5px] font-semibold ${open ? "text-blue" : "text-teal-700"}`}>
                   {open ? "Open" : `Unlock with ${PLAN_LABEL[from]}`}
                   <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
                 </span>

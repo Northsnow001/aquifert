@@ -40,12 +40,12 @@ export function LanguageMenu() {
         className="flex h-9 items-center gap-1.5 rounded-full px-2 text-ink transition-colors hover:bg-black/[.05]"
       >
         <Flag country={current.country} className="h-[15px] w-[22px]" />
-        <span className="hidden font-mono text-[10.5px] font-semibold uppercase tracking-wide text-mid xl:inline">{current.code}</span>
+        <span className="hidden font-mono text-[11.5px] font-semibold uppercase tracking-wide text-mid xl:inline">{current.code}</span>
         <ChevronDown className={`hidden h-3.5 w-3.5 text-dim transition-transform sm:block ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
         <div role="menu" translate="no" aria-label={t("top.language")} className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-60 rounded-2xl border border-border bg-white p-1.5">
-          <p className="px-2.5 pb-1.5 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-dim">{t("top.language")}</p>
+          <p className="px-2.5 pb-1.5 pt-1.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-dim">{t("top.language")}</p>
           <div className="max-h-[min(70vh,420px)] overflow-y-auto">
             {LANGUAGES.map((option) => {
               const active = option.code === lang;
@@ -60,11 +60,11 @@ export function LanguageMenu() {
                     setLang(option.code);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13.5px] transition-colors hover:bg-s2 ${active ? "bg-blue-light/60 font-semibold text-ink" : "font-medium text-ink"}`}
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[15px] transition-colors hover:bg-s2 ${active ? "bg-blue-light/60 font-semibold text-ink" : "font-medium text-ink"}`}
                 >
                   <Flag country={option.country} />
                   <span className="min-w-0 flex-1 truncate">{option.nativeName}</span>
-                  {option.nativeName !== option.englishName ? <span className="text-[11.5px] text-dim">{option.englishName}</span> : null}
+                  {option.nativeName !== option.englishName ? <span className="text-[12.5px] text-dim">{option.englishName}</span> : null}
                   {active ? <Check className="h-3.5 w-3.5 shrink-0 text-blue" /> : null}
                 </button>
               );

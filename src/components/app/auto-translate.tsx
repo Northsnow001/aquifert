@@ -21,6 +21,7 @@ function mostlyForeignScript(text: string) {
   return foreign > letters.length - foreign;
 }
 const MAX_LENGTH = 4000;
+const LOAD_FALLBACK_MS = 2500;
 const REQUEST_SIZE = 150;
 const STORE_LIMIT = 1_500_000;
 const RETRY_MS = 30_000;
@@ -68,18 +69,24 @@ function whenHydrated(run: () => void) {
   }
   let idle = 0;
   let cancelled = false;
+  let started = false;
   const go = () => {
-    if (cancelled) return;
+    if (cancelled || started) return;
+    started = true;
+    window.clearTimeout(fallback);
     const done = () => {
       hydrated = true;
       if (!cancelled) run();
     };
     idle = typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(done, { timeout: 600 }) : window.setTimeout(done, 120);
   };
+  // A slow image can hold back the load event indefinitely.
+  const fallback = window.setTimeout(go, LOAD_FALLBACK_MS);
   if (document.readyState === "complete") go();
   else window.addEventListener("load", go, { once: true });
   return () => {
     cancelled = true;
+    window.clearTimeout(fallback);
     window.removeEventListener("load", go);
     if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(idle);
     window.clearTimeout(idle);
@@ -293,7 +300,7 @@ export function AutoTranslate() {
     <>
       {masked ? <style>{"#main-content{opacity:0;animation:aq-tr-reveal .3s ease 3s forwards}@keyframes aq-tr-reveal{to{opacity:1}}"}</style> : null}
       {busy && lang !== "en" ? (
-        <div translate="no" role="status" className="aq-float pointer-events-none fixed left-1/2 top-[76px] z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-white px-3.5 py-1.5 text-[12.5px] font-medium text-mid">
+        <div translate="no" role="status" className="aq-float pointer-events-none fixed left-1/2 top-[76px] z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border bg-white px-3.5 py-1.5 text-[13.5px] font-medium text-mid">
           <span className="h-3 w-3 animate-spin rounded-full border-2 border-blue/25 border-t-blue" aria-hidden />
           {t("top.translating")}
         </div>

@@ -29,7 +29,7 @@ const TIER_OFFERS = MEMBERSHIP_OFFERS.filter((offer) => offer.tier);
 function CycleToggle({ cycle, onChange, compact = false }: { cycle: BillingCycle; onChange: (cycle: BillingCycle) => void; compact?: boolean }) {
   const { t } = useI18n();
   return (
-    <div role="radiogroup" aria-label="Billing" className={`inline-flex items-center rounded-full border border-border bg-white p-1 font-semibold shadow-sm ${compact ? "text-[12.5px]" : "text-[13.5px]"}`}>
+    <div role="radiogroup" aria-label="Billing" className={`inline-flex items-center rounded-full border border-border bg-white p-1 font-semibold shadow-sm ${compact ? "text-[13.5px]" : "text-[15px]"}`}>
       {(["monthly", "annual"] as const).map((value) => (
         <button
           key={value}
@@ -53,9 +53,9 @@ function PriceLine({ offer, cycle }: { offer: MembershipOffer; cycle: BillingCyc
     <div className="mt-4">
       <p className="flex items-baseline gap-1">
         <span className="text-[30px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular-nums">{gbp(annual ? annualPrice(offer.monthly) : offer.monthly)}</span>
-        <span className="text-[13.5px] text-dim">{annual ? t("mem.perYear") : t("mem.perMonth")}</span>
+        <span className="text-[15px] text-dim">{annual ? t("mem.perYear") : t("mem.perMonth")}</span>
       </p>
-      <p className={`mt-1 h-4 text-[12px] font-semibold text-[#1f8a4c] ${annual ? "" : "invisible"}`}>{t("mem.save", { amount: gbp(annualSaving(offer.monthly)) })}</p>
+      <p className={`mt-1 h-4 text-[13px] font-semibold text-[#1f8a4c] ${annual ? "" : "invisible"}`}>{t("mem.save", { amount: gbp(annualSaving(offer.monthly)) })}</p>
     </div>
   );
 }
@@ -93,7 +93,7 @@ export function MembershipBoard({
       />
 
       {plan === "core" ? (
-        <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-navy-50 px-4 py-2.5 text-[13px] text-navy-700">
+        <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-navy-50 px-4 py-2.5 text-[14.5px] text-navy-700">
           <Crown className="h-4 w-4 shrink-0 text-[#d9951f]" aria-hidden />
           <span className="min-w-0 flex-1">{t("mem.freeNote")}</span>
           <Link href="/hub/contact?topic=Membership" className="font-semibold text-blue no-underline hover:underline">
@@ -127,7 +127,7 @@ export function MembershipBoard({
             <section key={offer.id} aria-label={offer.name} className={`aq-card relative flex flex-col p-6 transition-transform duration-200 hover:-translate-y-0.5 ${frame}`}>
               {badge ? (
                 <span
-                  className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-white shadow-sm ${
+                  className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.08em] text-white shadow-sm ${
                     state === "open" ? "bg-teal-500" : "bg-[#2fa865]"
                   }`}
                 >
@@ -135,9 +135,9 @@ export function MembershipBoard({
                 </span>
               ) : null}
               <h2 className="text-[18px] font-bold text-ink">{offer.name}</h2>
-              <p className="mt-0.5 text-[12.5px] text-dim">{offer.tagline}</p>
+              <p className="mt-0.5 text-[13.5px] text-dim">{offer.tagline}</p>
               <PriceLine offer={offer} cycle={cycle} />
-              <ul className="mt-4 space-y-2 text-[13.5px]">
+              <ul className="mt-4 space-y-2 text-[15px]">
                 {offer.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-ink">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" aria-hidden /> {feature}
@@ -157,7 +157,7 @@ export function MembershipBoard({
                   type="button"
                   disabled={state !== "open"}
                   onClick={() => setCheckout(offer.id)}
-                  className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-full px-5 text-[14px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
+                  className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-full px-5 text-[15.5px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
                     state !== "open"
                       ? "bg-s3 text-mid"
                       : offer.popular
@@ -237,7 +237,7 @@ function RequestDialog({
       <button type="button" aria-label={t("mem.close")} className="aq-backdrop absolute inset-0 cursor-default bg-[#0b1e2d]/50" onClick={onClose} />
       <div className="aq-sheet aq-safe-bottom relative flex max-h-[92dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[22px] bg-white shadow-2xl sm:rounded-[22px]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-          <h2 id="membership-dialog-title" className="flex items-center gap-2 text-[16px] font-semibold text-ink">
+          <h2 id="membership-dialog-title" className="flex items-center gap-2 text-[17px] font-semibold text-ink">
             <Crown className="h-5 w-5 text-navy-600" aria-hidden /> {t("mem.request", { name: offer.name })}
           </h2>
           <button type="button" onClick={onClose} aria-label={t("mem.close")} className="flex h-8 w-8 items-center justify-center rounded-full text-mid hover:bg-s2 hover:text-ink">
@@ -250,10 +250,10 @@ function RequestDialog({
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e7f6ee] text-[#1f8a4c]">
               <CheckCircle2 className="h-6 w-6" />
             </span>
-            <p className="text-[14px] leading-relaxed text-ink" role="status">
+            <p className="text-[15.5px] leading-relaxed text-ink" role="status">
               {t("mem.sent", { email: sent })}
             </p>
-            <button type="button" onClick={onClose} className="mt-2 inline-flex h-10 items-center rounded-full bg-navy-600 px-5 text-[13.5px] font-semibold text-white hover:bg-navy-700">
+            <button type="button" onClick={onClose} className="mt-2 inline-flex h-10 items-center rounded-full bg-navy-600 px-5 text-[15px] font-semibold text-white hover:bg-navy-700">
               {t("mem.close")}
             </button>
           </div>
@@ -297,8 +297,8 @@ function RequestDialog({
                         }`}
                       >
                         <input type="radio" name="tier" value={item.id} checked={active} onChange={() => setSelected(item.id)} className="sr-only" />
-                        <span className="block text-[13.5px] font-semibold text-ink">{item.name}</span>
-                        <span className="block text-[11px] leading-snug text-dim">{item.tagline}</span>
+                        <span className="block text-[15px] font-semibold text-ink">{item.name}</span>
+                        <span className="block text-[12px] leading-snug text-dim">{item.tagline}</span>
                       </label>
                     );
                   })}
@@ -308,15 +308,15 @@ function RequestDialog({
 
             <div className="rounded-xl bg-s2 p-3.5">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[14px] font-bold text-ink">{offer.name}</span>
-                <span className="text-[15px] font-bold tabular-nums text-ink">
+                <span className="text-[15.5px] font-bold text-ink">{offer.name}</span>
+                <span className="text-[16.5px] font-bold tabular-nums text-ink">
                   {gbp(price)}
-                  <span className="text-[12px] font-medium text-dim">{cycle === "annual" ? t("mem.perYear") : t("mem.perMonth")}</span>
+                  <span className="text-[13px] font-medium text-dim">{cycle === "annual" ? t("mem.perYear") : t("mem.perMonth")}</span>
                 </span>
               </div>
               <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
                 <CycleToggle cycle={cycle} onChange={onCycle} compact />
-                {cycle === "annual" ? <span className="text-[12px] font-semibold text-[#1f8a4c]">{t("mem.save", { amount: gbp(annualSaving(offer.monthly)) })}</span> : null}
+                {cycle === "annual" ? <span className="text-[13px] font-semibold text-[#1f8a4c]">{t("mem.save", { amount: gbp(annualSaving(offer.monthly)) })}</span> : null}
               </div>
             </div>
 
@@ -353,11 +353,11 @@ function RequestDialog({
             <button
               type="submit"
               disabled={pending || unchanged}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-teal-500 px-5 text-[14px] font-semibold text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] transition hover:bg-teal-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-teal-500 px-5 text-[15.5px] font-semibold text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] transition hover:bg-teal-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
             >
               <Send className="h-4 w-4" /> {pending ? t("mem.sending") : t("mem.send")}
             </button>
-            <p className="text-center text-[11.5px] leading-relaxed text-dim">{t("mem.noPayment")}</p>
+            <p className="text-center text-[12.5px] leading-relaxed text-dim">{t("mem.noPayment")}</p>
           </form>
         )}
       </div>

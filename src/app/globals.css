@@ -135,9 +135,9 @@ body::before {
   --color-blue-dim: #25598f;
   --color-blue-light: #eaf2fb;
   --color-teal: #5fa88a;
-  --color-ink: #10263b;
-  --color-mid: #4d6275;
-  --color-dim: #7d8fa0;
+  --color-ink: #0b1724;
+  --color-mid: #34485a;
+  --color-dim: #5a6d7f;
   --radius-lg: 0.625rem;
   --radius-xl: 0.875rem;
   --radius-2xl: 1.125rem;
@@ -946,7 +946,7 @@ body::before {
 /* Admin-authored rich text (Tools commentary). */
 .aq-prose {
   color: var(--color-mid);
-  font-size: 13px;
+  font-size: 14.5px;
   line-height: 1.65;
   overflow-wrap: anywhere;
 }
@@ -955,14 +955,14 @@ body::before {
 }
 .aq-prose h2 {
   color: var(--color-ink);
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 700;
   line-height: 1.35;
 }
 .aq-prose h3,
 .aq-prose h4 {
   color: var(--color-ink);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.4;
 }

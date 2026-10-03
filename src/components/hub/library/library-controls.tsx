@@ -7,7 +7,7 @@ import { ACCESS_OPTIONS, SORTS, libraryHref, type LibraryFilters, type LibrarySo
 import type { TelexAccess } from "@/lib/content-types";
 
 const control =
-  "h-11 w-full rounded-xl border border-border bg-white px-3 text-[13.5px] text-ink outline-none hover:border-[#cdd7e1] sm:w-auto";
+  "h-11 w-full rounded-xl border border-border bg-white px-3 text-[15px] text-ink outline-none hover:border-[#cdd7e1] sm:w-auto";
 
 export function LibraryControls({
   filters,

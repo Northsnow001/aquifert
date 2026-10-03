@@ -92,13 +92,13 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
       <section className="aq-card p-5 xl:col-span-2" aria-labelledby="new-alert">
-        <h2 id="new-alert" className="flex items-center gap-2 text-[15px] font-semibold text-ink">
+        <h2 id="new-alert" className="flex items-center gap-2 text-[16.5px] font-semibold text-ink">
           <BellPlus className="h-4 w-4 text-blue" aria-hidden /> New price alert
         </h2>
-        <p className="mt-1 text-[12.5px] text-mid">Alerts are checked every time the desk updates prices. Hits show here and on your dashboard.</p>
+        <p className="mt-1 text-[13.5px] text-mid">Alerts are checked every time the desk updates prices. Hits show here and on your dashboard.</p>
 
         {!series.length ? (
-          <p className="mt-4 rounded-xl bg-s2 px-4 py-3 text-[13px] text-mid">Alerts open up as soon as the desk publishes its first price series.</p>
+          <p className="mt-4 rounded-xl bg-s2 px-4 py-3 text-[14.5px] text-mid">Alerts open up as soon as the desk publishes its first price series.</p>
         ) : (
           <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
             <div>
@@ -172,7 +172,7 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
               </p>
               {option?.latest ? (
                 <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick set from the latest price">
-                  <span className="text-[11.5px] text-dim">Quick set:</span>
+                  <span className="text-[12.5px] text-dim">Quick set:</span>
                   {QUICK.map((pct) => (
                     <button
                       key={pct}
@@ -181,7 +181,7 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
                         setThreshold(String(tidy(option.latest!.value * (1 + pct / 100))));
                         setDirection(pct > 0 ? "above" : "below");
                       }}
-                      className="aq-nopress rounded-full border border-border bg-white px-2.5 py-1 text-[12px] font-semibold tabular-nums text-mid transition hover:border-blue/40 hover:text-blue"
+                      className="aq-nopress rounded-full border border-border bg-white px-2.5 py-1 text-[13px] font-semibold tabular-nums text-mid transition hover:border-blue/40 hover:text-blue"
                       title={`${pct > 0 ? "Above" : "Below"} ${num(tidy(option.latest!.value * (1 + pct / 100)))} ${option.unit}`}
                     >
                       {pct > 0 ? "+" : "−"}
@@ -202,7 +202,7 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
             <button type="submit" disabled={saving || full} className={btnPrimary}>
               <BellRing className="h-4 w-4" aria-hidden /> {saving ? "Setting alert…" : "Set alert"}
             </button>
-            <p className="-mt-2 text-center text-[12px] text-dim">
+            <p className="-mt-2 text-center text-[13px] text-dim">
               {full ? `You have ${MAX_ALERTS} alerts, the most a member can hold. Delete one to add another.` : `${alerts.length} of ${MAX_ALERTS} alerts in use`}
             </p>
           </form>
@@ -211,18 +211,18 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
 
       <section className="aq-card flex min-w-0 flex-col overflow-hidden xl:col-span-3" aria-labelledby="your-alerts">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3.5">
-          <h2 id="your-alerts" className="text-[15px] font-semibold text-ink">
+          <h2 id="your-alerts" className="text-[16.5px] font-semibold text-ink">
             Your alerts
           </h2>
           {alerts.length ? (
-            <p className={`text-[12.5px] font-semibold ${triggered.length ? "text-danger" : "text-mid"}`}>{triggered.length ? `${triggered.length} hit` : `${alerts.filter((row) => row.active).length} watching`}</p>
+            <p className={`text-[13.5px] font-semibold ${triggered.length ? "text-danger" : "text-mid"}`}>{triggered.length ? `${triggered.length} hit` : `${alerts.filter((row) => row.active).length} watching`}</p>
           ) : null}
         </header>
         {!alerts.length ? (
           <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
             <BellRing className="h-6 w-6 text-dim" aria-hidden />
-            <p className="text-[14px] font-semibold text-ink">No alerts yet</p>
-            <p className="max-w-sm text-[13px] leading-relaxed text-mid">Pick a series, choose above or below and set your price. Quick-set chips put the threshold a few percent from today&apos;s level.</p>
+            <p className="text-[15.5px] font-semibold text-ink">No alerts yet</p>
+            <p className="max-w-sm text-[14.5px] leading-relaxed text-mid">Pick a series, choose above or below and set your price. Quick-set chips put the threshold a few percent from today&apos;s level.</p>
           </div>
         ) : (
           <ul className="divide-y divide-border">
@@ -233,28 +233,28 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
                   <div className="flex items-start gap-3">
                     <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${row.triggered ? "bg-danger" : row.active ? "bg-teal-500" : "bg-[#c3ced8]"}`} aria-hidden />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[14px] font-semibold text-ink">
+                      <p className="text-[15.5px] font-semibold text-ink">
                         {row.label} <span className="font-normal text-mid">· {row.basis}</span>
                       </p>
-                      <p className="text-[13px] tabular-nums text-mid">
+                      <p className="text-[14.5px] tabular-nums text-mid">
                         {row.direction === "above" ? "At or above" : "At or below"} <strong className="font-semibold text-ink">{num(row.threshold)}</strong> {row.unit}
                       </p>
                       {row.missing ? (
-                        <p className="mt-1 text-[12.5px] text-mid">The desk no longer publishes this series. Delete the alert or set it on another series.</p>
+                        <p className="mt-1 text-[13.5px] text-mid">The desk no longer publishes this series. Delete the alert or set it on another series.</p>
                       ) : row.triggered && row.latest ? (
-                        <p className="mt-1 text-[12.5px] font-semibold text-danger">
+                        <p className="mt-1 text-[13.5px] font-semibold text-danger">
                           Hit: {num(row.latest.value)} {row.unit} on {formatDay(row.latest.date)}
                         </p>
                       ) : !row.active ? (
-                        <p className="mt-1 text-[12.5px] text-dim">Paused{row.latest ? ` · currently ${num(row.latest.value)} ${row.unit}` : ""}</p>
+                        <p className="mt-1 text-[13.5px] text-dim">Paused{row.latest ? ` · currently ${num(row.latest.value)} ${row.unit}` : ""}</p>
                       ) : row.latest && row.distance !== null ? (
-                        <p className="mt-1 text-[12.5px] tabular-nums text-mid">
+                        <p className="mt-1 text-[13.5px] tabular-nums text-mid">
                           Currently {num(row.latest.value)} {row.unit} · {num(Math.abs(row.distance))} {pct !== null ? `(${pct.toFixed(1)}%)` : ""} to go
                         </p>
                       ) : (
-                        <p className="mt-1 text-[12.5px] text-dim">Waiting for the first price</p>
+                        <p className="mt-1 text-[13.5px] text-dim">Waiting for the first price</p>
                       )}
-                      {row.note ? <p className="mt-1 text-[12.5px] italic text-mid">{row.note}</p> : null}
+                      {row.note ? <p className="mt-1 text-[13.5px] italic text-mid">{row.note}</p> : null}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <Switch checked={row.active} disabled={busy === row.id} label={`${row.active ? "Pause" : "Switch on"} alert for ${row.label} ${row.basis}`} onChange={(next) => rowAction(row.id, () => toggleAlert(row.id, next))} />
@@ -271,15 +271,15 @@ export function AlertsManager({ series, alerts }: { series: SeriesOption[]; aler
                   </div>
                   {confirming === row.id ? (
                     <div className="mt-3 flex flex-wrap items-center justify-end gap-2 rounded-xl border border-red-200 bg-white px-3 py-2">
-                      <p className="mr-auto text-[12.5px] text-ink">Delete this alert?</p>
-                      <button type="button" onClick={() => setConfirming(null)} className={`${btnSecondary} h-8 px-3 text-[12.5px]`}>
+                      <p className="mr-auto text-[13.5px] text-ink">Delete this alert?</p>
+                      <button type="button" onClick={() => setConfirming(null)} className={`${btnSecondary} h-8 px-3 text-[13.5px]`}>
                         Keep it
                       </button>
                       <button
                         type="button"
                         disabled={busy === row.id}
                         onClick={() => rowAction(row.id, () => removeAlert(row.id))}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-danger px-3 text-[12.5px] font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-danger px-3 text-[13.5px] font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
                       >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete
                       </button>
@@ -313,8 +313,8 @@ export function BriefProducts({ options, initial }: { options: readonly string[]
 
   return (
     <div>
-      <p className="text-[14px] font-semibold text-ink">Products in your brief</p>
-      <p className="mt-0.5 text-[12.5px] text-mid">{selected.length ? `Your brief leads with ${selected.join(", ")}.` : "Leave all clear to cover every product."}</p>
+      <p className="text-[15.5px] font-semibold text-ink">Products in your brief</p>
+      <p className="mt-0.5 text-[13.5px] text-mid">{selected.length ? `Your brief leads with ${selected.join(", ")}.` : "Leave all clear to cover every product."}</p>
       <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Brief products">
         {options.map((item) => {
           const on = selected.includes(item);
@@ -324,7 +324,7 @@ export function BriefProducts({ options, initial }: { options: readonly string[]
               type="button"
               aria-pressed={on}
               onClick={() => setSelected(on ? selected.filter((value) => value !== item) : [...selected, item])}
-              className={`aq-nopress inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition ${on ? "border-blue bg-blue-light text-blue" : "border-border bg-white text-mid hover:border-blue/35 hover:text-ink"}`}
+              className={`aq-nopress inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-[14.5px] font-semibold transition ${on ? "border-blue bg-blue-light text-blue" : "border-border bg-white text-mid hover:border-blue/35 hover:text-ink"}`}
             >
               {on ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}
               {item}
@@ -332,7 +332,7 @@ export function BriefProducts({ options, initial }: { options: readonly string[]
           );
         })}
       </div>
-      <button type="button" onClick={save} disabled={!dirty || pending} className={`${btnPrimary} mt-4 h-10 px-4 text-[13px]`}>
+      <button type="button" onClick={save} disabled={!dirty || pending} className={`${btnPrimary} mt-4 h-10 px-4 text-[14.5px]`}>
         {pending ? "Saving…" : dirty ? "Save brief products" : "Saved"}
       </button>
     </div>

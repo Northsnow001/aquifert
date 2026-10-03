@@ -4,6 +4,8 @@ import { saveEnquiry } from "@/app/(auth)/actions";
 import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
 import { orderSections, orderVars, type OrderSubmission } from "@/lib/desk-settings/forms";
 import { notifySubmission } from "@/lib/desk-settings/notify";
+import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
+import { resolvePort, portText } from "@/lib/ports";
 import { listInbox } from "@/lib/inbox";
 import { getSession } from "@/lib/session";
 
@@ -39,6 +41,9 @@ export async function submitOrderEnquiry(input: OrderInput) {
   if (missing.length) return { ok: false as const, message: `Add ${missing.join(", ")}.` };
   if (!EMAIL_PATTERN.test(order.email)) return { ok: false as const, message: "Enter a valid email address." };
   if (!(Number(order.quantity) > 0)) return { ok: false as const, message: "Enter the quantity in metric tonnes." };
+  const port = resolvePort(order.destination, activePorts(await getFreightDesk()));
+  if (!port) return { ok: false as const, message: "Choose a destination port from the list." };
+  order.destination = portText(port);
   if (order.shipTo < order.shipFrom) return { ok: false as const, message: "The shipping period ends before it starts." };
 
   const account = user.email.toLowerCase();

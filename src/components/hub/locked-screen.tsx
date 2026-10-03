@@ -35,15 +35,15 @@ export function LockedScreen({ module, required, plan }: { module: ModuleKey; re
               <span className="aq-chip aq-chip-blue flex h-10 w-10 items-center justify-center rounded-xl text-white">
                 <Lock className="h-[18px] w-[18px]" strokeWidth={2.4} />
               </span>
-              <span className="rounded-full bg-blue-light px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-blue">AQ Analytics</span>
-              <span className="rounded-full bg-s3 px-2.5 py-1 text-[11px] font-semibold text-mid">Included from {PLAN_LABEL[required]}</span>
+              <span className="rounded-full bg-blue-light px-2.5 py-1 text-[12px] font-bold uppercase tracking-[0.1em] text-blue">AQ Analytics</span>
+              <span className="rounded-full bg-s3 px-2.5 py-1 text-[12px] font-semibold text-mid">Included from {PLAN_LABEL[required]}</span>
             </div>
             <h1 className="mt-4 text-[28px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[34px]">Unlock {info.label}</h1>
-            <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-mid">{info.pitch}</p>
+            <p className="mt-2 max-w-xl text-[16.5px] leading-relaxed text-mid">{info.pitch}</p>
 
             <ul className="mt-5 space-y-2.5">
               {info.covers.map((line) => (
-                <li key={line} className="flex items-start gap-2.5 text-[14px] text-ink">
+                <li key={line} className="flex items-start gap-2.5 text-[15.5px] text-ink">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e7f6ee] text-[#1b7a47]">
                     <Check className="h-3 w-3" strokeWidth={3} />
                   </span>
@@ -60,7 +60,7 @@ export function LockedScreen({ module, required, plan }: { module: ModuleKey; re
                 <MessageCircle className="h-4 w-4" /> Talk to the desk
               </Link>
             </div>
-            <p className="mt-3 text-[12.5px] text-dim">
+            <p className="mt-3 text-[13.5px] text-dim">
               You are on <strong className="font-semibold text-mid">{PLAN_LABEL[plan]}</strong>. The desk moves accounts the same working day, and nothing changes until you confirm.
             </p>
           </div>
@@ -80,7 +80,7 @@ export function LockedScreen({ module, required, plan }: { module: ModuleKey; re
               ))}
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="aq-float flex items-center gap-2 rounded-full border border-border bg-white/95 px-4 py-2 text-[13px] font-semibold text-ink backdrop-blur">
+              <div className="aq-float flex items-center gap-2 rounded-full border border-border bg-white/95 px-4 py-2 text-[14.5px] font-semibold text-ink backdrop-blur">
                 <Lock className="h-3.5 w-3.5 text-blue" /> Live data for {PLAN_LABEL[required]} members
               </div>
             </div>
@@ -88,7 +88,7 @@ export function LockedScreen({ module, required, plan }: { module: ModuleKey; re
         </div>
       </section>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/70 px-5 py-3.5 text-[13px] text-mid">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/70 px-5 py-3.5 text-[14.5px] text-mid">
         <span>Not sure it is worth it? Book the free Freight Analytics Call and see the desk&apos;s data first.</span>
         <Link href="/hub/community-call" className="inline-flex items-center gap-1 font-semibold text-blue no-underline hover:underline">
           Register for the call <ArrowRight className="h-3.5 w-3.5" />

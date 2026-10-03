@@ -141,11 +141,11 @@ export function AquibotChat({
     <div className="mx-auto w-full max-w-4xl">
       <header className="mb-5">
         <h1 className="text-[26px] font-black tracking-tight text-ink sm:text-[30px]">Aquibot</h1>
-        <p className="mt-1 max-w-2xl text-[14px] leading-6 text-mid">{t("bot.subtitle")}</p>
+        <p className="mt-1 max-w-2xl text-[15.5px] leading-6 text-mid">{t("bot.subtitle")}</p>
       </header>
 
       <section className="aq-card mb-5 px-4 py-4 sm:px-5" aria-label={t("bot.journey")}>
-        <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-mid">
+        <p className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em] text-mid">
           <Sparkles className="h-3.5 w-3.5 text-teal-500" /> {t("bot.journey")}
         </p>
         <ol className="flex flex-wrap items-center gap-y-2">
@@ -154,7 +154,7 @@ export function AquibotChat({
               <Link
                 href={step.href}
                 aria-current={index === current ? "step" : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[12px] font-semibold no-underline transition ${
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold no-underline transition ${
                   step.done
                     ? "bg-teal-500 text-white hover:bg-teal-600"
                     : index === current
@@ -162,7 +162,7 @@ export function AquibotChat({
                       : "border border-border bg-s2/70 text-mid hover:text-ink"
                 }`}
               >
-                <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${step.done ? "bg-white/25" : "bg-ink/10"}`}>
+                <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[11px] ${step.done ? "bg-white/25" : "bg-ink/10"}`}>
                   {step.done ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : index + 1}
                 </span>
                 {t(step.key)}
@@ -177,8 +177,8 @@ export function AquibotChat({
         <div className="flex items-center gap-3 border-b border-border bg-s2/50 px-4 py-3.5 sm:px-5">
           <AquibotAvatar size={40} active={chat.busy} />
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-semibold text-ink">Aquibot</p>
-            <p className="truncate text-[12px] text-mid">{t("bot.cardSub")}</p>
+            <p className="text-[15.5px] font-semibold text-ink">Aquibot</p>
+            <p className="truncate text-[13px] text-mid">{t("bot.cardSub")}</p>
           </div>
           {isAdmin ? (
             <button
@@ -186,7 +186,7 @@ export function AquibotChat({
               onClick={() => setTestMode((value) => !value)}
               disabled={!hasTestPrompt}
               title={hasTestPrompt ? "Answer with the draft test prompt instead of the live one" : "Save a test prompt in Admin → Aquibot first"}
-              className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:flex ${
+              className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12.5px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 sm:flex ${
                 testMode ? "border-[#f5c46b] bg-[#fff6e5] text-[#9a5b00]" : "border-border bg-white text-mid hover:text-ink"
               }`}
             >
@@ -206,7 +206,7 @@ export function AquibotChat({
             <SquarePen className="h-4 w-4" />
           </button>
           <span
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold ${
               engine.ready ? "bg-emerald-50 text-emerald-700" : "bg-[#fff6e5] text-[#9a5b00]"
             }`}
           >
@@ -218,10 +218,10 @@ export function AquibotChat({
         <div ref={logRef} className="h-[min(56vh,540px)] min-h-[320px] space-y-4 overflow-y-auto px-4 py-5 sm:px-5" aria-live="polite">
           <div className="flex gap-3">
             <AquibotAvatar size={32} className="mt-0.5" />
-            <div className="max-w-[80%] space-y-1.5 rounded-2xl rounded-ss-md bg-s2 px-4 py-3 text-[14px] leading-relaxed text-ink shadow-[0_1px_2px_rgb(14_32_49/0.06)]">
+            <div className="max-w-[80%] space-y-1.5 rounded-2xl rounded-ss-md bg-s2 px-4 py-3 text-[15.5px] leading-relaxed text-ink shadow-[0_1px_2px_rgb(14_32_49/0.06)]">
               {firstName ? <p className="font-semibold">{t("bot.hello", { name: firstName })}</p> : null}
               {introLines.map((line, index) => (
-                <p key={index} className={index === introLines.length - 1 && introLines.length > 1 ? "text-[12px] text-mid" : ""}>
+                <p key={index} className={index === introLines.length - 1 && introLines.length > 1 ? "text-[13px] text-mid" : ""}>
                   {line}
                 </p>
               ))}
@@ -234,7 +234,7 @@ export function AquibotChat({
                 <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy-600 text-white">
                   <User className="h-4 w-4" aria-hidden />
                 </span>
-                <p translate="no" className="max-w-[75%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-navy-600 px-4 py-3 text-[14px] leading-relaxed text-white shadow-[0_1px_2px_rgb(14_32_49/0.08)]">
+                <p translate="no" className="max-w-[75%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-navy-600 px-4 py-3 text-[15.5px] leading-relaxed text-white shadow-[0_1px_2px_rgb(14_32_49/0.08)]">
                   {message.content}
                 </p>
               </div>
@@ -270,7 +270,7 @@ export function AquibotChat({
                   type="button"
                   onClick={() => send(t(key))}
                   disabled={!engine.ready || chat.busy || chat.limitReached}
-                  className="rounded-full border border-border bg-white px-3.5 py-1.5 text-start text-[12px] font-medium text-navy-800 transition hover:border-teal-500/40 hover:bg-teal-50 disabled:opacity-50"
+                  className="rounded-full border border-border bg-white px-3.5 py-1.5 text-start text-[13px] font-medium text-navy-800 transition hover:border-teal-500/40 hover:bg-teal-50 disabled:opacity-50"
                 >
                   {t(key)}
                 </button>
@@ -301,7 +301,7 @@ export function AquibotChat({
               disabled={!engine.ready || chat.limitReached}
               placeholder={t("bot.inputPage")}
               aria-label={t("bot.inputPage")}
-              className="min-h-11 flex-1 resize-none rounded-xl border border-border bg-white px-4 py-[11px] text-[14px] leading-5 outline-none transition disabled:cursor-not-allowed"
+              className="min-h-11 flex-1 resize-none rounded-xl border border-border bg-white px-4 py-[11px] text-[15.5px] leading-5 outline-none transition disabled:cursor-not-allowed"
             />
             {chat.busy ? (
               <button type="button" onClick={chat.stop} aria-label={t("bot.stop")} title={t("bot.stop")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink text-white">
@@ -320,18 +320,18 @@ export function AquibotChat({
             )}
           </form>
 
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-1 text-[11px] text-dim">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-1 text-[12px] text-dim">
             <span>
               {t("bot.enterHint")}
               {testMode ? " · answering with the test prompt" : ""}
             </span>
             {usage.unlimited ? (
-              <span className="font-mono text-[10.5px]">
+              <span className="font-mono text-[11.5px]">
                 {t("bot.unlimited")}
                 {isAdmin ? " (admin)" : ""}
               </span>
             ) : (
-              <span className="flex items-center gap-2 font-mono text-[10.5px]">
+              <span className="flex items-center gap-2 font-mono text-[11.5px]">
                 {t("bot.usage", { used: usage.used.toLocaleString(lang), limit: usage.limit.toLocaleString(lang) })}
                 <span className="h-1.5 w-16 overflow-hidden rounded-full bg-s2">
                   <span className={`block h-full rounded-full ${usagePercent >= 90 ? "bg-[#d97706]" : "bg-teal-500"}`} style={{ width: `${usagePercent}%` }} />
@@ -343,7 +343,7 @@ export function AquibotChat({
         </div>
       </section>
 
-      <p className="mt-4 text-center text-[12px] text-mid">
+      <p className="mt-4 text-center text-[13px] text-mid">
         {footerBefore}
         <a href={`mailto:${DESK_EMAIL}`} className="font-semibold text-teal-700 hover:underline">
           {DESK_EMAIL}
@@ -397,13 +397,13 @@ function HistoryMenu({
         className={`flex h-8 items-center gap-1 rounded-full px-2 text-mid transition hover:bg-white hover:text-ink ${open ? "bg-white text-ink" : ""}`}
       >
         <History className="h-4 w-4" />
-        {sessions.length ? <span className="font-mono text-[10.5px] font-semibold">{sessions.length}</span> : null}
+        {sessions.length ? <span className="font-mono text-[11.5px] font-semibold">{sessions.length}</span> : null}
       </button>
       {open ? (
         <div role="menu" className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-[min(80vw,300px)] rounded-2xl border border-border bg-white p-1.5">
-          <p className="px-2.5 pb-1 pt-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-mid">{t("bot.history")}</p>
+          <p className="px-2.5 pb-1 pt-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-mid">{t("bot.history")}</p>
           <div className="max-h-[320px] overflow-y-auto">
-            {sessions.length === 0 ? <p className="px-2.5 py-3 text-[12.5px] text-dim">{t("bot.noHistory")}</p> : null}
+            {sessions.length === 0 ? <p className="px-2.5 py-3 text-[13.5px] text-dim">{t("bot.noHistory")}</p> : null}
             {sessions.map((item) => {
               const active = item.id === activeId;
               return (
@@ -414,8 +414,8 @@ function HistoryMenu({
                     onClick={() => setOpen(false)}
                     className={`min-w-0 flex-1 px-2.5 py-2 no-underline ${active ? "text-blue" : "text-ink"}`}
                   >
-                    <span className="block truncate text-[13px] font-medium">{item.title}</span>
-                    <span className="block text-[11px] text-dim">{relative(item.updatedAt)}</span>
+                    <span className="block truncate text-[14.5px] font-medium">{item.title}</span>
+                    <span className="block text-[12px] text-dim">{relative(item.updatedAt)}</span>
                   </Link>
                   <button
                     type="button"
@@ -439,7 +439,7 @@ function HistoryMenu({
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 flex items-start gap-2 rounded-xl border border-[#f5dfb3] bg-[#fffaf0] px-3 py-2 text-[12.5px] text-[#7a4a00]">
+    <p className="mb-3 flex items-start gap-2 rounded-xl border border-[#f5dfb3] bg-[#fffaf0] px-3 py-2 text-[13.5px] text-[#7a4a00]">
       <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <span>{children}</span>
     </p>
@@ -459,10 +459,10 @@ function AssistantMessage({ message, stage, isAdmin }: { message: ChatMessage; s
       <div className="min-w-0 max-w-[85%] flex-1">
         {message.content ? (
           <div translate="no" className="rounded-2xl rounded-ss-md bg-s2 px-4 py-3 shadow-[0_1px_2px_rgb(14_32_49/0.06)]">
-            <Markdown text={message.content} className="text-[14px] text-ink" />
+            <Markdown text={message.content} className="text-[15.5px] text-ink" />
           </div>
         ) : message.pending ? (
-          <p className="inline-flex items-center gap-2 rounded-2xl rounded-ss-md bg-s2 px-4 py-3 text-[13px] text-mid">
+          <p className="inline-flex items-center gap-2 rounded-2xl rounded-ss-md bg-s2 px-4 py-3 text-[14.5px] text-mid">
             <span className="flex gap-1">
               {[0, 1, 2].map((dot) => (
                 <span key={dot} className="h-1.5 w-1.5 animate-pulse rounded-full bg-mid" style={{ animationDelay: `${dot * 150}ms` }} />
@@ -473,14 +473,14 @@ function AssistantMessage({ message, stage, isAdmin }: { message: ChatMessage; s
         ) : null}
 
         {message.error ? (
-          <p className="mt-1.5 flex items-start gap-2 rounded-xl border border-[#f3c9c5] bg-[#fdf2f1] px-3 py-2 text-[12.5px] text-[#b42318]">
+          <p className="mt-1.5 flex items-start gap-2 rounded-xl border border-[#f3c9c5] bg-[#fdf2f1] px-3 py-2 text-[13.5px] text-[#b42318]">
             <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             {message.error}
           </p>
         ) : null}
 
         {!message.pending && message.content ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-mid">
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[12.5px] text-mid">
             {meta?.stopped ? <span className="rounded-full bg-s2 px-2 py-0.5">{t("bot.stopped")}</span> : null}
             {ranges.length ? (
               <span className="flex items-center gap-1 rounded-full border border-border px-2 py-0.5" title={ranges.map((range) => `“${range.phrase}”`).join(", ")}>
@@ -523,7 +523,7 @@ function AssistantMessage({ message, stage, isAdmin }: { message: ChatMessage; s
           </div>
         ) : null}
 
-        {isAdmin && !message.pending && meta?.rewrittenQuery ? <p className="mt-1 text-[11px] text-dim">Searched for: {meta.rewrittenQuery}</p> : null}
+        {isAdmin && !message.pending && meta?.rewrittenQuery ? <p className="mt-1 text-[12px] text-dim">Searched for: {meta.rewrittenQuery}</p> : null}
       </div>
     </div>
   );

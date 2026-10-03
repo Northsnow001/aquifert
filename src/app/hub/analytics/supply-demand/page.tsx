@@ -41,7 +41,7 @@ function Bars({ row }: { row: BalanceRow }) {
     <div className="mt-2 space-y-1" role="img" aria-label={`Production ${num(row.production)} ${row.unit} against consumption ${num(row.consumption)} ${row.unit}`}>
       {bars.map((bar) => (
         <div key={bar.label} className="flex items-center gap-2">
-          <span className="w-8 shrink-0 text-[10px] font-semibold uppercase text-dim">{bar.label.slice(0, 4)}</span>
+          <span className="w-8 shrink-0 text-[11px] font-semibold uppercase text-dim">{bar.label.slice(0, 4)}</span>
           <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-s3">
             <span className={`block h-full rounded-full ${bar.color}`} style={{ width: `${Math.max(3, (bar.value / top) * 100)}%` }} />
           </span>
@@ -99,15 +99,15 @@ export default async function SupplyDemandPage() {
                 <li key={row.id} className="px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-[14.5px] font-semibold text-ink">{row.product}</p>
-                      <p className="text-[12px] text-dim">
+                      <p className="text-[16px] font-semibold text-ink">{row.product}</p>
+                      <p className="text-[13px] text-dim">
                         {row.region} · {row.season} · {row.unit}
                       </p>
                     </div>
                     <Tag tone={TREND[row.trend]?.tone ?? "neutral"}>{TREND[row.trend]?.label ?? "Stable"}</Tag>
                   </div>
                   <Bars row={row} />
-                  <dl className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2 text-[12px]">
+                  <dl className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2 text-[13px]">
                     {[
                       ["Production", num(row.production)],
                       ["Consumption", num(row.consumption)],
@@ -128,19 +128,19 @@ export default async function SupplyDemandPage() {
                       </dd>
                     </div>
                   </dl>
-                  <p className="mt-3 flex items-center gap-1 text-[12.5px] text-mid">
+                  <p className="mt-3 flex items-center gap-1 text-[13.5px] text-mid">
                     Stocks-to-use <strong className={`font-semibold tabular-nums ${stuTone(stocksToUse)}`}>{stocksToUse === null ? "–" : `${stocksToUse}%`}</strong>
                     <InfoTip label="Stocks-to-use" text={TIPS.stocksToUse} href="/hub/guide#supply-demand" />
                   </p>
-                  {row.note ? <p className="mt-1 text-[12.5px] leading-snug text-mid">{row.note}</p> : null}
+                  {row.note ? <p className="mt-1 text-[13.5px] leading-snug text-mid">{row.note}</p> : null}
                 </li>
               ))}
             </ul>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[860px] text-[13px]">
+              <table className="w-full min-w-[860px] text-[14.5px]">
                 <caption className="sr-only">Supply and demand balances with computed surplus and stocks-to-use</caption>
                 <thead>
-                  <tr className="border-b border-border bg-s2 text-left font-mono text-[10px] uppercase tracking-wider text-mid">
+                  <tr className="border-b border-border bg-s2 text-left font-mono text-[11px] uppercase tracking-wider text-mid">
                     <th scope="col" className="px-4 py-2.5 font-semibold">Product</th>
                     <th scope="col" className="px-3 py-2.5 text-right font-semibold">Production</th>
                     <th scope="col" className="px-3 py-2.5 text-right font-semibold">Consumption</th>
@@ -168,8 +168,8 @@ export default async function SupplyDemandPage() {
                   {rows.map(({ row, surplus, stocksToUse }) => (
                     <tr key={row.id} className="align-top transition-colors hover:bg-s2/60">
                       <th scope="row" className="w-[220px] px-4 py-3.5 text-left font-normal">
-                        <span className="block text-[14px] font-semibold text-ink">{row.product}</span>
-                        <span className="block text-[12px] text-dim">
+                        <span className="block text-[15.5px] font-semibold text-ink">{row.product}</span>
+                        <span className="block text-[13px] text-dim">
                           {row.region} · {row.season} · {row.unit}
                         </span>
                         <Bars row={row} />
@@ -182,19 +182,19 @@ export default async function SupplyDemandPage() {
                       <td className={`px-3 py-3.5 text-right font-semibold tabular-nums ${surplus < 0 ? "text-[#b53a2f]" : surplus > 0 ? "text-[#1b7a47]" : "text-ink"}`}>
                         {surplus > 0 ? "+" : ""}
                         {num(surplus)}
-                        <span className="block text-[11px] font-medium text-dim">{surplus < 0 ? "Stock draw" : surplus > 0 ? "Stock build" : "Balanced"}</span>
+                        <span className="block text-[12px] font-medium text-dim">{surplus < 0 ? "Stock draw" : surplus > 0 ? "Stock build" : "Balanced"}</span>
                       </td>
                       <td className={`px-3 py-3.5 text-right font-semibold tabular-nums ${stuTone(stocksToUse)}`}>{stocksToUse === null ? "–" : `${stocksToUse}%`}</td>
                       <td className="px-4 py-3.5">
                         <Tag tone={TREND[row.trend]?.tone ?? "neutral"}>{TREND[row.trend]?.label ?? "Stable"}</Tag>
-                        {row.note ? <p className="mt-1.5 max-w-[260px] text-[12.5px] leading-snug text-mid">{row.note}</p> : null}
+                        {row.note ? <p className="mt-1.5 max-w-[260px] text-[13.5px] leading-snug text-mid">{row.note}</p> : null}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-4 py-2.5 text-[11.5px] text-dim">
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-4 py-2.5 text-[12.5px] text-dim">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-4 rounded-full bg-teal-500" /> Production
               </span>
@@ -209,7 +209,7 @@ export default async function SupplyDemandPage() {
 
       {commentary.trim() ? (
         <Panel title="Desk commentary" sub="What would change the balance" icon={MessageSquareText} bodyClassName="px-5 py-4">
-          <Markdown text={commentary} className="text-[14px] text-ink" />
+          <Markdown text={commentary} className="text-[15.5px] text-ink" />
         </Panel>
       ) : null}
 

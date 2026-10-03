@@ -112,7 +112,7 @@ export function AquibotDock({ open }: { open: boolean }) {
     >
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-black/[.07] px-3 lg:h-16">
         <AquibotAvatar size={32} active={chat.busy} />
-        <span className="text-[15px] font-bold text-ink">Aquibot</span>
+        <span className="text-[16.5px] font-bold text-ink">Aquibot</span>
         <div className="ms-auto flex items-center gap-0.5">
           <button type="button" onClick={newChat} disabled={chat.busy} title={t("bot.newChat")} aria-label={t("bot.newChat")} className={iconBtn}>
             <SquarePen className="h-4 w-4" />
@@ -131,7 +131,7 @@ export function AquibotDock({ open }: { open: boolean }) {
           <AquibotAvatar size={84} />
           <div>
             <h2 className="text-[22px] font-bold tracking-tight text-ink">{t("bot.meet")}</h2>
-            <p className="mx-auto mt-1.5 max-w-[300px] text-[13px] leading-5 text-mid">{t("bot.tagline")}</p>
+            <p className="mx-auto mt-1.5 max-w-[300px] text-[14.5px] leading-5 text-mid">{t("bot.tagline")}</p>
           </div>
           <ul className="aq-stagger w-full space-y-1 text-start">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
@@ -140,8 +140,8 @@ export function AquibotDock({ open }: { open: boolean }) {
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[13.5px] font-bold text-ink">{t(title)}</span>
-                  <span className="block text-[12px] leading-4 text-mid">{t(desc)}</span>
+                  <span className="block text-[15px] font-bold text-ink">{t(title)}</span>
+                  <span className="block text-[13px] leading-4 text-mid">{t(desc)}</span>
                 </span>
               </li>
             ))}
@@ -151,10 +151,10 @@ export function AquibotDock({ open }: { open: boolean }) {
         <div ref={listRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4" aria-live="polite">
           <div className="flex items-start gap-2">
             <AquibotAvatar size={26} className="mt-0.5" />
-            <div className="min-w-0 max-w-[88%] space-y-1.5 rounded-2xl rounded-ss-md bg-s2 px-3.5 py-2.5 text-[13.5px] leading-6 text-ink">
+            <div className="min-w-0 max-w-[88%] space-y-1.5 rounded-2xl rounded-ss-md bg-s2 px-3.5 py-2.5 text-[15px] leading-6 text-ink">
               {info?.firstName ? <p className="font-semibold">{t("bot.hello", { name: info.firstName })}</p> : null}
               {introLines.map((line, index) => (
-                <p key={index} className={index === introLines.length - 1 && introLines.length > 1 ? "text-[11.5px] leading-5 text-mid" : ""}>
+                <p key={index} className={index === introLines.length - 1 && introLines.length > 1 ? "text-[12.5px] leading-5 text-mid" : ""}>
                   {line}
                 </p>
               ))}
@@ -170,7 +170,7 @@ export function AquibotDock({ open }: { open: boolean }) {
                   type="button"
                   onClick={() => send(t(key))}
                   disabled={chat.limitReached}
-                  className="rounded-full border border-border bg-white px-3 py-1.5 text-start text-[12px] font-medium text-navy-800 transition hover:border-teal-500/40 hover:bg-teal-50 disabled:opacity-50"
+                  className="rounded-full border border-border bg-white px-3 py-1.5 text-start text-[13px] font-medium text-navy-800 transition hover:border-teal-500/40 hover:bg-teal-50 disabled:opacity-50"
                 >
                   {t(key)}
                 </button>
@@ -181,7 +181,7 @@ export function AquibotDock({ open }: { open: boolean }) {
           {chat.messages.map((message) =>
             message.role === "user" ? (
               <div key={message.id} className="flex justify-end">
-                <p translate="no" className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-blue-light px-3.5 py-2.5 text-[13.5px] font-medium leading-6 text-[#25598f]">{message.content}</p>
+                <p translate="no" className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-blue-light px-3.5 py-2.5 text-[15px] font-medium leading-6 text-[#25598f]">{message.content}</p>
               </div>
             ) : (
               <DockAnswer key={message.id} message={message} stage={message.pending ? chat.stage : null} />
@@ -212,7 +212,7 @@ export function AquibotDock({ open }: { open: boolean }) {
           <button
             type="button"
             onClick={startChatting}
-            className="h-11 w-full rounded-xl bg-blue text-[14px] font-bold text-white shadow-[0_8px_20px_-10px_rgb(47_111_179/0.8)] transition hover:bg-[#25598f]"
+            className="h-11 w-full rounded-xl bg-blue text-[15.5px] font-bold text-white shadow-[0_8px_20px_-10px_rgb(47_111_179/0.8)] transition hover:bg-[#25598f]"
           >
             {t("bot.start")}
           </button>
@@ -239,10 +239,10 @@ export function AquibotDock({ open }: { open: boolean }) {
               disabled={!ready || chat.limitReached}
               placeholder={t("bot.placeholder")}
               aria-label={t("bot.placeholder")}
-              className="block max-h-40 w-full resize-none border-0 bg-transparent px-2 py-1 text-[13.5px] leading-5 shadow-none outline-none focus:shadow-none disabled:cursor-not-allowed"
+              className="block max-h-40 w-full resize-none border-0 bg-transparent px-2 py-1 text-[15px] leading-5 shadow-none outline-none focus:shadow-none disabled:cursor-not-allowed"
             />
             <div className="flex items-center gap-2 px-1">
-              <span className="min-w-0 flex-1 truncate font-mono text-[10.5px] text-dim">
+              <span className="min-w-0 flex-1 truncate font-mono text-[11.5px] text-dim">
                 {usage ? (usage.unlimited ? t("bot.unlimited") : t("bot.usage", { used: usage.used.toLocaleString(lang), limit: usage.limit.toLocaleString(lang) })) : null}
               </span>
               {chat.busy ? (
@@ -257,7 +257,7 @@ export function AquibotDock({ open }: { open: boolean }) {
             </div>
           </form>
         )}
-        <p className="py-2 text-center text-[10.5px] text-dim">{t("bot.disclaimer")}</p>
+        <p className="py-2 text-center text-[11.5px] text-dim">{t("bot.disclaimer")}</p>
       </div>
     </aside>
   );
@@ -265,7 +265,7 @@ export function AquibotDock({ open }: { open: boolean }) {
 
 function Notice({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-2 flex items-start gap-2 rounded-xl border border-[#f5dfb3] bg-[#fffaf0] px-3 py-2 text-[12px] text-[#7a4a00]">
+    <p className="mb-2 flex items-start gap-2 rounded-xl border border-[#f5dfb3] bg-[#fffaf0] px-3 py-2 text-[13px] text-[#7a4a00]">
       <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <span>{children}</span>
     </p>
@@ -283,10 +283,10 @@ function DockAnswer({ message, stage }: { message: ChatMessage; stage: ChatStage
       <div className="min-w-0 flex-1">
         {message.content ? (
           <div translate="no">
-            <Markdown text={message.content} className="text-[13.5px] text-ink" />
+            <Markdown text={message.content} className="text-[15px] text-ink" />
           </div>
         ) : message.pending ? (
-          <p className="flex items-center gap-2 py-1 text-[13px] font-medium text-mid">
+          <p className="flex items-center gap-2 py-1 text-[14.5px] font-medium text-mid">
             <span className="flex gap-1">
               {[0, 1, 2].map((dot) => (
                 <span key={dot} className="h-1.5 w-1.5 animate-pulse rounded-full bg-mid" style={{ animationDelay: `${dot * 150}ms` }} />
@@ -297,14 +297,14 @@ function DockAnswer({ message, stage }: { message: ChatMessage; stage: ChatStage
         ) : null}
 
         {message.error ? (
-          <p className="mt-1.5 flex items-start gap-2 rounded-xl border border-[#f3c9c5] bg-[#fdf2f1] px-3 py-2 text-[12px] text-[#b42318]">
+          <p className="mt-1.5 flex items-start gap-2 rounded-xl border border-[#f3c9c5] bg-[#fdf2f1] px-3 py-2 text-[13px] text-[#b42318]">
             <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             {message.error}
           </p>
         ) : null}
 
         {!message.pending && message.content ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-mid">
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[12px] text-mid">
             {message.meta?.stopped ? <span className="rounded-full bg-s2 px-2 py-0.5">{t("bot.stopped")}</span> : null}
             {sources.slice(0, 3).map((source, index) => (
               <span key={index} className="flex max-w-[180px] items-center gap-1 rounded-full border border-border bg-s2/60 px-2 py-0.5" title={source.title}>

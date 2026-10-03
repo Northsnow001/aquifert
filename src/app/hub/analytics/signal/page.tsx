@@ -99,8 +99,8 @@ export default async function SignalProPage({ searchParams }: { searchParams: Pr
           return (
             <section key={group} className="aq-card aq-rise flex min-w-0 flex-col overflow-hidden">
               <header className="border-b border-border px-5 py-4">
-                <h2 className="text-[16px] font-semibold text-ink">{group}</h2>
-                <p className="mt-1 text-[13px] leading-relaxed text-mid">{narrative || `Not enough prices inside the last ${days} days to read this group yet.`}</p>
+                <h2 className="text-[17px] font-semibold text-ink">{group}</h2>
+                <p className="mt-1 text-[14.5px] leading-relaxed text-mid">{narrative || `Not enough prices inside the last ${days} days to read this group yet.`}</p>
               </header>
 
               <ul className="divide-y divide-border">
@@ -110,17 +110,17 @@ export default async function SignalProPage({ searchParams }: { searchParams: Pr
                     <li key={item.id} className="px-5 py-3.5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-[14px] font-semibold text-ink">{item.label}</p>
-                          <p className="text-[12px] text-dim">{item.basis}</p>
+                          <p className="text-[15.5px] font-semibold text-ink">{item.label}</p>
+                          <p className="text-[13px] text-dim">{item.basis}</p>
                         </div>
                         {item.insufficient ? (
-                          <span className="text-[12px] text-dim">Not enough prices</span>
+                          <span className="text-[13px] text-dim">Not enough prices</span>
                         ) : (
                           <div className="text-right">
-                            <p className="text-[15px] font-semibold tabular-nums text-ink">
-                              {num(item.current)} <span className="text-[11px] font-medium text-dim">{item.unit}</span>
+                            <p className="text-[16.5px] font-semibold tabular-nums text-ink">
+                              {num(item.current)} <span className="text-[12px] font-medium text-dim">{item.unit}</span>
                             </p>
-                            <p className={`text-[12.5px] font-semibold tabular-nums ${TONE_TEXT[item.direction]}`}>{signedPct(item.changePct)}</p>
+                            <p className={`text-[13.5px] font-semibold tabular-nums ${TONE_TEXT[item.direction]}`}>{signedPct(item.changePct)}</p>
                           </div>
                         )}
                       </div>
@@ -135,7 +135,7 @@ export default async function SignalProPage({ searchParams }: { searchParams: Pr
                               <span className="sr-only">{momentum.hint}</span>
                             </div>
                             <RangeBar value={item.rangePosition} />
-                            <p className="mt-1 flex justify-between text-[10.5px] tabular-nums text-dim">
+                            <p className="mt-1 flex justify-between text-[11.5px] tabular-nums text-dim">
                               <span>Low {num(item.low)}</span>
                               <span>High {num(item.high)}</span>
                             </p>
@@ -149,17 +149,17 @@ export default async function SignalProPage({ searchParams }: { searchParams: Pr
               </ul>
 
               <div className="mt-auto border-t border-border bg-s2/50 px-5 py-4">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-700">What drove it</p>
+                <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">What drove it</p>
                 {drivers.length ? (
                   <ul className="mt-2 space-y-2">
                     {drivers.slice(0, 4).map((driver) => (
                       <li key={driver.id} className="flex items-start gap-2.5">
                         {driver.source === "Telex" ? <RadioTower className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" aria-hidden /> : <Newspaper className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" aria-hidden />}
                         <div className="min-w-0">
-                          <Link href={driver.href} className="text-[13px] font-medium leading-snug text-ink no-underline hover:text-blue hover:underline">
+                          <Link href={driver.href} className="text-[14.5px] font-medium leading-snug text-ink no-underline hover:text-blue hover:underline">
                             {driver.headline}
                           </Link>
-                          <p className="text-[11.5px] text-dim">
+                          <p className="text-[12.5px] text-dim">
                             {driver.source} · {formatDay(driver.date)}
                           </p>
                         </div>
@@ -167,10 +167,10 @@ export default async function SignalProPage({ searchParams }: { searchParams: Pr
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1.5 text-[12.5px] text-mid">No {group.toLowerCase()} Telex or analysis in this window. A longer window may show what set the trend.</p>
+                  <p className="mt-1.5 text-[13.5px] text-mid">No {group.toLowerCase()} Telex or analysis in this window. A longer window may show what set the trend.</p>
                 )}
                 {drivers.length > 4 || drivers.some((driver) => driver.source === "Telex") ? (
-                  <Link href={telexHref(group)} className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-blue no-underline hover:underline">
+                  <Link href={telexHref(group)} className="mt-3 inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue no-underline hover:underline">
                     All {group.toLowerCase()} flashes in this window <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                   </Link>
                 ) : null}

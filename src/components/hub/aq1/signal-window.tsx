@@ -34,14 +34,14 @@ export function SignalWindow({ windows, value }: { windows: readonly number[]; v
               type="button"
               aria-pressed={on}
               onClick={() => choose(days)}
-              className={`min-h-9 rounded-full px-3.5 text-[13px] font-semibold tabular-nums transition-colors sm:px-4 ${on ? "bg-navy-700 text-white shadow-sm" : "text-mid hover:text-ink"}`}
+              className={`min-h-9 rounded-full px-3.5 text-[14.5px] font-semibold tabular-nums transition-colors sm:px-4 ${on ? "bg-navy-700 text-white shadow-sm" : "text-mid hover:text-ink"}`}
             >
               {days} days
             </button>
           );
         })}
       </div>
-      <span className="inline-flex items-center gap-1.5 text-[12px] text-dim" aria-live="polite">
+      <span className="inline-flex items-center gap-1.5 text-[13px] text-dim" aria-live="polite">
         {pending ? (
           <>
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Recalculating

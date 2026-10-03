@@ -24,12 +24,12 @@ export function HubPageHeader({
   return (
     <header className="aq-rise mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow ? <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-teal-700">{eyebrow}</p> : null}
+        {eyebrow ? <p className="mb-1 text-[12px] font-bold uppercase tracking-[0.14em] text-teal-700">{eyebrow}</p> : null}
         <h1 className="flex items-center gap-1 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[30px]">
           <span className="min-w-0">{title}</span>
           {tip ? <InfoTip label={typeof title === "string" ? title : "About this page"} text={tip} href={guide ? `/hub/guide#${guide}` : "/hub/guide"} /> : null}
         </h1>
-        {description ? <p className="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-mid">{description}</p> : null}
+        {description ? <p className="mt-1.5 max-w-2xl text-[15.5px] leading-relaxed text-mid">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
@@ -61,7 +61,7 @@ const TAG_TONE = {
 export type TagTone = keyof typeof TAG_TONE;
 
 export function Tag({ children, tone = "neutral", className = "" }: { children: React.ReactNode; tone?: TagTone; className?: string }) {
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.06em] ${TAG_TONE[tone]} ${className}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-bold uppercase tracking-[0.06em] ${TAG_TONE[tone]} ${className}`}>{children}</span>;
 }
 
 export const toneTag = (tone: Tone): TagTone => (tone === "up" ? "green" : tone === "down" ? "red" : "neutral");
@@ -98,7 +98,7 @@ export function StatTile({
   const body = (
     <>
       <div className="flex items-start justify-between gap-3">
-        <p className="text-[12.5px] font-medium text-mid">{label}</p>
+        <p className="text-[13.5px] font-medium text-mid">{label}</p>
         <span className={`aq-chip ${tone ? `aq-chip-${tone}` : ""} flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white`}>
           <Icon className="h-4 w-4" strokeWidth={2.2} />
         </span>
@@ -112,7 +112,7 @@ export function StatTile({
           />
         </div>
       ) : null}
-      {hint ? <p className="mt-2 text-[12px] leading-snug text-dim">{hint}</p> : null}
+      {hint ? <p className="mt-2 text-[13px] leading-snug text-dim">{hint}</p> : null}
     </>
   );
   const cls = "aq-card aq-lift flex flex-col p-4 no-underline";
@@ -177,8 +177,8 @@ export function Panel({
           </span>
         ) : null}
         <div className="min-w-0 flex-1">
-          <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
-          {sub ? <p className="text-[12px] text-dim">{sub}</p> : null}
+          <h2 className="text-[16.5px] font-semibold text-ink">{title}</h2>
+          {sub ? <p className="text-[13px] text-dim">{sub}</p> : null}
         </div>
         {actions}
       </header>
@@ -190,8 +190,8 @@ export function Panel({
 export function EmptyPanel({ title, body, action }: { title: string; body?: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border bg-white/60 px-6 py-12 text-center">
-      <p className="text-[14.5px] font-semibold text-ink">{title}</p>
-      {body ? <p className="max-w-md text-[13px] leading-relaxed text-mid">{body}</p> : null}
+      <p className="text-[16px] font-semibold text-ink">{title}</p>
+      {body ? <p className="max-w-md text-[14.5px] leading-relaxed text-mid">{body}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
@@ -199,7 +199,7 @@ export function EmptyPanel({ title, body, action }: { title: string; body?: Reac
 
 export function Disclaimer({ children }: { children?: React.ReactNode }) {
   return (
-    <p className="text-[11.5px] leading-relaxed text-dim">
+    <p className="text-[12.5px] leading-relaxed text-dim">
       {children ?? "Desk assessments for information only. Not an offer, a price assessment or advice. Verify independently before trading."}
     </p>
   );

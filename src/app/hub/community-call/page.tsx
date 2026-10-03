@@ -50,7 +50,7 @@ export default async function CommunityCallPage() {
                 <h2 id="next-call-title" className="mt-3 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[26px]">
                   {next.topic}
                 </h2>
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-mid">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[14.5px] text-mid">
                   <span className="inline-flex items-center gap-1.5">
                     <UserRound className="h-3.5 w-3.5 text-dim" aria-hidden /> Hosted by {next.host || "the Aquifert desk"}
                   </span>
@@ -64,13 +64,13 @@ export default async function CommunityCallPage() {
                   </span>
                   <CallWhen startsAt={next.startsAt} durationMinutes={next.durationMinutes} />
                 </div>
-                {next.description ? <p className="mt-4 text-[14px] leading-relaxed text-mid">{next.description}</p> : null}
+                {next.description ? <p className="mt-4 text-[15.5px] leading-relaxed text-mid">{next.description}</p> : null}
               </div>
               <div className="p-5 sm:p-6">
                 {!active.has(next.id) ? (
                   <div className="mb-4">
-                    <h3 className="text-[15px] font-semibold text-ink">Register for the call</h3>
-                    <p className="mt-0.5 text-[13px] text-mid">Takes a few seconds. Your name and email come from your account.</p>
+                    <h3 className="text-[16.5px] font-semibold text-ink">Register for the call</h3>
+                    <p className="mt-0.5 text-[14.5px] text-mid">Takes a few seconds. Your name and email come from your account.</p>
                   </div>
                 ) : null}
                 <CallRegistration call={next} registered={active.has(next.id)} name={user.name} email={user.email} defaults={defaults} />
@@ -91,7 +91,7 @@ export default async function CommunityCallPage() {
 
         <div className="flex flex-col gap-4">
           <Panel title="What happens on the call" icon={Mic} bodyClassName="px-5 py-4">
-            <ul className="space-y-2.5 text-[13px] leading-relaxed text-mid">
+            <ul className="space-y-2.5 text-[14.5px] leading-relaxed text-mid">
               {[
                 "The desk walks through nitrogen, phosphate, potash and the freight picture.",
                 "Questions sent in advance are grouped and the most requested are answered live.",
@@ -114,11 +114,11 @@ export default async function CommunityCallPage() {
                 {later.map((call) => (
                   <li key={call.id} className="flex items-start gap-3 px-5 py-3.5">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13.5px] font-semibold leading-snug text-ink">{call.topic}</p>
-                      <p className="mt-0.5 text-[12px] text-mid">
+                      <p className="text-[15px] font-semibold leading-snug text-ink">{call.topic}</p>
+                      <p className="mt-0.5 text-[13px] text-mid">
                         <CallWhen startsAt={call.startsAt} durationMinutes={call.durationMinutes} size="sm" />
                       </p>
-                      <p className="text-[12px] text-dim">
+                      <p className="text-[13px] text-dim">
                         {call.host || "Aquifert desk"} · {call.durationMinutes} min
                       </p>
                     </div>
@@ -137,8 +137,8 @@ export default async function CommunityCallPage() {
                     <a href={call.recordingUrl} target="_blank" rel="noreferrer noopener" className="flex items-start gap-3 px-5 py-3.5 no-underline transition-colors hover:bg-s2/60">
                       <PlayCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue" aria-hidden />
                       <span className="min-w-0">
-                        <span className="block text-[13.5px] font-semibold leading-snug text-ink">{call.topic}</span>
-                        <span className="block text-[12px] text-dim">
+                        <span className="block text-[15px] font-semibold leading-snug text-ink">{call.topic}</span>
+                        <span className="block text-[13px] text-dim">
                           {formatDay(call.startsAt)} · {call.durationMinutes} min · Opens in a new tab
                         </span>
                       </span>
@@ -147,7 +147,7 @@ export default async function CommunityCallPage() {
                 ))}
               </ul>
             ) : (
-              <p className="px-5 py-6 text-[13px] leading-relaxed text-mid">Recordings of past calls are posted here. Register for the next call to hear it live and put your question to the desk.</p>
+              <p className="px-5 py-6 text-[14.5px] leading-relaxed text-mid">Recordings of past calls are posted here. Register for the next call to hear it live and put your question to the desk.</p>
             )}
           </Panel>
         </div>

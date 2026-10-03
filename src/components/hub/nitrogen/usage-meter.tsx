@@ -11,10 +11,10 @@ export function NitrogenUsage({ used, limit, resets }: { used: number; limit: nu
           <FlaskConical className="h-[18px] w-[18px]" />
         </span>
         <div>
-          <p className="text-[14px] font-semibold text-ink">
+          <p className="text-[15.5px] font-semibold text-ink">
             {limit > 0 ? `${used} of ${limit} reports this month` : `${used} report${used === 1 ? "" : "s"} this month`}
           </p>
-          <p className="text-[12.5px] text-mid">
+          <p className="text-[13.5px] text-mid">
             {limit > 0 ? (left > 0 ? `${left} left · resets ${resets}` : `All used · resets ${resets}`) : "Unlimited on your plan"}
           </p>
         </div>
@@ -31,12 +31,12 @@ export function NitrogenUsage({ used, limit, resets }: { used: number; limit: nu
           >
             <div className={`h-full rounded-full transition-[width] duration-700 ${pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-[#d9951f]" : "bg-teal-500"}`} style={{ width: `${Math.max(3, pct)}%` }} />
           </div>
-          <Link href="/hub/plan-usage" className="shrink-0 text-[12.5px] font-semibold text-blue no-underline hover:underline">
+          <Link href="/hub/plan-usage" className="shrink-0 text-[13.5px] font-semibold text-blue no-underline hover:underline">
             All allowances
           </Link>
         </div>
       ) : (
-        <Link href="/hub/plan-usage" className="text-[12.5px] font-semibold text-blue no-underline hover:underline sm:ml-auto">
+        <Link href="/hub/plan-usage" className="text-[13.5px] font-semibold text-blue no-underline hover:underline sm:ml-auto">
           All allowances
         </Link>
       )}

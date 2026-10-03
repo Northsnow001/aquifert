@@ -2,12 +2,15 @@ import Link from "next/link";
 import { OrderDeskBoard } from "@/components/hub/order-desk-board";
 import { ZeroPanel } from "@/components/hub/zero-panel";
 import { getDeskSettings } from "@/lib/desk-settings/store";
+import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
+import { resolvePort } from "@/lib/ports";
 import { getSession } from "@/lib/session";
 import { findZeroRegistration } from "@/lib/zero-interest";
 
 export default async function OrderDeskPage({ searchParams }: { searchParams: Promise<{ tab?: string; product?: string; destination?: string }> }) {
   const [{ tab, product, destination }, user] = await Promise.all([searchParams, getSession()]);
-  const settings = await getDeskSettings();
+  const [settings, freight] = await Promise.all([getDeskSettings(), getFreightDesk()]);
+  const ports = activePorts(freight);
   const showZero = settings.zero.showOnHub;
   const zero = showZero && tab === "zero";
   const registration = zero && user ? await findZeroRegistration(user) : null;
@@ -16,7 +19,7 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div>
         <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Order Fertilizer Now</h1>
-        <p className="mt-1 text-[14px] text-mid">
+        <p className="mt-1 text-[15.5px] text-mid">
           {zero ? "Supplier-cost buying with a fixed operations fee. Register now for the pilot." : "Your enquiry goes directly to the Aquifert trading desk."}
         </p>
       </div>
@@ -31,12 +34,12 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
               key={item.href}
               href={item.href}
               aria-current={item.active ? "page" : undefined}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-[13.5px] font-semibold no-underline transition ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-[15px] font-semibold no-underline transition ${
                 item.active ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid hover:text-ink"
               }`}
             >
               {item.label}
-              {item.badge ? <span className="rounded-full bg-[#fff4de] px-1.5 py-px font-mono text-[10px] uppercase tracking-wide text-[#9a5b00]">{item.badge}</span> : null}
+              {item.badge ? <span className="rounded-full bg-[#fff4de] px-1.5 py-px font-mono text-[11px] uppercase tracking-wide text-[#9a5b00]">{item.badge}</span> : null}
             </Link>
           ))}
         </nav>
@@ -54,7 +57,8 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
           name={user?.name ?? ""}
           email={user?.email ?? ""}
           success={settings.orderDesk.success}
-          initial={{ product: typeof product === "string" ? product : undefined, destination: typeof destination === "string" ? destination : undefined }}
+          ports={ports}
+          initial={{ product: typeof product === "string" ? product : undefined, destination: typeof destination === "string" ? resolvePort(destination, ports) : undefined }}
         />
       )}
     </div>

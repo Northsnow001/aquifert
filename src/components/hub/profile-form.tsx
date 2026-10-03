@@ -44,8 +44,8 @@ export function ProfileForm({ user, saved }: { user: SessionUser; saved: boolean
       ) : null}
 
       <section className="aq-card p-5 md:p-6">
-        <h2 className="text-[16px] font-semibold text-ink">Profile details</h2>
-        <p className="mt-0.5 text-[13.5px] text-mid">How the desk addresses you and where replies go.</p>
+        <h2 className="text-[17px] font-semibold text-ink">Profile details</h2>
+        <p className="mt-0.5 text-[15px] text-mid">How the desk addresses you and where replies go.</p>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <Field label="First name">
             <input name="firstName" required autoComplete="given-name" defaultValue={name.first} className={fieldClass} />
@@ -60,8 +60,8 @@ export function ProfileForm({ user, saved }: { user: SessionUser; saved: boolean
       </section>
 
       <section className="aq-card p-5 md:p-6">
-        <h2 className="text-[16px] font-semibold text-ink">Billing address</h2>
-        <p className="mt-0.5 text-[13.5px] text-mid">Used on quotes and invoices.</p>
+        <h2 className="text-[17px] font-semibold text-ink">Billing address</h2>
+        <p className="mt-0.5 text-[15px] text-mid">Used on quotes and invoices.</p>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <Field label="Address line 1">
             <input name="address1" required autoComplete="address-line1" defaultValue={user.address1 ?? ""} className={fieldClass} />

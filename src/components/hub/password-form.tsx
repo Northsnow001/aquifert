@@ -24,8 +24,8 @@ export function PasswordForm() {
         </p>
       ) : null}
       <section className="aq-card p-5 md:p-6">
-        <h2 className="text-[16px] font-semibold text-ink">Update password</h2>
-        <p className="mt-0.5 text-[13.5px] text-mid">Choose a strong password to keep your account secure.</p>
+        <h2 className="text-[17px] font-semibold text-ink">Update password</h2>
+        <p className="mt-0.5 text-[15px] text-mid">Choose a strong password to keep your account secure.</p>
         <div className="mt-5 flex flex-col gap-4">
           <label className="block">
             <span className={labelClass}>New password</span>

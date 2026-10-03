@@ -46,7 +46,7 @@ export default async function BillingPage() {
               <CreditCard className="h-[18px] w-[18px]" />
             </span>
             <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">Current plan</p>
+              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-teal-700">Current plan</p>
               <h2 id="plan-title" className="text-[20px] font-semibold leading-tight text-ink">
                 {PLAN_LABEL[user.plan]}
               </h2>
@@ -56,16 +56,16 @@ export default async function BillingPage() {
             </Tag>
           </div>
           <p className="mt-4 text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink">{PLAN_PRICE[user.plan]}</p>
-          <p className="mt-1.5 text-[13px] text-mid">
+          <p className="mt-1.5 text-[14.5px] text-mid">
             {user.plan === "enterprise" ? "Pricing and terms are agreed with the desk for your team." : "Billed monthly by the desk. Change plan whenever your needs change."}
           </p>
           {open ? (
-            <p className="mt-4 flex items-start gap-2 rounded-xl bg-[#fff4df] px-3.5 py-2.5 text-[12.5px] text-[#9a5b00]">
+            <p className="mt-4 flex items-start gap-2 rounded-xl bg-[#fff4df] px-3.5 py-2.5 text-[13.5px] text-[#9a5b00]">
               <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               Your request to move to {PLAN_LABEL[open.requestedPlan]} was sent on {longDay(open.at)}. Billing updates once the desk confirms it.
             </p>
           ) : null}
-          {admin ? <p className="mt-4 rounded-xl bg-blue-light px-3.5 py-2.5 text-[12.5px] text-blue">Admin account: plan and billing changes for members are made in Supabase or the admin console.</p> : null}
+          {admin ? <p className="mt-4 rounded-xl bg-blue-light px-3.5 py-2.5 text-[13.5px] text-blue">Admin account: plan and billing changes for members are made in Supabase or the admin console.</p> : null}
           <div className="mt-auto flex flex-wrap gap-2 pt-5">
             <Link href="/hub/membership" className={btnPrimary}>
               Change plan <ArrowRight className="h-4 w-4" />
@@ -82,13 +82,13 @@ export default async function BillingPage() {
               <Mail className="h-[18px] w-[18px]" />
             </span>
             <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">Billing contact</p>
-              <h2 id="contact-title" className="text-[16px] font-semibold text-ink">
+              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-teal-700">Billing contact</p>
+              <h2 id="contact-title" className="text-[17px] font-semibold text-ink">
                 Who the desk invoices
               </h2>
             </div>
           </div>
-          <dl className="mt-4 divide-y divide-border text-[13.5px]">
+          <dl className="mt-4 divide-y divide-border text-[15px]">
             <div className="flex justify-between gap-4 py-2.5">
               <dt className="text-dim">Name</dt>
               <dd translate={user.name ? "no" : undefined} className="min-w-0 truncate text-right font-medium text-ink">
@@ -114,7 +114,7 @@ export default async function BillingPage() {
               </dd>
             </div>
           </dl>
-          <p className="mt-auto pt-4 text-[12.5px] text-mid">
+          <p className="mt-auto pt-4 text-[13.5px] text-mid">
             Update your name and address in{" "}
             <Link href="/hub/account/profile" className="font-semibold text-blue no-underline hover:underline">
               Profile
@@ -154,13 +154,13 @@ export default async function BillingPage() {
               <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-teal-50 text-teal-700 ring-1 ring-teal-100">
                 <item.icon className="h-[18px] w-[18px]" />
               </span>
-              <p className="mt-3 text-[14px] font-semibold text-ink">{item.title}</p>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-mid">{item.body}</p>
+              <p className="mt-3 text-[15.5px] font-semibold text-ink">{item.title}</p>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-mid">{item.body}</p>
             </div>
           ))}
         </div>
         <div className="mt-4 flex flex-col items-start gap-3 rounded-2xl border border-border bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[13.5px] text-mid">A question about an invoice, a refund or changing how you pay? Billing replies by email, usually the same working day.</p>
+          <p className="text-[15px] text-mid">A question about an invoice, a refund or changing how you pay? Billing replies by email, usually the same working day.</p>
           <Link href="/hub/contact?topic=Billing" className={btnPrimary}>
             <MessageSquare className="h-4 w-4" /> Talk to billing
           </Link>

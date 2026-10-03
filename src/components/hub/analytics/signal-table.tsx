@@ -30,16 +30,16 @@ export function SignalTable({ rows, days }: { rows: Row[]; days: number }) {
 
   const toggle = (key: SortKey) => setSort((current) => (current.key === key ? { key, desc: !current.desc } : { key, desc: key === "changePct" || key === "rangePosition" }));
 
-  if (!live.length) return <p className="px-5 py-10 text-center text-[13px] text-mid">No series has two prices inside the last {days} days yet. Try a longer window.</p>;
+  if (!live.length) return <p className="px-5 py-10 text-center text-[14.5px] text-mid">No series has two prices inside the last {days} days yet. Try a longer window.</p>;
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[360px] text-[13px]">
+      <table className="w-full min-w-[360px] text-[14.5px]">
         <caption className="sr-only">
           Every series over the last {days} days. Column headers sort the table.
         </caption>
         <thead>
-          <tr className="border-b border-border bg-s2 font-mono text-[10px] uppercase tracking-wider text-mid">
+          <tr className="border-b border-border bg-s2 font-mono text-[11px] uppercase tracking-wider text-mid">
             {COLUMNS.map((column) => {
               const active = sort.key === column.key;
               const Icon = !active ? ArrowUpDown : sort.desc ? ArrowDown : ArrowUp;
@@ -62,18 +62,18 @@ export function SignalTable({ rows, days }: { rows: Row[]; days: number }) {
             <tr key={row.id} className="transition-colors hover:bg-s2/60">
               <th scope="row" className="py-3 pl-4 pr-3 text-left font-normal">
                 <span className="block font-semibold text-ink">{row.label}</span>
-                <span className="block text-[12px] text-dim">{row.basis}</span>
+                <span className="block text-[13px] text-dim">{row.basis}</span>
               </th>
               <td className="hidden px-3 py-3 text-mid sm:table-cell">{row.group}</td>
               <td className="px-3 py-3 text-right">
                 <span className={`block font-semibold tabular-nums ${TONE_TEXT[row.direction]}`}>{signedPct(row.changePct)}</span>
-                <span className="block text-[11.5px] tabular-nums text-dim">
+                <span className="block text-[12.5px] tabular-nums text-dim">
                   {num(row.start)} → {num(row.current)}
                 </span>
               </td>
               <td className="min-w-[132px] px-3 py-3">
                 <RangeBar value={row.rangePosition} />
-                <span className="mt-1.5 flex justify-between text-[10.5px] tabular-nums text-dim">
+                <span className="mt-1.5 flex justify-between text-[11.5px] tabular-nums text-dim">
                   <span>{num(row.low)}</span>
                   <span className="font-semibold text-mid">{row.rangePosition}</span>
                   <span>{num(row.high)}</span>
@@ -87,7 +87,7 @@ export function SignalTable({ rows, days }: { rows: Row[]; days: number }) {
         </tbody>
       </table>
       {missing.length ? (
-        <p className="border-t border-border px-4 py-2.5 text-[12px] text-dim">
+        <p className="border-t border-border px-4 py-2.5 text-[13px] text-dim">
           Not enough prices in this window for {missing.map((row) => `${row.label} (${row.basis})`).join(", ")}.
         </p>
       ) : null}

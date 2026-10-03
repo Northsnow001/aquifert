@@ -56,10 +56,10 @@ export function CallWhen({ startsAt, durationMinutes, size = "lg" }: { startsAt:
   return (
     <div>
       <p className="text-[17px] font-semibold text-ink">{when.day}</p>
-      <p className="mt-0.5 text-[14px] text-mid tabular-nums">
+      <p className="mt-0.5 text-[15.5px] text-mid tabular-nums">
         {when.range} <span className="font-semibold text-ink">{when.zone}</span>
       </p>
-      <p className="mt-1 text-[12px] text-dim">{zone ? `Shown in your time zone (${zone.replace(/_/g, " ")}).` : "Times in UTC."}</p>
+      <p className="mt-1 text-[13px] text-dim">{zone ? `Shown in your time zone (${zone.replace(/_/g, " ")}).` : "Times in UTC."}</p>
     </div>
   );
 }
@@ -84,7 +84,7 @@ export function Countdown({ startsAt, durationMinutes }: { startsAt: string; dur
   const { live, text } = countdownLabel(startsAt, durationMinutes, now);
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold ${live ? "bg-[#fdecea] text-[#b53a2f]" : "bg-blue-light text-blue"}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12.5px] font-semibold ${live ? "bg-[#fdecea] text-[#b53a2f]" : "bg-blue-light text-blue"}`}
       aria-live="polite"
     >
       {live ? <Radio className="h-3 w-3" aria-hidden /> : <Clock className="h-3 w-3" aria-hidden />}

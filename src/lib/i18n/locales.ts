@@ -40,7 +40,8 @@ export function languageFor(code: LangCode) {
 const en = {
   "nav.dashboard": "Dashboard",
   "nav.home": "Hub",
-  "nav.library": "Library",
+  "nav.library": "Weekly Report & Analysis",
+  "short.library": "Reports",
   "nav.nitrogen": "Nitrogen Report",
   "nav.aquibot": "Aquibot",
   "nav.telex": "Market TELEX Feed",
@@ -116,7 +117,8 @@ export type Dict = Record<DictKey, string>;
 const zh: Dict = {
   "nav.dashboard": "仪表盘",
   "nav.home": "资讯中心",
-  "nav.library": "文库",
+  "nav.library": "周报与分析",
+  "short.library": "周报",
   "nav.nitrogen": "氮肥报告",
   "nav.aquibot": "Aquibot",
   "nav.telex": "市场 TELEX 快讯",
@@ -189,7 +191,8 @@ const zh: Dict = {
 const es: Dict = {
   "nav.dashboard": "Panel",
   "nav.home": "Centro",
-  "nav.library": "Biblioteca",
+  "nav.library": "Informe semanal y análisis",
+  "short.library": "Informes",
   "nav.nitrogen": "Informe de nitrógeno",
   "nav.aquibot": "Aquibot",
   "nav.telex": "TELEX de mercado",
@@ -262,7 +265,8 @@ const es: Dict = {
 const fr: Dict = {
   "nav.dashboard": "Tableau de bord",
   "nav.home": "Hub",
-  "nav.library": "Bibliothèque",
+  "nav.library": "Rapport hebdomadaire et analyse",
+  "short.library": "Rapports",
   "nav.nitrogen": "Rapport azote",
   "nav.aquibot": "Aquibot",
   "nav.telex": "TELEX marché",
@@ -335,7 +339,8 @@ const fr: Dict = {
 const ar: Dict = {
   "nav.dashboard": "لوحة التحكم",
   "nav.home": "المركز",
-  "nav.library": "المكتبة",
+  "nav.library": "التقرير الأسبوعي والتحليل",
+  "short.library": "التقارير",
   "nav.nitrogen": "تقرير النيتروجين",
   "nav.aquibot": "أكويبوت",
   "nav.telex": "تغذية TELEX للسوق",
@@ -408,7 +413,8 @@ const ar: Dict = {
 const ja: Dict = {
   "nav.dashboard": "ダッシュボード",
   "nav.home": "ハブ",
-  "nav.library": "ライブラリ",
+  "nav.library": "週次レポートと分析",
+  "short.library": "レポート",
   "nav.nitrogen": "窒素レポート",
   "nav.aquibot": "Aquibot",
   "nav.telex": "市場TELEX速報",
@@ -481,7 +487,8 @@ const ja: Dict = {
 const de: Dict = {
   "nav.dashboard": "Übersicht",
   "nav.home": "Hub",
-  "nav.library": "Bibliothek",
+  "nav.library": "Wochenbericht & Analyse",
+  "short.library": "Berichte",
   "nav.nitrogen": "Stickstoffbericht",
   "nav.aquibot": "Aquibot",
   "nav.telex": "Markt-TELEX",
@@ -554,7 +561,8 @@ const de: Dict = {
 const ko: Dict = {
   "nav.dashboard": "대시보드",
   "nav.home": "허브",
-  "nav.library": "라이브러리",
+  "nav.library": "주간 보고서 및 분석",
+  "short.library": "보고서",
   "nav.nitrogen": "질소 리포트",
   "nav.aquibot": "Aquibot",
   "nav.telex": "시장 TELEX 피드",
@@ -627,7 +635,8 @@ const ko: Dict = {
 const pt: Dict = {
   "nav.dashboard": "Painel",
   "nav.home": "Hub",
-  "nav.library": "Biblioteca",
+  "nav.library": "Relatório semanal e análise",
+  "short.library": "Relatórios",
   "nav.nitrogen": "Relatório de Nitrogênio",
   "nav.aquibot": "Aquibot",
   "nav.telex": "Feed de mercado TELEX",
@@ -700,7 +709,8 @@ const pt: Dict = {
 const it: Dict = {
   "nav.dashboard": "Cruscotto",
   "nav.home": "Hub",
-  "nav.library": "Libreria",
+  "nav.library": "Report settimanale e analisi",
+  "short.library": "Report",
   "nav.nitrogen": "Rapporto azoto",
   "nav.aquibot": "Aquibot",
   "nav.telex": "Feed di mercato TELEX",
@@ -773,7 +783,8 @@ const it: Dict = {
 const hi: Dict = {
   "nav.dashboard": "डैशबोर्ड",
   "nav.home": "हब",
-  "nav.library": "लाइब्रेरी",
+  "nav.library": "साप्ताहिक रिपोर्ट और विश्लेषण",
+  "short.library": "रिपोर्ट",
   "nav.nitrogen": "नाइट्रोजन रिपोर्ट",
   "nav.aquibot": "Aquibot",
   "nav.telex": "बाज़ार TELEX फ़ीड",
@@ -846,7 +857,8 @@ const hi: Dict = {
 const ru: Dict = {
   "nav.dashboard": "Панель",
   "nav.home": "Хаб",
-  "nav.library": "Библиотека",
+  "nav.library": "Еженедельный отчёт и анализ",
+  "short.library": "Отчёты",
   "nav.nitrogen": "Отчёт по азоту",
   "nav.aquibot": "Aquibot",
   "nav.telex": "Рыночная лента TELEX",
@@ -919,7 +931,8 @@ const ru: Dict = {
 const tr: Dict = {
   "nav.dashboard": "Panel",
   "nav.home": "Hub",
-  "nav.library": "Kütüphane",
+  "nav.library": "Haftalık Rapor ve Analiz",
+  "short.library": "Raporlar",
   "nav.nitrogen": "Azot Raporu",
   "nav.aquibot": "Aquibot",
   "nav.telex": "Pazar TELEX akışı",

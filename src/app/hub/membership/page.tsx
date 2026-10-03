@@ -78,7 +78,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           <span className="aq-chip flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white">
             {can(fromModule.key) ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
           </span>
-          <div className="text-[13.5px] leading-relaxed text-mid">
+          <div className="text-[15px] leading-relaxed text-mid">
             <p className="font-semibold text-ink">
               You opened {fromModule.label}. {can(fromModule.key) ? "It is included in your plan." : `It is included from ${PLAN_LABEL[modules.access[fromModule.key]]}.`}
             </p>
@@ -97,7 +97,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           <span className="aq-chip aq-chip-amber flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white">
             <Clock className="h-4 w-4" />
           </span>
-          <div className="min-w-0 flex-1 text-[13.5px]">
+          <div className="min-w-0 flex-1 text-[15px]">
             <p className="font-semibold text-ink">
               Your request for {open.tier ? `${TIER_LABEL[open.tier]} (${PLAN_LABEL.enterprise})` : PLAN_LABEL[open.requestedPlan]}
               {open.cycle ? `, billed ${open.cycle}` : ""}{" "}
@@ -113,7 +113,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
       ) : null}
 
       {admin ? (
-        <p className="flex items-start gap-2 rounded-xl bg-blue-light px-4 py-3 text-[13px] text-blue">
+        <p className="flex items-start gap-2 rounded-xl bg-blue-light px-4 py-3 text-[14.5px] text-blue">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
           You are an admin, so everything is unlocked for you. Member plan changes are made in Supabase or the admin console; requests sent here arrive in the admin queue.
         </p>
@@ -122,13 +122,13 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
       <div className="grid gap-4 lg:grid-cols-5">
         <section className="aq-card overflow-hidden lg:col-span-3" aria-labelledby="compare-title">
           <header className="border-b border-border px-5 py-3.5">
-            <h2 id="compare-title" className="text-[15px] font-semibold text-ink">
+            <h2 id="compare-title" className="text-[16.5px] font-semibold text-ink">
               Compare plans
             </h2>
-            <p className="text-[12px] text-dim">Modules and allowances come straight from the desk&rsquo;s current settings.</p>
+            <p className="text-[13px] text-dim">Modules and allowances come straight from the desk&rsquo;s current settings.</p>
           </header>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-[13px]">
+            <table className="w-full min-w-[560px] text-left text-[14.5px]">
               <thead>
                 <tr className="border-b border-border bg-s2/70">
                   <th scope="col" className="sticky left-0 bg-s2 px-5 py-3 font-semibold text-ink">
@@ -137,8 +137,8 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
                   {PLAN_ORDER.map((plan) => (
                     <th key={plan} scope="col" className={`px-4 py-3 text-center font-semibold ${plan === user.plan ? "text-teal-700" : "text-ink"}`}>
                       {PLAN_LABEL[plan]}
-                      <span className="block text-[11px] font-medium text-dim">{PLAN_PRICE[plan]}</span>
-                      {plan === user.plan ? <span className="block text-[10.5px] font-bold uppercase tracking-[0.08em]">Your plan</span> : null}
+                      <span className="block text-[12px] font-medium text-dim">{PLAN_PRICE[plan]}</span>
+                      {plan === user.plan ? <span className="block text-[11.5px] font-bold uppercase tracking-[0.08em]">Your plan</span> : null}
                     </th>
                   ))}
                 </tr>
@@ -177,7 +177,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
                   </tr>
                 ))}
                 <tr className="bg-s2/50">
-                  <th scope="row" colSpan={4} className="px-5 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-teal-700">
+                  <th scope="row" colSpan={4} className="px-5 py-2 text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">
                     AQ Analytics modules
                   </th>
                 </tr>
@@ -205,13 +205,13 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           <div className="flex flex-col gap-2">
             {FAQ.map((item) => (
               <details key={item.q} className="aq-card group p-0 [&_summary::-webkit-details-marker]:hidden">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[13.5px] font-semibold text-ink">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[15px] font-semibold text-ink">
                   {item.q}
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-s3 text-mid transition group-open:rotate-45" aria-hidden>
                     +
                   </span>
                 </summary>
-                <p className="px-4 pb-4 text-[13px] leading-relaxed text-mid">{item.a}</p>
+                <p className="px-4 pb-4 text-[14.5px] leading-relaxed text-mid">{item.a}</p>
               </details>
             ))}
           </div>

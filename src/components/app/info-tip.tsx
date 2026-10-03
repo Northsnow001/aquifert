@@ -58,8 +58,8 @@ export function InfoTip({ label, text, href = "/hub/guide", className = "" }: { 
 
   const body = (
     <>
-      <p className="text-[13.5px] leading-relaxed text-ink">{text}</p>
-      <Link href={href} onClick={() => setOpen(false)} className="mt-2 inline-block text-[13px] font-semibold text-blue no-underline hover:underline">
+      <p className="text-[15px] leading-relaxed text-ink">{text}</p>
+      <Link href={href} onClick={() => setOpen(false)} className="mt-2 inline-block text-[14.5px] font-semibold text-blue no-underline hover:underline">
         Learn more
       </Link>
     </>
@@ -95,7 +95,7 @@ export function InfoTip({ label, text, href = "/hub/guide", className = "" }: { 
                   <div className="aq-sheet aq-safe-bottom absolute inset-x-0 bottom-0 rounded-t-[22px] bg-white px-5 pt-3 shadow-2xl">
                     <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#d5dde6]" />
                     <div className="flex items-center justify-between gap-3">
-                      <h2 className="text-[16px] font-semibold text-ink">{label}</h2>
+                      <h2 className="text-[17px] font-semibold text-ink">{label}</h2>
                       <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="rounded-full bg-s3 p-1.5 text-mid">
                         <X className="h-4 w-4" />
                       </button>
@@ -112,7 +112,7 @@ export function InfoTip({ label, text, href = "/hub/guide", className = "" }: { 
                   className="aq-drop aq-float fixed z-[95] -translate-y-1/2 rounded-2xl border border-border bg-white p-4"
                   style={{ top: pos.top, left: pos.left, width: WIDTH }}
                 >
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">{label}</p>
+                  <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-dim">{label}</p>
                   {body}
                 </div>
               ) : null}

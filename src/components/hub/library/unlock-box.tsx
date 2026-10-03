@@ -13,7 +13,7 @@ export function UnlockBox({ access }: { access: TelexAccess }) {
         <Icon className="h-5 w-5" aria-hidden />
       </span>
       <h2 className="mt-3 text-[17px] font-semibold text-ink">This file is for {unlock.label} members</h2>
-      <p className="mx-auto mt-1.5 max-w-md text-[13.5px] leading-relaxed text-mid">
+      <p className="mx-auto mt-1.5 max-w-md text-[15px] leading-relaxed text-mid">
         Upgrade to {unlock.label} to read and download it, along with every other {unlock.label} report in the library.
       </p>
       <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">

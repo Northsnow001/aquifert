@@ -8,6 +8,7 @@ import { deleteReport } from "@/app/hub/nitrogen-report/actions";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { EmptyPanel, Panel } from "@/components/hub/kit";
 import { NitrogenWizard } from "@/components/hub/nitrogen/wizard";
+import type { PortRecord } from "@/lib/ports";
 
 export type ReportRow = { id: string; refNo: string; crop: string; country: string; date: string };
 
@@ -21,14 +22,14 @@ function ReportItem({ row }: { row: ReportRow }) {
           <FileText className="h-4 w-4" />
         </span>
         <span className="min-w-0">
-          <span className="block font-mono text-[13px] font-semibold text-ink group-hover:text-blue">{row.refNo}</span>
-          <span className="block truncate text-[12.5px] text-mid">{[row.crop, row.country, row.date].filter(Boolean).join(" · ")}</span>
+          <span className="block font-mono text-[14.5px] font-semibold text-ink group-hover:text-blue">{row.refNo}</span>
+          <span className="block truncate text-[13.5px] text-mid">{[row.crop, row.country, row.date].filter(Boolean).join(" · ")}</span>
         </span>
       </Link>
       <div className="flex shrink-0 items-center gap-2">
         {confirming ? (
           <>
-            <span className="text-[12.5px] text-mid">Delete this report?</span>
+            <span className="text-[13.5px] text-mid">Delete this report?</span>
             <button
               type="button"
               disabled={pending}
@@ -42,17 +43,17 @@ function ReportItem({ row }: { row: ReportRow }) {
                   }
                 })
               }
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-danger px-3.5 text-[13px] font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-danger px-3.5 text-[14.5px] font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
             >
               {pending ? "Deleting…" : "Delete"}
             </button>
-            <button type="button" onClick={() => setConfirming(false)} className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-semibold text-mid hover:text-ink">
+            <button type="button" onClick={() => setConfirming(false)} className="inline-flex h-9 items-center rounded-full px-3 text-[14.5px] font-semibold text-mid hover:text-ink">
               Keep
             </button>
           </>
         ) : (
           <>
-            <Link href={`/hub/nitrogen-report/${row.id}`} className="inline-flex h-9 items-center gap-1 rounded-full border border-border bg-white px-3.5 text-[13px] font-semibold text-ink no-underline transition hover:border-blue/35 hover:text-blue">
+            <Link href={`/hub/nitrogen-report/${row.id}`} className="inline-flex h-9 items-center gap-1 rounded-full border border-border bg-white px-3.5 text-[14.5px] font-semibold text-ink no-underline transition hover:border-blue/35 hover:text-blue">
               View <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <button
@@ -70,7 +71,19 @@ function ReportItem({ row }: { row: ReportRow }) {
   );
 }
 
-export function NitrogenWorkspace({ reports, limitReached, limitNote, keepNote }: { reports: ReportRow[]; limitReached: boolean; limitNote: string; keepNote: string }) {
+export function NitrogenWorkspace({
+  reports,
+  ports,
+  limitReached,
+  limitNote,
+  keepNote,
+}: {
+  reports: ReportRow[];
+  ports: PortRecord[];
+  limitReached: boolean;
+  limitNote: string;
+  keepNote: string;
+}) {
   const [view, setView] = useState<"list" | "form">("list");
   const [draft, setDraft] = useState(0);
 
@@ -83,12 +96,12 @@ export function NitrogenWorkspace({ reports, limitReached, limitNote, keepNote }
   return (
     <>
       <div hidden={view !== "form"}>
-        <NitrogenWizard key={draft} blocked={limitReached ? limitNote : null} onClose={() => setView("list")} onReset={() => setDraft((value) => value + 1)} />
+        <NitrogenWizard key={draft} ports={ports} blocked={limitReached ? limitNote : null} onClose={() => setView("list")} onReset={() => setDraft((value) => value + 1)} />
       </div>
 
       <div hidden={view !== "list"} className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-[13.5px] leading-relaxed text-mid">Four short sections, about three minutes. Your answers stay put if you step back to check something.</p>
+          <p className="max-w-xl text-[15px] leading-relaxed text-mid">Four short sections, about three minutes. Your answers stay put if you step back to check something.</p>
           {limitReached ? (
             <div className="flex flex-wrap items-center gap-2">
               {start}
@@ -100,7 +113,7 @@ export function NitrogenWorkspace({ reports, limitReached, limitNote, keepNote }
             start
           )}
         </div>
-        {limitReached ? <p className="text-[12.5px] text-[#9a5b00]">{limitNote}</p> : null}
+        {limitReached ? <p className="text-[13.5px] text-[#9a5b00]">{limitNote}</p> : null}
 
         <Panel title="Previous reports" sub={keepNote} icon={FileText} bodyClassName={reports.length ? "" : "p-4"}>
           {reports.length ? (

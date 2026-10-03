@@ -6,14 +6,14 @@ import { longDay, shortDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { listNitrogenReports, nitrogenReportsThisMonth } from "@/lib/aq-modules/members";
 import { limitFor } from "@/lib/aq-modules/types";
-import { nextReset } from "@/lib/freight-desk/store";
+import { activePorts, getFreightDesk, nextReset } from "@/lib/freight-desk/store";
 
 export const metadata: Metadata = { title: "Nitrogen Report" };
 export const dynamic = "force-dynamic";
 
 export default async function NitrogenReportPage() {
   const { user, admin, modules } = await getHubAccess();
-  const [reports, used] = await Promise.all([listNitrogenReports(user), nitrogenReportsThisMonth(user)]);
+  const [reports, used, freight] = await Promise.all([listNitrogenReports(user), nitrogenReportsThisMonth(user), getFreightDesk()]);
   const limit = admin ? 0 : limitFor(modules.limits.nitrogenReports, user.plan);
   const keep = admin ? 0 : limitFor(modules.limits.savedReports, user.plan);
   const resets = shortDay(nextReset());
@@ -37,6 +37,7 @@ export default async function NitrogenReportPage() {
       <NitrogenUsage used={used} limit={limit} resets={resets} />
       <NitrogenWorkspace
         reports={rows}
+        ports={activePorts(freight)}
         limitReached={limit > 0 && used >= limit}
         limitNote={`You have used all ${limit} reports on your plan this month. Your allowance resets on ${resets}, or upgrade for more.`}
         keepNote={keep > 0 ? `Your plan keeps your latest ${keep}. The oldest makes way when you go over.` : "Every report you generate is kept."}

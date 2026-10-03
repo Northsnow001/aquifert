@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { ArrowLeftRight, ArrowUp, Calculator, FileText, Library } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeftRight, ArrowUp, Calculator, Library } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 
 const PROMPTS = [
@@ -17,18 +17,10 @@ const ACTIONS = [
   { href: "/hub/freight-calculator", label: "Price a freight", icon: Calculator },
   { href: "/hub/netback", label: "Check netback", icon: ArrowLeftRight },
   { href: "/hub/library", label: "Open the Library", icon: Library },
-  { href: "/hub/order-desk", label: "Request a quote", icon: FileText },
 ];
-
-const subscribe = () => () => {};
-function greeting() {
-  const hour = new Date().getHours();
-  return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-}
 
 export function HomeHero({ name }: { name: string }) {
   const router = useRouter();
-  const hello = useSyncExternalStore(subscribe, greeting, () => "Welcome back");
   const [value, setValue] = useState("");
   const [hint, setHint] = useState(0);
   const first = name.trim().split(/\s+/)[0] || "there";
@@ -46,8 +38,8 @@ export function HomeHero({ name }: { name: string }) {
   return (
     <section className="aq-rise flex flex-col items-center px-1 pb-2 pt-2 text-center sm:pt-4">
       <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]">
-        {hello}, <span translate="no">{first}</span>.
-        <span className="block text-mid sm:inline"> What do you want to look at today?</span>
+        Hi, <span translate="no">{first}</span>.
+        <span className="block text-mid sm:inline"> What do you want to check today?</span>
       </h1>
       <form
         className="mt-5 w-full max-w-[640px]"
@@ -63,7 +55,7 @@ export function HomeHero({ name }: { name: string }) {
             onChange={(event) => setValue(event.target.value)}
             placeholder={PROMPTS[hint]}
             aria-label="Ask Aquibot"
-            className="min-w-0 flex-1 bg-transparent px-1 text-[15px] text-ink outline-none"
+            className="min-w-0 flex-1 bg-transparent px-1 text-[16.5px] text-ink outline-none"
           />
           <button type="submit" aria-label="Ask Aquibot" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue text-white transition hover:bg-blue-dim">
             <ArrowUp className="h-4 w-4" />
@@ -75,7 +67,7 @@ export function HomeHero({ name }: { name: string }) {
           <Link
             key={action.href}
             href={action.href}
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/[.07] bg-white px-3.5 py-2 text-[13px] font-medium text-ink no-underline shadow-[0_1px_2px_rgb(16_38_59/0.05)] transition hover:-translate-y-px hover:border-blue/30 hover:text-blue"
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/[.07] bg-white px-3.5 py-2 text-[14.5px] font-medium text-ink no-underline shadow-[0_1px_2px_rgb(16_38_59/0.05)] transition hover:-translate-y-px hover:border-blue/30 hover:text-blue"
           >
             <action.icon className="h-3.5 w-3.5 text-blue" />
             {action.label}

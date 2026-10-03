@@ -3,7 +3,7 @@ import { CalendarClock, Download } from "lucide-react";
 import { btnSecondary } from "@/components/app/form";
 
 export const segWrap = "inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-full border border-border bg-white p-1 shadow-[inset_0_1px_2px_rgb(16_38_59/0.04)]";
-export const segItem = "inline-flex h-8 items-center justify-center rounded-full px-3 text-[12.5px] font-semibold no-underline transition";
+export const segItem = "inline-flex h-8 items-center justify-center rounded-full px-3 text-[13.5px] font-semibold no-underline transition";
 export const segOn = "bg-blue text-white shadow-[0_4px_12px_-6px_rgb(47_111_179/0.8)]";
 export const segOff = "text-mid hover:bg-s2 hover:text-ink";
 
@@ -22,7 +22,7 @@ export function SegLinks({ label, items }: { label: string; items: { href: strin
 
 export function DownloadLink({ href, label = "Download CSV" }: { href: string; label?: string }) {
   return (
-    <a href={href} download className={`${btnSecondary} h-10 px-4 text-[13px]`}>
+    <a href={href} download className={`${btnSecondary} h-10 px-4 text-[14.5px]`}>
       <Download className="h-4 w-4" aria-hidden /> {label}
     </a>
   );
@@ -30,7 +30,7 @@ export function DownloadLink({ href, label = "Download CSV" }: { href: string; l
 
 export function AsOf({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wide text-dim">
+    <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wide text-dim">
       <CalendarClock className="h-3.5 w-3.5" aria-hidden /> {children}
     </p>
   );
@@ -39,9 +39,9 @@ export function AsOf({ children }: { children: React.ReactNode }) {
 export function Metric({ label, value, sub, className = "" }: { label: string; value: React.ReactNode; sub?: React.ReactNode; className?: string }) {
   return (
     <div className="rounded-2xl border border-border bg-s2/60 px-3.5 py-3">
-      <p className="text-[11.5px] font-medium text-mid">{label}</p>
+      <p className="text-[12.5px] font-medium text-mid">{label}</p>
       <p className={`mt-0.5 text-[18px] font-semibold tabular-nums tracking-[-0.01em] text-ink ${className}`}>{value}</p>
-      {sub ? <p className="mt-0.5 text-[11px] text-dim">{sub}</p> : null}
+      {sub ? <p className="mt-0.5 text-[12px] text-dim">{sub}</p> : null}
     </div>
   );
 }

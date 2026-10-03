@@ -36,7 +36,7 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
     <div className="aq-card overflow-hidden">
       <header className="relative overflow-hidden bg-[#0f2a47] bg-[radial-gradient(120%_120%_at_100%_0%,#1e5b8f_0%,transparent_55%)] px-6 py-7 text-white">
         <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[#1463a5]/40 blur-3xl" />
-        <span className="relative inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-[0.16em]">
+        <span className="relative inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 font-mono text-[11.5px] font-semibold uppercase tracking-[0.16em]">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6baa8e] opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[#6baa8e]" />
@@ -62,16 +62,16 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
                 <Icon className="h-4 w-4" />
               </span>
               <h3 className="mt-3 text-sm font-semibold text-ink">{title}</h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-mid">{body}</p>
+              <p className="mt-1 text-[14.5px] leading-relaxed text-mid">{body}</p>
             </div>
           ))}
         </div>
 
         <section>
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">How we charge — activity-based bands</p>
+          <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.14em] text-mid">How we charge — activity-based bands</p>
           <div className="mt-2 overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-s2 text-[12px] text-mid">
+              <thead className="bg-s2 text-[13px] text-mid">
                 <tr>
                   <th className="px-3 py-2 font-semibold">Band</th>
                   <th className="px-3 py-2 font-semibold">Shipments / cycle</th>
@@ -83,10 +83,10 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
                 {BANDS.map((row) => (
                   <tr key={row.band} className="border-t border-border text-ink">
                     <td className="px-3 py-2.5">
-                      <span className={`rounded-full px-2 py-0.5 text-[12px] font-semibold ${row.tone}`}>{row.band}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[13px] font-semibold ${row.tone}`}>{row.band}</span>
                     </td>
                     <td className="px-3 py-2.5">{row.shipments}</td>
-                    <td className="px-3 py-2.5 font-mono text-[13px]">{row.volume}</td>
+                    <td className="px-3 py-2.5 font-mono text-[14.5px]">{row.volume}</td>
                     <td className="px-3 py-2.5">4 weeks</td>
                   </tr>
                 ))}
@@ -103,7 +103,7 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
           {done ? (
             <div className="mt-3 rounded-lg border border-[#cdebd8] bg-[#f1faf4] px-4 py-4 text-sm text-[#1f5f3a]">
               <p className="font-semibold">{justSent ? success : `You registered interest on ${day(done.at)}.`}</p>
-              <p className="mt-1 text-[13px]">
+              <p className="mt-1 text-[14.5px]">
                 {done.product} · {Number(done.annualVolume).toLocaleString("en-GB")} MT a year. {justSent ? "" : "The team will be in touch with programme details as soon as they are confirmed."}
               </p>
               <button type="button" onClick={() => setDone(null)} className="mt-3 rounded-lg border border-[#cdebd8] bg-white px-3 py-1.5 text-xs font-semibold text-[#1f7a45]">
@@ -145,24 +145,24 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
               >
                 <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block text-[13px] font-medium text-mid">
+                  <label className="block text-[14.5px] font-medium text-mid">
                     Full name *
                     <input name="name" required defaultValue={name} className={inputClass} />
                   </label>
-                  <label className="block text-[13px] font-medium text-mid">
+                  <label className="block text-[14.5px] font-medium text-mid">
                     Company *
                     <input name="company" required defaultValue={last?.company} placeholder="Company name" className={inputClass} />
                   </label>
-                  <label className="block text-[13px] font-medium text-mid">
+                  <label className="block text-[14.5px] font-medium text-mid">
                     Email *
                     <input name="email" type="email" required defaultValue={email} className={inputClass} />
                   </label>
-                  <label className="block text-[13px] font-medium text-mid">
+                  <label className="block text-[14.5px] font-medium text-mid">
                     Estimated annual volume (MT) *
                     <input name="annualVolume" type="number" min="1" step="1" required defaultValue={last?.annualVolume} placeholder="e.g. 5000" className={inputClass} />
                   </label>
                 </div>
-                <label className="block text-[13px] font-medium text-mid">
+                <label className="block text-[14.5px] font-medium text-mid">
                   Primary product interest *
                   <select name="product" required defaultValue={last?.product ?? ""} className={inputClass}>
                     <option value="">Select a product...</option>
@@ -171,7 +171,7 @@ export function ZeroPanel({ name, email, success, registered }: { name: string; 
                     ))}
                   </select>
                 </label>
-                <label className="block text-[13px] font-medium text-mid">
+                <label className="block text-[14.5px] font-medium text-mid">
                   Anything we should know
                   <textarea name="notes" rows={3} placeholder="Destinations, timing, current suppliers…" className={`${areaClass} mt-1.5`} />
                 </label>
