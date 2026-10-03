@@ -234,7 +234,7 @@ export function AquibotChat({
                 <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy-600 text-white">
                   <User className="h-4 w-4" aria-hidden />
                 </span>
-                <p className="max-w-[75%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-navy-600 px-4 py-3 text-[14px] leading-relaxed text-white shadow-[0_1px_2px_rgb(14_32_49/0.08)]">
+                <p translate="no" className="max-w-[75%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-navy-600 px-4 py-3 text-[14px] leading-relaxed text-white shadow-[0_1px_2px_rgb(14_32_49/0.08)]">
                   {message.content}
                 </p>
               </div>
@@ -458,7 +458,7 @@ function AssistantMessage({ message, stage, isAdmin }: { message: ChatMessage; s
       <AquibotAvatar size={32} active={message.pending} className="mt-0.5" />
       <div className="min-w-0 max-w-[85%] flex-1">
         {message.content ? (
-          <div className="rounded-2xl rounded-ss-md bg-s2 px-4 py-3 shadow-[0_1px_2px_rgb(14_32_49/0.06)]">
+          <div translate="no" className="rounded-2xl rounded-ss-md bg-s2 px-4 py-3 shadow-[0_1px_2px_rgb(14_32_49/0.06)]">
             <Markdown text={message.content} className="text-[14px] text-ink" />
           </div>
         ) : message.pending ? (

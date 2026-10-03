@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BookOpenCheck, ChevronDown, ChevronsLeft, ChevronsRight, Lock, LogOut, Menu, MoreHorizontal, Search, Sparkles, UserCircle, X } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
+import { AutoTranslate } from "@/components/app/auto-translate";
 import { closeAquibot, toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
 import { useI18n } from "@/components/app/i18n";
@@ -161,7 +162,7 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
       </button>
       {open ? (
         <div role="menu" className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-64 rounded-2xl border border-border bg-white p-1.5">
-          <div className="px-2.5 pb-2.5 pt-2">
+          <div translate="no" className="px-2.5 pb-2.5 pt-2">
             <p className="truncate text-[14px] font-semibold text-ink">{user.name}</p>
             <p className="truncate text-[12px] text-dim">{user.email}</p>
             <span className="mt-2 inline-flex rounded-full bg-blue-light px-2 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wide text-blue">
@@ -349,7 +350,7 @@ export function AppShell({
             </div>
           </header>
 
-          <main id="main-content" className="flex-1 px-4 pb-28 pt-5 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
+          <main id="main-content" className="flex-1 px-4 pb-28 pt-5 transition-opacity duration-300 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
             <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">
               {children}
             </div>
@@ -398,7 +399,7 @@ export function AppShell({
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12px] font-bold text-white">
                   {initials(user.name)}
                 </span>
-                <div className="min-w-0 flex-1">
+                <div translate="no" className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px] font-semibold text-ink">{user.name}</p>
                   <p className="truncate font-mono text-[10.5px] uppercase tracking-wide text-dim">{PLAN_LABEL[user.plan]}</p>
                 </div>
@@ -415,6 +416,7 @@ export function AppShell({
 
       <Tour />
       <CommandPalette items={palette} />
+      <AutoTranslate />
     </div>
   );
 }

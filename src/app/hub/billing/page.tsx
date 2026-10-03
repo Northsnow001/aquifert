@@ -91,7 +91,9 @@ export default async function BillingPage() {
           <dl className="mt-4 divide-y divide-border text-[13.5px]">
             <div className="flex justify-between gap-4 py-2.5">
               <dt className="text-dim">Name</dt>
-              <dd className="min-w-0 truncate text-right font-medium text-ink">{user.name || "Not set"}</dd>
+              <dd translate={user.name ? "no" : undefined} className="min-w-0 truncate text-right font-medium text-ink">
+                {user.name || "Not set"}
+              </dd>
             </div>
             <div className="flex justify-between gap-4 py-2.5">
               <dt className="text-dim">Email</dt>
@@ -102,7 +104,7 @@ export default async function BillingPage() {
               <dd className="min-w-0 text-right font-medium text-ink">
                 {address.length ? (
                   address.map((line) => (
-                    <span key={line} className="block">
+                    <span key={line} translate="no" className="block">
                       {line}
                     </span>
                   ))

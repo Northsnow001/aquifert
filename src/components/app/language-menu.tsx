@@ -44,7 +44,7 @@ export function LanguageMenu() {
         <ChevronDown className={`hidden h-3.5 w-3.5 text-dim transition-transform sm:block ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
-        <div role="menu" aria-label={t("top.language")} className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-60 rounded-2xl border border-border bg-white p-1.5">
+        <div role="menu" translate="no" aria-label={t("top.language")} className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-60 rounded-2xl border border-border bg-white p-1.5">
           <p className="px-2.5 pb-1.5 pt-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-dim">{t("top.language")}</p>
           <div className="max-h-[min(70vh,420px)] overflow-y-auto">
             {LANGUAGES.map((option) => {

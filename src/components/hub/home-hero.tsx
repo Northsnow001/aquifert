@@ -46,7 +46,7 @@ export function HomeHero({ name }: { name: string }) {
   return (
     <section className="aq-rise flex flex-col items-center px-1 pb-2 pt-2 text-center sm:pt-4">
       <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]">
-        {hello}, {first}.
+        {hello}, <span translate="no">{first}</span>.
         <span className="block text-mid sm:inline"> What do you want to look at today?</span>
       </h1>
       <form

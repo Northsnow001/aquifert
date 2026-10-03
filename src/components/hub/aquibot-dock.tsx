@@ -181,7 +181,7 @@ export function AquibotDock({ open }: { open: boolean }) {
           {chat.messages.map((message) =>
             message.role === "user" ? (
               <div key={message.id} className="flex justify-end">
-                <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-blue-light px-3.5 py-2.5 text-[13.5px] font-medium leading-6 text-[#25598f]">{message.content}</p>
+                <p translate="no" className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-se-md bg-blue-light px-3.5 py-2.5 text-[13.5px] font-medium leading-6 text-[#25598f]">{message.content}</p>
               </div>
             ) : (
               <DockAnswer key={message.id} message={message} stage={message.pending ? chat.stage : null} />
@@ -282,7 +282,9 @@ function DockAnswer({ message, stage }: { message: ChatMessage; stage: ChatStage
       <AquibotAvatar size={26} active={message.pending} className="mt-0.5" />
       <div className="min-w-0 flex-1">
         {message.content ? (
-          <Markdown text={message.content} className="text-[13.5px] text-ink" />
+          <div translate="no">
+            <Markdown text={message.content} className="text-[13.5px] text-ink" />
+          </div>
         ) : message.pending ? (
           <p className="flex items-center gap-2 py-1 text-[13px] font-medium text-mid">
             <span className="flex gap-1">

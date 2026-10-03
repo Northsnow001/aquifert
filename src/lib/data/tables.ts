@@ -5,7 +5,9 @@ import type { ZeroRegistration } from "@/lib/zero-types";
 
 /** Admin-edited documents: one JSON row each in `app_documents`, or `data/<key>.json` on a local machine. */
 export const DOCUMENT_KEYS = ["hub-content", "freight-desk", "netback-desk", "desk-settings", "aq-modules", "wp-import-state", "wp-import-export"] as const;
-export type DocumentKey = (typeof DOCUMENT_KEYS)[number];
+/** Machine translations of hub text, one document per language. Kept out of DOCUMENT_KEYS so data status tools skip them. */
+export type TranslationDocumentKey = `ui-translations-${string}`;
+export type DocumentKey = (typeof DOCUMENT_KEYS)[number] | TranslationDocumentKey;
 
 export const LIBRARY_BUCKET = "library";
 
