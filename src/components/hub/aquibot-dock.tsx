@@ -112,7 +112,7 @@ export function AquibotDock({ open }: { open: boolean }) {
     >
       <header className="flex h-14 shrink-0 items-center gap-2 border-b border-black/[.07] px-3 lg:h-16">
         <AquibotAvatar size={32} active={chat.busy} />
-        <span className="text-[16.5px] font-bold text-ink">Aquibot</span>
+        <span className="text-[16.5px] font-bold text-ink">Aquibot Trader AI</span>
         <div className="ms-auto flex items-center gap-0.5">
           <button type="button" onClick={newChat} disabled={chat.busy} title={t("bot.newChat")} aria-label={t("bot.newChat")} className={iconBtn}>
             <SquarePen className="h-4 w-4" />

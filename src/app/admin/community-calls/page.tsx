@@ -50,7 +50,7 @@ export default async function CommunityCallsAdminPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Community calls"
+        title="Weekly Market Calls"
         description="Schedule the desk's live calls, add join and recording links, and see who registered. Times are saved in UTC."
         actions={
           <div className="flex items-center gap-3">

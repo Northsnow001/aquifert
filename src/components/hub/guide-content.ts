@@ -1,22 +1,22 @@
 import {
   Activity,
-  Archive,
   ArrowLeftRight,
+  BookOpenText,
   Calculator,
   ChartLine,
+  CircleUser,
   Compass,
   Crown,
-  FileText,
   FlaskConical,
+  House,
   LayoutDashboard,
   Layers,
   Mail,
   Newspaper,
   PhoneCall,
-  Radar,
   Radio,
   Scale,
-  UserCircle,
+  ShoppingCart,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -33,9 +33,11 @@ export type GuideSection = {
   href?: string;
   /** Extra anchor ids that land on this section, so every sidebar ⓘ has a target. */
   aliases?: string[];
+  /** Matches a hidden menu item: left out of the guide until the feature launches. */
+  hidden?: boolean;
 };
 
-export const GUIDE_SECTIONS: GuideSection[] = [
+const ALL_SECTIONS: GuideSection[] = [
   {
     id: "start",
     title: "Getting around",
@@ -43,8 +45,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     summary: "Where everything lives and the fastest ways to reach it.",
     aliases: ["guide"],
     body: [
-      "The sidebar opens with the places you use daily: Dashboard, Hub, Library, Nitrogen Report and Aquibot. Below them, AQ ONE Free plan holds everything included with every account, and AQ Analytics holds the deeper data unlocked by plan. Desk tools and You sit at the bottom. Hover any item and tap the small ⓘ for a one-line explanation.",
-      "A lock beside a menu item means your plan does not include it yet. Open it anyway: the page explains what it covers, shows a preview and lets you upgrade or talk to the desk.",
+      "AQ ONE in the sidebar holds everything included with every account: Hub, Library - Reports & Analysis, Aquibot Trader AI, AQ View, TELEX, Nitrogen Report, Freight Calculator, Netback, AQ Trader Tools, Buy Fertilizer and Weekly Market Call. On AQ Analytics and AQ ZERO your Dashboard sits above them. Help holds the User Guide and Contact Us, and You holds your account. Hover any item and tap the small ⓘ for a one-line explanation.",
     ],
     points: [
       { term: "Search", text: "Press Ctrl K (⌘ K on Mac) or tap the search pill to jump to any page or ask Aquibot directly." },
@@ -68,12 +69,12 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       { term: "Steady", text: "No clear direction. Shown in neutral grey." },
       { term: "Softer", text: "Prices are easing or supply is loosening. Shown in red." },
     ],
-    tip: "The right-hand column shows your next Community Call and any price alert that has triggered since the desk last updated prices.",
+    tip: "The right-hand column shows your next Weekly Market Call and any price alert that has triggered since the desk last updated prices.",
   },
   {
     id: "home",
     title: "Hub and market indicators",
-    icon: Radar,
+    icon: House,
     summary: "Gauges, the Telex feed, commentary and forward curves.",
     href: "/hub",
     body: [
@@ -89,8 +90,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     id: "library",
-    title: "Library",
-    icon: Archive,
+    title: "Library - Reports & Analysis",
+    icon: BookOpenText,
     summary: "Every report and research note the desk has published.",
     href: "/hub/library",
     body: [
@@ -99,20 +100,8 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
-    id: "nitrogen",
-    title: "Nitrogen Report",
-    icon: FlaskConical,
-    summary: "Four short sections, one tailored nitrogen sourcing and agronomy report.",
-    href: "/hub/nitrogen-report",
-    body: [
-      "Answer four sections: delivery (destination, packaging and source), volumes, your crop and soil, and your goals. Hints under each field explain what the desk needs and why. The report recommends a nitrogen source, an application rate band for your crop, timing, additives and the sourcing points to raise with the desk.",
-      "Every report is saved with a reference number under your reports, where you can reopen, print or save it as a PDF. Each plan includes a number of reports per calendar month, shown on the page and on Plan & Usage.",
-    ],
-    tip: "Ready to buy? Each report links straight to Order Fertilizer Now with the product filled in.",
-  },
-  {
     id: "aquibot",
-    title: "Aquibot",
+    title: "Aquibot Trader AI",
     icon: "aquibot",
     summary: "Ask about the market in plain English and get sourced answers.",
     href: "/hub/aquibot",
@@ -123,8 +112,18 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     tip: "Ask with a timeframe, such as “urea in Brazil over the last two weeks”, for the most focused answer.",
   },
   {
+    id: "analysis",
+    title: "AQ View",
+    icon: Newspaper,
+    summary: "What a move means for buyers and what to watch next.",
+    href: "/hub/analysis",
+    body: [
+      "The Telex reports what happened. AQ View notes explain why it matters, who it affects and what would change the picture. Filter by product, open a note to read it in full, and follow the links back to the flashes it interprets.",
+    ],
+  },
+  {
     id: "telex",
-    title: "Market TELEX Feed",
+    title: "TELEX",
     icon: Radio,
     summary: "Desk-issued market flashes, newest first, grouped by day.",
     href: "/hub/telex",
@@ -134,25 +133,29 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
-    id: "analysis",
-    title: "AQ Market Analysis Feed",
-    icon: Newspaper,
-    summary: "What a move means for buyers and what to watch next.",
-    href: "/hub/analysis",
+    id: "nitrogen",
+    title: "Nitrogen Report",
+    icon: FlaskConical,
+    summary: "Four short sections, one tailored nitrogen sourcing and agronomy report.",
+    href: "/hub/nitrogen-report",
     body: [
-      "The Telex reports what happened. Analysis notes explain why it matters, who it affects and what would change the picture. Filter by product, open a note to read it in full, and follow the links back to the flashes it interprets.",
+      "Answer four sections: destination (port, delivery months, packaging and source), volumes, your crop and soil, and your goals. Hints under each field explain what the desk needs and why. The report recommends a nitrogen source, an application rate band for your crop, timing, additives and the sourcing points to raise with the desk.",
+      "Every report is saved with a reference number under your reports, where you can reopen, print or save it as a PDF. Each plan includes a number of reports per calendar month, shown on the page and on Plan & Usage.",
     ],
+    tip: "Ready to buy? Each report links straight to Buy Fertilizer with the product filled in.",
   },
   {
-    id: "signal",
-    title: "AQ Signal",
-    icon: Activity,
-    summary: "Rolling price windows on benchmark fertilizer and freight prices.",
-    href: "/hub/signal",
+    id: "freight",
+    title: "Freight Calculator",
+    icon: Calculator,
+    summary: "Estimate a voyage's freight rate between any two ports.",
+    href: "/hub/freight-calculator",
     body: [
-      "Pick a 7, 30, 60 or 90-day window. Each card compares the first and latest price in the window, with the change, the high and the low and a one-line summary. The bar shows where today's price sits between the window's low and high. A move under half a percent counts as flat.",
-      "The window you pick is remembered. AQ Analytics extends Signal to 180 days on every tracked series.",
+      "Choose a load port and a discharge port, the cargo type and the tonnage (35,000 MT by default), then set the market: Normal, Tight (+10%) or Oversupplied (−10%). Port costs, agency and extra port days are pre-filled and editable. Tap a city on the VLSFO bar to use its bunker price.",
+      "The result is an estimated freight rate in USD/MT with gross revenue and time-charter equivalent per day. Below it you get the distance, voyage days, vessel type, the Baltic Dry Index and the route (Direct, Suez, Panama or Cape), then the full cost breakdown: voyage costs, time costs and premiums for cargo type, origin region, season and war risk where it applies.",
+      "Market benchmark compares the estimate with verified fixtures. When the estimate sits outside the verified band, the displayed rate is blended toward the band's midpoint and marked Outside band.",
     ],
+    tip: "Share copies a link with every input filled in, so a colleague sees exactly the voyage you priced.",
   },
   {
     id: "netback",
@@ -168,9 +171,20 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     tip: "Confirm your currency and exchange rate before calculating. Calculations run in USD; your currency is shown alongside.",
   },
   {
+    id: "tools",
+    title: "AQ Trader Tools",
+    icon: Wrench,
+    summary: "Interactive map, production cost calculator, process guides and glossary.",
+    href: "/hub/tools",
+    body: [
+      "World Map layers NH₃ terminals, urea exporters, phosphate producers and potash mines, with export and ex-works cost curves. Tap a country or bar for its facts.",
+      "Cost Calculator moves natural gas, phosphate rock and sulphur prices and shows the production cost of eleven products, from ammonia and urea to MAP and DAP. Tap a product card for its breakdown. How It's Made shows each production chain and the Glossary defines the key terms.",
+    ],
+  },
+  {
     id: "order",
-    title: "Order Fertilizer Now",
-    icon: FileText,
+    title: "Buy Fertilizer",
+    icon: ShoppingCart,
     summary: "Register for Aquifert Zero, or send the trading desk an enquiry and get a quote back.",
     href: "/hub/order-desk",
     body: [
@@ -181,7 +195,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
   },
   {
     id: "call",
-    title: "Freight Analytics Call",
+    title: "Weekly Market Call",
     icon: PhoneCall,
     summary: "A free live call with the desk on fertilizer prices and freight.",
     href: "/hub/community-call",
@@ -196,7 +210,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     icon: Mail,
     summary: "Four ways to reach a person on the desk.",
     href: "/hub/contact",
-    body: ["Start a WhatsApp chat, book a meeting in the calendar, send a message, or open Order Fertilizer Now when you are ready to buy. When you arrive from a locked page or Membership, the topic is filled in for you."],
+    body: ["Start a WhatsApp chat, book a meeting in the calendar, send a message, or open Buy Fertilizer when you are ready to buy. When you arrive from a locked page or Membership, the topic is filled in for you."],
   },
   {
     id: "plans",
@@ -218,14 +232,37 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     href: "/hub/account/membership",
     aliases: ["billing"],
     body: [
-      "AQ ONE is the free plan. Membership shows the paid options as cards: Sprout (up to 200 tonnes a month), Harvest (201 to 600 tonnes) and Scale (unlimited) are AQ ZERO memberships that replace the margin on every quote, and AQ Analytics (£299 a month) adds licensed market data without physical trading. Switch between monthly and annual billing (10% off), select a card and send the request; the desk confirms and moves your account, and you can follow the request's status on the same page. A table below compares the modules and allowances of each plan.",
+      "AQ ONE is the free plan. Membership shows the paid options as cards: AQ Sprout (up to 200 tonnes a month), AQ Harvest (201 to 600 tonnes) and AQ Scale (unlimited) are AQ ZERO memberships that replace the margin on every quote, and AQ Analytics adds licensed market data without physical trading. Select a card and send the request; the desk confirms pricing, moves your account, and you can follow the request's status on the same page. A table below compares the modules and allowances of each plan.",
       "Billing shows your plan, the contact the desk invoices, and your invoices and payment history. The desk handles billing directly, so a person is always on hand for questions.",
+    ],
+  },
+  {
+    id: "account",
+    title: "Your account",
+    icon: CircleUser,
+    summary: "Profile, password and legal notices.",
+    href: "/hub/account",
+    body: [
+      "Profile holds your name, email and billing address. Password lets you change how you sign in. Legal sets out how calculator outputs are meant to be used: as estimates, not fixtures, offers or customs advice.",
+    ],
+  },
+  {
+    id: "signal",
+    title: "AQ Signal",
+    icon: Activity,
+    hidden: true,
+    summary: "Rolling price windows on benchmark fertilizer and freight prices.",
+    href: "/hub/signal",
+    body: [
+      "Pick a 7, 30, 60 or 90-day window. Each card compares the first and latest price in the window, with the change, the high and the low and a one-line summary. The bar shows where today's price sits between the window's low and high. A move under half a percent counts as flat.",
+      "The window you pick is remembered. AQ Analytics extends Signal to 180 days on every tracked series.",
     ],
   },
   {
     id: "analytics",
     title: "AQ Analytics",
     icon: ChartLine,
+    hidden: true,
     summary: "Deeper data unlocked by plan: the full wire, price series, signal, freight and the briefing.",
     href: "/hub/analytics",
     aliases: ["a-telex", "a-market", "a-signal", "a-freight", "a-briefing", "a-alerts", "freight-analytics"],
@@ -239,6 +276,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     id: "supply-demand",
     title: "Supply & Demand",
     icon: Scale,
+    hidden: true,
     summary: "Balance sheets for the major nutrients and the direction of travel.",
     href: "/hub/analytics/supply-demand",
     aliases: ["a-sd"],
@@ -251,38 +289,6 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       { term: "Direction", text: "Whether the balance is tightening or loosening compared with the year before." },
     ],
   },
-  {
-    id: "freight",
-    title: "Freight Calculator",
-    icon: Calculator,
-    summary: "Estimate a voyage's freight rate between any two ports.",
-    href: "/hub/freight-calculator",
-    body: [
-      "Choose a load port and a discharge port, the cargo type and the tonnage (35,000 MT by default), then set the market: Normal, Tight (+10%) or Oversupplied (−10%). Port costs, agency and extra port days are pre-filled and editable. Tap a city on the VLSFO bar to use its bunker price.",
-      "The result is an estimated freight rate in USD/MT with gross revenue and time-charter equivalent per day. Below it you get the distance, voyage days, vessel type, the Baltic Dry Index and the route (Direct, Suez, Panama or Cape), then the full cost breakdown: voyage costs, time costs and premiums for cargo type, origin region, season and war risk where it applies.",
-      "Market benchmark compares the estimate with verified fixtures. When the estimate sits outside the verified band, the displayed rate is blended toward the band's midpoint and marked Outside band.",
-    ],
-    tip: "Share copies a link with every input filled in, so a colleague sees exactly the voyage you priced.",
-  },
-  {
-    id: "tools",
-    title: "Tools",
-    icon: Wrench,
-    summary: "Interactive map, production cost calculator, process guides and glossary.",
-    href: "/hub/tools",
-    body: [
-      "World Map layers NH₃ terminals, urea exporters, phosphate producers and potash mines, with export and ex-works cost curves. Tap a country or bar for its facts.",
-      "Cost Calculator moves natural gas, phosphate rock and sulphur prices and shows the production cost of eleven products, from ammonia and urea to MAP and DAP. Tap a product card for its breakdown. How It's Made shows each production chain and the Glossary defines the key terms.",
-    ],
-  },
-  {
-    id: "account",
-    title: "Your account",
-    icon: UserCircle,
-    summary: "Profile, password and legal notices.",
-    href: "/hub/account",
-    body: [
-      "Profile holds your name, email and billing address. Password lets you change how you sign in. Legal sets out how calculator outputs are meant to be used: as estimates, not fixtures, offers or customs advice.",
-    ],
-  },
 ];
+
+export const GUIDE_SECTIONS = ALL_SECTIONS.filter((section) => !section.hidden);

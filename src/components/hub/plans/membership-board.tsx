@@ -9,15 +9,7 @@ import { requestPlan } from "@/app/hub/account/membership/actions";
 import { areaClass, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { useI18n } from "@/components/app/i18n";
 import { AccountIntro } from "@/components/hub/kit";
-import {
-  annualPrice,
-  annualSaving,
-  gbp,
-  MEMBERSHIP_OFFERS,
-  type BillingCycle,
-  type MembershipOffer,
-  type MembershipTier,
-} from "@/lib/aq-modules/membership";
+import { MEMBERSHIP_OFFERS, type MembershipOffer, type MembershipTier } from "@/lib/aq-modules/membership";
 import type { Plan } from "@/lib/session-shared";
 
 type OfferId = MembershipOffer["id"];
@@ -25,40 +17,6 @@ type OfferId = MembershipOffer["id"];
 const MESSAGE_MAX = 1000;
 const noop = () => () => {};
 const TIER_OFFERS = MEMBERSHIP_OFFERS.filter((offer) => offer.tier);
-
-function CycleToggle({ cycle, onChange, compact = false }: { cycle: BillingCycle; onChange: (cycle: BillingCycle) => void; compact?: boolean }) {
-  const { t } = useI18n();
-  return (
-    <div role="radiogroup" aria-label="Billing" className={`inline-flex items-center rounded-full border border-border bg-white p-1 font-semibold shadow-sm ${compact ? "text-[13.5px]" : "text-[15px]"}`}>
-      {(["monthly", "annual"] as const).map((value) => (
-        <button
-          key={value}
-          type="button"
-          role="radio"
-          aria-checked={cycle === value}
-          onClick={() => onChange(value)}
-          className={`rounded-full transition-colors ${compact ? "px-3 py-1" : "px-4 py-1.5"} ${cycle === value ? "bg-navy-600 text-white shadow-sm" : "text-mid hover:text-ink"}`}
-        >
-          {value === "annual" ? t("mem.annual") : t("mem.monthly")}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function PriceLine({ offer, cycle }: { offer: MembershipOffer; cycle: BillingCycle }) {
-  const { t } = useI18n();
-  const annual = cycle === "annual";
-  return (
-    <div className="mt-4">
-      <p className="flex items-baseline gap-1">
-        <span className="text-[30px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular-nums">{gbp(annual ? annualPrice(offer.monthly) : offer.monthly)}</span>
-        <span className="text-[15px] text-dim">{annual ? t("mem.perYear") : t("mem.perMonth")}</span>
-      </p>
-      <p className={`mt-1 h-4 text-[13px] font-semibold text-[#1f8a4c] ${annual ? "" : "invisible"}`}>{t("mem.save", { amount: gbp(annualSaving(offer.monthly)) })}</p>
-    </div>
-  );
-}
 
 export function MembershipBoard({
   plan,
@@ -73,7 +31,6 @@ export function MembershipBoard({
   source: string;
 }) {
   const { t } = useI18n();
-  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [checkout, setCheckout] = useState<OfferId | null>(initialOffer);
 
   const stateOf = (offer: MembershipOffer) => {
@@ -83,7 +40,7 @@ export function MembershipBoard({
 
   return (
     <>
-      <AccountIntro description={t("mem.subtitle")} actions={<CycleToggle cycle={cycle} onChange={setCycle} />} />
+      <AccountIntro description={t("mem.subtitle")} />
 
       {plan === "core" ? (
         <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-navy-50 px-4 py-2.5 text-[14.5px] text-navy-700">
@@ -129,8 +86,7 @@ export function MembershipBoard({
               ) : null}
               <h2 className="text-[18px] font-bold text-ink">{offer.name}</h2>
               <p className="mt-0.5 text-[13.5px] text-dim">{offer.tagline}</p>
-              <PriceLine offer={offer} cycle={cycle} />
-              <ul className="mt-4 space-y-2 text-[15px]">
+              <ul className="mt-5 space-y-2 text-[15px]">
                 {offer.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-ink">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" aria-hidden /> {feature}
@@ -173,8 +129,6 @@ export function MembershipBoard({
           offerId={checkout}
           plan={plan}
           currentTier={currentTier}
-          cycle={cycle}
-          onCycle={setCycle}
           source={source}
           onClose={() => setCheckout(null)}
         />
@@ -187,16 +141,12 @@ function RequestDialog({
   offerId,
   plan,
   currentTier,
-  cycle,
-  onCycle,
   source,
   onClose,
 }: {
   offerId: OfferId;
   plan: Plan;
   currentTier: MembershipTier | null;
-  cycle: BillingCycle;
-  onCycle: (cycle: BillingCycle) => void;
   source: string;
   onClose: () => void;
 }) {
@@ -207,7 +157,6 @@ function RequestDialog({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const offer = MEMBERSHIP_OFFERS.find((item) => item.id === selected)!;
-  const price = cycle === "annual" ? annualPrice(offer.monthly) : offer.monthly;
   const unchanged = offer.tier ? plan === "enterprise" && currentTier === offer.tier : plan === offer.plan;
   const mounted = useSyncExternalStore(noop, () => true, () => false);
 
@@ -261,7 +210,6 @@ function RequestDialog({
                 const result = await requestPlan({
                   requestedPlan: offer.plan,
                   tier: offer.tier,
-                  cycle,
                   company: String(data.get("company") ?? ""),
                   message,
                   source,
@@ -300,17 +248,9 @@ function RequestDialog({
             ) : null}
 
             <div className="rounded-xl bg-s2 p-3.5">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[15.5px] font-bold text-ink">{offer.name}</span>
-                <span className="text-[16.5px] font-bold tabular-nums text-ink">
-                  {gbp(price)}
-                  <span className="text-[13px] font-medium text-dim">{cycle === "annual" ? t("mem.perYear") : t("mem.perMonth")}</span>
-                </span>
-              </div>
-              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
-                <CycleToggle cycle={cycle} onChange={onCycle} compact />
-                {cycle === "annual" ? <span className="text-[13px] font-semibold text-[#1f8a4c]">{t("mem.save", { amount: gbp(annualSaving(offer.monthly)) })}</span> : null}
-              </div>
+              <p className="text-[15.5px] font-bold text-ink">{offer.name}</p>
+              <p className="mt-0.5 text-[13.5px] text-dim">{offer.tagline}</p>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-mid">The desk confirms pricing with you before anything changes.</p>
             </div>
 
             <div>

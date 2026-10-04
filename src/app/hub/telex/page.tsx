@@ -12,7 +12,7 @@ import { TELEX_PRODUCTS, type TelexProduct } from "@/lib/aq-modules/types";
 import { formatStamp } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
 
-export const metadata: Metadata = { title: "Market TELEX Feed" };
+export const metadata: Metadata = { title: "TELEX" };
 export const dynamic = "force-dynamic";
 
 const PAGE = 40;
@@ -54,7 +54,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
     <div className="mx-auto max-w-4xl pb-2">
       <HubPageHeader
         eyebrow="AQ ONE Free plan"
-        title="Market TELEX Feed"
+        title="TELEX"
         description="Desk-issued market flashes, newest first and grouped by day. Pick the products you trade and save them as your default, so the feed opens on what matters to you."
         tip="Short, time-stamped flashes from the Aquifert desk: tenders, price moves, plant news and freight. Green chips lean firmer, red lean softer. Flashes above your plan show as locked rows."
         guide="telex"

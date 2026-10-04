@@ -4,15 +4,11 @@ export const MEMBERSHIP_TIERS = ["sprout", "harvest", "scale"] as const;
 export type MembershipTier = (typeof MEMBERSHIP_TIERS)[number];
 export type BillingCycle = "monthly" | "annual";
 
-export const ANNUAL_DISCOUNT = 0.1;
-
 export type MembershipOffer = {
   id: MembershipTier | "analytics";
   name: string;
   plan: Plan;
   tier: MembershipTier | null;
-  /** GBP per month. */
-  monthly: number;
   tagline: string;
   features: string[];
   missing: string[];
@@ -22,33 +18,30 @@ export type MembershipOffer = {
 export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
   {
     id: "sprout",
-    name: "Sprout",
+    name: "AQ Sprout",
     plan: "enterprise",
     tier: "sprout",
-    monthly: 2000,
     tagline: "Up to 200 tonnes / month",
     features: ["Cost-to-cost pricing (no margin)", "Basic market insights dashboard", "30-day price trends", "Standard support"],
     missing: ["Invoice financing", "Real-time AI recommendations", "Dedicated account manager"],
   },
   {
     id: "harvest",
-    name: "Harvest",
+    name: "AQ Harvest",
     plan: "enterprise",
     tier: "harvest",
-    monthly: 5000,
     tagline: "201–600 tonnes / month",
-    features: ["Everything in Sprout", "Real-time insights dashboard", "Invoice financing up to £50k", "AI trade recommendations", "Priority support"],
+    features: ["Everything in AQ Sprout", "Real-time insights dashboard", "Invoice financing up to £50k", "AI trade recommendations", "Priority support"],
     missing: ["Dedicated account manager", "Custom analytics"],
     popular: true,
   },
   {
     id: "scale",
-    name: "Scale",
+    name: "AQ Scale",
     plan: "enterprise",
     tier: "scale",
-    monthly: 7000,
     tagline: "Unlimited tonnes / month",
-    features: ["Everything in Harvest", "Dedicated account manager", "Financing up to £200k", "Custom analytics & reports", "Quarterly strategy reviews"],
+    features: ["Everything in AQ Harvest", "Dedicated account manager", "Financing up to £200k", "Custom analytics & reports", "Quarterly strategy reviews"],
     missing: [],
   },
   {
@@ -56,7 +49,6 @@ export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
     name: "AQ Analytics",
     plan: "growth",
     tier: null,
-    monthly: 299,
     tagline: "Analytics & licensed market data · no physical trading",
     features: [
       "Everything in the free AQ ONE plan",
@@ -70,14 +62,7 @@ export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
   },
 ];
 
-export const TIER_LABEL: Record<MembershipTier, string> = { sprout: "Sprout", harvest: "Harvest", scale: "Scale" };
+export const TIER_LABEL: Record<MembershipTier, string> = { sprout: "AQ Sprout", harvest: "AQ Harvest", scale: "AQ Scale" };
 
 export const isTier = (value: unknown): value is MembershipTier => MEMBERSHIP_TIERS.includes(value as MembershipTier);
 export const isCycle = (value: unknown): value is BillingCycle => value === "monthly" || value === "annual";
-
-export const annualPrice = (monthly: number) => Math.round(monthly * 12 * (1 - ANNUAL_DISCOUNT));
-export const annualSaving = (monthly: number) => monthly * 12 - annualPrice(monthly);
-
-export function gbp(value: number) {
-  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(value);
-}

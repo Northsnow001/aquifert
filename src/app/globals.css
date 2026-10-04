@@ -201,42 +201,22 @@ body::before {
 }
 }
 
-/* 3D menu chips: logo-green face, glass highlight, soft drop; brighter when active. */
-.aq-chip {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(150deg, #7fb3a2 0%, #4f7f72 55%, #3c6a5f 100%);
-  box-shadow:
-    0 2px 3px rgb(14 32 49 / 0.2),
-    0 3px 8px -2px rgb(78 127 114 / 0.42),
-    inset 0 1.5px 0 rgb(255 255 255 / 0.45),
-    inset 0 -1.5px 0 rgb(14 32 49 / 0.22);
-  transition: transform 0.15s ease, filter 0.15s ease;
-}
-.aq-chip::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 55% 0;
-  border-radius: inherit;
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.38), rgb(255 255 255 / 0));
-  pointer-events: none;
-}
-.aq-chip-blue {
-  background: linear-gradient(150deg, #6fa3d6 0%, #2f6fb3 55%, #245a8f 100%);
-}
-.aq-chip-amber {
-  background: linear-gradient(150deg, #f2c16b 0%, #d9951f 55%, #b87a12 100%);
-}
+/* Icon slots: plain line icons in ink, the same treatment as the sidebar. The tone
+   variants are kept as hooks but no longer change the look. Unlayered on purpose so it
+   beats the `text-white` and icon-size utilities still written on older markup. */
+.aq-chip,
+.aq-chip-blue,
+.aq-chip-amber,
 .aq-chip-rose {
-  background: linear-gradient(150deg, #ee9a92 0%, #cf5a4f 55%, #a9443b 100%);
+  background: none;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--color-ink) 85%, transparent);
 }
-.aq-nav-link:hover .aq-chip {
-  transform: translateY(-1px);
+.aq-chip > svg {
+  width: clamp(14px, 62%, 22px);
+  height: clamp(14px, 62%, 22px);
+  stroke-width: 1.75;
 }
-.aq-nav-link[aria-current="page"] .aq-chip {
-  filter: saturate(1.15) brightness(1.06);
-}
-
 /* Aquibot avatar: a glass orb holding the Aquifert drop. At rest the orb beats like a
    heart (a double "lub-dub" pulse with a glow and an outward ring), the drop floats and
    turns, caustic light drifts through the glass and a glint twinkles. Hover lifts the

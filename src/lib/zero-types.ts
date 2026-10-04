@@ -2,14 +2,12 @@ import { MEMBERSHIP_OFFERS, type MembershipOffer } from "@/lib/aq-modules/member
 
 export type ZeroProgrammeId = MembershipOffer["id"];
 
-const withAq = (text: string) => text.replace(/\b(Sprout|Harvest|Scale)\b/g, "AQ $1");
-
-/** The membership offers shown on the Aquifert Zero tab: same cards, AQ names, no prices. */
+/** The membership offers shown on the Aquifert Zero tab. */
 export const ZERO_PROGRAMMES = MEMBERSHIP_OFFERS.map((offer) => ({
   id: offer.id,
-  name: offer.name.startsWith("AQ ") ? offer.name : `AQ ${offer.name}`,
+  name: offer.name,
   tagline: offer.tagline,
-  features: offer.features.map(withAq),
+  features: offer.features,
   missing: offer.missing,
   popular: offer.popular ?? false,
 }));

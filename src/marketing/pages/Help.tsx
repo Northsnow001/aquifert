@@ -18,7 +18,7 @@ const KB: { match: string[]; answer: string }[] = [
   {
     match: ["member", "pricing", "plan", "cost", "price of membership", "subscription", "sprout", "harvest", "scale"],
     answer:
-      "Membership replaces per-tonne margin with one flat fee: Sprout £2,000/month (up to 50t), Harvest £5,000/month (51–200t) and Scale £7,000/month (201t+). Annual billing saves two months on every tier. Full details are on the Membership page.",
+      "Membership replaces per-tonne margin with one flat fee: AQ Sprout (up to 200t a month), AQ Harvest (201–600t) and AQ Scale (unlimited). The desk confirms pricing for your tier with you directly. Full details are on the Membership page.",
   },
   {
     match: ["quote", "request", "buy", "purchase", "order", "source", "sourcing"],
@@ -43,7 +43,7 @@ const KB: { match: string[]; answer: string }[] = [
   {
     match: ["financ", "credit", "invoice", "payment terms"],
     answer:
-      "Harvest and Scale members can finance up to 85% of a verified invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules.",
+      "AQ Harvest and AQ Scale members can finance up to 85% of a verified invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules.",
   },
   {
     match: ["account", "register", "sign up", "signup", "log in", "login", "password"],
@@ -183,7 +183,7 @@ function Aquibot() {
 const TOPICS = [
   {
     title: "Membership & billing",
-    body: "Tiers, tonnage limits, annual billing and cancellations, Sprout, Harvest and Scale compared.",
+    body: "Tiers, tonnage limits and cancellations, AQ Sprout, AQ Harvest and AQ Scale compared.",
     to: "/membership",
   },
   {

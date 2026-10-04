@@ -88,11 +88,11 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
             <FileText className="h-[18px] w-[18px]" />
           </span>
           <div>
-            <h2 className="text-[17px] font-semibold text-ink">Open Order Desk</h2>
+            <h2 className="text-[17px] font-semibold text-ink">Buy Fertilizer</h2>
             <p className="mt-1 text-[15px] leading-relaxed text-mid">Need pricing and availability? Submit a request and the trading desk responds with a quote.</p>
           </div>
           <span className="mt-auto inline-flex items-center gap-1.5 text-[15px] font-semibold text-blue">
-            <FileText className="h-4 w-4" /> Open Order Desk
+            <FileText className="h-4 w-4" /> Open Buy Fertilizer
           </span>
         </Link>
       </div>

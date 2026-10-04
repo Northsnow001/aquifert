@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Banknote, Building2, Clock, CreditCard, FileText, Mail, MessageSquare, Receipt, ShieldCheck } from "lucide-react";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { AccountIntro, EmptyPanel, Panel, Tag } from "@/components/hub/kit";
-import { longDay, PLAN_PRICE } from "@/components/hub/plans/shared";
+import { longDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
@@ -51,8 +51,7 @@ export default async function BillingPage() {
               Active
             </Tag>
           </div>
-          <p className="mt-4 text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink">{PLAN_PRICE[user.plan]}</p>
-          <p className="mt-1.5 text-[14.5px] text-mid">
+          <p className="mt-4 text-[14.5px] text-mid">
             {user.plan === "enterprise" ? "Pricing and terms are agreed with the desk for your team." : "Billed monthly by the desk. Change plan whenever your needs change."}
           </p>
           {open ? (

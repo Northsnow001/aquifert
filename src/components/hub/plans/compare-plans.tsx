@@ -1,5 +1,5 @@
 import { Check, Lock } from "lucide-react";
-import { ALLOWANCE_LABEL, amount, PLAN_ORDER, PLAN_PRICE, type Allowances } from "@/components/hub/plans/shared";
+import { ALLOWANCE_LABEL, amount, PLAN_ORDER, type Allowances } from "@/components/hub/plans/shared";
 import { MODULES, PLAN_LABEL, PLAN_RANK, type AccessRules, type ModuleKey } from "@/lib/aq-modules/types";
 import type { Plan } from "@/lib/session-shared";
 
@@ -13,13 +13,11 @@ export function ComparePlans({
   plan,
   allowances,
   access,
-  prices = true,
   className = "",
 }: {
   plan: Plan | null;
   allowances: Record<Plan, Allowances>;
   access: AccessRules;
-  prices?: boolean;
   className?: string;
 }) {
   const includedIn = (tier: Plan, key: ModuleKey) => PLAN_RANK[tier] >= PLAN_RANK[access[key]];
@@ -42,7 +40,6 @@ export function ComparePlans({
               {PLAN_ORDER.map((tier) => (
                 <th key={tier} scope="col" className={`px-4 py-3 text-center font-semibold ${tier === plan ? "text-teal-700" : "text-ink"}`}>
                   {PLAN_LABEL[tier]}
-                  {prices ? <span className="block text-[12px] font-medium text-dim">{PLAN_PRICE[tier]}</span> : null}
                   {tier === plan ? <span className="block text-[11.5px] font-bold uppercase tracking-[0.08em]">Your plan</span> : null}
                 </th>
               ))}

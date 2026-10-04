@@ -21,11 +21,11 @@ export async function requestPlan(input: {
   const requestedPlan = input?.requestedPlan;
   if (!isPlan(requestedPlan)) return { ok: false, message: "Choose the plan you would like." };
   const tier = requestedPlan === "enterprise" && isTier(input.tier) ? input.tier : null;
-  if (requestedPlan === "enterprise" && !tier) return { ok: false, message: "Choose Sprout, Harvest or Scale." };
+  if (requestedPlan === "enterprise" && !tier) return { ok: false, message: "Choose AQ Sprout, AQ Harvest or AQ Scale." };
   if (requestedPlan === user.plan && !tier) {
     return { ok: false, message: `You are already on ${PLAN_LABEL[requestedPlan]}. Choose a different plan, or message the desk from Contact Us.` };
   }
-  const cycle = requestedPlan === "core" ? null : isCycle(input.cycle) ? input.cycle : "monthly";
+  const cycle = requestedPlan !== "core" && isCycle(input.cycle) ? input.cycle : null;
   const source = String(input.source ?? "").trim();
   const note = String(input.message ?? "").trim().slice(0, 1000);
   try {

@@ -140,7 +140,7 @@ export function AquibotChat({
   return (
     <div className="mx-auto w-full max-w-4xl">
       <header className="mb-5">
-        <h1 className="text-[26px] font-black tracking-tight text-ink sm:text-[30px]">Aquibot</h1>
+        <h1 className="text-[26px] font-black tracking-tight text-ink sm:text-[30px]">Aquibot Trader AI</h1>
         <p className="mt-1 max-w-2xl text-[15.5px] leading-6 text-mid">{t("bot.subtitle")}</p>
       </header>
 

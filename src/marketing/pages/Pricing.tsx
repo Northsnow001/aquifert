@@ -4,9 +4,9 @@
  * PLANS PART 4 — public pricing page + in-account plan comparison.
  *
  * Rows are generated from the plan catalogue (marketing/lib/billing). Real table
- * semantics, monthly/annual toggle, "Current plan" disabled state, and the
- * 3-step plan-change flow (choose → preview → apply) with an honest preview:
- * gains, explicit losses, effective date, and the exact money.
+ * semantics, "Current plan" disabled state, and the 3-step plan-change flow
+ * (choose → preview → apply) with an honest preview: gains, explicit losses and
+ * effective date. Prices are confirmed by the desk, so none are shown.
  */
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@/marketing/router";
@@ -26,10 +26,6 @@ import { Logo } from "@/marketing/components/shared/Logo";
 
 type Interval = "monthly" | "annual";
 
-function fmt(minor: number) {
-  return `£${(minor / 100).toFixed(2)}`;
-}
-
 function tonnageLabel(value: number | "unlimited" | undefined): string | null {
   if (value === undefined) return null;
   return value === "unlimited" ? "Unlimited tonnage" : `Orders up to ${value} MT`;
@@ -37,7 +33,7 @@ function tonnageLabel(value: number | "unlimited" | undefined): string | null {
 
 export default function Pricing() {
   const { isAuthenticated } = useAuth();
-  const [interval, setInterval] = useState<Interval>("monthly");
+  const interval: Interval = "monthly";
   const matrix = useMemo(() => ({ data: pricingMatrix(), isLoading: false }), []);
   const currentKey = isAuthenticated ? CURRENT_PLAN_KEY : null;
 
@@ -62,20 +58,12 @@ export default function Pricing() {
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6" id="main-content">
         <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl dark:text-slate-100">
-          Plans &amp; pricing
+          Plans
         </h1>
         <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-          Market intelligence, analytics and physical trading on one platform. Change plans at any time —
-          upgrades apply immediately with a prorated charge, downgrades take effect at the end of your
-          current period. Nothing you have saved is ever deleted.
+          Market intelligence, analytics and physical trading on one platform. Change plans at any time;
+          the desk confirms pricing with you before anything changes. Nothing you have saved is ever deleted.
         </p>
-
-        <div className="mt-6 flex items-center gap-3" role="group" aria-label="Billing interval">
-          <Button variant={interval === "monthly" ? "default" : "outline"} onClick={() => setInterval("monthly")} aria-pressed={interval === "monthly"}>Monthly</Button>
-          <Button variant={interval === "annual" ? "default" : "outline"} onClick={() => setInterval("annual")} aria-pressed={interval === "annual"}>
-            Annual <span className="ml-1.5 rounded-full bg-teal-100 px-2 py-0.5 text-[11px] font-semibold text-teal-800 dark:bg-teal-900 dark:text-teal-200">save 20%</span>
-          </Button>
-        </div>
 
         {matrix.isLoading ? (
           <div className="mt-10 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading plans…</div>
@@ -93,12 +81,6 @@ export default function Pricing() {
                         <div className="font-bold text-navy-900 dark:text-slate-100">{p.displayName}</div>
                         {p.family === "analytics" && (
                           <Badge variant="outline" className="mt-1 border-amber-400 text-amber-700 dark:text-amber-300">No physical trading</Badge>
-                        )}
-                        <div className="mt-2 text-lg font-extrabold">
-                          {p.priceMonthlyMinor == null ? "Free" : interval === "monthly" ? `${fmt(p.priceMonthlyMinor)}/mo` : `${fmt(p.annualMinor ?? 0)}/yr`}
-                        </div>
-                        {interval === "annual" && p.priceMonthlyMinor != null && p.annualDiscountPct != null && (
-                          <div className="text-[12px] text-teal-700 dark:text-teal-300">Save {Math.round(p.annualDiscountPct)}% vs monthly</div>
                         )}
                         {p.family === "aq0" && (
                           <div className="mt-1 text-[12px] font-semibold text-navy-700 dark:text-slate-300">
@@ -163,12 +145,7 @@ export default function Pricing() {
             <div className="mt-8 space-y-6 md:hidden">
               {plans.map((p) => (
                 <section key={p.planId} className="rounded-2xl border border-border p-5" aria-label={p.displayName}>
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="text-lg font-bold text-navy-900 dark:text-slate-100">{p.displayName}</h2>
-                    <span className="text-lg font-extrabold">
-                      {p.priceMonthlyMinor == null ? "Free" : interval === "monthly" ? `${fmt(p.priceMonthlyMinor)}/mo` : `${fmt(p.annualMinor ?? 0)}/yr`}
-                    </span>
-                  </div>
+                  <h2 className="text-lg font-bold text-navy-900 dark:text-slate-100">{p.displayName}</h2>
                   {p.family === "analytics" && <Badge variant="outline" className="mt-2 border-amber-400 text-amber-700">No physical trading</Badge>}
                   {p.family === "aq0" && (
                     <p className="mt-1 text-[13px] font-semibold text-navy-700">
@@ -358,21 +335,8 @@ function PlanChangeDialog({ open, onClose, targetPlanKey, interval }: { open: bo
               </section>
             )}
 
-            {/* THE MONEY */}
-            <section aria-label="Charges" className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
-              {p.money.nothingChargedNow ? (
-                <p><strong>Nothing is charged today.</strong></p>
-              ) : (
-                <p>Due when the plan starts: <strong>{p.money.chargeTodayLabel}</strong> (includes VAT where applicable). Nothing is charged online.</p>
-              )}
-              {p.money.nextRenewalMinor != null && (
-                <p className="mt-1 text-muted-foreground">
-                  Next renewal: {fmt(p.money.nextRenewalMinor)}{p.interval === "annual" ? "/year" : "/month"}
-                  {p.money.nextRenewalDate ? ` on ${niceDate(p.money.nextRenewalDate)}` : ""}
-                </p>
-              )}
-              {p.vat.ratePct > 0 && <p className="mt-1 text-[13px] text-muted-foreground">VAT at {p.vat.ratePct}%: {fmt(p.vat.vatMinor)}. {p.vat.note}</p>}
-              {p.vat.ratePct === 0 && <p className="mt-1 text-[13px] text-muted-foreground">{p.vat.note}</p>}
+            <section aria-label="Pricing" className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+              <p><strong>Nothing is charged online.</strong> The desk confirms pricing with you before the plan starts.</p>
             </section>
 
             {/* FAILURE + RETRY */}

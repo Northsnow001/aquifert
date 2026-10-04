@@ -5,7 +5,7 @@ import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { AccountIntro, Panel, Tag } from "@/components/hub/kit";
 import { AllowanceRow, IncludedRow } from "@/components/hub/plans/allowance-row";
 import { planAllowances } from "@/components/hub/plans/load";
-import { longDay, PLAN_PRICE, shortDay } from "@/components/hub/plans/shared";
+import { longDay, shortDay } from "@/components/hub/plans/shared";
 import { usageFor } from "@/lib/aquibot-engine/chat";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { listNitrogenReports, nitrogenReportsThisMonth } from "@/lib/aq-modules/members";
@@ -50,7 +50,7 @@ export default async function PlanUsagePage() {
             <div>
               <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-teal-700">Current plan</p>
               <p className="text-[24px] font-semibold leading-tight tracking-[-0.02em] text-ink">
-                {PLAN_LABEL[user.plan]} <span className="text-[16.5px] font-medium text-dim">· {PLAN_PRICE[user.plan]}</span>
+                {PLAN_LABEL[user.plan]}
               </p>
               <p className="mt-0.5 flex items-center gap-1.5 text-[14.5px] text-mid">
                 <CalendarClock className="h-3.5 w-3.5" aria-hidden /> Allowances reset on {longDay(resetDate)}
@@ -82,11 +82,11 @@ export default async function PlanUsagePage() {
 
         <Panel title="Always included" sub="No meter, on every plan" icon={Unlock} className="lg:col-span-2">
           <ul className="divide-y divide-border">
-            <IncludedRow label="Market TELEX Feed" detail="Desk flashes for your plan tier" href="/hub/telex" icon={Radio} />
-            <IncludedRow label="AQ Market Analysis" detail="What a move means for buyers" href="/hub/analysis" icon={Newspaper} />
+            <IncludedRow label="TELEX" detail="Desk flashes for your plan tier" href="/hub/telex" icon={Radio} />
+            <IncludedRow label="AQ View" detail="What a move means for buyers" href="/hub/analysis" icon={Newspaper} />
             <IncludedRow label="AQ Signal" detail="7 to 90-day price windows" href="/hub/signal" icon={Activity} />
             <IncludedRow label="Library free reports" detail="Weekly reports and research notes" href="/hub/library" icon={Archive} />
-            <IncludedRow label="Freight Analytics Call" detail="A free 45-minute call with the desk" href="/hub/community-call" icon={PhoneCall} />
+            <IncludedRow label="Weekly Market Call" detail="A free 45-minute call with the desk" href="/hub/community-call" icon={PhoneCall} />
           </ul>
         </Panel>
       </div>

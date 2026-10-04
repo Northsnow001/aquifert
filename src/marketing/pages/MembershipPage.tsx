@@ -9,7 +9,6 @@ import { CtaBand, MarketingLayout } from "@/marketing/components/MarketingLayout
 import { MediaCard } from "@/marketing/components/shared/MediaCard";
 import { ArrowRight, Check, Landmark, RefreshCw, Rocket, ShieldCheck, Sprout, Wheat } from "lucide-react";
 import { MEMBERSHIP_PLANS } from "@/marketing/lib/plans";
-import { gbp } from "@/marketing/lib/format";
 import { useAuth } from "@/marketing/hooks/useAuth";
 
 const PLAN_ICONS = {
@@ -22,7 +21,7 @@ const NOTES = [
   {
     icon: Landmark,
     title: "Financing eligibility",
-    text: "Members at Harvest tier and above unlock the Invoice Discounting Facility, up to 85% of a verified fertilizer invoice value, advanced within 48 hours.",
+    text: "Members at AQ Harvest tier and above unlock the Invoice Discounting Facility, up to 85% of a verified fertilizer invoice value, advanced within 48 hours.",
   },
   {
     icon: ShieldCheck,
@@ -32,14 +31,14 @@ const NOTES = [
   {
     icon: RefreshCw,
     title: "Change anytime",
-    text: "Upgrade, downgrade or cancel from your portal. Annual billing saves two months; adjustments are pro-rated automatically.",
+    text: "Upgrade, downgrade or cancel from your portal. The desk confirms pricing with you and handles every change.",
   },
 ];
 
 const PRICING_FAQ: FaqItem[] = [
   {
-    q: "How much does Aquifert membership cost?",
-    a: "Sprout is £2,000 per month for buyers trading up to 50 tonnes a month, Harvest is £5,000 per month for 51–200 tonnes, and Scale is £7,000 per month for volumes above 201 tonnes. Annual billing saves two months on every tier.",
+    q: "Which Aquifert membership tier fits me?",
+    a: "AQ Sprout is for buyers trading up to 200 tonnes a month, AQ Harvest covers 201–600 tonnes, and AQ Scale has no tonnage limit. The desk confirms pricing for your tier with you directly.",
   },
   {
     q: "What do members save compared with a traditional fertilizer trader?",
@@ -47,7 +46,7 @@ const PRICING_FAQ: FaqItem[] = [
   },
   {
     q: "Can I switch or cancel my fertilizer membership?",
-    a: "Yes. You can upgrade, downgrade or cancel from your portal at any time. Annual plans save two months, and any mid-cycle tier change is pro-rated automatically.",
+    a: "Yes. You can upgrade, downgrade or cancel from your portal at any time, and the desk handles the change for you.",
   },
 ];
 
@@ -71,9 +70,7 @@ const MEMBERSHIP_SCHEMA: Record<string, unknown> = {
     itemListElement: MEMBERSHIP_PLANS.map((p) => ({
       "@type": "Offer",
       name: `${p.name} membership, ${p.tonnage}`,
-      price: p.monthly,
-      priceCurrency: "GBP",
-      description: `Fertilizer trading membership: ${p.name}. ${p.tonnage}. Billed monthly or ${p.annual} GBP annually.`,
+      description: `Fertilizer trading membership: ${p.name}. ${p.tonnage}.`,
     })),
   },
 };
@@ -85,8 +82,8 @@ export function MembershipPage() {
   return (
     <MarketingLayout>
       <Seo
-        title="Fertilizer Trading Membership Plans, Sprout £2,000, Harvest £5,000, Scale £7,000 | Aquifert"
-        description="Aquifert membership replaces per-tonne fertilizer margin with one flat fee. Sprout (£2,000/month, up to 50t), Harvest (£5,000/month, 51–200t) and Scale (£7,000/month, 201t+) include cost-to-cost quotes, market intelligence, live tracking and invoice financing."
+        title="Fertilizer Trading Membership Plans: AQ Sprout, AQ Harvest, AQ Scale | Aquifert"
+        description="Aquifert membership replaces per-tonne fertilizer margin with one flat fee. AQ Sprout (up to 200t a month), AQ Harvest (201–600t) and AQ Scale (unlimited) include cost-to-cost quotes, market intelligence, live tracking and invoice financing."
         keywords="fertilizer trading membership, fertilizer subscription pricing, buy fertilizer without margin, fertilizer invoice financing UK, aquifert plans"
         path="/membership"
         jsonLd={[ORGANIZATION_JSONLD, MEMBERSHIP_SCHEMA, PRICING_FAQ_SCHEMA, MEMBERSHIP_BREADCRUMB]}
@@ -105,7 +102,7 @@ export function MembershipPage() {
           </h1>
           <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl text-lg leading-relaxed sm:text-xl">
             Fertilizer membership tiers scale with your volumes, from first trade to full market
-            making. Choose monthly flexibility or save two months with annual billing.
+            making. The desk confirms pricing for your tier with you directly.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <a
@@ -147,13 +144,6 @@ export function MembershipPage() {
                   <p className="text-lg font-bold text-navy-900 dark:text-white">{plan.name}</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400">{plan.tonnage}</p>
                 </div>
-                <div className="mt-5 flex items-baseline gap-1.5">
-                  <span className="text-4xl font-extrabold tracking-tight text-navy-900 dark:text-white">{gbp(plan.monthly)}</span>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">/ month</span>
-                </div>
-                <p className="mt-2 text-sm font-medium text-teal-700 dark:text-teal-300">
-                  or {gbp(plan.annual)} billed annually, two months free
-                </p>
                 <ul className="mt-5 flex-1 space-y-2.5 border-t border-slate-200 pt-5 text-sm leading-relaxed text-slate-700 dark:border-slate-700 dark:text-slate-300">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5">
@@ -212,8 +202,8 @@ export function MembershipPage() {
         <div className="mx-auto max-w-4xl px-4 py-20">
           <SectionHeader
             kicker="Membership questions"
-            title="Fertilizer membership pricing, FAQ"
-            sub="What each tier costs, what it saves, and how flexible it is."
+            title="Fertilizer membership, FAQ"
+            sub="Which tier fits, what it saves, and how flexible it is."
             center
           />
           <Reveal delay={120} className="mt-10">

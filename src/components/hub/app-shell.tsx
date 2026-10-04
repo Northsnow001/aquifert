@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpenCheck, ChevronDown, ChevronsLeft, ChevronsRight, CreditCard, Crown, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, Sparkles, UserCircle, X } from "lucide-react";
+import { BookOpenCheck, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, CreditCard, Crown, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, Sparkles, UserCircle, X } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { AutoTranslate } from "@/components/app/auto-translate";
 import { closeAquibot, toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
@@ -12,6 +12,7 @@ import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/
 import { useI18n } from "@/components/app/i18n";
 import { InfoTip } from "@/components/app/info-tip";
 import { LanguageMenu } from "@/components/app/language-menu";
+import { NavHoverCard } from "@/components/app/nav-hover-card";
 import { startTour, Tour } from "@/components/app/tour";
 import { useStoredFlag } from "@/components/app/use-stored-flag";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
@@ -21,17 +22,10 @@ import { initials, type SessionUser } from "@/lib/session-shared";
 
 const RAIL_KEY = "aq.rail.collapsed";
 
-function NavIcon({ item, size = 28, locked = false }: { item: HubNavItem; size?: number; locked?: boolean }) {
-  if (item.icon === "aquibot") return <AquibotAvatar size={size} />;
+function NavIcon({ item, locked = false }: { item: HubNavItem; locked?: boolean }) {
+  if (item.icon === "aquibot") return <AquibotAvatar size={22} />;
   const Icon = item.icon;
-  return (
-    <span
-      className={`aq-chip ${item.tone ? `aq-chip-${item.tone}` : ""} inline-flex shrink-0 items-center justify-center rounded-[9px] text-white ${locked ? "opacity-60 saturate-50" : ""}`}
-      style={{ width: size, height: size }}
-    >
-      <Icon className="h-[14px] w-[14px]" strokeWidth={2.2} />
-    </span>
-  );
+  return <Icon className={`h-5 w-5 shrink-0 ${locked ? "opacity-45" : ""}`} strokeWidth={1.75} aria-hidden />;
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
@@ -46,8 +40,8 @@ function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-const SECTION_KEY: Record<string, string> = { "AQ ONE Free plan": "aq1", "AQ Analytics": "analytics", "Desk tools": "desk", You: "you" };
-const SECTION_NOTE: Partial<Record<string, string>> = { "AQ ONE Free plan": "note.aq1", "AQ Analytics": "note.analytics" };
+const SECTION_KEY: Record<string, string> = { "AQ ONE": "aq1", Plans: "plans", "AQ Analytics": "analytics", Help: "help", You: "you" };
+const SECTION_NOTE: Partial<Record<string, string>> = { "AQ ONE": "note.aq1", "AQ Analytics": "note.analytics" };
 
 function NavList({
   pathname,
@@ -67,12 +61,12 @@ function NavList({
   const { t } = useI18n();
   return (
     <nav aria-label="Hub" className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pb-4 pt-2">
-      {SECTIONS.map((section) => (
+      {SECTIONS.filter((section) => items.some((item) => item.section === section) || (section === "You" && admin)).map((section, index) => (
         <div key={section} className="flex flex-col gap-0.5" aria-label={section}>
           {collapsed ? (
-            <div className="mx-auto mb-1 h-px w-6 bg-black/[.07] first:hidden" />
+            index === 0 ? null : <div className="mx-auto mb-1 h-px w-6 bg-black/[.07]" />
           ) : section === "Main" ? null : (
-            <div className="mt-1 border-t border-black/[.06] px-2.5 pb-1 pt-3">
+            <div className={`px-2.5 pb-1 ${index === 0 ? "pt-1" : "mt-1 border-t border-black/[.06] pt-3"}`}>
               <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-teal-700">{t(`section.${SECTION_KEY[section]}`)}</p>
               {SECTION_NOTE[section] ? <p className="mt-0.5 text-[12px] text-dim">{t(SECTION_NOTE[section])}</p> : null}
             </div>
@@ -81,6 +75,31 @@ function NavList({
             const active = isActive(pathname, item.href);
             const locked = Boolean(item.module && !unlocked.includes(item.module));
             const label = t(`nav.${item.key}`);
+            if (item.promo) {
+              return (
+                <NavHoverCard key={item.key} label={label} headline={item.promo.headline} line={item.promo.line} href={item.href} cta="View membership">
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-label={collapsed ? label : undefined}
+                    className={`aq-nav-link group flex items-center gap-3 rounded-xl py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink ${
+                      collapsed ? "justify-center px-0" : "px-3"
+                    }`}
+                  >
+                    <NavIcon item={item} />
+                    {collapsed ? null : (
+                      <span className="min-w-0 flex-1 leading-snug">
+                        <span className="block">{label}</span>
+                        {onNavigate ? <span className="mt-0.5 block text-[12.5px] font-normal text-dim">{item.promo.headline}</span> : null}
+                      </span>
+                    )}
+                    {collapsed ? null : (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-dim opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden />
+                    )}
+                  </Link>
+                </NavHoverCard>
+              );
+            }
             return (
               <div key={item.key} data-tour={item.key} className="group relative flex items-center">
                 <Link
@@ -88,9 +107,9 @@ function NavList({
                   onClick={onNavigate}
                   title={collapsed ? `${label}${locked ? " (locked)" : ""}` : undefined}
                   aria-current={active ? "page" : undefined}
-                  className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl py-[7px] text-[14.5px] no-underline transition-colors ${
-                    collapsed ? "justify-center px-0" : "px-2.5 pr-8"
-                  } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"}`}
+                  className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl py-[9px] text-[15px] no-underline transition-colors ${
+                    collapsed ? "justify-center px-0" : "px-3 pr-8"
+                  } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08)]" : "font-medium text-ink/85 hover:bg-white/70 hover:text-ink"}`}
                 >
                   <NavIcon item={item} locked={locked} />
                   {collapsed ? null : <span className="line-clamp-2 min-w-0 flex-1 leading-snug">{label}</span>}
@@ -109,13 +128,11 @@ function NavList({
               href={ADMIN_LINK.href}
               onClick={onNavigate}
               title={collapsed ? t("top.admin") : undefined}
-              className={`aq-nav-link flex items-center gap-3 rounded-xl py-[7px] text-[15px] font-medium text-mid no-underline transition-colors hover:bg-white/70 hover:text-ink ${
-                collapsed ? "justify-center px-0" : "px-2.5"
+              className={`aq-nav-link flex items-center gap-3 rounded-xl py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink ${
+                collapsed ? "justify-center px-0" : "px-3"
               }`}
             >
-              <span className="aq-chip aq-chip-blue inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] text-white">
-                <ADMIN_LINK.icon className="h-[14px] w-[14px]" strokeWidth={2.2} />
-              </span>
+              <ADMIN_LINK.icon className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
               {collapsed ? null : <span className="truncate">{t("top.admin")}</span>}
             </Link>
           ) : null}

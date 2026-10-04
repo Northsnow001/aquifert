@@ -55,7 +55,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
           icon: "freight",
           badge: content.freight.showOnHome ? content.freight.fixtures.filter((row) => row.visible).length : "off",
         },
-        { href: "/admin/tools", label: "Tools Commentary", icon: "tools" },
+        { href: "/admin/tools", label: "AQ Trader Tools commentary", icon: "tools" },
       ],
     },
     {
@@ -69,9 +69,9 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       title: "AQ Modules",
       items: [
         { href: "/admin/aq-access", label: "Access & allowances", icon: "access" },
-        { href: "/admin/analysis", label: "Analysis notes", icon: "analysis", badge: analysisDrafts ? `${analysisDrafts} draft` : aq.analysis.length },
+        { href: "/admin/analysis", label: "AQ View notes", icon: "analysis", badge: analysisDrafts ? `${analysisDrafts} draft` : aq.analysis.length },
         { href: "/admin/market-data", label: "Market data", icon: "marketData", badge: marketFreshness(aq.series).badge },
-        { href: "/admin/community-calls", label: "Community calls", icon: "calls", badge: nextCallRegistered },
+        { href: "/admin/community-calls", label: "Weekly Market Calls", icon: "calls", badge: nextCallRegistered },
         { href: "/admin/supply-demand", label: "Supply & demand", icon: "supplyDemand" },
         { href: "/admin/briefing", label: "The Briefing", icon: "briefing", badge: aq.briefings.length },
         { href: "/admin/membership-requests", label: "Membership requests", icon: "requests", badge: requestsNew ? `${requestsNew} new` : requests.length },
@@ -95,7 +95,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
     },
     {
       title: "Assistant",
-      items: [{ href: "/admin/aquibot", label: "Aquibot", icon: "aquibot", badge: content.aquibot.prompt.published ? "custom" : undefined }],
+      items: [{ href: "/admin/aquibot", label: "Aquibot Trader AI", icon: "aquibot", badge: content.aquibot.prompt.published ? "custom" : undefined }],
     },
     {
       title: "Members",

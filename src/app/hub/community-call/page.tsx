@@ -10,7 +10,7 @@ import { myRegistrations } from "@/lib/aq-modules/members";
 import { upcomingCalls } from "@/lib/aq-modules/store";
 import { formatDay } from "@/lib/content-types";
 
-export const metadata: Metadata = { title: "Freight Analytics Call" };
+export const metadata: Metadata = { title: "Weekly Market Call" };
 export const dynamic = "force-dynamic";
 
 export default async function CommunityCallPage() {
@@ -21,13 +21,13 @@ export default async function CommunityCallPage() {
   const last = [...rows].sort((a, b) => (b.updatedAt ?? b.at).localeCompare(a.updatedAt ?? a.at))[0];
   const defaults: RegistrationDefaults = { company: last?.company ?? "", country: last?.country || user.country || "", reminders: last?.reminders ?? true };
   const recordings = past.filter((call) => call.recordingUrl);
-  const deskLink = `/hub/contact?topic=${encodeURIComponent("Freight Analytics Call")}`;
+  const deskLink = `/hub/contact?topic=${encodeURIComponent("Weekly Market Call")}`;
 
   return (
     <div className="mx-auto max-w-5xl pb-2">
       <HubPageHeader
         eyebrow="AQ ONE Free plan"
-        title="Freight Analytics Call"
+        title="Weekly Market Call"
         description="A free live call with the Aquifert desk on fertilizer prices and freight. Register in one click, add it to your calendar and send in the question you want answered."
         tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan. The joining link appears on this page 15 minutes before the start."
         guide="call"
@@ -79,7 +79,7 @@ export default async function CommunityCallPage() {
           ) : (
             <EmptyPanel
               title="The next call is being scheduled"
-              body="The desk runs the Freight Analytics Call regularly and posts the date here as soon as it is set. Tell the desk what you would like covered and they will let you know when registration opens."
+              body="The desk runs the Weekly Market Call regularly and posts the date here as soon as it is set. Tell the desk what you would like covered and they will let you know when registration opens."
               action={
                 <Link href={deskLink} className={btnSecondary}>
                   <Mail className="h-4 w-4" /> Contact the desk

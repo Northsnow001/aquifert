@@ -9,7 +9,7 @@ import { publishedAnalysis } from "@/lib/aq-modules/store";
 import { productOf, THUMBS, TELEX_PRODUCTS, toneOf, type AnalysisNote, type TelexProduct } from "@/lib/aq-modules/types";
 import { excerpt, formatDay, plainText } from "@/lib/content-types";
 
-export const metadata: Metadata = { title: "AQ Market Analysis Feed" };
+export const metadata: Metadata = { title: "AQ View" };
 export const dynamic = "force-dynamic";
 
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
@@ -76,17 +76,17 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
     <div className="mx-auto max-w-5xl pb-2">
       <HubPageHeader
         eyebrow="AQ ONE Free plan"
-        title="AQ Market Analysis Feed"
+        title="AQ View"
         description={
           notes[0]
             ? `What a move means, not just what happened. The desk's interpretation for buyers, with what to watch next. Latest note ${formatDay(notes[0].note.publishedAt)}.`
             : "What a move means, not just what happened. The desk's interpretation for buyers, with what to watch next."
         }
-        tip="The Telex reports what happened. Analysis notes explain why it matters, who it affects and what would change the picture. Each note links back to the flashes it interprets."
+        tip="The Telex reports what happened. AQ View notes explain why it matters, who it affects and what would change the picture. Each note links back to the flashes it interprets."
         guide="analysis"
         actions={
           <Link href="/hub/telex" className={btnSecondary}>
-            <Radio className="h-4 w-4" /> Market TELEX Feed
+            <Radio className="h-4 w-4" /> TELEX
           </Link>
         }
       />

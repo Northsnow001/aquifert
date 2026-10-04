@@ -54,7 +54,7 @@ export function ToolsBoard({ commentaryHtml }: { commentaryHtml: string }) {
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">Tools</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">AQ Trader Tools</h1>
         <span className="rounded-full border border-border bg-s2 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-mid">
           Beta
         </span>

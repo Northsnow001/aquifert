@@ -26,7 +26,7 @@ const LABEL: Record<string, string> = {
   member_access_events: "Ban and reinstate history",
   email_outbox: "Email outbox",
   nitrogen_reports: "Nitrogen reports",
-  community_call_registrations: "Community Call registrations",
+  community_call_registrations: "Weekly Market Call registrations",
   member_alerts: "Member price alerts",
   member_prefs: "Member preferences",
   membership_requests: "Membership requests",

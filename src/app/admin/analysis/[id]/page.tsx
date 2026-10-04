@@ -22,7 +22,7 @@ export default async function EditAnalysisPage({ params }: { params: Promise<{ i
       <PageHeader
         title="Edit analysis note"
         description={`${note.status === "published" ? "Published" : "Draft"} · ${formatStamp(note.publishedAt)}`}
-        crumbs={[{ href: "/admin/analysis", label: "AQ Market Analysis" }]}
+        crumbs={[{ href: "/admin/analysis", label: "AQ View" }]}
         actions={
           <>
             <StatusBadge status={note.status} />

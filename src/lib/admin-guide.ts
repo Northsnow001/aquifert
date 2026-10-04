@@ -190,7 +190,7 @@ export const GUIDE: GuideSection[] = [
   {
     id: "tools",
     group: "Publishing",
-    title: "Tools Commentary",
+    title: "AQ Trader Tools commentary",
     icon: "tools",
     href: "/admin/tools",
     summary:
@@ -394,7 +394,7 @@ export const GUIDE: GuideSection[] = [
   {
     id: "aquibot",
     group: "Assistant",
-    title: "Aquibot",
+    title: "Aquibot Trader AI",
     icon: "aquibot",
     href: "/admin/aquibot",
     summary:

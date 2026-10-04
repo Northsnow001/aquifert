@@ -29,7 +29,7 @@ type Tab = (typeof TABS)[number]["key"];
 const LIMITS = [
   { href: "/admin/freight-calculator?tab=pricing", label: "Freight Calculator", detail: "Daily limits, premiums and seasonal uplift" },
   { href: "/admin/netback?tab=settings", label: "Netback Calculator", detail: "Trade costs and daily limits" },
-  { href: "/admin/aquibot?tab=settings", label: "Aquibot", detail: "Question limits by plan" },
+  { href: "/admin/aquibot?tab=settings", label: "Aquibot Trader AI", detail: "Question limits by plan" },
 ];
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {

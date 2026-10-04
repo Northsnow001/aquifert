@@ -107,7 +107,7 @@ function Row({ row, open, onToggle }: { row: MembershipRequest; open: boolean; o
               {row.cycle ? (
                 <>
                   <dt className="text-dim">Billing</dt>
-                  <dd className="text-ink">{row.cycle === "annual" ? "Annual (10% off)" : "Monthly"}</dd>
+                  <dd className="text-ink">{row.cycle === "annual" ? "Annual" : "Monthly"}</dd>
                 </>
               ) : null}
               <dt className="text-dim">Came from</dt>

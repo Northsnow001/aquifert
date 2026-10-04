@@ -10,7 +10,7 @@ export default async function ToolsCommentaryAdminPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title="Tools commentary"
+        title="AQ Trader Tools commentary"
         description="The Commentary block beneath the Tools tabs on the member Tools page. What you see here is how members read it. Leave it empty to hide the block."
       />
       <RichTextEditor initialHtml={toolsCommentary.html} updatedAt={toolsCommentary.updatedAt} save={saveToolsCommentary} publicHref="/hub/tools" />

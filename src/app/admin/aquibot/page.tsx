@@ -97,7 +97,7 @@ export default async function AquibotAdminPage({ searchParams }: { searchParams:
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Aquibot" description="Control how Aquibot answers members: the system prompt, usage limits, retrieval tuning, query vocabulary, the knowledge base and member conversations." />
+      <PageHeader title="Aquibot Trader AI" description="Control how Aquibot answers members: the system prompt, usage limits, retrieval tuning, query vocabulary, the knowledge base and member conversations." />
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (

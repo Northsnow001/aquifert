@@ -21,7 +21,7 @@ export type Plan = {
 
 const TELEX: Capability = {
   capabilityKey: "intel.telex_feed",
-  label: "Market TELEX Feed",
+  label: "TELEX",
   group: "Market intelligence",
   description: null,
 };

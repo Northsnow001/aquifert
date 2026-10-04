@@ -34,7 +34,7 @@ export const SECTION_LABEL: Record<SectionKey, string> = {
   indicators: "Market indicators",
   hedge: "Hedge tables",
   freight: "Freight routes",
-  tools: "Tools commentary",
+  tools: "AQ Trader Tools commentary",
   library: "Library collections and files",
   enquiries: "Order Desk enquiries",
 };

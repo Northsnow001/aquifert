@@ -57,7 +57,7 @@ const BLOCKS: Block[] = [
 
 const MORE = [
   { icon: LineChart, title: "Fertilizer Market Insights Engine", desc: "26 weeks of fertilizer price history across five commodities and four regions, regional heatmaps, volatility indicators and AI-generated trade recommendations, broadcast to members on a schedule." },
-  { icon: Wallet, title: "Fertilizer invoice financing", desc: "Harvest and Scale members finance up to 85% of a fertilizer invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules." },
+  { icon: Wallet, title: "Fertilizer invoice financing", desc: "AQ Harvest and AQ Scale members finance up to 85% of a fertilizer invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules." },
   { icon: ShieldCheck, title: "Governance built in", desc: "Role-based access for admin, operations, finance, support, buyers and suppliers, with margins visible only to the roles that should see them." },
 ];
 

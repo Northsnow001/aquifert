@@ -10,7 +10,7 @@ export default async function NewAnalysisPage() {
   const [modules, telex] = await Promise.all([getAqModules(), telexOptions()]);
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title="New analysis note" crumbs={[{ href: "/admin/analysis", label: "AQ Market Analysis" }]} />
+      <PageHeader title="New analysis note" crumbs={[{ href: "/admin/analysis", label: "AQ View" }]} />
       <AnalysisEditor defaultPublishedAt={deskNow()} slugs={modules.analysis.map((item) => ({ id: item.id, slug: item.slug }))} telex={telex} />
     </div>
   );

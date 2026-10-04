@@ -9,7 +9,7 @@ import { LibraryPagination } from "@/components/hub/library/library-pagination";
 import { loadLibrary } from "@/components/hub/library/load";
 import { PAGE_SIZE, isFiltered, libraryHref, matchFiles, readFilters, shelfTree, sortFiles } from "@/components/hub/library/model";
 
-export const metadata: Metadata = { title: "Library" };
+export const metadata: Metadata = { title: "Library - Reports & Analysis" };
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -31,7 +31,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col pb-2">
       <HubPageHeader
-        title="Library"
+        title="Library - Reports & Analysis"
         description="Weekly market reports and research from the Aquifert desk."
         tip="Every report and research file the desk publishes. Files outside your plan stay listed so you can see what an upgrade includes."
         guide="library"

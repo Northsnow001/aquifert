@@ -85,7 +85,7 @@ export default async function AnalysisNotePage({ params }: Props) {
               <h2 id="related-title" className="text-[16.5px] font-semibold text-ink">
                 TELEX items this note interprets
               </h2>
-              <p className="text-[13px] text-dim">The flashes behind the analysis, from the Market TELEX Feed</p>
+              <p className="text-[13px] text-dim">The flashes behind the analysis, from the TELEX</p>
             </div>
           </header>
           <ul className="divide-y divide-border">

@@ -26,6 +26,7 @@ const PROTECTED_TERMS = [
   "AQ Analytics",
   "AQ Signal",
   "AQ TELEX",
+  "AQ View",
   "Telex",
   "TELEX",
   "Netback",

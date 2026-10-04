@@ -26,7 +26,7 @@ function fold(line: string) {
 }
 
 /**
- * Calendar invite for a community call. `stamp` is when the file was made (ISO) and `pageUrl`
+ * Calendar invite for a Weekly Market Call. `stamp` is when the file was made (ISO) and `pageUrl`
  * is where the member returns to join, used when the call has no joining link yet.
  */
 export function callIcs(call: Pick<CommunityCall, "id" | "topic" | "host" | "description" | "startsAt" | "durationMinutes" | "joinUrl">, stamp: string, pageUrl: string) {
@@ -39,7 +39,7 @@ export function callIcs(call: Pick<CommunityCall, "id" | "topic" | "host" | "des
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Aquifert//Freight Analytics Call//EN",
+    "PRODID:-//Aquifert//Weekly Market Call//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

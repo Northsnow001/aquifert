@@ -89,7 +89,7 @@ export function LockedScreen({ module, required, plan }: { module: ModuleKey; re
       </section>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-white/70 px-5 py-3.5 text-[14.5px] text-mid">
-        <span>Not sure it is worth it? Book the free Freight Analytics Call and see the desk&apos;s data first.</span>
+        <span>Not sure it is worth it? Book the free Weekly Market Call and see the desk&apos;s data first.</span>
         <Link href="/hub/community-call" className="inline-flex items-center gap-1 font-semibold text-blue no-underline hover:underline">
           Register for the call <ArrowRight className="h-3.5 w-3.5" />
         </Link>

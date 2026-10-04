@@ -240,7 +240,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             <nav aria-label="Platform">
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Platform</h3>
               <ul className="mt-4 space-y-2 text-[13px]">
-                {["Aquifert ONE", "Freight Calculator", "Netback", "Library", "Tools", "Order Desk"].map((l) => (
+                {["Aquifert ONE", "Freight Calculator", "Netback", "Library - Reports & Analysis", "AQ Trader Tools", "Buy Fertilizer"].map((l) => (
                   <li key={l}>
                     <Link to="/platform" className="text-slate-300 hover:text-white">{l}</Link>
                   </li>

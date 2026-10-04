@@ -28,11 +28,11 @@ const FAQ = [
   },
   {
     q: "Which membership tier fits me?",
-    a: "Tiers follow the tonnage you buy through the desk each month: Sprout covers up to 200 tonnes, Harvest 201 to 600 tonnes, and Scale has no limit. If you outgrow your tier, the desk suggests the next one.",
+    a: "Tiers follow the tonnage you buy through the desk each month: AQ Sprout covers up to 200 tonnes, AQ Harvest 201 to 600 tonnes, and AQ Scale has no limit. If you outgrow your tier, the desk suggests the next one.",
   },
   {
     q: "What is the difference between AQ Analytics and AQ ZERO?",
-    a: "AQ Analytics is for analysis and licensed market data, with no physical trading. Sprout, Harvest and Scale are AQ ZERO memberships: one flat fee replaces the margin on every quote, and every AQ Analytics module is included.",
+    a: "AQ Analytics is for analysis and licensed market data, with no physical trading. AQ Sprout, AQ Harvest and AQ Scale are AQ ZERO memberships: one flat fee replaces the margin on every quote, and every AQ Analytics module is included.",
   },
   {
     q: "When does a new plan take effect?",
@@ -44,7 +44,7 @@ const FAQ = [
   },
   {
     q: "How am I billed?",
-    a: "The desk invoices you directly, monthly or annually. Annual billing takes 10% off. Your invoices and billing contact are on the Billing page.",
+    a: "The desk confirms pricing with you and invoices you directly. Your invoices and billing contact are on the Billing page.",
   },
 ];
 
@@ -96,8 +96,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
           </span>
           <div className="min-w-0 flex-1 text-[15px]">
             <p className="font-semibold text-ink">
-              Your request for {open.tier ? `${TIER_LABEL[open.tier]} (${PLAN_LABEL.enterprise})` : PLAN_LABEL[open.requestedPlan]}
-              {open.cycle ? `, billed ${open.cycle}` : ""}{" "}
+              Your request for {open.tier ? `${TIER_LABEL[open.tier]} (${PLAN_LABEL.enterprise})` : PLAN_LABEL[open.requestedPlan]}{" "}
               <Tag tone={open.status === "new" ? "amber" : "blue"} className="ml-1 align-middle">
                 {STATUS_COPY[open.status].label}
               </Tag>

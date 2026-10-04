@@ -14,7 +14,7 @@ export default async function AnalysisAdminPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="AQ Market Analysis"
+        title="AQ View"
         description="Longer desk notes for members. Published notes appear under Analysis on the hub, newest first, and can link back to the Telex that prompted them."
         actions={
           <Link href="/admin/analysis/new" className={btnPrimary}>

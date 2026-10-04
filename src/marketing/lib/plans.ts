@@ -1,11 +1,8 @@
 export const MEMBERSHIP_PLANS = [
   {
     tier: "SPROUT" as const,
-    name: "Sprout",
-    monthly: 2000,
-    annual: 21600,
-    tonnage: "Up to 50 tons / month",
-    tonnageLimit: 50,
+    name: "AQ Sprout",
+    tonnage: "Up to 200 tonnes / month",
     features: [
       "Cost-to-cost pricing (no margin)",
       "Basic market insights dashboard",
@@ -16,13 +13,10 @@ export const MEMBERSHIP_PLANS = [
   },
   {
     tier: "HARVEST" as const,
-    name: "Harvest",
-    monthly: 5000,
-    annual: 54000,
-    tonnage: "51–200 tons / month",
-    tonnageLimit: 200,
+    name: "AQ Harvest",
+    tonnage: "201–600 tonnes / month",
     features: [
-      "Everything in Sprout",
+      "Everything in AQ Sprout",
       "Real-time insights dashboard",
       "Invoice financing up to £50k",
       "AI trade recommendations",
@@ -32,13 +26,10 @@ export const MEMBERSHIP_PLANS = [
   },
   {
     tier: "SCALE" as const,
-    name: "Scale",
-    monthly: 7000,
-    annual: 75600,
-    tonnage: "201+ tons / month",
-    tonnageLimit: 1000,
+    name: "AQ Scale",
+    tonnage: "Unlimited tonnes / month",
     features: [
-      "Everything in Harvest",
+      "Everything in AQ Harvest",
       "Dedicated account manager",
       "Financing up to £200k",
       "Custom analytics & reports",
