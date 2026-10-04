@@ -111,7 +111,7 @@ export default async function DashboardPage() {
           icon={Calculator}
           tone="amber"
           meter={pct(freightUsed + netbackUsed, calcLimit)}
-          href="/hub/plan-usage"
+          href="/hub/account/usage"
           hint={`${freightUsed} freight · ${netbackUsed} netback`}
         />
         <StatTile
@@ -186,7 +186,7 @@ export default async function DashboardPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/hub/membership" className={`${btnPrimary} mt-4 w-full`}>
+              <Link href="/hub/account/membership" className={`${btnPrimary} mt-4 w-full`}>
                 Compare plans <ArrowRight className="h-4 w-4" />
               </Link>
             </section>

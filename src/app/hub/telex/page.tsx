@@ -77,7 +77,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
               <>
                 {" "}
                 {locked} {locked === 1 ? "flash is" : "flashes are"} on a higher plan.{" "}
-                <Link href="/hub/membership" className="font-semibold text-blue no-underline hover:underline">
+                <Link href="/hub/account/membership" className="font-semibold text-blue no-underline hover:underline">
                   Compare plans
                 </Link>
               </>

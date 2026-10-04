@@ -23,7 +23,7 @@ const JOURNEY = [
   { key: "bot.j2", href: "/hub/telex" },
   { key: "bot.j3", href: "/hub/netback" },
   { key: "bot.j4", href: "/hub/order-desk" },
-  { key: "bot.j5", href: "/hub/membership" },
+  { key: "bot.j5", href: "/hub/account/membership" },
 ];
 
 const DESK_EMAIL = "enquiry@aquifert.com";

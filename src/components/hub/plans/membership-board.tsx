@@ -5,10 +5,10 @@ import { useEffect, useState, useSyncExternalStore, useTransition } from "react"
 import { createPortal } from "react-dom";
 import { Check, CheckCircle2, CircleAlert, Crown, Send, X } from "lucide-react";
 import { toast } from "sonner";
-import { requestPlan } from "@/app/hub/membership/actions";
+import { requestPlan } from "@/app/hub/account/membership/actions";
 import { areaClass, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { useI18n } from "@/components/app/i18n";
-import { HubPageHeader } from "@/components/hub/kit";
+import { AccountIntro } from "@/components/hub/kit";
 import {
   annualPrice,
   annualSaving,
@@ -83,14 +83,7 @@ export function MembershipBoard({
 
   return (
     <>
-      <HubPageHeader
-        eyebrow="Your account"
-        title={t("mem.title")}
-        tip="Pick Sprout, Harvest or Scale for AQ ZERO membership, or AQ Analytics for data without physical trading. The desk confirms the change and invoices you."
-        guide="membership"
-        description={t("mem.subtitle")}
-        actions={<CycleToggle cycle={cycle} onChange={setCycle} />}
-      />
+      <AccountIntro description={t("mem.subtitle")} actions={<CycleToggle cycle={cycle} onChange={setCycle} />} />
 
       {plan === "core" ? (
         <p className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-navy-50 px-4 py-2.5 text-[14.5px] text-navy-700">

@@ -23,7 +23,7 @@ function SampleChart({ seed }: { seed: number }) {
  */
 export function LockedScreen({ module, required, plan }: { module: ModuleKey; required: Plan; plan: Plan }) {
   const info = moduleInfo(module);
-  const upgrade = `/hub/membership?plan=${required}&from=${module}`;
+  const upgrade = `/hub/account/membership?plan=${required}&from=${module}`;
   const desk = `/hub/contact?topic=${encodeURIComponent(`Unlock ${info.label}`)}`;
   return (
     <div className="mx-auto max-w-5xl">

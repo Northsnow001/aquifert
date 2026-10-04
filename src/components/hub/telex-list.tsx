@@ -47,7 +47,7 @@ export function TelexList({
                       <p className="mt-1.5 flex items-center gap-1.5 text-[14.5px] text-mid">
                         <Lock className="h-3.5 w-3.5 text-blue" />
                         {FILE_ACCESS_LABEL[item.access]} flash.{" "}
-                        <Link href="/hub/membership" className="font-semibold text-blue no-underline hover:underline">
+                        <Link href="/hub/account/membership" className="font-semibold text-blue no-underline hover:underline">
                           Upgrade to read it
                         </Link>
                       </p>

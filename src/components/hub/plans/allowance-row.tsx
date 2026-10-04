@@ -35,7 +35,7 @@ export function AllowanceRow({
     note = (
       <span className="text-danger">
         All used. Resets {resets}.{" "}
-        <Link href="/hub/membership" className="font-semibold text-blue no-underline hover:underline">
+        <Link href="/hub/account/membership" className="font-semibold text-blue no-underline hover:underline">
           Upgrade for more
         </Link>
       </span>

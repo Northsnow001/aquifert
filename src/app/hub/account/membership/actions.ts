@@ -41,7 +41,7 @@ export async function requestPlan(input: {
       source: /^[a-z0-9-]{1,40}$/.test(source) ? source : "",
       message: note || (tier && requestedPlan === user.plan ? `Move my membership to ${TIER_LABEL[tier]}.` : ""),
     });
-    revalidatePath("/hub/membership");
+    revalidatePath("/hub/account/membership");
     return { ok: true, email: user.email };
   } catch (error) {
     return {

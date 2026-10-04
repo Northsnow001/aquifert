@@ -105,7 +105,7 @@ export function NitrogenWorkspace({
           {limitReached ? (
             <div className="flex flex-wrap items-center gap-2">
               {start}
-              <Link href="/hub/membership?from=nitrogen-report" className={btnSecondary}>
+              <Link href="/hub/account/membership?from=nitrogen-report" className={btnSecondary}>
                 <Crown className="h-4 w-4" /> Upgrade for more
               </Link>
             </div>

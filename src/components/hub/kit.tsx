@@ -36,6 +36,16 @@ export function HubPageHeader({
   );
 }
 
+/** Lead-in for a tab inside the Account frame, which already shows the title. */
+export function AccountIntro({ description, actions }: { description: React.ReactNode; actions?: React.ReactNode }) {
+  return (
+    <div className="aq-rise flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="max-w-2xl text-[15.5px] leading-relaxed text-mid">{description}</p>
+      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+    </div>
+  );
+}
+
 export function FeedThumb({ product, size = 56, className = "" }: { product: TelexProduct | "Market"; size?: number; className?: string }) {
   return (
     <Image

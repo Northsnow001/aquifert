@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { moved } from "@/app/hub/account/moved";
 
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ plan?: string }> }) {
-  const { plan } = await searchParams;
-  redirect(plan ? `/hub/membership?plan=${encodeURIComponent(plan)}` : "/hub/membership");
+export default function PlanPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  return moved("/hub/account/membership", searchParams);
 }

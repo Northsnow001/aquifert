@@ -42,7 +42,7 @@ const UNLOCK = {
 
 export function unlockFor(access: TelexAccess) {
   const target = UNLOCK[access === "enterprise" ? "enterprise" : "growth"];
-  return { label: target.label, href: `/hub/membership?plan=${target.plan}&from=library` };
+  return { label: target.label, href: `/hub/account/membership?plan=${target.plan}&from=library` };
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];

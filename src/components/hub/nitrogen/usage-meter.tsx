@@ -31,12 +31,12 @@ export function NitrogenUsage({ used, limit, resets }: { used: number; limit: nu
           >
             <div className={`h-full rounded-full transition-[width] duration-700 ${pct >= 100 ? "bg-danger" : pct >= 80 ? "bg-[#d9951f]" : "bg-teal-500"}`} style={{ width: `${Math.max(3, pct)}%` }} />
           </div>
-          <Link href="/hub/plan-usage" className="shrink-0 text-[13.5px] font-semibold text-blue no-underline hover:underline">
+          <Link href="/hub/account/usage" className="shrink-0 text-[13.5px] font-semibold text-blue no-underline hover:underline">
             All allowances
           </Link>
         </div>
       ) : (
-        <Link href="/hub/plan-usage" className="text-[13.5px] font-semibold text-blue no-underline hover:underline sm:ml-auto">
+        <Link href="/hub/account/usage" className="text-[13.5px] font-semibold text-blue no-underline hover:underline sm:ml-auto">
           All allowances
         </Link>
       )}

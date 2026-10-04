@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpenCheck, ChevronDown, ChevronsLeft, ChevronsRight, Lock, LogOut, Menu, MoreHorizontal, Search, Sparkles, UserCircle, X } from "lucide-react";
+import { BookOpenCheck, ChevronDown, ChevronsLeft, ChevronsRight, CreditCard, Crown, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, Sparkles, UserCircle, X } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { AutoTranslate } from "@/components/app/auto-translate";
 import { closeAquibot, toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
@@ -257,6 +257,9 @@ export function AppShell({
     const account: PaletteItem[] = [
       { href: "/hub/account/profile", label: "Profile details", group: "Account", icon: <UserCircle /> },
       { href: "/hub/account/password", label: "Change password", group: "Account", icon: <UserCircle /> },
+      { href: "/hub/account/usage", label: t("nav.plan-usage"), group: "Account", icon: <SlidersHorizontal /> },
+      { href: "/hub/account/membership", label: t("nav.membership"), group: "Account", icon: <Crown /> },
+      { href: "/hub/account/billing", label: t("nav.billing"), group: "Account", icon: <CreditCard /> },
       { href: "#tour", label: t("top.tour"), group: "Help", icon: <Sparkles />, action: startTour },
     ];
     return [...pages, ...account, ...(admin ? [{ href: "/admin", label: t("top.admin"), group: "Help", icon: <ADMIN_LINK.icon /> }] : [])];
@@ -344,7 +347,7 @@ export function AppShell({
                 {t("top.askAquibot")}
               </button>
               <Link
-                href="/hub/plan-usage"
+                href="/hub/account/usage"
                 title={t("nav.plan-usage")}
                 className="hidden rounded-full border border-black/[.08] bg-white px-2.5 py-1 font-mono text-[11.5px] font-semibold uppercase tracking-wide text-mid no-underline hover:text-blue md:inline-flex"
               >

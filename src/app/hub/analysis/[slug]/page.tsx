@@ -92,7 +92,7 @@ export default async function AnalysisNotePage({ params }: Props) {
             {related.map((item) => (
               <li key={item.id}>
                 <Link
-                  href={item.readable ? `/hub/telex?p=all&q=${encodeURIComponent(item.headline.slice(0, 80))}` : "/hub/membership"}
+                  href={item.readable ? `/hub/telex?p=all&q=${encodeURIComponent(item.headline.slice(0, 80))}` : "/hub/account/membership"}
                   className="flex items-start gap-3 px-5 py-3.5 no-underline transition-colors hover:bg-s2/60"
                 >
                   <FeedThumb product={item.product} size={40} />

@@ -6,8 +6,6 @@ import {
   BookOpenCheck,
   Calculator,
   ChartLine,
-  CreditCard,
-  Crown,
   FlaskConical,
   LayoutDashboard,
   Mail,
@@ -20,7 +18,6 @@ import {
   ScrollText,
   Ship,
   ShoppingCart,
-  SlidersHorizontal,
   UserCircle,
   Wrench,
   LayoutGrid,
@@ -178,33 +175,6 @@ export const HUB_NAV: HubNavItem[] = [
     section: "AQ ONE Free plan",
     tip: "Reach the Aquifert desk by WhatsApp, a booked meeting or a message. Use this when you want a person rather than a screen.",
   },
-  {
-    key: "plan-usage",
-    href: "/hub/plan-usage",
-    label: "Plan & Usage",
-    short: "Usage",
-    icon: SlidersHorizontal,
-    section: "AQ ONE Free plan",
-    tip: "Every allowance in one place: what you have used this month, your limit and when it resets.",
-  },
-  {
-    key: "membership",
-    href: "/hub/membership",
-    label: "Membership",
-    short: "Plans",
-    icon: Crown,
-    section: "AQ ONE Free plan",
-    tip: "Sprout, Harvest and Scale memberships (AQ ZERO) and AQ Analytics, monthly or annual. Select one and the desk moves your account.",
-  },
-  {
-    key: "billing",
-    href: "/hub/billing",
-    label: "Billing",
-    short: "Billing",
-    icon: CreditCard,
-    section: "AQ ONE Free plan",
-    tip: "Your plan, billing contact, invoices and payment history.",
-  },
 
   {
     key: "a-telex",
@@ -312,7 +282,7 @@ export const HUB_NAV: HubNavItem[] = [
     icon: UserCircle,
     section: "You",
     tone: "rose",
-    tip: "Your profile, password, payments and the legal notices that apply to market data.",
+    tip: "Your profile and password, your plan and usage, membership, billing and the legal notices that apply to market data.",
   },
 ];
 
@@ -346,6 +316,9 @@ const EXTRA_TITLES: [string, string][] = [
   ["/hub/account/profile", "Profile"],
   ["/hub/account/password", "Password"],
   ["/hub/account/legal", "Legal"],
+  ["/hub/account/usage", "Plan & Usage"],
+  ["/hub/account/membership", "Membership"],
+  ["/hub/account/billing", "Billing"],
   ["/hub/voyage", "Voyage"],
 ];
 

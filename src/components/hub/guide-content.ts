@@ -203,7 +203,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     title: "Plans, usage and limits",
     icon: Layers,
     summary: "What each plan includes and how monthly limits work.",
-    href: "/hub/plan-usage",
+    href: "/hub/account/usage",
     aliases: ["plan-usage"],
     body: [
       "Plan & Usage shows every allowance in one place: what you have used this month, your limit and the date it resets. Calculations, Aquibot questions and Nitrogen Reports are counted per calendar month.",
@@ -215,7 +215,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     title: "Membership and billing",
     icon: Crown,
     summary: "Compare plans, ask to move plan, and see your invoices.",
-    href: "/hub/membership",
+    href: "/hub/account/membership",
     aliases: ["billing"],
     body: [
       "AQ ONE is the free plan. Membership shows the paid options as cards: Sprout (up to 200 tonnes a month), Harvest (201 to 600 tonnes) and Scale (unlimited) are AQ ZERO memberships that replace the margin on every quote, and AQ Analytics (£299 a month) adds licensed market data without physical trading. Switch between monthly and annual billing (10% off), select a card and send the request; the desk confirms and moves your account, and you can follow the request's status on the same page. A table below compares the modules and allowances of each plan.",
