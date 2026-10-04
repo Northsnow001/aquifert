@@ -28,11 +28,11 @@ const FAQ = [
   },
   {
     q: "Which membership tier fits me?",
-    a: "Tiers follow the tonnage you buy through the desk each month: AQ Sprout covers up to 200 tonnes, AQ Harvest 201 to 600 tonnes, and AQ Scale has no limit. If you outgrow your tier, the desk suggests the next one.",
+    a: "Tiers follow the tonnage you buy through the desk each month: AQ Zero Sprout covers up to 200 tonnes, AQ Zero Harvest 201 to 600 tonnes, and AQ Zero Scale has no limit. If you outgrow your tier, the desk suggests the next one.",
   },
   {
     q: "What is the difference between AQ Analytics and AQ ZERO?",
-    a: "AQ Analytics is for analysis and licensed market data, with no physical trading. AQ Sprout, AQ Harvest and AQ Scale are AQ ZERO memberships: one flat fee replaces the margin on every quote, and every AQ Analytics module is included.",
+    a: "AQ Analytics is for analysis and licensed market data, with no physical trading. AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale are AQ ZERO memberships: one flat fee replaces the margin on every quote, and every AQ Analytics module is included.",
   },
   {
     q: "When does a new plan take effect?",

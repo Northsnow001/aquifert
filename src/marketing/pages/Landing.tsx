@@ -485,7 +485,7 @@ function MembershipBand() {
                 See membership plans <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Link>
               <span className="text-[13px] font-medium text-white">
-                AQ Sprout, AQ Harvest and AQ Scale · cancel anytime
+                AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale · cancel anytime
               </span>
             </div>
           </Reveal>
@@ -505,7 +505,7 @@ const HOME_FAQ: FaqItem[] = [
   },
   {
     q: "How does Aquifert fertilizer pricing work?",
-    a: "Aquifert replaces the traditional trader's per-tonne margin with a flat membership fee. Members see the full landed-cost breakdown on every quote, product, ocean freight, clearing and duties, so they buy at true cost. AQ Sprout, AQ Harvest and AQ Scale tiers scale with monthly tonnage.",
+    a: "Aquifert replaces the traditional trader's per-tonne margin with a flat membership fee. Members see the full landed-cost breakdown on every quote, product, ocean freight, clearing and duties, so they buy at true cost. AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale tiers scale with monthly tonnage.",
   },
   {
     q: "Which fertilizers can I source through Aquifert?",

@@ -5,7 +5,7 @@ export const PLAN_ORDER: Plan[] = ["core", "growth", "enterprise"];
 export const PLAN_PITCH: Record<Plan, string> = {
   core: "The free AQ ONE plan: the hub, Telex, analysis, AQ Signal, the library, the calculators and Aquibot.",
   growth: "Analytics and licensed market data with no physical trading: the full wire, market data, signals, freight and alerts.",
-  enterprise: "AQ Sprout, AQ Harvest or AQ Scale membership. One flat fee replaces the margin on every quote, with every AQ Analytics module.",
+  enterprise: "AQ Zero Sprout, AQ Zero Harvest or AQ Zero Scale membership. One flat fee replaces the margin on every quote, with every AQ Analytics module.",
 };
 
 export type Allowances = { nitrogen: number; saved: number; freight: number; netback: number; aquibot: number };

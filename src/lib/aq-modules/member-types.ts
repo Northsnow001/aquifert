@@ -69,7 +69,7 @@ export type MembershipRequest = {
   company: string;
   currentPlan: Plan;
   requestedPlan: Plan;
-  /** AQ Sprout, AQ Harvest or AQ Scale when the request is for AQ ZERO membership. */
+  /** AQ Zero Sprout, AQ Zero Harvest or AQ Zero Scale when the request is for AQ ZERO membership. */
   tier?: MembershipTier | null;
   cycle?: BillingCycle | null;
   /** The locked module that sent them here, if any. */

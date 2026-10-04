@@ -21,7 +21,7 @@ export async function requestPlan(input: {
   const requestedPlan = input?.requestedPlan;
   if (!isPlan(requestedPlan)) return { ok: false, message: "Choose the plan you would like." };
   const tier = requestedPlan === "enterprise" && isTier(input.tier) ? input.tier : null;
-  if (requestedPlan === "enterprise" && !tier) return { ok: false, message: "Choose AQ Sprout, AQ Harvest or AQ Scale." };
+  if (requestedPlan === "enterprise" && !tier) return { ok: false, message: "Choose AQ Zero Sprout, AQ Zero Harvest or AQ Zero Scale." };
   if (requestedPlan === user.plan && !tier) {
     return { ok: false, message: `You are already on ${PLAN_LABEL[requestedPlan]}. Choose a different plan, or message the desk from Contact Us.` };
   }

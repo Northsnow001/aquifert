@@ -18,7 +18,7 @@ export type MembershipOffer = {
 export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
   {
     id: "sprout",
-    name: "AQ Sprout",
+    name: "AQ Zero Sprout",
     plan: "enterprise",
     tier: "sprout",
     tagline: "Up to 200 tonnes / month",
@@ -27,21 +27,21 @@ export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
   },
   {
     id: "harvest",
-    name: "AQ Harvest",
+    name: "AQ Zero Harvest",
     plan: "enterprise",
     tier: "harvest",
     tagline: "201–600 tonnes / month",
-    features: ["Everything in AQ Sprout", "Real-time insights dashboard", "Invoice financing up to £50k", "AI trade recommendations", "Priority support"],
+    features: ["Everything in AQ Zero Sprout", "Real-time insights dashboard", "Invoice financing up to £50k", "AI trade recommendations", "Priority support"],
     missing: ["Dedicated account manager", "Custom analytics"],
     popular: true,
   },
   {
     id: "scale",
-    name: "AQ Scale",
+    name: "AQ Zero Scale",
     plan: "enterprise",
     tier: "scale",
     tagline: "Unlimited tonnes / month",
-    features: ["Everything in AQ Harvest", "Dedicated account manager", "Financing up to £200k", "Custom analytics & reports", "Quarterly strategy reviews"],
+    features: ["Everything in AQ Zero Harvest", "Dedicated account manager", "Financing up to £200k", "Custom analytics & reports", "Quarterly strategy reviews"],
     missing: [],
   },
   {
@@ -62,7 +62,7 @@ export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
   },
 ];
 
-export const TIER_LABEL: Record<MembershipTier, string> = { sprout: "AQ Sprout", harvest: "AQ Harvest", scale: "AQ Scale" };
+export const TIER_LABEL: Record<MembershipTier, string> = { sprout: "AQ Zero Sprout", harvest: "AQ Zero Harvest", scale: "AQ Zero Scale" };
 
 export const isTier = (value: unknown): value is MembershipTier => MEMBERSHIP_TIERS.includes(value as MembershipTier);
 export const isCycle = (value: unknown): value is BillingCycle => value === "monthly" || value === "annual";

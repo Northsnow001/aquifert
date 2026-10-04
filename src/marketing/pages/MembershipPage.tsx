@@ -21,7 +21,7 @@ const NOTES = [
   {
     icon: Landmark,
     title: "Financing eligibility",
-    text: "Members at AQ Harvest tier and above unlock the Invoice Discounting Facility, up to 85% of a verified fertilizer invoice value, advanced within 48 hours.",
+    text: "Members at AQ Zero Harvest tier and above unlock the Invoice Discounting Facility, up to 85% of a verified fertilizer invoice value, advanced within 48 hours.",
   },
   {
     icon: ShieldCheck,
@@ -38,7 +38,7 @@ const NOTES = [
 const PRICING_FAQ: FaqItem[] = [
   {
     q: "Which Aquifert membership tier fits me?",
-    a: "AQ Sprout is for buyers trading up to 200 tonnes a month, AQ Harvest covers 201–600 tonnes, and AQ Scale has no tonnage limit. The desk confirms pricing for your tier with you directly.",
+    a: "AQ Zero Sprout is for buyers trading up to 200 tonnes a month, AQ Zero Harvest covers 201–600 tonnes, and AQ Zero Scale has no tonnage limit. The desk confirms pricing for your tier with you directly.",
   },
   {
     q: "What do members save compared with a traditional fertilizer trader?",
@@ -82,8 +82,8 @@ export function MembershipPage() {
   return (
     <MarketingLayout>
       <Seo
-        title="Fertilizer Trading Membership Plans: AQ Sprout, AQ Harvest, AQ Scale | Aquifert"
-        description="Aquifert membership replaces per-tonne fertilizer margin with one flat fee. AQ Sprout (up to 200t a month), AQ Harvest (201–600t) and AQ Scale (unlimited) include cost-to-cost quotes, market intelligence, live tracking and invoice financing."
+        title="Fertilizer Trading Membership Plans: AQ Zero Sprout, AQ Zero Harvest, AQ Zero Scale | Aquifert"
+        description="Aquifert membership replaces per-tonne fertilizer margin with one flat fee. AQ Zero Sprout (up to 200t a month), AQ Zero Harvest (201–600t) and AQ Zero Scale (unlimited) include cost-to-cost quotes, market intelligence, live tracking and invoice financing."
         keywords="fertilizer trading membership, fertilizer subscription pricing, buy fertilizer without margin, fertilizer invoice financing UK, aquifert plans"
         path="/membership"
         jsonLd={[ORGANIZATION_JSONLD, MEMBERSHIP_SCHEMA, PRICING_FAQ_SCHEMA, MEMBERSHIP_BREADCRUMB]}

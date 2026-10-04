@@ -131,7 +131,7 @@ export const ZERO_SAMPLE: ZeroSubmission = {
   name: "Amara Okafor",
   email: "amara@harvestco.com",
   company: "Harvest Co",
-  programme: "AQ Harvest",
+  programme: "AQ Zero Harvest",
   annualVolume: "5000",
   product: "Urea (Prilled / Granular)",
   notes: "Interested in a Q1 pilot slot.",

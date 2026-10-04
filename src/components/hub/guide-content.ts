@@ -188,7 +188,7 @@ const ALL_SECTIONS: GuideSection[] = [
     summary: "Register for Aquifert Zero, or send the trading desk an enquiry and get a quote back.",
     href: "/hub/order-desk",
     body: [
-      "Where Aquifert Zero is open, the page opens on its tab. It shows the AQ Sprout, AQ Harvest, AQ Scale and AQ Analytics programmes and a plan comparison. Pick the one that fits and register interest for a pilot slot; the desk confirms pricing with you. You can update your details at any time.",
+      "Where Aquifert Zero is open, the page opens on its tab. It shows the AQ Zero Sprout, AQ Zero Harvest, AQ Zero Scale and AQ Analytics programmes and a plan comparison. Pick the one that fits and register interest for a pilot slot; the desk confirms pricing with you. You can update your details at any time.",
       "On the Trading Desk tab, tell the desk what you need: product and grade, quantity, packaging, origin preference, destination, Incoterms, shipping window, target price, prepayment and payment terms. Your enquiry goes straight to the Aquifert trading desk and you see a confirmation straight away. It also appears under Recent requests on your Dashboard.",
     ],
     tip: "The more specific the grade, window and destination, the faster and sharper the quote.",
@@ -232,7 +232,7 @@ const ALL_SECTIONS: GuideSection[] = [
     href: "/hub/account/membership",
     aliases: ["billing"],
     body: [
-      "AQ ONE is the free plan. Membership shows the paid options as cards: AQ Sprout (up to 200 tonnes a month), AQ Harvest (201 to 600 tonnes) and AQ Scale (unlimited) are AQ ZERO memberships that replace the margin on every quote, and AQ Analytics adds licensed market data without physical trading. Select a card and send the request; the desk confirms pricing, moves your account, and you can follow the request's status on the same page. A table below compares the modules and allowances of each plan.",
+      "AQ ONE is the free plan. Membership shows the paid options as cards: AQ Zero Sprout (up to 200 tonnes a month), AQ Zero Harvest (201 to 600 tonnes) and AQ Zero Scale (unlimited) are AQ ZERO memberships that replace the margin on every quote, and AQ Analytics adds licensed market data without physical trading. Select a card and send the request; the desk confirms pricing, moves your account, and you can follow the request's status on the same page. A table below compares the modules and allowances of each plan.",
       "Billing shows your plan, the contact the desk invoices, and your invoices and payment history. The desk handles billing directly, so a person is always on hand for questions.",
     ],
   },
