@@ -21,7 +21,7 @@ const LABEL: Record<string, string> = {
   freight_debug_logs: "Freight debug log",
   netback_calc_logs: "Netback calculation logs",
   desk_inbox: "Enquiries and messages",
-  zero_registrations: "Aquifert Zero registrations",
+  zero_waitlist: "Aquifert Zero waitlist and call requests",
   member_bans: "Banned members",
   member_access_events: "Ban and reinstate history",
   email_outbox: "Email outbox",

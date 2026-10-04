@@ -62,6 +62,14 @@ export const MEMBERSHIP_OFFERS: MembershipOffer[] = [
   },
 ];
 
+export type OfferState = "current" | "included" | "open";
+
+/** AQ ZERO includes every AQ Analytics module, and admins have every module unlocked. */
+export function offerState(offer: MembershipOffer, viewer: { plan: Plan; admin?: boolean; currentTier?: MembershipTier | null }): OfferState {
+  if (!offer.tier) return viewer.plan === offer.plan ? "current" : viewer.plan === "enterprise" || viewer.admin ? "included" : "open";
+  return viewer.plan === "enterprise" && viewer.currentTier === offer.tier ? "current" : "open";
+}
+
 export const TIER_LABEL: Record<MembershipTier, string> = { sprout: "AQ Zero Sprout", harvest: "AQ Zero Harvest", scale: "AQ Zero Scale" };
 
 export const isTier = (value: unknown): value is MembershipTier => MEMBERSHIP_TIERS.includes(value as MembershipTier);

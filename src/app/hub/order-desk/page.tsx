@@ -3,12 +3,14 @@ import { OrderDeskBoard } from "@/components/hub/order-desk-board";
 import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { ZeroPanel } from "@/components/hub/zero-panel";
+import { isAdminUser } from "@/lib/admin-access";
 import { getAqModules } from "@/lib/aq-modules/store";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
 import { resolvePort } from "@/lib/ports";
 import { getSession } from "@/lib/session";
 import { findZeroRegistration } from "@/lib/zero-interest";
+import { intentOf } from "@/lib/zero-types";
 
 export default async function OrderDeskPage({ searchParams }: { searchParams: Promise<{ tab?: string; product?: string; destination?: string }> }) {
   const [{ tab, product, destination }, user] = await Promise.all([searchParams, getSession()]);
@@ -54,8 +56,24 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
         <ZeroPanel
           name={user?.name ?? ""}
           email={user?.email ?? ""}
+          plan={user?.plan ?? "core"}
+          admin={isAdminUser(user)}
           success={settings.zero.success}
-          registered={registration ? { at: registration.at, programme: registration.programme ?? null, product: registration.product, annualVolume: registration.annualVolume, company: registration.company } : null}
+          registered={
+            registration
+              ? {
+                  at: registration.at,
+                  programme: registration.programme ?? null,
+                  intent: intentOf(registration),
+                  callDate: registration.callDate ?? "",
+                  callWindow: registration.callWindow ?? "",
+                  phone: registration.phone ?? "",
+                  product: registration.product,
+                  annualVolume: registration.annualVolume,
+                  company: registration.company,
+                }
+              : null
+          }
           compare={modules && allowances ? <ComparePlans plan={user?.plan ?? null} allowances={allowances} access={modules.access} /> : null}
         />
       ) : (

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DISPOSABLE_MESSAGE, WORK_EMAIL_MESSAGE, checkSignupEmail, cleanEntries } from "./email-rules";
+import { ZERO, toRow } from "../data/tables";
+import { ZERO_INTENT_LABEL, ZERO_NEXT_STEP } from "../zero-types";
+import { ZERO_SAMPLE, zeroSections, zeroVars } from "./forms";
 import { renderEmail } from "./render";
 import { DEFAULT_DESK_SETTINGS } from "./types";
 
@@ -68,6 +71,39 @@ test("empty tags do not leave dangling separators in the subject", () => {
   assert.equal(subject({ product: "Urea - Granular", qty: "5000", user_company: "" }), "New enquiry — Urea - Granular — 5000 MT");
   assert.equal(subject({ product: "", qty: "5000", user_company: "Harvest Co" }), "New enquiry — 5000 MT — Harvest Co");
   assert.equal(renderEmail({ template: { subject: "{a} · Desk | {b}", body: "b" }, vars: { a: "", b: "Zero" }, sections: [] }).subject, "Desk | Zero");
+});
+
+test("the Zero confirmation says what happens next, with call details only for call requests", () => {
+  const call = { ...ZERO_SAMPLE, request: ZERO_INTENT_LABEL.call, nextStep: ZERO_NEXT_STEP.call };
+  const waitlist = { ...ZERO_SAMPLE, request: ZERO_INTENT_LABEL.waitlist, nextStep: ZERO_NEXT_STEP.waitlist, phone: "", callDate: "", callWindow: "", timezone: "" };
+  const render = (zero: typeof call) => renderEmail({ template: DEFAULT_DESK_SETTINGS.zero.applicant, vars: zeroVars(zero), sections: zeroSections(zero) });
+
+  const callEmail = render(call);
+  assert.ok(callEmail.text.includes(ZERO_NEXT_STEP.call));
+  assert.ok(callEmail.text.includes("Preferred call day: Tuesday, 6 October 2026"));
+  assert.ok(callEmail.text.includes("Phone: +234 801 234 5678"));
+  assert.deepEqual(callEmail.unknownTags, []);
+
+  const waitlistEmail = render(waitlist);
+  assert.ok(waitlistEmail.text.includes("We will get back to you as soon as Aquifert Zero is live."));
+  assert.ok(waitlistEmail.text.includes("Request: Join the waitlist"));
+  assert.ok(!waitlistEmail.text.includes("Preferred call"));
+  assert.ok(!waitlistEmail.text.includes("Phone:"));
+});
+
+test("waitlist rows fill the Supabase columns, treating older registrations as waitlist sign-ups", () => {
+  const base = { id: "zero-1", at: "2026-10-04T10:00:00.000Z", userId: "u1", name: "Ola", email: "Ola@Example.com", company: "Harvest Co", annualVolume: "5000", product: "DAP / MAP", notes: "", status: "new" as const, adminNote: "", updatedAt: null };
+  const old = toRow(ZERO, base);
+  assert.equal(old.intent, "waitlist");
+  assert.equal(old.company, "Harvest Co");
+  assert.equal(old.email, "ola@example.com");
+  assert.equal(old.call_date, null);
+
+  const call = toRow(ZERO, { ...base, intent: "call", callDate: "2026-10-06", callWindow: "Morning (09:00–12:00)", phone: "+234 801", status: "scheduled" });
+  assert.equal(call.intent, "call");
+  assert.equal(call.call_date, "2026-10-06");
+  assert.equal(call.status, "scheduled");
+  assert.equal(call.id, "zero-1");
 });
 
 test("an action button is appended when given", () => {

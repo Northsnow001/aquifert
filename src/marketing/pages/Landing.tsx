@@ -485,7 +485,7 @@ function MembershipBand() {
                 See membership plans <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Link>
               <span className="text-[13px] font-medium text-white">
-                AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale · cancel anytime
+                AQ Zero Sprout, AQ Zero Harvest, AQ Zero Scale and AQ Analytics · cancel anytime
               </span>
             </div>
           </Reveal>

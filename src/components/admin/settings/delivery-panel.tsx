@@ -97,8 +97,12 @@ export function DeliveryPanel({
                 <>
                   <p className="mt-1 text-mid">Submissions are saved and every email is written to the outbox below, ready to read. Nothing leaves the server until a provider is connected.</p>
                   <p className="mt-2.5 text-mid">
-                    To connect, set <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">RESEND_API_KEY</code> and{" "}
-                    <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">EMAIL_FROM</code> (a verified sender address) in the hosting environment, then redeploy.
+                    To connect, set <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">EMAIL_FROM</code> (for example no-reply@aquifert.com) and either{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">SMTP_HOST</code>,{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">SMTP_PORT</code>,{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">SMTP_USER</code> and{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">SMTP_PASS</code>, or{" "}
+                    <code className="rounded bg-white px-1 font-mono text-[12px] text-ink">RESEND_API_KEY</code>, in the hosting environment, then redeploy.
                   </p>
                 </>
               )}

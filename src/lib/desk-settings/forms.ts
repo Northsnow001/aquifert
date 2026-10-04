@@ -29,10 +29,22 @@ export type ZeroSubmission = {
   email: string;
   company: string;
   programme: string;
+  /** "Join the waitlist" or "Book a call for early discounted access". */
+  request: string;
+  nextStep: string;
+  phone: string;
+  callDate: string;
+  callWindow: string;
+  timezone: string;
   annualVolume: string;
   product: string;
   notes: string;
   submittedAt: string;
+};
+
+const callDay = (value: string) => {
+  const date = new Date(`${value}T00:00:00Z`);
+  return value && !Number.isNaN(date.getTime()) ? date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : value;
 };
 
 const stamp = (iso: string) => {
@@ -83,7 +95,16 @@ export function orderSections(order: OrderSubmission): DetailSection[] {
 }
 
 export function zeroVars(zero: ZeroSubmission): Record<string, string> {
-  return { user_name: zero.name, user_email: zero.email, user_company: zero.company, programme: zero.programme, annual_volume: zero.annualVolume, primary_product: zero.product };
+  return {
+    user_name: zero.name,
+    user_email: zero.email,
+    user_company: zero.company,
+    programme: zero.programme,
+    request: zero.request,
+    next_step: zero.nextStep,
+    annual_volume: zero.annualVolume,
+    primary_product: zero.product,
+  };
 }
 
 export function zeroSections(zero: ZeroSubmission): DetailSection[] {
@@ -91,16 +112,21 @@ export function zeroSections(zero: ZeroSubmission): DetailSection[] {
     {
       title: "Submission details",
       rows: [
+        ["Request", zero.request],
         ["Name", zero.name],
         ["Email", zero.email],
         ["Company", zero.company],
         ["Programme", zero.programme],
         ["Estimated annual volume", tonnes(zero.annualVolume)],
         ["Primary product", zero.product],
+        ["Preferred call day", callDay(zero.callDate)],
+        ["Preferred call time", [zero.callWindow, zero.timezone].filter(Boolean).join(", ")],
+        ["Phone", zero.phone],
         ["Additional notes", zero.notes],
         ["Submitted", stamp(zero.submittedAt)],
       ],
     },
+    { title: "What happens next", rows: [["Next step", zero.nextStep]] },
   ];
 }
 
@@ -132,6 +158,12 @@ export const ZERO_SAMPLE: ZeroSubmission = {
   email: "amara@harvestco.com",
   company: "Harvest Co",
   programme: "AQ Zero Harvest",
+  request: "Book a call for early discounted access",
+  nextStep: "The desk will email you to confirm a call time. Early callers get discounted access when Aquifert Zero goes live.",
+  phone: "+234 801 234 5678",
+  callDate: "2026-10-06",
+  callWindow: "Morning (09:00–12:00)",
+  timezone: "Africa/Lagos",
   annualVolume: "5000",
   product: "Urea (Prilled / Granular)",
   notes: "Interested in a Q1 pilot slot.",

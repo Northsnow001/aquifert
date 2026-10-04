@@ -33,6 +33,7 @@ const INDEX: Entry[] = [
   { title: "AQ Zero Sprout", section: "Membership", keywords: "aq zero sprout aq sprout plan 200 tonnes starter membership", to: "/membership" },
   { title: "AQ Zero Harvest", section: "Membership", keywords: "aq zero harvest aq harvest plan 600 tonnes financing membership", to: "/membership" },
   { title: "AQ Zero Scale", section: "Membership", keywords: "aq zero scale aq scale plan unlimited enterprise membership", to: "/membership" },
+  { title: "AQ Analytics", section: "Membership", keywords: "aq analytics plan market data pra trade flows port lineups freight benchmarks aquibot membership", to: "/membership" },
   { title: "Invoice financing", section: "Membership", keywords: "financing invoice discounting credit 85%", to: "/membership" },
   { title: "Contact the desk", section: "Support", keywords: "contact email enquiry desk phone", to: "/help" },
   { title: "Terms & Conditions of Trading", section: "Legal", keywords: "terms trading incoterms delivery payment claims liability", to: "/legal/terms-of-trading" },

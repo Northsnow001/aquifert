@@ -60,14 +60,14 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
 
   let initialOffer: MembershipOffer["id"] | null = null;
   if (isPlan(planParam) && !open) {
-    if (planParam === "growth" && user.plan === "core") initialOffer = "analytics";
+    if (planParam === "growth" && user.plan === "core" && !admin) initialOffer = "analytics";
     if (planParam === "enterprise" && user.plan !== "enterprise") initialOffer = isTier(tierParam) ? tierParam : "harvest";
   }
 
   return (
     <div className="flex flex-col gap-6 pb-2">
       <div className="flex flex-col gap-4">
-        <MembershipBoard plan={user.plan} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
+        <MembershipBoard plan={user.plan} admin={admin} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
       </div>
 
       {fromModule ? (

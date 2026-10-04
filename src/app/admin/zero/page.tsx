@@ -4,6 +4,7 @@ import { ZeroRegistrationsPanel } from "@/components/admin/zero/registrations-pa
 import { PageHeader, btnSecondary } from "@/components/admin/ui";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { listZeroRegistrations } from "@/lib/zero-interest";
+import { intentOf } from "@/lib/zero-types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ export default async function ZeroAdminPage() {
     return new Date(Date.UTC(now.getUTCFullYear(), Math.floor(now.getUTCMonth() / 3) * 3, 1)).toISOString();
   })();
   const fresh = rows.filter((row) => row.status === "new").length;
+  const calls = rows.filter((row) => intentOf(row) === "call");
+  const callsWaiting = calls.filter((row) => row.status === "new" || row.status === "contacted").length;
   const offered = rows.filter((row) => row.status === "offered" && (row.updatedAt ?? row.at) >= quarterStart).length;
   const volume = rows.filter((row) => row.status !== "declined").reduce((sum, row) => sum + (Number(row.annualVolume) || 0), 0);
   const products = new Map<string, number>();
@@ -24,8 +27,18 @@ export default async function ZeroAdminPage() {
   const top = [...products.entries()].sort((a, b) => b[1] - a[1])[0];
 
   const stats = [
-    { label: "Registrations", value: rows.length.toLocaleString(), meta: settings.zero.showOnHub ? "Tab is live on the Order Desk" : "Tab is hidden on the hub", tone: "text-ink" },
-    { label: "Awaiting contact", value: fresh.toLocaleString(), meta: fresh ? "Marked new" : "Everyone has been contacted", tone: fresh ? "text-[#1463a5]" : "text-ink" },
+    {
+      label: "Registrations",
+      value: rows.length.toLocaleString(),
+      meta: `${(rows.length - calls.length).toLocaleString()} waitlist · ${calls.length.toLocaleString()} call requests${settings.zero.showOnHub ? "" : " · tab hidden on the hub"}`,
+      tone: "text-ink",
+    },
+    {
+      label: "Awaiting contact",
+      value: fresh.toLocaleString(),
+      meta: callsWaiting ? `${callsWaiting} ${callsWaiting === 1 ? "call" : "calls"} still to book` : fresh ? "Marked new" : "Everyone has been contacted",
+      tone: fresh || callsWaiting ? "text-[#1463a5]" : "text-ink",
+    },
     { label: "Pilot slots this quarter", value: `${offered} of ${PILOT_SLOTS}`, meta: offered >= PILOT_SLOTS ? "Quarter is full" : `${PILOT_SLOTS - offered} left to offer`, tone: offered >= PILOT_SLOTS ? "text-[#9a5b00]" : "text-ink" },
     { label: "Pipeline volume", value: `${volume.toLocaleString("en-GB")} MT`, meta: top ? `Most asked: ${top[0]}` : "Annual, excluding not-a-fit", tone: "text-ink" },
   ];
@@ -34,7 +47,7 @@ export default async function ZeroAdminPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Aquifert Zero"
-        description="Members who registered for the Zero pilot. Move each one through contacted and slot offered, and keep notes for the desk."
+        description="Members who joined the Zero waitlist or asked for a call for early discounted access. Move each one through contacted, call booked and slot offered, and keep notes for the desk."
         actions={
           <div className="flex items-center gap-3">
             <Link href="/admin/settings?tab=zero" className="text-[12.5px] font-semibold text-blue no-underline">

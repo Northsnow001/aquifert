@@ -9,7 +9,7 @@ import { requestPlan } from "@/app/hub/account/membership/actions";
 import { areaClass, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { useI18n } from "@/components/app/i18n";
 import { AccountIntro } from "@/components/hub/kit";
-import { MEMBERSHIP_OFFERS, type MembershipOffer, type MembershipTier } from "@/lib/aq-modules/membership";
+import { MEMBERSHIP_OFFERS, offerState, type MembershipOffer, type MembershipTier } from "@/lib/aq-modules/membership";
 import type { Plan } from "@/lib/session-shared";
 
 type OfferId = MembershipOffer["id"];
@@ -20,11 +20,13 @@ const TIER_OFFERS = MEMBERSHIP_OFFERS.filter((offer) => offer.tier);
 
 export function MembershipBoard({
   plan,
+  admin = false,
   currentTier,
   initialOffer,
   source,
 }: {
   plan: Plan;
+  admin?: boolean;
   /** The tier from the member's last completed AQ ZERO request, when known. */
   currentTier: MembershipTier | null;
   initialOffer: OfferId | null;
@@ -33,10 +35,7 @@ export function MembershipBoard({
   const { t } = useI18n();
   const [checkout, setCheckout] = useState<OfferId | null>(initialOffer);
 
-  const stateOf = (offer: MembershipOffer) => {
-    if (offer.plan === "growth") return plan === "growth" ? "current" : plan === "enterprise" ? "included" : "open";
-    return plan === "enterprise" && currentTier === offer.tier ? "current" : "open";
-  };
+  const stateOf = (offer: MembershipOffer) => offerState(offer, { plan, admin, currentTier });
 
   return (
     <>

@@ -22,6 +22,8 @@ export type RecordSpec<T> = {
   max?: number;
   /** Reads rows from an older local file layout when `file` does not exist yet. */
   legacy?: { file: string; pick: (raw: unknown) => T[] };
+  /** Extra table columns copied from the record, so the desk can query them directly in Supabase. */
+  columns?: (item: T) => Record<string, string | null>;
 };
 
 export type InboxRecord = { id: string; table: "contact_messages" | "order_enquiries"; at: string; payload: Record<string, string> };
@@ -60,9 +62,21 @@ export const INBOX: RecordSpec<InboxRecord> = {
 };
 
 export const ZERO: RecordSpec<ZeroRegistration> = {
-  table: "zero_registrations",
+  table: "zero_waitlist",
   file: "zero-interest.json",
   keys: (row) => ({ id: row.id, at: row.at, userId: row.userId || null, email: lower(row.email) }),
+  columns: (row) => ({
+    name: row.name || null,
+    company: row.company || null,
+    intent: row.intent ?? "waitlist",
+    programme: row.programme ?? null,
+    product: row.product || null,
+    annual_volume: row.annualVolume || null,
+    phone: row.phone || null,
+    call_date: row.callDate || null,
+    call_window: row.callWindow || null,
+    status: row.status,
+  }),
 };
 
 export const BANS: RecordSpec<BanRow> = {
@@ -134,7 +148,7 @@ export const RECORD_SPECS = [
 ] as RecordSpec<unknown>[];
 
 /** The row written to Supabase for one record. */
-export function toRow<T>(spec: RecordSpec<T>, item: T) {
+export function toRow<T>(spec: RecordSpec<T>, item: T): Record<string, unknown> & { id: string; at: string; user_id: string | null; email: string | null; data: T } {
   const keys = spec.keys(item);
-  return { id: keys.id, at: keys.at, user_id: keys.userId ?? null, email: keys.email ?? null, data: item };
+  return { ...spec.columns?.(item), id: keys.id, at: keys.at, user_id: keys.userId ?? null, email: keys.email ?? null, data: item };
 }

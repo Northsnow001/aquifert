@@ -39,9 +39,10 @@ function routeBadge(canal: string) {
   return "Direct Route";
 }
 
-function resetLabel(isoDate: string) {
-  const date = new Date(`${isoDate}T00:00:00Z`);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).toUpperCase();
+function usageLine(usage: Usage) {
+  const resets = new Date(`${usage.resetsOn}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }).toUpperCase();
+  const remaining = usage.limit > 0 ? `${Math.max(0, usage.limit - usage.used).toLocaleString()} remaining` : "unlimited";
+  return `${usage.used.toLocaleString()}${usage.limit > 0 ? ` of ${usage.limit.toLocaleString()}` : ""} calculated · ${remaining} · resets ${resets}`;
 }
 
 function Row({ label, value, strong = false, accent = false }: { label: string; value: string; strong?: boolean; accent?: boolean }) {
@@ -89,6 +90,7 @@ export function FreightCalculator({
   const [extraPortDays, setExtraPortDays] = useState(Number(params.get("days") ?? 2.5));
   const [quote, setQuote] = useState<(Success & { key: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [usage, setUsage] = useState(initialUsage);
   const [pending, startTransition] = useTransition();
 
@@ -143,6 +145,7 @@ export function FreightCalculator({
     });
     router.replace(`/hub/freight-calculator?${query.toString()}`);
     void navigator.clipboard?.writeText(`${window.location.origin}/hub/freight-calculator?${query.toString()}`);
+    setCopied(true);
   }
 
   const season = seasonalName();
@@ -151,31 +154,31 @@ export function FreightCalculator({
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-xl font-black text-ink">Freight Calculator</h1>
-        <p className="text-sm text-mid">Dry bulk fertilizer and commodity voyage estimates.</p>
+        <h1 className="text-[28px] font-semibold tracking-tight text-ink">Freight Calculator — Dry Bulk Voyage Estimate</h1>
+        <p className="text-sm text-mid">Freight Rate · Route & Voyage Days · Cost Breakdown · Benchmark Check</p>
       </div>
 
       <div className={`rounded-xl border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] ${limitReached ? "border-[#f3c9c5] bg-[#fdf2f1] text-[#b42318]" : "border-border bg-surface text-mid"}`}>
-        {usage.used} {usage.used === 1 ? "search" : "searches"} used · {usage.limit ? `${usage.limit} per month` : "unlimited searches"} · resets {resetLabel(usage.resetsOn)}
+        {usageLine(usage)}
       </div>
 
       {bunkers.length ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2" aria-label="VLSFO bunker prices">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-mid">VLSFO</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-1.5 pl-4" aria-label="VLSFO bunker prices">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">VLSFO bunker</span>
           {bunkers.map((hub) => (
             <button
               key={hub.city}
               type="button"
               onClick={() => setBunkerPrice(hub.price)}
-              className={`rounded-lg border px-2.5 py-1 text-xs ${bunkerPrice === hub.price ? "border-blue bg-blue-light text-blue" : "border-border bg-white text-ink"}`}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${bunkerPrice === hub.price ? "border-[#b7e0c8] bg-[#e8f7ee] text-[#178a4c]" : "border-border text-mid"}`}
             >
-              <span className="text-mid">{hub.city}</span> <span className="font-mono">${num(hub.price)}</span>
+              {hub.city} <span className="font-mono">${num(hub.price)}</span>
             </button>
           ))}
         </div>
       ) : null}
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
         <form
           className="rounded-xl border border-border bg-surface p-4"
           onSubmit={(event) => {
@@ -190,6 +193,7 @@ export function FreightCalculator({
           </div>
           <PortField countryLabel="Discharge country" label="Discharge port" value={discharge} onSelect={setDischarge} ports={ports} />
           <div className="my-4 h-px bg-border" />
+          <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">— Cargo parameters</p>
           <label className="mb-3 block">
             <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Cargo type</span>
             <select value={cargoType} onChange={(event) => setCargoType(event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm">
@@ -234,7 +238,6 @@ export function FreightCalculator({
               <input type="number" step="0.5" value={extraPortDays} onChange={(event) => setExtraPortDays(Number(event.target.value))} className="w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
             </label>
           </div>
-          {error ? <p className="mt-4 rounded-lg border border-[#f3c9c5] bg-[#fdf2f1] px-3 py-2 text-[13px] text-[#b42318]">{error}</p> : null}
           <div className="mt-4 flex gap-2">
             <button
               type="submit"
@@ -251,10 +254,12 @@ export function FreightCalculator({
               </button>
             ) : null}
           </div>
+          {error ? <p className="mt-2 rounded-lg bg-[#fdecec] px-3 py-2 text-xs text-[#b42318]">{error}</p> : null}
+          {copied ? <p className="mt-2 rounded-lg bg-[#e8f7ee] px-3 py-2 text-xs text-[#178a4c]">Share link copied to clipboard.</p> : null}
         </form>
 
         {!result ? (
-          <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
+          <div className="flex min-h-[520px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
             <Ship className="mb-3 h-8 w-8 text-dim" />
             <p className="max-w-sm text-sm leading-relaxed text-mid">
               {shared && load && discharge
@@ -279,9 +284,9 @@ export function FreightCalculator({
             ) : null}
 
             <div className="rounded-xl border border-border bg-surface px-6 py-5">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">Estimated freight rate</p>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">Estimated freight rate</p>
               <div className="mt-1 flex items-end gap-3">
-                <p className="font-mono text-5xl font-black tracking-tight text-blue">{usd2(result.quotedRate)}</p>
+                <p className="font-mono text-5xl font-semibold tracking-tight text-blue">{usd2(result.quotedRate)}</p>
                 <p className="mb-1.5 text-sm font-semibold uppercase tracking-wide text-mid">USD / MT</p>
               </div>
               <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-mid">
@@ -293,17 +298,17 @@ export function FreightCalculator({
             <div className="rounded-xl border border-border bg-surface px-5 py-4">
               <div className="flex flex-wrap items-center gap-4">
                 <div>
-                  <p className="font-mono text-2xl font-bold text-ink">{num(result.route.nauticalMiles)} nm</p>
+                  <p className="font-mono text-2xl font-semibold text-ink">{num(result.route.nauticalMiles)} nm</p>
                   <p className="font-mono text-[10px] uppercase tracking-wider text-mid">Nautical miles</p>
                 </div>
                 <div className="h-8 w-px bg-border" />
                 <div>
-                  <p className="font-mono text-2xl font-bold text-ink">{num(result.totalDays, 1)} days</p>
+                  <p className="font-mono text-2xl font-semibold text-ink">{num(result.totalDays, 1)} days</p>
                   <p className="font-mono text-[10px] uppercase tracking-wider text-mid">Total days</p>
                 </div>
                 <div className="h-8 w-px bg-border" />
                 <div>
-                  <p className="text-lg font-bold text-ink">{result.vesselLabel}</p>
+                  <p className="text-lg font-semibold text-ink">{result.vesselLabel}</p>
                   <p className="font-mono text-[10px] uppercase tracking-wider text-mid">BDI {num(quote?.bdi ?? bdi)}</p>
                 </div>
                 <span className="ml-auto rounded-full border border-[#b7e0c8] bg-[#e8f7ee] px-3 py-1 text-xs font-semibold text-[#178a4c]">
@@ -368,7 +373,7 @@ export function FreightCalculator({
             </div>
 
             <div className="rounded-xl border border-border bg-surface px-5 py-4">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">Market benchmark (verified rates)</p>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">Market benchmark (verified rates)</p>
               {band ? (
                 <dl className="mt-3 divide-y divide-border text-[13px]">
                   <div className="flex justify-between py-2"><dt className="text-mid">Match tier</dt><dd>{band.label ?? TIER_LABEL[band.matchType] ?? band.matchType}</dd></div>
@@ -399,7 +404,7 @@ export function FreightCalculator({
             </div>
 
             <div className="rounded-xl border border-border bg-surface px-5 py-4">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">AI market assessment</p>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">AI market assessment</p>
               <p className="mt-3 text-sm leading-relaxed text-ink">
                 This panel is advisory on the live hub and does not replace the headline rate. The Gemini assessment is not connected in this build, so no suggested adjustment is applied.
               </p>

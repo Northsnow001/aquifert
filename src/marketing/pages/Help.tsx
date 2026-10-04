@@ -18,7 +18,7 @@ const KB: { match: string[]; answer: string }[] = [
   {
     match: ["member", "pricing", "plan", "cost", "price of membership", "subscription", "sprout", "harvest", "scale"],
     answer:
-      "Membership replaces per-tonne margin with one flat fee: AQ Zero Sprout (up to 200t a month), AQ Zero Harvest (201–600t) and AQ Zero Scale (unlimited). The desk confirms pricing for your tier with you directly. Full details are on the Membership page.",
+      "Membership replaces per-tonne margin with one flat fee: AQ Zero Sprout (up to 200t a month), AQ Zero Harvest (201–600t) and AQ Zero Scale (unlimited). AQ Analytics covers licensed market data and analysis without physical trading. The desk confirms pricing for your tier with you directly. Full details are on the Membership page.",
   },
   {
     match: ["quote", "request", "buy", "purchase", "order", "source", "sourcing"],

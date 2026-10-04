@@ -7,16 +7,21 @@ import { toast } from "sonner";
 import { removeZeroRegistration, saveZeroRegistration } from "@/app/admin/zero/actions";
 import { EmptyState, btnDanger, btnPrimary, label, textarea } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
-import { programmeName, ZERO_STATUSES, ZERO_STATUS_LABEL, type ZeroRegistration, type ZeroStatus } from "@/lib/zero-types";
+import { intentOf, programmeName, ZERO_INTENT_SHORT, ZERO_INTENTS, ZERO_STATUSES, ZERO_STATUS_LABEL, type ZeroIntent, type ZeroRegistration, type ZeroStatus } from "@/lib/zero-types";
 
 const TONE: Record<ZeroStatus, string> = {
   new: "bg-[#e8f1fa] text-[#1463a5]",
   contacted: "bg-[#fff4de] text-[#9a5b00]",
+  scheduled: "bg-[#efe9fb] text-[#5b3cc4]",
   offered: "bg-[#e7f6ec] text-[#1f7a45]",
   declined: "bg-s2 text-dim",
 };
 
+const INTENT_TONE: Record<ZeroIntent, string> = { waitlist: "bg-s2 text-mid", call: "bg-[#fff4de] text-[#9a5b00]" };
+
 const tonnes = (value: string) => (Number(value) > 0 ? `${Number(value).toLocaleString("en-GB")} MT` : value || "—");
+
+const callDay = (value: string) => new Date(`${value}T00:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; onToggle: () => void }) {
   const router = useRouter();
@@ -50,7 +55,10 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
     <li className="border-b border-border last:border-b-0">
       <button type="button" onClick={onToggle} aria-expanded={open} className={`grid w-full grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_120px_20px] items-center gap-3 px-5 py-3 text-left transition hover:bg-s2/50 ${open ? "bg-s2/40" : ""}`}>
         <span className="min-w-0">
-          <span className="block truncate text-[13.5px] font-semibold text-ink">{row.company || "No company"}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[13.5px] font-semibold text-ink">{row.company || "No company"}</span>
+            <span className={`shrink-0 rounded-full px-1.5 py-px text-[10.5px] font-semibold ${INTENT_TONE[intentOf(row)]}`}>{ZERO_INTENT_SHORT[intentOf(row)]}</span>
+          </span>
           <span className="block truncate text-[12px] text-mid">
             {row.name} · {row.email}
           </span>
@@ -77,6 +85,20 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
                   {row.email}
                 </a>
               </dd>
+              <dt className="text-dim">Request</dt>
+              <dd className="text-ink">{intentOf(row) === "call" ? "Book a call for early discounted access" : "Join the waitlist"}</dd>
+              {intentOf(row) === "call" ? (
+                <>
+                  <dt className="text-dim">Preferred call</dt>
+                  <dd className="text-ink">
+                    {row.callDate ? callDay(row.callDate) : "—"}
+                    {row.callWindow ? `, ${row.callWindow}` : ""}
+                    {row.timezone ? <span className="text-dim"> ({row.timezone})</span> : null}
+                  </dd>
+                  <dt className="text-dim">Phone</dt>
+                  <dd className="text-ink">{row.phone ? <a href={`tel:${row.phone.replace(/[^\d+]/g, "")}`} className="text-blue">{row.phone}</a> : <span className="text-dim">Not given</span>}</dd>
+                </>
+              ) : null}
               <dt className="text-dim">Programme</dt>
               <dd className="text-ink">{programmeName(row.programme) || <span className="text-dim">Not chosen</span>}</dd>
               <dt className="text-dim">Annual volume</dt>
@@ -139,12 +161,16 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
 
 export function ZeroRegistrationsPanel({ rows }: { rows: ZeroRegistration[] }) {
   const [filter, setFilter] = useState<"all" | ZeroStatus>("all");
+  const [intent, setIntent] = useState<"all" | ZeroIntent>("all");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const needle = query.trim().toLowerCase();
-  const counts = Object.fromEntries(ZERO_STATUSES.map((key) => [key, rows.filter((row) => row.status === key).length])) as Record<ZeroStatus, number>;
-  const shown = rows.filter(
-    (row) => (filter === "all" || row.status === filter) && (!needle || [row.name, row.email, row.company, programmeName(row.programme), row.product, row.notes, row.adminNote].some((value) => value.toLowerCase().includes(needle))),
+  const byIntent = rows.filter((row) => intent === "all" || intentOf(row) === intent);
+  const counts = Object.fromEntries(ZERO_STATUSES.map((key) => [key, byIntent.filter((row) => row.status === key).length])) as Record<ZeroStatus, number>;
+  const shown = byIntent.filter(
+    (row) =>
+      (filter === "all" || row.status === filter) &&
+      (!needle || [row.name, row.email, row.company, programmeName(row.programme), row.product, row.notes, row.adminNote, row.phone ?? ""].some((value) => value.toLowerCase().includes(needle))),
   );
 
   if (!rows.length) {
@@ -168,13 +194,21 @@ export function ZeroRegistrationsPanel({ rows }: { rows: ZeroRegistration[] }) {
               onClick={() => setFilter(key)}
               className={`rounded-lg px-2.5 py-1 text-[12.5px] font-semibold transition ${filter === key ? "bg-blue-light text-blue" : "text-mid hover:text-ink"}`}
             >
-              {key === "all" ? "All" : ZERO_STATUS_LABEL[key]} <span className="font-mono text-[11px] opacity-70">{key === "all" ? rows.length : counts[key]}</span>
+              {key === "all" ? "All" : ZERO_STATUS_LABEL[key]} <span className="font-mono text-[11px] opacity-70">{key === "all" ? byIntent.length : counts[key]}</span>
             </button>
           ))}
         </div>
+        <select value={intent} onChange={(event) => setIntent(event.target.value as "all" | ZeroIntent)} aria-label="Filter by request" className="h-9 rounded-lg border border-border bg-white px-2.5 text-[13px] text-ink">
+          <option value="all">Waitlist and calls</option>
+          {ZERO_INTENTS.map((key) => (
+            <option key={key} value={key}>
+              {key === "call" ? "Call requests" : "Waitlist"} ({rows.filter((row) => intentOf(row) === key).length})
+            </option>
+          ))}
+        </select>
         <label className="relative">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-dim" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, notes" aria-label="Search registrations" className="h-9 w-64 rounded-lg border border-border bg-white pl-8 pr-3 text-[13px] text-ink" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, notes" aria-label="Search registrations" className="h-9 w-56 rounded-lg border border-border bg-white pl-8 pr-3 text-[13px] text-ink" />
         </label>
       </div>
       <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_120px_20px] gap-3 border-b border-border bg-s2/50 px-5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-dim md:grid">
