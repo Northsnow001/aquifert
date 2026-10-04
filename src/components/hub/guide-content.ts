@@ -80,7 +80,7 @@ const ALL_SECTIONS: GuideSection[] = [
     body: [
       "The Hub is your morning read. It opens with AQ View - Trader Analysis on the left, which gives the desk's reasoning for Nitrogen, Phosphate and Potassium, and TELEX on the right.",
       "The Telex feed is the desk's running log of market events: tenders, price moves, plant outages, policy changes and cargoes on the move. Newest items sit at the top. Posts are marked Public, AQ Analytics or AQ ZERO and appear according to your plan. Treat Telex as preliminary intel and verify figures before trading.",
-      "Further down, Direct Hedge | Paper Forward Curves shows bid and ask prices in USD/t by month for each product when the desk publishes them. Pick a report from the Published dropdown; arrows show whether each price moved higher, lower or held. Next to it, Market Indicators scores Nitrogen (green), Phosphate (orange) and Potassium (red) from 0 to 100 with a stance. Hover a card for the desk's longer note.",
+      "Further down, Direct Hedge | Paper Forward Curves shows the latest bid and ask prices in USD/t by month for each product when the desk publishes them, with International Urea & Amsul first. Arrows show whether each price moved higher, lower or held. Next to it, Market Indicators scores Nitrogen (green), Phosphate (orange) and Potassium (red) from 0 to 100 with a stance. Hover a card for the desk's longer note.",
     ],
     points: [
       { term: "Bullish", text: "Score above 66." },

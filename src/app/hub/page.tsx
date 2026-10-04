@@ -57,7 +57,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col gap-6 pb-2">
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[640px]">
+        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[60vh]">
           <header className="shrink-0 border-b border-border px-5 py-3.5">
             <h2 className="text-[16.5px] font-semibold text-ink">AQ View - Trader Analysis</h2>
             {readingsDay ? <p className="font-mono text-[12px] uppercase tracking-wide text-dim">{formatDay(readingsDay)}</p> : null}
@@ -83,7 +83,7 @@ export default async function HomePage() {
           </div>
         </article>
 
-        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[640px]">
+        <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[60vh]">
           <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-3.5">
             <span className="aq-chip aq-chip-blue flex h-8 w-8 items-center justify-center rounded-[10px] text-white">
               <Radio className="h-4 w-4" />

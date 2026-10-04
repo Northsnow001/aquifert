@@ -148,7 +148,7 @@ export const GUIDE: GuideSection[] = [
     icon: "hedge",
     href: "/admin/hedge",
     summary:
-      "The Direct Hedge and Paper Forward Curves block on the hub home page. Members see the latest published report first and can switch to earlier dates.",
+      "The Direct Hedge and Paper Forward Curves block on the hub home page. Members see the latest published report only, with any urea table shown first.",
     tasks: [
       {
         title: "Publish a report from a paste",
