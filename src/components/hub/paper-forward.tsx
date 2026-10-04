@@ -1,4 +1,3 @@
-import { FileText } from "lucide-react";
 import { HedgeMatrix } from "@/components/hub/hedge-matrix";
 import { splitParagraphs, type HedgeReport, type HedgeSection } from "@/lib/content-types";
 
@@ -13,8 +12,7 @@ export function PaperForwardBrief({ reports, className = "" }: { reports: HedgeR
   return (
     <section aria-labelledby="hedge-title" className={`aq-card flex min-w-0 flex-col overflow-hidden ${className}`}>
       <header className="shrink-0 border-b border-border px-5 py-3.5">
-        <h2 id="hedge-title" className="flex items-center gap-2 text-[16.5px] font-semibold text-ink">
-          <FileText className="h-4 w-4 shrink-0 text-blue" />
+        <h2 id="hedge-title" className="text-[16.5px] font-semibold text-ink">
           Direct Hedge
         </h2>
         <p className="font-mono text-[12px] uppercase tracking-wide text-dim">Paper forward curves</p>

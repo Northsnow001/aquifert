@@ -1,4 +1,4 @@
-import { Info, Radio } from "lucide-react";
+import { Info } from "lucide-react";
 import { FreightAnalytics } from "@/components/hub/freight-board";
 import { HomeHero } from "@/components/hub/home-hero";
 import { Markdown } from "@/components/hub/markdown";
@@ -84,10 +84,7 @@ export default async function HomePage() {
         </article>
 
         <article className="aq-card flex min-w-0 flex-col overflow-hidden lg:h-[60vh]">
-          <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-3.5">
-            <span className="aq-chip aq-chip-blue flex h-8 w-8 items-center justify-center rounded-[10px] text-white">
-              <Radio className="h-4 w-4" />
-            </span>
+          <header className="shrink-0 border-b border-border px-5 py-3.5">
             <div className="min-w-0">
               <div className="flex items-baseline gap-1.5">
                 <h2 className="text-[16.5px] font-semibold text-ink">TELEX</h2>
