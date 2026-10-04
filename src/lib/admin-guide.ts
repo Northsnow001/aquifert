@@ -128,14 +128,14 @@ export const GUIDE: GuideSection[] = [
     icon: "indicators",
     href: "/admin/indicators",
     summary:
-      "Nitrogen, phosphate and potassium sentiment. Each reading drives a dial on the hub home page, with a caption under the dial and notes in the Market Analysis column.",
+      "Nitrogen, phosphate and potassium sentiment. Each reading drives a dial on the hub home page, with a caption under the dial and notes in the AQ View - Trader Analysis column.",
     tasks: [
       {
         title: "Move the dials",
         steps: [
           "Set each reading from 0 to 100. Above 66 reads Bullish, 34 to 66 Neutral, and below 34 Bearish.",
           "Write the caption as one line members can take in at a glance.",
-          "Use the notes for the reasoning. They fill the Market Analysis column.",
+          "Use the notes for the reasoning. They fill the AQ View - Trader Analysis column.",
           "Save. The dashboard shows the dials as members now see them.",
         ],
       },

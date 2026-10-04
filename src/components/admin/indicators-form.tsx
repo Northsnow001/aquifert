@@ -203,7 +203,7 @@ export function IndicatorsForm({ indicators, updatedAt }: { indicators: Indicato
               </div>
               <div>
                 <label className={label} htmlFor={`note-${item.name}`}>
-                  Notes <span className="font-normal normal-case tracking-normal text-dim">(optional, shown in Market Analysis)</span>
+                  Notes <span className="font-normal normal-case tracking-normal text-dim">(optional, shown in AQ View - Trader Analysis)</span>
                 </label>
                 <textarea
                   id={`note-${item.name}`}
