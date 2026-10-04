@@ -11,6 +11,9 @@ import { getHubAccess } from "@/lib/aq-modules/access";
 import { isTier, TIER_LABEL, type MembershipOffer } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
 import { MODULES, PLAN_LABEL } from "@/lib/aq-modules/types";
+import { getDeskSettings } from "@/lib/desk-settings/store";
+import { findZeroRegistration } from "@/lib/zero-interest";
+import { zeroSummary } from "@/lib/zero-types";
 
 export const metadata: Metadata = { title: "Membership" };
 export const dynamic = "force-dynamic";
@@ -50,7 +53,10 @@ const FAQ = [
 
 export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ plan?: string; tier?: string; from?: string }> }) {
   const [{ plan: planParam, tier: tierParam, from }, { user, admin, modules, can }] = await Promise.all([searchParams, getHubAccess()]);
-  const [allowances, requests] = await Promise.all([planAllowances(modules), myMembershipRequests(user)]);
+  const [allowances, requests, settings, registration] = await Promise.all([planAllowances(modules), myMembershipRequests(user), getDeskSettings(), findZeroRegistration(user)]);
+  const zero = settings.zero.showOnHub
+    ? { name: user.name, email: user.email, success: settings.zero.success, last: registration ? zeroSummary(registration) : null }
+    : null;
 
   const fromModule = MODULES.find((item) => item.key === from);
   const sorted = [...requests].sort((a, b) => b.at.localeCompare(a.at));
@@ -67,7 +73,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   return (
     <div className="flex flex-col gap-6 pb-2">
       <div className="flex flex-col gap-4">
-        <MembershipBoard plan={user.plan} admin={admin} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
+        <MembershipBoard plan={user.plan} admin={admin} zero={zero} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
       </div>
 
       {fromModule ? (

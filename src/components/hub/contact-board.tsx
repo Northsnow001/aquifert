@@ -5,9 +5,9 @@ import { useEffect, useState, useTransition } from "react";
 import { CalendarClock, CheckCircle2, CircleAlert, FileText, MessageSquare, Phone, Send, X } from "lucide-react";
 import { sendContactMessage } from "@/app/hub/contact/actions";
 import { areaClass, btnPrimary, fieldClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
+import { CalendlyFrame } from "@/components/hub/calendly-frame";
 
 const WHATSAPP = "https://wa.me/?text=Hello%20Aquifert%20Support";
-const CALENDLY = "https://calendly.com/aquifert?hide_gdpr_banner=1";
 
 type View = "cards" | "meeting" | "message";
 
@@ -116,11 +116,7 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
                 <X className="h-4 w-4" />
               </button>
             </header>
-            <iframe
-              src={CALENDLY}
-              title="Aquifert Calendly scheduling"
-              className="min-h-0 w-full flex-1 border-0"
-            />
+            <CalendlyFrame name={name} email={email} className="min-h-0 flex-1" />
           </section>
         </div>
       ) : null}

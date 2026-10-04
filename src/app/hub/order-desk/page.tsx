@@ -10,7 +10,7 @@ import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
 import { resolvePort } from "@/lib/ports";
 import { getSession } from "@/lib/session";
 import { findZeroRegistration } from "@/lib/zero-interest";
-import { intentOf } from "@/lib/zero-types";
+import { zeroSummary } from "@/lib/zero-types";
 
 export default async function OrderDeskPage({ searchParams }: { searchParams: Promise<{ tab?: string; product?: string; destination?: string }> }) {
   const [{ tab, product, destination }, user] = await Promise.all([searchParams, getSession()]);
@@ -59,21 +59,7 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
           plan={user?.plan ?? "core"}
           admin={isAdminUser(user)}
           success={settings.zero.success}
-          registered={
-            registration
-              ? {
-                  at: registration.at,
-                  programme: registration.programme ?? null,
-                  intent: intentOf(registration),
-                  callDate: registration.callDate ?? "",
-                  callWindow: registration.callWindow ?? "",
-                  phone: registration.phone ?? "",
-                  product: registration.product,
-                  annualVolume: registration.annualVolume,
-                  company: registration.company,
-                }
-              : null
-          }
+          registered={registration ? zeroSummary(registration) : null}
           compare={modules && allowances ? <ComparePlans plan={user?.plan ?? null} allowances={allowances} access={modules.access} /> : null}
         />
       ) : (

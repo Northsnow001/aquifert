@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { Check, CheckCircle2, CircleAlert, Crown, Send, X } from "lucide-react";
+import { ArrowRight, Check, CheckCircle2, CircleAlert, Crown, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { requestPlan } from "@/app/hub/account/membership/actions";
 import { areaClass, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { useI18n } from "@/components/app/i18n";
 import { AccountIntro } from "@/components/hub/kit";
+import { ZeroRegisterDialog } from "@/components/hub/zero-panel";
 import { MEMBERSHIP_OFFERS, offerState, type MembershipOffer, type MembershipTier } from "@/lib/aq-modules/membership";
 import type { Plan } from "@/lib/session-shared";
+import type { ZeroSummary } from "@/lib/zero-types";
 
 type OfferId = MembershipOffer["id"];
 
@@ -21,18 +24,22 @@ const TIER_OFFERS = MEMBERSHIP_OFFERS.filter((offer) => offer.tier);
 export function MembershipBoard({
   plan,
   admin = false,
+  zero = null,
   currentTier,
   initialOffer,
   source,
 }: {
   plan: Plan;
   admin?: boolean;
+  /** Set while Aquifert Zero registrations are open: AQ Zero tiers then go to the waitlist or a Calendly call. */
+  zero?: { name: string; email: string; success: string; last: ZeroSummary | null } | null;
   /** The tier from the member's last completed AQ ZERO request, when known. */
   currentTier: MembershipTier | null;
   initialOffer: OfferId | null;
   source: string;
 }) {
   const { t } = useI18n();
+  const router = useRouter();
   const [checkout, setCheckout] = useState<OfferId | null>(initialOffer);
 
   const stateOf = (offer: MembershipOffer) => offerState(offer, { plan, admin, currentTier });
@@ -51,10 +58,12 @@ export function MembershipBoard({
         </p>
       ) : null}
 
-      <div className="aq-stagger grid gap-5 pt-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="@container">
+      <div className="aq-stagger grid gap-5 pt-3 @xl:grid-cols-2 @5xl:grid-cols-4">
         {MEMBERSHIP_OFFERS.map((offer) => {
           const state = stateOf(offer);
           const analytics = offer.plan === "growth";
+          const shortName = offer.tier ? offer.name.replace(/^AQ Zero /, "") : offer.name;
           const frame =
             state !== "open"
               ? "ring-2 ring-[#2fa865]"
@@ -64,14 +73,9 @@ export function MembershipBoard({
                   ? "border-2 border-navy-400"
                   : "";
           const badge = state === "current" ? t("mem.current") : state === "included" ? t("mem.included") : offer.popular ? t("mem.popular") : null;
-          const button =
-            state === "current"
-              ? t("mem.current")
-              : state === "included"
-                ? t("mem.included")
-                : plan === "enterprise" && offer.tier
-                  ? t("mem.switch", { name: offer.name })
-                  : t("mem.select", { name: offer.name });
+          const action = plan === "enterprise" && offer.tier ? "mem.switch" : "mem.select";
+          const buttonBase =
+            "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-center text-[15px] font-semibold leading-snug transition active:scale-[0.98]";
           return (
             <section key={offer.id} aria-label={offer.name} className={`aq-card relative flex flex-col p-6 transition-transform duration-200 hover:-translate-y-0.5 ${frame}`}>
               {badge ? (
@@ -101,28 +105,50 @@ export function MembershipBoard({
                 ))}
               </ul>
               <div className="mt-auto pt-6">
-                <button
-                  type="button"
-                  disabled={state !== "open"}
-                  onClick={() => setCheckout(offer.id)}
-                  className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-full px-5 text-[15.5px] font-semibold transition active:scale-[0.98] disabled:cursor-default ${
-                    state !== "open"
-                      ? "bg-s3 text-mid"
-                      : offer.popular
-                        ? "bg-teal-500 text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] hover:bg-teal-600"
-                        : "bg-navy-600 text-white shadow-[0_8px_18px_-10px_rgb(37_79_118/0.9)] hover:bg-navy-700"
-                  }`}
-                >
-                  {state !== "open" ? <Check className="h-4 w-4" aria-hidden /> : null}
-                  {button}
-                </button>
+                {state === "open" ? (
+                  <button
+                    type="button"
+                    onClick={() => setCheckout(offer.id)}
+                    aria-label={t(action, { name: offer.name })}
+                    className={`${buttonBase} text-white ${
+                      offer.popular
+                        ? "bg-teal-500 shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] hover:bg-teal-600"
+                        : "bg-navy-600 shadow-[0_8px_18px_-10px_rgb(37_79_118/0.9)] hover:bg-navy-700"
+                    }`}
+                  >
+                    {t(action, { name: shortName })}
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                  </button>
+                ) : analytics ? (
+                  <Link href="/hub/analytics" className={`${buttonBase} border border-[#2fa865] bg-[#f1faf4] text-[#1f7a45] no-underline hover:bg-[#e3f5ea]`}>
+                    {t("mem.open", { name: offer.name })}
+                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                  </Link>
+                ) : (
+                  <p className={`${buttonBase} border border-[#2fa865] bg-[#f1faf4] text-[#1f7a45]`}>
+                    <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
+                    {t("mem.current")}
+                  </p>
+                )}
               </div>
             </section>
           );
         })}
       </div>
+      </div>
 
-      {checkout ? (
+      {checkout && zero && checkout !== "analytics" ? (
+        <ZeroRegisterDialog
+          key={checkout}
+          initial={checkout}
+          name={zero.name}
+          email={zero.email}
+          last={zero.last}
+          success={zero.success}
+          onSaved={() => router.refresh()}
+          onClose={() => setCheckout(null)}
+        />
+      ) : checkout ? (
         <RequestDialog
           key={checkout}
           offerId={checkout}

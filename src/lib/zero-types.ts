@@ -1,4 +1,5 @@
 import { MEMBERSHIP_OFFERS, type MembershipOffer } from "@/lib/aq-modules/membership";
+import { CALENDLY_URL } from "@/lib/calendly";
 
 export type ZeroProgrammeId = MembershipOffer["id"];
 
@@ -31,10 +32,8 @@ export const ZERO_INTENT_SHORT: Record<ZeroIntent, string> = { waitlist: "Waitli
 /** What the member is told happens next, in the confirmation email and on screen. */
 export const ZERO_NEXT_STEP: Record<ZeroIntent, string> = {
   waitlist: "You are on the Aquifert Zero waitlist. We will get back to you as soon as Aquifert Zero is live.",
-  call: "The desk will email you to confirm a call time. Early callers get discounted access when Aquifert Zero goes live.",
+  call: `Pick your call time in the Aquifert calendar (${CALENDLY_URL}); Calendly emails you the invite. Early callers get discounted access when Aquifert Zero goes live.`,
 };
-
-export const CALL_WINDOWS = ["Morning (09:00–12:00)", "Afternoon (12:00–17:00)", "Evening (17:00–20:00)"] as const;
 
 export const ZERO_STATUSES = ["new", "contacted", "scheduled", "offered", "declined"] as const;
 export type ZeroStatus = (typeof ZERO_STATUSES)[number];
@@ -50,6 +49,27 @@ export const ZERO_STATUS_LABEL: Record<ZeroStatus, string> = {
 /** Registrations saved before members chose between the waitlist and a call were waitlist sign-ups. */
 export const intentOf = (row: { intent?: ZeroIntent }): ZeroIntent => row.intent ?? "waitlist";
 
+/** What the hub shows a member about their latest registration. */
+export type ZeroSummary = {
+  at: string;
+  programme: ZeroProgrammeId | null;
+  intent: ZeroIntent;
+  booked: boolean;
+  product: string;
+  annualVolume: string;
+  company: string;
+};
+
+export const zeroSummary = (row: ZeroRegistration): ZeroSummary => ({
+  at: row.at,
+  programme: row.programme ?? null,
+  intent: intentOf(row),
+  booked: Boolean(row.callBookedAt) || row.status === "scheduled",
+  product: row.product,
+  annualVolume: row.annualVolume,
+  company: row.company,
+});
+
 export type ZeroRegistration = {
   id: string;
   at: string;
@@ -62,10 +82,13 @@ export type ZeroRegistration = {
   /** Missing on registrations made before the waitlist or call choice existed. */
   intent?: ZeroIntent;
   phone?: string;
-  /** Preferred call day as YYYY-MM-DD, when the member asked for a call. */
+  /** Preferred call day as YYYY-MM-DD, from call requests made before booking moved to Calendly. */
   callDate?: string;
   callWindow?: string;
   timezone?: string;
+  /** When the member finished booking the call in Calendly. */
+  callBookedAt?: string;
+  calendlyInvitee?: string;
   annualVolume: string;
   product: string;
   notes: string;

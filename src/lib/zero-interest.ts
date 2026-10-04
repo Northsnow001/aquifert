@@ -27,7 +27,7 @@ export async function addZeroRegistration(input: Omit<ZeroRegistration, "id" | "
   return row;
 }
 
-export async function updateZeroRegistration(id: string, patch: Partial<Pick<ZeroRegistration, "status" | "adminNote">>): Promise<ZeroRegistration | null> {
+export async function updateZeroRegistration(id: string, patch: Partial<Pick<ZeroRegistration, "status" | "adminNote" | "callBookedAt" | "calendlyInvitee">>): Promise<ZeroRegistration | null> {
   const row = await getRecord(ZERO, id);
   if (!row) return null;
   const next = { ...row, ...patch, updatedAt: new Date().toISOString() };

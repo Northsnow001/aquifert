@@ -89,14 +89,37 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
               <dd className="text-ink">{intentOf(row) === "call" ? "Book a call for early discounted access" : "Join the waitlist"}</dd>
               {intentOf(row) === "call" ? (
                 <>
-                  <dt className="text-dim">Preferred call</dt>
+                  <dt className="text-dim">Calendly</dt>
                   <dd className="text-ink">
-                    {row.callDate ? callDay(row.callDate) : "—"}
-                    {row.callWindow ? `, ${row.callWindow}` : ""}
-                    {row.timezone ? <span className="text-dim"> ({row.timezone})</span> : null}
+                    {row.callBookedAt ? (
+                      <>
+                        Booked {formatStamp(row.callBookedAt)}
+                        <span className="text-dim"> · time and invite are in Calendly</span>
+                      </>
+                    ) : (
+                      <span className="text-dim">Not booked yet. The member has the Calendly link in their confirmation email.</span>
+                    )}
                   </dd>
-                  <dt className="text-dim">Phone</dt>
-                  <dd className="text-ink">{row.phone ? <a href={`tel:${row.phone.replace(/[^\d+]/g, "")}`} className="text-blue">{row.phone}</a> : <span className="text-dim">Not given</span>}</dd>
+                  {row.callDate ? (
+                    <>
+                      <dt className="text-dim">Preferred call</dt>
+                      <dd className="text-ink">
+                        {callDay(row.callDate)}
+                        {row.callWindow ? `, ${row.callWindow}` : ""}
+                        {row.timezone ? <span className="text-dim"> ({row.timezone})</span> : null}
+                      </dd>
+                    </>
+                  ) : null}
+                  {row.phone ? (
+                    <>
+                      <dt className="text-dim">Phone</dt>
+                      <dd className="text-ink">
+                        <a href={`tel:${row.phone.replace(/[^\d+]/g, "")}`} className="text-blue">
+                          {row.phone}
+                        </a>
+                      </dd>
+                    </>
+                  ) : null}
                 </>
               ) : null}
               <dt className="text-dim">Programme</dt>
