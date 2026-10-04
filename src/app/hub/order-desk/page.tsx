@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { OrderDeskBoard } from "@/components/hub/order-desk-board";
+import { ComparePlans } from "@/components/hub/plans/compare-plans";
+import { planAllowances } from "@/components/hub/plans/load";
 import { ZeroPanel } from "@/components/hub/zero-panel";
+import { getAqModules } from "@/lib/aq-modules/store";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
 import { resolvePort } from "@/lib/ports";
@@ -12,8 +15,10 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
   const [settings, freight] = await Promise.all([getDeskSettings(), getFreightDesk()]);
   const ports = activePorts(freight);
   const showZero = settings.zero.showOnHub;
-  const zero = showZero && tab === "zero";
-  const registration = zero && user ? await findZeroRegistration(user) : null;
+  const prefilled = Boolean(product || destination);
+  const zero = showZero && (tab === "zero" || (tab !== "desk" && !prefilled));
+  const [registration, modules] = zero ? await Promise.all([user ? findZeroRegistration(user) : null, getAqModules()]) : [null, null];
+  const allowances = modules ? await planAllowances(modules) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
@@ -27,8 +32,8 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
       {showZero ? (
         <nav className="flex gap-1 rounded-full bg-black/[.05] p-1" aria-label="Order Desk sections">
           {[
-            { href: "/hub/order-desk", label: "Trading Desk", active: !zero },
             { href: "/hub/order-desk?tab=zero", label: "Aquifert Zero", active: zero, badge: "Soon" },
+            { href: "/hub/order-desk?tab=desk", label: "Trading Desk", active: !zero },
           ].map((item) => (
             <Link
               key={item.href}
@@ -50,7 +55,8 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
           name={user?.name ?? ""}
           email={user?.email ?? ""}
           success={settings.zero.success}
-          registered={registration ? { at: registration.at, product: registration.product, annualVolume: registration.annualVolume, company: registration.company } : null}
+          registered={registration ? { at: registration.at, programme: registration.programme ?? null, product: registration.product, annualVolume: registration.annualVolume, company: registration.company } : null}
+          compare={modules && allowances ? <ComparePlans plan={user?.plan ?? null} allowances={allowances} access={modules.access} prices={false} /> : null}
         />
       ) : (
         <OrderDeskBoard

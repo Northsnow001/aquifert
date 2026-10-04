@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { removeZeroRegistration, saveZeroRegistration } from "@/app/admin/zero/actions";
 import { EmptyState, btnDanger, btnPrimary, label, textarea } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
-import { ZERO_STATUSES, ZERO_STATUS_LABEL, type ZeroRegistration, type ZeroStatus } from "@/lib/zero-types";
+import { programmeName, ZERO_STATUSES, ZERO_STATUS_LABEL, type ZeroRegistration, type ZeroStatus } from "@/lib/zero-types";
 
 const TONE: Record<ZeroStatus, string> = {
   new: "bg-[#e8f1fa] text-[#1463a5]",
@@ -56,7 +56,7 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
           </span>
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-[13px] text-ink">{row.product}</span>
+          <span className="block truncate text-[13px] text-ink">{[programmeName(row.programme), row.product].filter(Boolean).join(" · ")}</span>
           <span className="block font-mono text-[11.5px] text-mid">{tonnes(row.annualVolume)} / yr</span>
         </span>
         <span>
@@ -77,6 +77,8 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
                   {row.email}
                 </a>
               </dd>
+              <dt className="text-dim">Programme</dt>
+              <dd className="text-ink">{programmeName(row.programme) || <span className="text-dim">Not chosen</span>}</dd>
               <dt className="text-dim">Annual volume</dt>
               <dd className="text-ink">{tonnes(row.annualVolume)}</dd>
               <dt className="text-dim">Product</dt>
@@ -142,7 +144,7 @@ export function ZeroRegistrationsPanel({ rows }: { rows: ZeroRegistration[] }) {
   const needle = query.trim().toLowerCase();
   const counts = Object.fromEntries(ZERO_STATUSES.map((key) => [key, rows.filter((row) => row.status === key).length])) as Record<ZeroStatus, number>;
   const shown = rows.filter(
-    (row) => (filter === "all" || row.status === filter) && (!needle || [row.name, row.email, row.company, row.product, row.notes, row.adminNote].some((value) => value.toLowerCase().includes(needle))),
+    (row) => (filter === "all" || row.status === filter) && (!needle || [row.name, row.email, row.company, programmeName(row.programme), row.product, row.notes, row.adminNote].some((value) => value.toLowerCase().includes(needle))),
   );
 
   if (!rows.length) {

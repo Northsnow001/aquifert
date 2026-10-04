@@ -96,7 +96,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="aq-stagger grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile label="Order requests" value={orders.length} icon={Package} tone="blue" href="/hub/order-desk" hint={orders.length ? "With the desk" : "No requests yet"} />
+        <StatTile label="Order requests" value={orders.length} icon={Package} tone="blue" href="/hub/order-desk?tab=desk" hint={orders.length ? "With the desk" : "No requests yet"} />
         <StatTile
           label="Nitrogen reports this month"
           value={allowance(reports, nitrogenLimit)}
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
           className="lg:col-span-2"
           bodyClassName="p-4"
           actions={
-            <Link href="/hub/order-desk" className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue no-underline hover:underline">
+            <Link href="/hub/order-desk?tab=desk" className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue no-underline hover:underline">
               New request <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           }
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
           {orders.length ? (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {orders.map((item) => (
-                <Link key={item.id} href="/hub/order-desk" className="aq-lift rounded-2xl border border-border bg-white p-4 no-underline">
+                <Link key={item.id} href="/hub/order-desk?tab=desk" className="aq-lift rounded-2xl border border-border bg-white p-4 no-underline">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-[12px] font-semibold text-dim">{item.id.slice(-6).toUpperCase()}</span>
                     <Tag tone="amber">With the desk</Tag>
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
               title="No requests yet"
               body="Tell the desk the product, quantity and destination, and a trader comes back with a quote."
               action={
-                <Link href="/hub/order-desk" className={btnPrimary}>
+                <Link href="/hub/order-desk?tab=desk" className={btnPrimary}>
                   Order Fertilizer Now
                 </Link>
               }

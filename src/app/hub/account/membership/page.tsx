@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Info, Lock, Sparkles } from "lucide-react";
+import { ArrowRight, Clock, Info, Lock, Sparkles } from "lucide-react";
 import { btnPrimary } from "@/components/app/form";
 import { Tag } from "@/components/hub/kit";
+import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { MembershipBoard } from "@/components/hub/plans/membership-board";
-import { ALLOWANCE_LABEL, amount, isPlan, longDay, PLAN_ORDER, PLAN_PRICE, type Allowances } from "@/components/hub/plans/shared";
+import { isPlan, longDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { isTier, TIER_LABEL, type MembershipOffer } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
-import { MODULES, PLAN_LABEL, PLAN_RANK, type ModuleKey } from "@/lib/aq-modules/types";
-import type { Plan } from "@/lib/session-shared";
+import { MODULES, PLAN_LABEL } from "@/lib/aq-modules/types";
 
 export const metadata: Metadata = { title: "Membership" };
 export const dynamic = "force-dynamic";
-
-const ALLOWANCE_KEYS = Object.keys(ALLOWANCE_LABEL) as (keyof Allowances)[];
 
 const STATUS_COPY = {
   new: { label: "Received", body: "The desk has your request and will be in touch shortly." },
@@ -55,7 +53,6 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   const [allowances, requests] = await Promise.all([planAllowances(modules), myMembershipRequests(user)]);
 
   const fromModule = MODULES.find((item) => item.key === from);
-  const includedIn = (plan: Plan, key: ModuleKey) => PLAN_RANK[plan] >= PLAN_RANK[modules.access[key]];
   const sorted = [...requests].sort((a, b) => b.at.localeCompare(a.at));
   const open = sorted.find((item) => item.status !== "done");
   const lastTier = sorted.find((item) => item.status === "done" && item.requestedPlan === "enterprise" && item.tier)?.tier ?? null;
@@ -120,83 +117,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <section className="aq-card overflow-hidden lg:col-span-3" aria-labelledby="compare-title">
-          <header className="border-b border-border px-5 py-3.5">
-            <h2 id="compare-title" className="text-[16.5px] font-semibold text-ink">
-              Compare plans
-            </h2>
-            <p className="text-[13px] text-dim">Modules and allowances come straight from the desk&rsquo;s current settings.</p>
-          </header>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-[14.5px]">
-              <thead>
-                <tr className="border-b border-border bg-s2/70">
-                  <th scope="col" className="sticky left-0 bg-s2 px-5 py-3 font-semibold text-ink">
-                    Feature
-                  </th>
-                  {PLAN_ORDER.map((plan) => (
-                    <th key={plan} scope="col" className={`px-4 py-3 text-center font-semibold ${plan === user.plan ? "text-teal-700" : "text-ink"}`}>
-                      {PLAN_LABEL[plan]}
-                      <span className="block text-[12px] font-medium text-dim">{PLAN_PRICE[plan]}</span>
-                      {plan === user.plan ? <span className="block text-[11.5px] font-bold uppercase tracking-[0.08em]">Your plan</span> : null}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                <tr>
-                  <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                    AQ ONE hub, Telex, analysis and library
-                  </th>
-                  {PLAN_ORDER.map((plan) => (
-                    <td key={plan} className="px-4 py-2.5 text-center">
-                      <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" />
-                    </td>
-                  ))}
-                </tr>
-                <tr>
-                  <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                    Cost-to-cost quotes (no margin)
-                  </th>
-                  {PLAN_ORDER.map((plan) => (
-                    <td key={plan} className="px-4 py-2.5 text-center">
-                      {plan === "enterprise" ? <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" /> : <Lock className="mx-auto h-4 w-4 text-[#b8c3ce]" aria-label="Not included" />}
-                    </td>
-                  ))}
-                </tr>
-                {ALLOWANCE_KEYS.map((key) => (
-                  <tr key={key}>
-                    <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                      {ALLOWANCE_LABEL[key]}
-                    </th>
-                    {PLAN_ORDER.map((plan) => (
-                      <td key={plan} className={`px-4 py-2.5 text-center tabular-nums ${allowances[plan][key] === 0 ? "font-semibold text-teal-700" : "text-ink"}`}>
-                        {amount(allowances[plan][key])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                <tr className="bg-s2/50">
-                  <th scope="row" colSpan={4} className="px-5 py-2 text-[12px] font-bold uppercase tracking-[0.12em] text-teal-700">
-                    AQ Analytics modules
-                  </th>
-                </tr>
-                {MODULES.map((item) => (
-                  <tr key={item.key}>
-                    <th scope="row" className="sticky left-0 bg-white px-5 py-2.5 font-medium text-ink">
-                      {item.label}
-                    </th>
-                    {PLAN_ORDER.map((plan) => (
-                      <td key={plan} className="px-4 py-2.5 text-center">
-                        {includedIn(plan, item.key) ? <Check className="mx-auto h-4 w-4 text-teal-600" aria-label="Included" /> : <Lock className="mx-auto h-4 w-4 text-[#b8c3ce]" aria-label="Not included" />}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <ComparePlans plan={user.plan} allowances={allowances} access={modules.access} className="lg:col-span-3" />
 
         <section className="lg:col-span-2" aria-labelledby="faq-title">
           <h2 id="faq-title" className="mb-3 text-[17px] font-semibold text-ink">

@@ -8,11 +8,12 @@ import { getDeskSettings } from "@/lib/desk-settings/store";
 import { ZERO_PRODUCTS } from "@/lib/desk-settings/types";
 import { getSession } from "@/lib/session";
 import { addZeroRegistration, listZeroRegistrations } from "@/lib/zero-interest";
+import { isZeroProgramme, programmeName } from "@/lib/zero-types";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_IN_WINDOW = 5;
 
-export async function registerZeroInterest(input: { name: string; email: string; company: string; annualVolume: string; product: string; notes: string; website?: string }) {
+export async function registerZeroInterest(input: { name: string; email: string; company: string; programme: string; annualVolume: string; product: string; notes: string; website?: string }) {
   const user = await getSession();
   if (!user) return { ok: false as const, message: "Your session has ended. Sign in again to register." };
   if (!(await getDeskSettings()).zero.showOnHub) return { ok: false as const, message: "Aquifert Zero registrations are closed right now." };
@@ -25,6 +26,8 @@ export async function registerZeroInterest(input: { name: string; email: string;
   const annualVolume = text(input.annualVolume, 20);
   const product = text(input.product);
   const notes = text(input.notes, 2000);
+  const programme = input.programme;
+  if (!isZeroProgramme(programme)) return { ok: false as const, message: "Choose the programme you are interested in." };
   if (!name || !company) return { ok: false as const, message: "Add your name and company." };
   if (!EMAIL_PATTERN.test(email)) return { ok: false as const, message: "Enter a valid email address." };
   if (!(Number(annualVolume) > 0)) return { ok: false as const, message: "Enter your estimated annual volume in metric tonnes." };
@@ -34,8 +37,8 @@ export async function registerZeroInterest(input: { name: string; email: string;
   const recent = (await listZeroRegistrations()).filter((row) => row.userId === user.id && Date.parse(row.at) > since).length;
   if (recent >= MAX_IN_WINDOW) return { ok: false as const, message: "You have registered several times in the last few minutes. Wait a little, then try again." };
 
-  const row = await addZeroRegistration({ userId: user.id, name, email, company, annualVolume, product, notes });
-  const submission = { name, email, company, annualVolume, product, notes, submittedAt: row.at };
+  const row = await addZeroRegistration({ userId: user.id, name, email, company, programme, annualVolume, product, notes });
+  const submission = { name, email, company, programme: programmeName(programme), annualVolume, product, notes, submittedAt: row.at };
   await notifySubmission("zero", { vars: zeroVars(submission), sections: zeroSections(submission), applicantEmail: email, adminPath: "/admin/zero" });
   revalidatePath("/admin", "layout");
   return { ok: true as const, at: row.at };

@@ -29,8 +29,8 @@ import { sameCountry, type PortRecord } from "@/lib/ports";
 
 const STEPS = [
   {
-    title: "Logistics & delivery",
-    short: "Logistics",
+    title: "Destination",
+    short: "Destination",
     desc: "Where and how the product should arrive.",
     why: "Destination, timing and packaging decide the freight and which origins the desk can realistically quote.",
   },

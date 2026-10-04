@@ -22,7 +22,7 @@ const JOURNEY = [
   { key: "bot.j1", href: "/hub/account" },
   { key: "bot.j2", href: "/hub/telex" },
   { key: "bot.j3", href: "/hub/netback" },
-  { key: "bot.j4", href: "/hub/order-desk" },
+  { key: "bot.j4", href: "/hub/order-desk?tab=desk" },
   { key: "bot.j5", href: "/hub/account/membership" },
 ];
 

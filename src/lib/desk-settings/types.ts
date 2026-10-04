@@ -48,6 +48,7 @@ export const TEMPLATE_TAGS: Record<TemplateKind, TemplateTag[]> = {
     { tag: "user_name", label: "Member name", sample: "Amara Okafor" },
     { tag: "user_email", label: "Member email", sample: "amara@harvestco.com" },
     { tag: "user_company", label: "Company", sample: "Harvest Co" },
+    { tag: "programme", label: "Programme", sample: "AQ Harvest" },
     { tag: "annual_volume", label: "Annual volume (MT)", sample: "5000" },
     { tag: "primary_product", label: "Primary product", sample: "Urea (Prilled / Granular)" },
   ],

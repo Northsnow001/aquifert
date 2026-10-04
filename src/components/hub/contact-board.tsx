@@ -83,7 +83,7 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
           </span>
         </button>
 
-        <Link href="/hub/order-desk" className={tile}>
+        <Link href="/hub/order-desk?tab=desk" className={tile}>
           <span className="aq-chip aq-chip-blue flex h-10 w-10 items-center justify-center rounded-xl text-white">
             <FileText className="h-[18px] w-[18px]" />
           </span>

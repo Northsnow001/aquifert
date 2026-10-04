@@ -28,6 +28,7 @@ export type ZeroSubmission = {
   name: string;
   email: string;
   company: string;
+  programme: string;
   annualVolume: string;
   product: string;
   notes: string;
@@ -82,7 +83,7 @@ export function orderSections(order: OrderSubmission): DetailSection[] {
 }
 
 export function zeroVars(zero: ZeroSubmission): Record<string, string> {
-  return { user_name: zero.name, user_email: zero.email, user_company: zero.company, annual_volume: zero.annualVolume, primary_product: zero.product };
+  return { user_name: zero.name, user_email: zero.email, user_company: zero.company, programme: zero.programme, annual_volume: zero.annualVolume, primary_product: zero.product };
 }
 
 export function zeroSections(zero: ZeroSubmission): DetailSection[] {
@@ -93,6 +94,7 @@ export function zeroSections(zero: ZeroSubmission): DetailSection[] {
         ["Name", zero.name],
         ["Email", zero.email],
         ["Company", zero.company],
+        ["Programme", zero.programme],
         ["Estimated annual volume", tonnes(zero.annualVolume)],
         ["Primary product", zero.product],
         ["Additional notes", zero.notes],
@@ -129,6 +131,7 @@ export const ZERO_SAMPLE: ZeroSubmission = {
   name: "Amara Okafor",
   email: "amara@harvestco.com",
   company: "Harvest Co",
+  programme: "AQ Harvest",
   annualVolume: "5000",
   product: "Urea (Prilled / Granular)",
   notes: "Interested in a Q1 pilot slot.",
