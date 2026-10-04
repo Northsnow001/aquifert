@@ -655,8 +655,9 @@ export function LeadMagnet() {
                       onChange={(e) => setS2({ ...s2, termsAccepted: e.target.checked })}
                       className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-navy-700" />
                     <span>
-                      I agree to Aquifert's <span className="font-medium underline">Privacy Policy</span> and{" "}
-                      <span className="font-medium underline">Terms of Service</span> (required)
+                      I agree to Aquifert's{" "}
+                      <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-medium underline">Privacy Policy</a> and{" "}
+                      <a href="/legal/terms-of-use" target="_blank" rel="noopener noreferrer" className="font-medium underline">Terms of Use</a> (required)
                     </span>
                   </label>
                   {errors.termsAccepted && <p className={errCls}>{errors.termsAccepted}</p>}

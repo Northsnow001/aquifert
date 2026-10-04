@@ -9,6 +9,7 @@
  */
 import { useEffect, useState } from "react";
 import { COOKIE_POLICY_VERSION, getConsent, recordConsent } from "@/marketing/lib/consent";
+import { Link } from "@/marketing/router";
 
 export const OPEN_COOKIE_PREFS_EVENT = "aq:open-cookie-preferences";
 
@@ -75,13 +76,13 @@ export function CookieConsent() {
             <p className="text-[12.5px] leading-relaxed text-slate-300 sm:max-w-xl">
               We use cookies to run the site and, with your permission, to measure usage and tailor
               market updates. Read our{" "}
-              <a href="/help" className="text-white underline underline-offset-2">
+              <Link to="/legal/privacy#cookies" className="text-white underline underline-offset-2">
                 Cookie Policy
-              </a>{" "}
+              </Link>{" "}
               and{" "}
-              <a href="/help" className="text-white underline underline-offset-2">
+              <Link to="/legal/privacy" className="text-white underline underline-offset-2">
                 Privacy Policy
-              </a>
+              </Link>
               .
             </p>
             <div className="flex w-full flex-wrap gap-2 sm:ml-auto sm:w-auto">

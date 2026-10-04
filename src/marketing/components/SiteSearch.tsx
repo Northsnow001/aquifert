@@ -35,6 +35,11 @@ const INDEX: Entry[] = [
   { title: "Scale, £7,000/month", section: "Membership", keywords: "scale plan unlimited enterprise membership", to: "/membership" },
   { title: "Invoice financing", section: "Membership", keywords: "financing invoice discounting credit 85%", to: "/membership" },
   { title: "Contact the desk", section: "Support", keywords: "contact email enquiry desk phone", to: "/help" },
+  { title: "Terms & Conditions of Trading", section: "Legal", keywords: "terms trading incoterms delivery payment claims liability", to: "/legal/terms-of-trading" },
+  { title: "Platform Terms of Use", section: "Legal", keywords: "terms of use service acceptable use market data disclaimer", to: "/legal/terms-of-use" },
+  { title: "Privacy Policy", section: "Legal", keywords: "privacy personal data cookies rights", to: "/legal/privacy" },
+  { title: "Data Protection & GDPR", section: "Legal", keywords: "gdpr data protection processor dpa security breach", to: "/legal/data-protection" },
+  { title: "Payment & Refund Policy", section: "Legal", keywords: "payment refund cancellation billing subscription chargeback", to: "/legal/payments-and-refunds" },
 ];
 
 export function SiteSearch({ open, onClose }: { open: boolean; onClose: () => void }) {

@@ -109,7 +109,7 @@ export default async function HomePage() {
             <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" />
             <p>
               Preliminary market intel. Verify data before trading.{" "}
-              <a href="/hub/account/legal" className="font-medium text-blue underline underline-offset-2">
+              <a href="/hub/account/legal?doc=terms-of-use#market-data" className="font-medium text-blue underline underline-offset-2">
                 More
               </a>
             </p>

@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { NavLink, useNavigate } from "@/marketing/router";
+import { Link, NavLink, useNavigate } from "@/marketing/router";
+import { LEGAL_LINKS } from "@/lib/legal/documents";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { Reveal } from "@/marketing/components/shared/Reveal";
@@ -59,10 +60,20 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       {children}
 
       <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-slate-500 dark:text-slate-500">
             © {new Date().getFullYear()} Aquifert Ltd · London · Water-soluble fertilizer trading, reimagined
           </p>
+          <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+            <Link to="/legal" className="font-semibold text-slate-600 hover:text-teal-700 dark:text-slate-300">
+              Legal
+            </Link>
+            {LEGAL_LINKS.filter((l) => !l.to.includes("#")).map((l) => (
+              <Link key={l.to} to={l.to} className="text-slate-500 hover:text-teal-700 dark:text-slate-400">
+                {l.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </footer>
     </div>

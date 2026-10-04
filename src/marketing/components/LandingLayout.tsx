@@ -13,6 +13,7 @@ import { Logo } from "@/marketing/components/shared/Logo";
 import { OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
 import { PRICE_SOURCES } from "@/marketing/lib/prices";
+import { LEGAL_LINKS } from "@/lib/legal/documents";
 
 const PRIMARY_NAV = [
   { to: "/", label: "Home" },
@@ -259,9 +260,9 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             <nav aria-label="Legal">
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Legal</h3>
               <ul className="mt-4 space-y-2 text-[13px]">
-                {["Terms of Service", "Privacy Policy", "Cookie Policy", "Data Sources", "Disclaimer"].map((l) => (
-                  <li key={l}>
-                    <Link to="/why-aquifert" className="text-slate-300 hover:text-white">{l}</Link>
+                {LEGAL_LINKS.map((l) => (
+                  <li key={l.to}>
+                    <Link to={l.to} className="text-slate-300 hover:text-white">{l.label}</Link>
                   </li>
                 ))}
                 <li>
