@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarClock, Check, CheckCircle2, CircleAlert, ListChecks, PhoneCall, Send, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { markZeroCallBooked, registerZeroInterest } from "@/app/hub/order-desk/zero-actions";
-import { areaClass, btnSecondary, fieldClass, labelClass, noticeError } from "@/components/app/form";
+import { areaClass, btnSecondary, btnSubmit, dialogBody, dialogFooter, fieldClass, labelClass, noticeError } from "@/components/app/form";
 import { CalendlyFrame } from "@/components/hub/calendly-frame";
 import { MEMBERSHIP_OFFERS, offerState } from "@/lib/aq-modules/membership";
 import { calendlyLink } from "@/lib/calendly";
@@ -277,7 +277,7 @@ export function ZeroRegisterDialog({
           </div>
         ) : (
           <form
-            className="flex flex-col gap-4 overflow-y-auto px-5 py-5"
+            className="flex min-h-0 flex-1 flex-col"
             onSubmit={(event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
@@ -321,89 +321,88 @@ export function ZeroRegisterDialog({
               });
             }}
           >
-            <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" />
-            <IntentChoice value={intent} onChange={setIntent} />
+            <div className={dialogBody}>
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" />
+              <IntentChoice value={intent} onChange={setIntent} />
 
-            <fieldset>
-              <legend className={labelClass}>Programme</legend>
-              <div className="grid grid-cols-2 gap-2">
-                {ZERO_PROGRAMMES.map((item) => {
-                  const active = item.id === selected;
-                  return (
-                    <label
-                      key={item.id}
-                      className={`cursor-pointer rounded-xl border px-3 py-2.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${
-                        active ? "border-teal-500 bg-teal-50 shadow-[0_0_0_1px_var(--color-teal-500)]" : "border-border hover:border-navy-300"
-                      }`}
-                    >
-                      <input type="radio" name="programme" value={item.id} checked={active} onChange={() => setSelected(item.id)} className="sr-only" />
-                      <span className="block text-[15px] font-semibold text-ink">{item.name}</span>
-                      <span className="block text-[12px] leading-snug text-dim">{item.tagline}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+              <fieldset>
+                <legend className={labelClass}>Programme</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {ZERO_PROGRAMMES.map((item) => {
+                    const active = item.id === selected;
+                    return (
+                      <label
+                        key={item.id}
+                        className={`cursor-pointer rounded-xl border px-3 py-2.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${
+                          active ? "border-teal-500 bg-teal-50 shadow-[0_0_0_1px_var(--color-teal-500)]" : "border-border hover:border-navy-300"
+                        }`}
+                      >
+                        <input type="radio" name="programme" value={item.id} checked={active} onChange={() => setSelected(item.id)} className="sr-only" />
+                        <span className="block text-[15px] font-semibold text-ink">{item.name}</span>
+                        <span className="block text-[12px] leading-snug text-dim">{item.tagline}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="z-name" className={labelClass}>
-                  Full name *
-                </label>
-                <input id="z-name" name="name" required autoComplete="name" defaultValue={name} className={fieldClass} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="z-name" className={labelClass}>
+                    Full name *
+                  </label>
+                  <input id="z-name" name="name" required autoComplete="name" defaultValue={name} className={fieldClass} />
+                </div>
+                <div>
+                  <label htmlFor="z-company" className={labelClass}>
+                    Company *
+                  </label>
+                  <input id="z-company" name="company" required autoComplete="organization" defaultValue={last?.company} placeholder="Company name" className={fieldClass} />
+                </div>
+                <div>
+                  <label htmlFor="z-email" className={labelClass}>
+                    Email *
+                  </label>
+                  <input id="z-email" name="email" type="email" required autoComplete="email" defaultValue={email} className={fieldClass} />
+                </div>
+                <div>
+                  <label htmlFor="z-volume" className={labelClass}>
+                    Estimated annual volume (MT) *
+                  </label>
+                  <input id="z-volume" name="annualVolume" type="number" min="1" step="1" required defaultValue={last?.annualVolume} placeholder="e.g. 5000" className={fieldClass} />
+                </div>
               </div>
               <div>
-                <label htmlFor="z-company" className={labelClass}>
-                  Company *
+                <label htmlFor="z-product" className={labelClass}>
+                  Primary product interest *
                 </label>
-                <input id="z-company" name="company" required autoComplete="organization" defaultValue={last?.company} placeholder="Company name" className={fieldClass} />
+                <select id="z-product" name="product" required defaultValue={last?.product ?? ""} className={fieldClass}>
+                  <option value="">Select a product...</option>
+                  {ZERO_PRODUCTS.map((item) => (
+                    <option key={item}>{item}</option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label htmlFor="z-email" className={labelClass}>
-                  Email *
+                <label htmlFor="z-notes" className={labelClass}>
+                  Anything we should know
                 </label>
-                <input id="z-email" name="email" type="email" required autoComplete="email" defaultValue={email} className={fieldClass} />
-              </div>
-              <div>
-                <label htmlFor="z-volume" className={labelClass}>
-                  Estimated annual volume (MT) *
-                </label>
-                <input id="z-volume" name="annualVolume" type="number" min="1" step="1" required defaultValue={last?.annualVolume} placeholder="e.g. 5000" className={fieldClass} />
+                <textarea id="z-notes" name="notes" rows={3} maxLength={2000} placeholder="Destinations, timing, current suppliers…" className={areaClass} />
               </div>
             </div>
-            <div>
-              <label htmlFor="z-product" className={labelClass}>
-                Primary product interest *
-              </label>
-              <select id="z-product" name="product" required defaultValue={last?.product ?? ""} className={fieldClass}>
-                <option value="">Select a product...</option>
-                {ZERO_PRODUCTS.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="z-notes" className={labelClass}>
-                Anything we should know
-              </label>
-              <textarea id="z-notes" name="notes" rows={3} maxLength={2000} placeholder="Destinations, timing, current suppliers…" className={areaClass} />
-            </div>
 
-            {error ? (
-              <p role="alert" className={noticeError}>
-                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={pending}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-teal-500 px-5 text-[15.5px] font-semibold text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] transition hover:bg-teal-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              {intent === "call" ? <CalendarClock className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-              {pending ? "Saving…" : intent === "call" ? "Continue to pick a time" : "Join the waitlist"}
-            </button>
-            <p className="text-center text-[12.5px] leading-relaxed text-dim">No payment now. The desk confirms pricing and availability before anything is agreed.</p>
+            <div className={dialogFooter}>
+              {error ? (
+                <p role="alert" className={noticeError}>
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+                </p>
+              ) : null}
+              <button type="submit" disabled={pending} className={btnSubmit}>
+                {intent === "call" ? <CalendarClock className="h-4 w-4 shrink-0" /> : <Send className="h-4 w-4 shrink-0" />}
+                {pending ? "Saving…" : intent === "call" ? "Continue to pick a time" : "Join the waitlist"}
+              </button>
+              <p className="text-center text-[12.5px] leading-relaxed text-dim">No payment now. The desk confirms pricing and availability before anything is agreed.</p>
+            </div>
           </form>
         )}
       </div>

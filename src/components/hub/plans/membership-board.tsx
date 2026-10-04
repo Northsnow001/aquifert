@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { ArrowRight, Check, CheckCircle2, CircleAlert, Crown, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { requestPlan } from "@/app/hub/account/membership/actions";
-import { areaClass, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
+import { areaClass, btnSubmit, dialogBody, dialogFooter, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { useI18n } from "@/components/app/i18n";
 import { AccountIntro } from "@/components/hub/kit";
 import { ZeroRegisterDialog } from "@/components/hub/zero-panel";
@@ -226,7 +226,7 @@ function RequestDialog({
           </div>
         ) : (
           <form
-            className="flex flex-col gap-4 overflow-y-auto px-5 py-5"
+            className="flex min-h-0 flex-1 flex-col"
             onSubmit={(event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
@@ -249,73 +249,73 @@ function RequestDialog({
               });
             }}
           >
-            {offer.tier ? (
-              <fieldset>
-                <legend className={labelClass}>{t("mem.tier")}</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {TIER_OFFERS.map((item) => {
-                    const active = item.id === selected;
-                    return (
-                      <label
-                        key={item.id}
-                        className={`cursor-pointer rounded-xl border px-3 py-2.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${
-                          active ? "border-teal-500 bg-teal-50 shadow-[0_0_0_1px_var(--color-teal-500)]" : "border-border hover:border-navy-300"
-                        }`}
-                      >
-                        <input type="radio" name="tier" value={item.id} checked={active} onChange={() => setSelected(item.id)} className="sr-only" />
-                        <span className="block text-[15px] font-semibold text-ink">{item.name}</span>
-                        <span className="block text-[12px] leading-snug text-dim">{item.tagline}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            ) : null}
+            <div className={dialogBody}>
+              {offer.tier ? (
+                <fieldset>
+                  <legend className={labelClass}>{t("mem.tier")}</legend>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TIER_OFFERS.map((item) => {
+                      const active = item.id === selected;
+                      return (
+                        <label
+                          key={item.id}
+                          className={`cursor-pointer rounded-xl border px-3 py-2.5 transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue/40 ${
+                            active ? "border-teal-500 bg-teal-50 shadow-[0_0_0_1px_var(--color-teal-500)]" : "border-border hover:border-navy-300"
+                          }`}
+                        >
+                          <input type="radio" name="tier" value={item.id} checked={active} onChange={() => setSelected(item.id)} className="sr-only" aria-label={item.name} />
+                          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-teal-700">AQ Zero</span>
+                          <span className="block text-[15.5px] font-semibold text-ink">{item.name.replace(/^AQ Zero /, "")}</span>
+                          <span className="mt-0.5 block text-[12px] leading-snug text-dim">{item.tagline}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              ) : null}
 
-            <div className="rounded-xl bg-s2 p-3.5">
-              <p className="text-[15.5px] font-bold text-ink">{offer.name}</p>
-              <p className="mt-0.5 text-[13.5px] text-dim">{offer.tagline}</p>
-              <p className="mt-1.5 text-[13.5px] leading-relaxed text-mid">The desk confirms pricing with you before anything changes.</p>
+              <div className="rounded-xl bg-s2 p-3.5">
+                <p className="text-[15.5px] font-bold text-ink">{offer.name}</p>
+                <p className="mt-0.5 text-[13.5px] text-dim">{offer.tagline}</p>
+                <p className="mt-1.5 text-[13.5px] leading-relaxed text-mid">The desk confirms pricing with you before anything changes.</p>
+              </div>
+
+              <div>
+                <label htmlFor="m-company" className={labelClass}>
+                  {t("mem.company")}
+                </label>
+                <input id="m-company" name="company" autoComplete="organization" maxLength={120} placeholder="e.g. Fenland Growers Ltd" className={fieldClass} />
+              </div>
+              <div>
+                <label htmlFor="m-message" className={labelClass}>
+                  {t("mem.message")}
+                </label>
+                <textarea
+                  id="m-message"
+                  rows={3}
+                  maxLength={MESSAGE_MAX}
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  placeholder="Monthly tonnage, the products you buy, when you would like to start."
+                  className={areaClass}
+                />
+                <p className={`${hintClass} text-end tabular-nums`}>
+                  {message.length} / {MESSAGE_MAX}
+                </p>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="m-company" className={labelClass}>
-                {t("mem.company")}
-              </label>
-              <input id="m-company" name="company" autoComplete="organization" maxLength={120} placeholder="e.g. Fenland Growers Ltd" className={fieldClass} />
+            <div className={dialogFooter}>
+              {error ? (
+                <p role="alert" className={noticeError}>
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+                </p>
+              ) : null}
+              <button type="submit" disabled={pending || unchanged} className={btnSubmit}>
+                <Send className="h-4 w-4 shrink-0" /> {pending ? t("mem.sending") : t("mem.send")}
+              </button>
+              <p className="text-center text-[12.5px] leading-relaxed text-dim">{t("mem.noPayment")}</p>
             </div>
-            <div>
-              <label htmlFor="m-message" className={labelClass}>
-                {t("mem.message")}
-              </label>
-              <textarea
-                id="m-message"
-                rows={3}
-                maxLength={MESSAGE_MAX}
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Monthly tonnage, the products you buy, when you would like to start."
-                className={areaClass}
-              />
-              <p className={`${hintClass} text-end tabular-nums`}>
-                {message.length} / {MESSAGE_MAX}
-              </p>
-            </div>
-
-            {error ? (
-              <p role="alert" className={noticeError}>
-                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={pending || unchanged}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-teal-500 px-5 text-[15.5px] font-semibold text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] transition hover:bg-teal-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              <Send className="h-4 w-4" /> {pending ? t("mem.sending") : t("mem.send")}
-            </button>
-            <p className="text-center text-[12.5px] leading-relaxed text-dim">{t("mem.noPayment")}</p>
           </form>
         )}
       </div>
