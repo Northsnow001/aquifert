@@ -32,10 +32,12 @@ export type AquibotSettings = {
 };
 
 export const AQUIBOT_MODELS = [
-  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", hint: "Fast, low cost" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", hint: "Deeper reasoning, slower" },
-  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite", hint: "Fastest, lightest" },
+  { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash", hint: "Best balance of quality and speed" },
+  { value: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite", hint: "Fastest, lowest cost" },
+  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (preview)", hint: "Deeper reasoning, slower" },
 ] as const;
+
+export const isAquibotModel = (value: unknown): value is string => AQUIBOT_MODELS.some((item) => item.value === value);
 
 export type ExtractionRules = { pdf: string; image: string; telex: string };
 
@@ -266,8 +268,8 @@ export const DEFAULT_SETTINGS: AquibotSettings = {
   recencyYears: 2,
   benchmarkPriority: true,
   monthTokenMatching: true,
-  answerModel: "gemini-2.5-flash",
-  rewriteModel: "gemini-2.5-flash",
+  answerModel: "gemini-3.8-flash",
+  rewriteModel: "gemini-3.5-flash-lite",
 };
 
 export const AQUIBOT_SEED: AquibotConfig = {

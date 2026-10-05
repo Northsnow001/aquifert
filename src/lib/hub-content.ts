@@ -18,7 +18,7 @@ import {
   type TelexItem,
   type ToolsCommentary,
 } from "@/lib/content-types";
-import { AQUIBOT_SEED, type AquibotConfig } from "@/lib/aquibot";
+import { AQUIBOT_SEED, isAquibotModel, type AquibotConfig } from "@/lib/aquibot";
 
 export type { Collection, FreightBoard, HedgeReport, Indicator, LibraryDocument, TelexItem, ToolsCommentary } from "@/lib/content-types";
 
@@ -141,9 +141,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizeAquibot(raw: unknown, base: AquibotConfig): AquibotConfig {
   if (!isRecord(raw)) return base;
   const config = raw as Partial<AquibotConfig>;
+  const settings = { ...base.settings, ...(isRecord(config.settings) ? config.settings : {}) };
+  if (!isAquibotModel(settings.answerModel)) settings.answerModel = base.settings.answerModel;
+  if (!isAquibotModel(settings.rewriteModel)) settings.rewriteModel = base.settings.rewriteModel;
   return {
     prompt: { ...base.prompt, ...(isRecord(config.prompt) ? config.prompt : {}) },
-    settings: { ...base.settings, ...(isRecord(config.settings) ? config.settings : {}) },
+    settings,
     synonyms: typeof config.synonyms === "string" ? config.synonyms : base.synonyms,
     stopWords: typeof config.stopWords === "string" ? config.stopWords : base.stopWords,
     extraction: { ...base.extraction, ...(isRecord(config.extraction) ? config.extraction : {}) },

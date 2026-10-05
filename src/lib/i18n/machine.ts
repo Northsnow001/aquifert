@@ -1,11 +1,11 @@
 import "server-only";
 
-import { generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
+import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
 import { readDocument, updateDocument } from "@/lib/data/documents";
 import { languageFor, type LangCode } from "@/lib/i18n/locales";
 import { acceptTranslations, batchTexts, parseTranslationArray, protectTerms, restoreTerms } from "@/lib/i18n/machine-text";
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = EXTRACTION_MODEL;
 const GOOGLE_URL = "https://translate.googleapis.com/translate_a/t?client=gtx&dt=t&sl=en&tl=";
 const GOOGLE_LANG: Partial<Record<LangCode, string>> = { zh: "zh-CN" };
 const BATCH_CHARS = 4500;

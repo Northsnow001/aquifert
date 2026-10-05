@@ -3,7 +3,7 @@ import "server-only";
 const BASE = "https://generativelanguage.googleapis.com";
 export const EMBEDDING_MODEL = "gemini-embedding-001";
 export const EMBEDDING_DIMENSIONS = 768;
-export const EXTRACTION_MODEL = "gemini-2.5-flash";
+export const EXTRACTION_MODEL = "gemini-3.8-flash";
 const EMBED_BATCH = 100;
 const INLINE_LIMIT = 18 * 1024 * 1024;
 
@@ -94,23 +94,38 @@ type GenerateOptions = {
   maxOutputTokens?: number;
   timeoutMs?: number;
   signal?: AbortSignal;
-  /** Turns thinking off on Flash models, for short utility calls such as query rewriting. */
+  /** Keeps thinking to the minimum the model allows, for short utility calls such as query rewriting. */
   fast?: boolean;
 };
 
 type Candidate = { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string };
 type GenerateResponse = { candidates?: Candidate[]; promptFeedback?: { blockReason?: string }; usageMetadata?: Record<string, number> };
 
+/** Gemini 2.x takes a thinking budget; Gemini 3 takes a thinking level and can loop when temperature is set below its default. */
+const legacyModel = (model: string) => /^gemini-2\./i.test(model);
+const MINIMAL_THINKING = /flash-lite|^gemini-3(\.5|\.6)?-flash/i;
+
+function generationConfig(model: string, options: { temperature?: number; maxOutputTokens?: number; fast?: boolean }) {
+  const legacy = legacyModel(model);
+  const thinkingConfig = !options.fast
+    ? null
+    : legacy
+      ? /flash/i.test(model)
+        ? { thinkingBudget: 0 }
+        : null
+      : { thinkingLevel: MINIMAL_THINKING.test(model) ? "minimal" : "low" };
+  return {
+    ...(legacy ? { temperature: options.temperature ?? 0.7 } : {}),
+    ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
+    ...(thinkingConfig ? { thinkingConfig } : {}),
+  };
+}
+
 function generationBody(options: GenerateOptions) {
-  const skipThinking = options.fast && /flash/i.test(options.model);
   return {
     ...(options.system ? { systemInstruction: { parts: [{ text: options.system }] } } : {}),
     contents: options.turns.filter((turn) => turn.text.trim()).map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
-    generationConfig: {
-      temperature: options.temperature ?? 0.7,
-      ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
-      ...(skipThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-    },
+    generationConfig: generationConfig(options.model, options),
   };
 }
 
@@ -227,7 +242,7 @@ export async function extractWithGemini(input: { data: Buffer; mimeType: string;
       `models/${EXTRACTION_MODEL}:generateContent`,
       {
         contents: [{ role: "user", parts: [filePart, { text: input.prompt }] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 65_536, thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: generationConfig(EXTRACTION_MODEL, { temperature: 0, maxOutputTokens: 65_536, fast: true }),
       },
       300_000,
     );
