@@ -22,6 +22,34 @@ export class GeminiError extends Error {
   get rateLimited() {
     return this.status === 429 || /quota|rate limit|resource exhausted/i.test(this.message);
   }
+  /** Google is out of capacity or quota for this model right now; another model or a later try usually works. */
+  get busy() {
+    return this.rateLimited || this.status === 500 || this.status === 503 || /high demand|overloaded|unavailable|try again later/i.test(this.message);
+  }
+}
+
+const FALLBACKS: Record<string, string[]> = {
+  "gemini-3.8-flash": ["gemini-3.5-flash", "gemini-3.5-flash-lite"],
+  "gemini-3.1-pro-preview": ["gemini-3.8-flash", "gemini-3.5-flash"],
+  "gemini-3.5-flash-lite": ["gemini-3.5-flash"],
+};
+const BUSY_RETRY_MS = 1200;
+
+/** Runs on the requested model; when Google reports it busy, retries once, then moves to the next model in line. */
+async function withFallback<T>(model: string, signal: AbortSignal | undefined, run: (model: string) => Promise<T>): Promise<T> {
+  const attempts = [model, model, ...(FALLBACKS[model] ?? [])];
+  let last: unknown;
+  for (const [index, candidate] of attempts.entries()) {
+    if (index === 1) await new Promise((resolve) => setTimeout(resolve, BUSY_RETRY_MS));
+    if (signal?.aborted) break;
+    try {
+      return await run(candidate);
+    } catch (error) {
+      if (!(error instanceof GeminiError && error.busy) || signal?.aborted) throw error;
+      last = error;
+    }
+  }
+  throw last ?? new GeminiError("Gemini request was cancelled.");
 }
 
 function headers(extra: Record<string, string> = {}) {
@@ -138,14 +166,14 @@ function candidateText(json: GenerateResponse) {
 }
 
 export async function generateText(options: GenerateOptions) {
-  const json = await post<GenerateResponse>(`models/${encodeURIComponent(options.model)}:generateContent`, generationBody(options), options.timeoutMs ?? 60_000, options.signal);
+  const json = await withFallback(options.model, options.signal, (model) =>
+    post<GenerateResponse>(`models/${encodeURIComponent(model)}:generateContent`, generationBody({ ...options, model }), options.timeoutMs ?? 60_000, options.signal),
+  );
   if (json.promptFeedback?.blockReason) throw new GeminiError(`Gemini blocked the request (${json.promptFeedback.blockReason}).`);
   return { text: candidateText(json).trim(), usage: json.usageMetadata ?? {} };
 }
 
-/** Streams answer text from `streamGenerateContent` (server-sent events). */
-export async function* streamText(options: GenerateOptions): AsyncGenerator<{ text: string; usage?: Record<string, number> }> {
-  const timeoutMs = options.timeoutMs ?? 120_000;
+async function openStream(options: GenerateOptions, timeoutMs: number) {
   let response: Response;
   try {
     response = await fetch(`${BASE}/v1beta/models/${encodeURIComponent(options.model)}:streamGenerateContent?alt=sse`, {
@@ -162,8 +190,15 @@ export async function* streamText(options: GenerateOptions): AsyncGenerator<{ te
     const json = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new GeminiError(json?.error?.message ?? `Gemini returned HTTP ${response.status}.`, response.status);
   }
+  return response.body;
+}
 
-  const reader = response.body.getReader();
+/** Streams answer text from `streamGenerateContent` (server-sent events). */
+export async function* streamText(options: GenerateOptions): AsyncGenerator<{ text: string; usage?: Record<string, number> }> {
+  const timeoutMs = options.timeoutMs ?? 120_000;
+  const body = await withFallback(options.model, options.signal, (model) => openStream({ ...options, model }, timeoutMs));
+
+  const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   for (;;) {
@@ -238,13 +273,15 @@ export async function extractWithGemini(input: { data: Buffer; mimeType: string;
       input.data.length > INLINE_LIMIT
         ? ((uploaded = await uploadFile(input.data, input.mimeType, input.displayName)), { file_data: { mime_type: input.mimeType, file_uri: uploaded.uri } })
         : { inline_data: { mime_type: input.mimeType, data: input.data.toString("base64") } };
-    const json = await post<GenerateResponse>(
-      `models/${EXTRACTION_MODEL}:generateContent`,
-      {
-        contents: [{ role: "user", parts: [filePart, { text: input.prompt }] }],
-        generationConfig: generationConfig(EXTRACTION_MODEL, { temperature: 0, maxOutputTokens: 65_536, fast: true }),
-      },
-      300_000,
+    const json = await withFallback(EXTRACTION_MODEL, undefined, (model) =>
+      post<GenerateResponse>(
+        `models/${model}:generateContent`,
+        {
+          contents: [{ role: "user", parts: [filePart, { text: input.prompt }] }],
+          generationConfig: generationConfig(model, { temperature: 0, maxOutputTokens: 65_536, fast: true }),
+        },
+        300_000,
+      ),
     );
     const text = candidateText(json).trim();
     if (!text) throw new GeminiError(json.promptFeedback?.blockReason ? `Gemini blocked the file (${json.promptFeedback.blockReason}).` : "Gemini returned no text for this file.");

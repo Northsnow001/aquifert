@@ -89,7 +89,7 @@ export async function openChat(actor: Actor, input: { message: unknown; sessionI
 }
 
 function friendly(error: unknown, isAdmin: boolean) {
-  if (error instanceof GeminiError && error.rateLimited) return "Aquibot is busy right now. Please try again in a minute.";
+  if (error instanceof GeminiError && error.busy) return "Aquibot is busy right now. Please try again in a minute.";
   if (isAdmin && error instanceof Error) return `Aquibot could not answer: ${error.message}`;
   return "I'm having trouble connecting right now. Please try again shortly.";
 }
