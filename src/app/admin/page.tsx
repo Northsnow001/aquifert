@@ -141,27 +141,27 @@ export default async function AdminHomePage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {stats.map((stat) => (
           <Link
             key={stat.href}
             href={stat.href}
-            className="aq-card aq-lift group p-4 no-underline"
+            className="aq-card aq-lift group min-w-0 p-3.5 no-underline sm:p-4"
           >
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2.5 text-[13px] font-semibold text-mid">
-                <span className="aq-chip aq-chip-blue flex h-7 w-7 items-center justify-center rounded-[9px] text-white">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex min-w-0 items-center gap-2.5 text-[13px] font-semibold leading-tight text-mid">
+                <span className="aq-chip aq-chip-blue flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] text-white">
                   <stat.icon className="h-3.5 w-3.5" strokeWidth={2.2} />
                 </span>
                 {stat.label}
               </span>
-              <ArrowRight className="h-4 w-4 text-dim transition group-hover:translate-x-0.5 group-hover:text-blue" />
+              <ArrowRight className="h-4 w-4 shrink-0 text-dim transition group-hover:translate-x-0.5 group-hover:text-blue" />
             </div>
             <p className="mt-3 flex items-baseline gap-1.5">
               <span className="text-[30px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-ink">{stat.value}</span>
               <span className="text-[13px] text-mid">{stat.unit}</span>
             </p>
-            <p className="mt-2 truncate text-[12.5px] text-dim">{stat.detail}</p>
+            <p className="mt-2 text-[12.5px] text-dim sm:truncate">{stat.detail}</p>
           </Link>
         ))}
       </div>
@@ -180,12 +180,12 @@ export default async function AdminHomePage() {
           <ul>
             {telex.slice(0, 5).map((item) => (
               <li key={item.id} className="border-b border-border last:border-b-0">
-                <Link href={`/admin/telex/${item.id}`} className="flex items-start gap-4 px-5 py-3.5 no-underline transition hover:bg-s2/60">
+                <Link href={`/admin/telex/${item.id}`} className="flex flex-col gap-2 px-5 py-3.5 no-underline transition hover:bg-s2/60 sm:flex-row sm:items-start sm:gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-1 text-[13.5px] font-semibold text-ink">{telexHeadline(item)}</p>
+                    <p className="line-clamp-2 text-[13.5px] font-semibold text-ink sm:line-clamp-1">{telexHeadline(item)}</p>
                     <p className="mt-0.5 line-clamp-1 text-[12.5px] text-mid">{excerpt(item.paragraphs, 18)}</p>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
+                  <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
                     <StatusBadge status={item.status} />
                     <span className="font-mono text-[11px] text-dim">{formatStamp(item.publishedAt)}</span>
                   </div>

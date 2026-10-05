@@ -82,7 +82,7 @@ export function InfoTip({ label, text, href = "/hub/guide", className = "" }: { 
           event.stopPropagation();
           setOpen((value) => !value);
         }}
-        className={`aq-nopress inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-dim transition hover:bg-white hover:text-blue ${className}`}
+        className={`aq-nopress ${/\b(absolute|fixed)\b/.test(className) ? "" : "relative"} inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-dim transition before:absolute before:-inset-2 before:content-[''] hover:bg-white hover:text-blue ${className}`}
       >
         <Info className="h-3.5 w-3.5" aria-hidden />
       </button>

@@ -562,7 +562,7 @@ body::before {
 }
 /* Phones zoom into any field under 16px; keep the page steady. */
 @media (max-width: 640px) {
-  .aq-app :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), select, textarea) {
+  :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), select, textarea) {
     font-size: 16px !important;
   }
 }

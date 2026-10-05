@@ -68,7 +68,7 @@ export function SessionsPanel({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {cards.map((card) => (
           <div key={card.label} className="rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{card.label}</p>
@@ -139,7 +139,7 @@ export function SessionsPanel({
           ) : null}
         </section>
 
-        <section className="min-h-[420px] aq-card">
+        <section className="aq-card xl:min-h-[420px]">
           {selected ? (
             <>
               <header className="flex flex-wrap items-start gap-3 border-b border-border px-5 py-3.5">
@@ -192,7 +192,7 @@ export function SessionsPanel({
               </div>
             </>
           ) : (
-            <div className="flex h-full min-h-[420px] flex-col items-center justify-center gap-2 px-6 text-center">
+            <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 px-6 py-10 text-center xl:min-h-[420px]">
               <MessagesSquare className="h-6 w-6 text-dim" />
               <p className="text-[13px] text-mid">Choose a session to read the conversation, export it or delete it.</p>
             </div>

@@ -10,7 +10,8 @@ export function HedgeMatrix({ sections, dense = false, fit = false }: { sections
     return <p className="px-5 py-8 text-center font-mono text-xs text-dim">No priced months in this report yet.</p>;
   }
   const pad = fit ? "px-3" : dense ? "px-3" : "px-5";
-  const cell = fit ? "px-0.5" : "px-2";
+  const cell = fit ? "px-1.5 xl:px-0.5" : "px-2";
+  const pin = "sticky left-0 z-[1] shadow-[1px_0_0_var(--color-border)]";
 
   return (
     <div className="divide-y divide-border">
@@ -23,12 +24,17 @@ export function HedgeMatrix({ sections, dense = false, fit = false }: { sections
             </p>
             <div className="overflow-x-auto">
               <table
-                className={`w-full border-collapse text-left ${fit ? "table-fixed" : ""}`}
-                style={{ minWidth: fit ? 72 + section.commodities.length * 70 : 120 + section.commodities.length * (dense ? 118 : 136) }}
+                className={`w-full border-collapse text-left ${fit ? "min-w-(--roomy) table-fixed xl:min-w-(--snug)" : "min-w-(--roomy)"}`}
+                style={
+                  {
+                    "--roomy": `${fit ? 72 + section.commodities.length * 92 : 120 + section.commodities.length * (dense ? 118 : 136)}px`,
+                    "--snug": `${72 + section.commodities.length * 70}px`,
+                  } as React.CSSProperties
+                }
               >
                 <thead>
                   <tr className="border-y border-border bg-s3">
-                    <th className={`${pad} ${fit ? "w-[72px]" : "w-[96px]"} py-2 align-bottom font-mono text-[11.5px] font-medium uppercase tracking-wide text-dim`}>Month</th>
+                    <th className={`${pin} bg-s3 ${pad} ${fit ? "w-[72px]" : "w-[96px]"} py-2 align-bottom font-mono text-[11.5px] font-medium uppercase tracking-wide text-dim`}>Month</th>
                     {section.commodities.map((commodity) => (
                       <th key={commodity.id} className={`${cell} py-2 text-center align-bottom`}>
                         <span className={`block font-mono font-semibold leading-tight text-mid ${fit ? "text-[11.5px]" : "text-[12px]"}`}>{commodity.label}</span>
@@ -40,7 +46,7 @@ export function HedgeMatrix({ sections, dense = false, fit = false }: { sections
                 <tbody className={`font-mono ${fit ? "text-[12px]" : "text-[13px]"}`}>
                   {periods.map((period) => (
                     <tr key={period.key} className="border-b border-border last:border-b-0 hover:bg-blue/[.03]">
-                      <td className={`${pad} py-2 text-mid [overflow-wrap:anywhere]`}>{period.label}</td>
+                      <td className={`${pin} bg-white ${pad} py-2 text-mid [overflow-wrap:anywhere]`}>{period.label}</td>
                       {section.commodities.map((commodity) => {
                         const row = commodity.rows.find((item) => item.period.trim().toLowerCase() === period.key);
                         if (!row || (!row.bid && !row.ask)) {

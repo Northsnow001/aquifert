@@ -164,51 +164,47 @@ export function AccessForm({ access: initialAccess, limits: initialLimits, updat
 
       <section className="overflow-hidden aq-card">
         <CardHeader title="AQ ONE allowances" meta="Monthly limits per plan. Enter 0 for unlimited." />
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-left">
-            <thead>
-              <tr className="border-b border-border font-mono text-[10.5px] uppercase tracking-[0.1em] text-dim">
-                <th className="px-5 py-2.5 font-medium">Allowance</th>
-                {PLANS.map((plan) => (
-                  <th key={plan} className="w-36 py-2.5 pr-5 font-medium">
-                    {PLAN_LABEL[plan]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {ALLOWANCES.map((row) => (
-                <tr key={row.key} className="border-b border-border align-top last:border-b-0">
-                  <td className="px-5 py-3.5">
-                    <p className="text-[13.5px] font-semibold text-ink">{row.label}</p>
-                    <p className="mt-0.5 text-[12px] text-mid">{row.hint}</p>
-                  </td>
-                  {PLANS.map((plan) => {
-                    const value = limits[row.key][plan];
-                    const id = `${row.key}-${plan}`;
-                    return (
-                      <td key={plan} className="py-3.5 pr-5">
-                        <label htmlFor={id} className="sr-only">
-                          {row.label}, {PLAN_LABEL[plan]}
-                        </label>
-                        <input
-                          id={id}
-                          type="number"
-                          min={0}
-                          step={1}
-                          inputMode="numeric"
-                          value={value}
-                          onChange={(event) => setLimit(row.key, plan, event.target.value)}
-                          className={`${field} h-9 w-full font-mono`}
-                        />
-                        <p className={`mt-1 text-[11px] ${value === 0 ? "font-semibold text-[#1f7a45]" : "text-dim"}`}>{value === 0 ? "Unlimited" : `${value} a month`}</p>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div role="table" aria-label="AQ ONE allowances">
+          <div role="row" className="hidden grid-cols-[1fr_repeat(3,9rem)] gap-x-5 border-b border-border px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-dim sm:grid">
+            <span role="columnheader" className="font-medium">
+              Allowance
+            </span>
+            {PLANS.map((plan) => (
+              <span key={plan} role="columnheader" className="font-medium">
+                {PLAN_LABEL[plan]}
+              </span>
+            ))}
+          </div>
+          {ALLOWANCES.map((row) => (
+            <div key={row.key} role="row" className="grid grid-cols-3 gap-x-3 gap-y-2.5 border-b border-border px-5 py-3.5 last:border-b-0 sm:grid-cols-[1fr_repeat(3,9rem)] sm:gap-x-5">
+              <div role="rowheader" className="col-span-3 sm:col-span-1">
+                <p className="text-[13.5px] font-semibold text-ink">{row.label}</p>
+                <p className="mt-0.5 text-[12px] text-mid">{row.hint}</p>
+              </div>
+              {PLANS.map((plan) => {
+                const value = limits[row.key][plan];
+                const id = `${row.key}-${plan}`;
+                return (
+                  <div key={plan} role="cell" className="min-w-0">
+                    <label htmlFor={id} className="mb-1 block font-mono text-[10.5px] uppercase tracking-[0.08em] text-dim sm:sr-only">
+                      {PLAN_LABEL[plan]}<span className="sr-only">, {row.label}</span>
+                    </label>
+                    <input
+                      id={id}
+                      type="number"
+                      min={0}
+                      step={1}
+                      inputMode="numeric"
+                      value={value}
+                      onChange={(event) => setLimit(row.key, plan, event.target.value)}
+                      className={`${field} h-10 w-full font-mono sm:h-9`}
+                    />
+                    <p className={`mt-1 text-[11px] ${value === 0 ? "font-semibold text-[#1f7a45]" : "text-dim"}`}>{value === 0 ? "Unlimited" : `${value} a month`}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
         <p className="border-t border-border px-5 py-3 text-[12px] text-dim">0 means unlimited. Admins are never limited.</p>
       </section>

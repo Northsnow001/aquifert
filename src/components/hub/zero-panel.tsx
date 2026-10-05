@@ -55,7 +55,7 @@ export function ZeroPanel({
           </span>
           Coming soon
         </span>
-        <span className="min-w-0 flex-1">Choose the programme that fits how you buy and register your interest. The desk confirms pricing and availability with you.</span>
+        <span className="min-w-[15rem] flex-1">Choose the programme that fits how you buy and register your interest. The desk confirms pricing and availability with you.</span>
       </p>
 
       {done ? (

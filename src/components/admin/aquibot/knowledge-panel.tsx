@@ -164,7 +164,7 @@ export function KnowledgePanel({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Stat label="Indexed" value={`${counts.indexed} / ${counts.readable}`} meta="Readable telex and files" tone={counts.indexed === counts.readable ? "good" : undefined} />
         <Stat label="Needs indexing" value={String(counts.pending)} meta="New or changed since last run" tone={counts.pending ? "warn" : undefined} />
         <Stat label="Failed" value={String(counts.errors)} meta="Retry, or check the Logs tab" tone={counts.errors ? "bad" : undefined} />
@@ -429,7 +429,7 @@ function Stat({ label, value, meta, tone }: { label: string; value: string; meta
     <div className="rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
       <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{label}</p>
       <p className={`mt-1 text-[20px] font-bold tracking-tight ${color}`}>{value}</p>
-      <p className="mt-0.5 truncate text-[12px] text-mid">{meta}</p>
+      <p className="mt-0.5 text-[12px] text-mid sm:truncate">{meta}</p>
     </div>
   );
 }

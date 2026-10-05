@@ -250,7 +250,7 @@ export function RichTextEditor({
               addLink();
             }
           }}
-          className="aq-prose min-h-[520px] max-w-none px-8 py-7 text-[14px] outline-none [&_h2]:text-[18px] [&_h3]:text-[15px]"
+          className="aq-prose min-h-[360px] max-w-none px-4 py-5 sm:min-h-[520px] sm:px-8 sm:py-7 text-[14px] outline-none [&_h2]:text-[18px] [&_h3]:text-[15px]"
         />
       ) : (
         <textarea
@@ -258,7 +258,7 @@ export function RichTextEditor({
           onChange={(event) => setHtml(event.target.value)}
           spellCheck={false}
           aria-label="Commentary HTML"
-          className="block min-h-[520px] w-full resize-y border-0 bg-[#0f2236] px-6 py-5 font-mono text-[12.5px] leading-relaxed text-[#d6e4f0] outline-none"
+          className="block min-h-[360px] w-full resize-y border-0 bg-[#0f2236] px-4 py-4 sm:min-h-[520px] sm:px-6 sm:py-5 font-mono text-[12.5px] leading-relaxed text-[#d6e4f0] outline-none"
         />
       )}
 

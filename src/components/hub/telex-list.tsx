@@ -28,10 +28,9 @@ export function TelexList({
           <ul className="divide-y divide-border">
             {rows.map((item) => (
               <li key={item.id} className="px-5 py-4 transition-colors hover:bg-s2/60">
-                <div className="flex items-start gap-3.5">
-                  <FeedThumb product={item.product} size={thumb} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 sm:items-start sm:gap-x-3.5">
+                  <FeedThumb product={item.product} size={thumb} className="max-sm:size-11! max-sm:rounded-lg sm:row-span-2" />
+                  <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-mono text-[12px] tabular-nums text-dim">{item.publishedAt.slice(11, 16) || "--:--"}</span>
                       <Tag tone="teal">{item.product}</Tag>
                       <ToneBadge tone={item.tone} />
@@ -41,7 +40,8 @@ export function TelexList({
                           {tag}
                         </span>
                       ))}
-                    </div>
+                  </div>
+                  <div className="col-span-2 min-w-0 max-sm:mt-1 sm:col-span-1 sm:col-start-2">
                     <h3 className="mt-1.5 text-[16.5px] font-semibold leading-snug tracking-[-0.01em] text-ink">{item.headline}</h3>
                     {!item.readable ? (
                       <p className="mt-1.5 flex items-center gap-1.5 text-[14.5px] text-mid">

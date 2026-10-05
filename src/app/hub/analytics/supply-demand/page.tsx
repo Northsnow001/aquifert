@@ -81,7 +81,7 @@ export default async function SupplyDemandPage() {
         <EmptyPanel title="Balance sheets arrive soon" body="The desk is compiling season balances. Each product will show production, consumption, trade, stocks and the direction of travel." />
       ) : (
         <>
-          <div className="aq-stagger grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="aq-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 max-sm:[&>:last-child]:col-span-2">
             <StatTile label="Balances tracked" value={rows.length} icon={Scale} tone="blue" hint={[...new Set(rows.map((item) => item.row.season))].join(", ")} />
             <StatTile label="Tightening" value={tightening} icon={TrendingUp} tone="rose" hint={tightening ? rows.filter((item) => item.row.trend === "up").map((item) => item.row.product).join(", ") : "No balance is tightening"} />
             <StatTile

@@ -107,8 +107,8 @@ export function StatTile({
 }) {
   const body = (
     <>
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[13.5px] font-medium text-mid">{label}</p>
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <p className="min-w-0 text-[13.5px] font-medium leading-snug text-mid">{label}</p>
         <span className={`aq-chip ${tone ? `aq-chip-${tone}` : ""} flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white`}>
           <Icon className="h-4 w-4" strokeWidth={2.2} />
         </span>
@@ -125,7 +125,7 @@ export function StatTile({
       {hint ? <p className="mt-2 text-[13px] leading-snug text-dim">{hint}</p> : null}
     </>
   );
-  const cls = "aq-card aq-lift flex flex-col p-4 no-underline";
+  const cls = "aq-card aq-lift flex min-w-0 flex-col p-3.5 no-underline sm:p-4";
   return href ? (
     <Link href={href} className={cls}>
       {body}

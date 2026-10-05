@@ -77,6 +77,13 @@ export function AquibotChat({
   const [deleting, startDelete] = useTransition();
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const stepsRef = useRef<HTMLOListElement>(null);
+
+  useEffect(() => {
+    const list = stepsRef.current;
+    const step = list?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (list && step && list.scrollWidth > list.clientWidth) list.scrollLeft = (step.parentElement?.offsetLeft ?? 0) - 44;
+  }, []);
 
   const chat = useAquibotChat({
     sessionId: session?.id ?? null,
@@ -148,13 +155,16 @@ export function AquibotChat({
         <p className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em] text-mid">
           <Sparkles className="h-3.5 w-3.5 text-teal-500" /> {t("bot.journey")}
         </p>
-        <ol className="flex flex-wrap items-center gap-y-2">
+        <ol
+          ref={stepsRef}
+          className="-mx-4 flex snap-x scroll-px-4 items-center overflow-x-auto px-4 py-0.5 [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-28px),transparent)] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:gap-y-2 sm:overflow-visible sm:px-0 sm:[mask-image:none] [&::-webkit-scrollbar]:hidden"
+        >
           {journey.map((step, index) => (
-            <li key={step.key} className="flex items-center">
+            <li key={step.key} className="flex shrink-0 snap-start items-center">
               <Link
                 href={step.href}
                 aria-current={index === current ? "step" : undefined}
-                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold no-underline transition ${
+                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold no-underline transition ${
                   step.done
                     ? "bg-teal-500 text-white hover:bg-teal-600"
                     : index === current
@@ -263,14 +273,14 @@ export function AquibotChat({
           ) : null}
 
           {chat.messages.length < 6 ? (
-            <div className="mb-3 flex flex-wrap gap-2">
+            <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 [mask-image:linear-gradient(to_right,transparent,#000_16px,#000_calc(100%-28px),transparent)] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:[mask-image:none] [&::-webkit-scrollbar]:hidden">
               {SUGGESTIONS.map((key) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => send(t(key))}
                   disabled={!engine.ready || chat.busy || chat.limitReached}
-                  className="rounded-full border border-border bg-white px-3.5 py-1.5 text-start text-[13px] font-medium text-navy-800 transition hover:border-teal-500/40 hover:bg-teal-50 disabled:opacity-50"
+                  className="shrink-0 whitespace-nowrap rounded-full border border-border bg-white px-3.5 py-2 text-start text-[13px] font-medium text-navy-800 transition hover:border-teal-500/40 hover:bg-teal-50 disabled:opacity-50 sm:shrink sm:whitespace-normal sm:py-1.5"
                 >
                   {t(key)}
                 </button>
@@ -321,7 +331,7 @@ export function AquibotChat({
           </form>
 
           <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 px-1 text-[12px] text-dim">
-            <span>
+            <span className="pointer-coarse:hidden">
               {t("bot.enterHint")}
               {testMode ? " · answering with the test prompt" : ""}
             </span>

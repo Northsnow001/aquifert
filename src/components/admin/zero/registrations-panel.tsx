@@ -53,7 +53,7 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
 
   return (
     <li className="border-b border-border last:border-b-0">
-      <button type="button" onClick={onToggle} aria-expanded={open} className={`grid w-full grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_120px_20px] items-center gap-3 px-5 py-3 text-left transition hover:bg-s2/50 ${open ? "bg-s2/40" : ""}`}>
+      <button type="button" onClick={onToggle} aria-expanded={open} className={`grid w-full grid-cols-[minmax(0,1fr)_auto_16px] items-center gap-x-3 gap-y-1.5 px-5 py-3 text-left md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_120px_20px] md:gap-3 transition hover:bg-s2/50 ${open ? "bg-s2/40" : ""}`}>
         <span className="min-w-0">
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[13.5px] font-semibold text-ink">{row.company || "No company"}</span>
@@ -63,15 +63,15 @@ function Row({ row, open, onToggle }: { row: ZeroRegistration; open: boolean; on
             {row.name} · {row.email}
           </span>
         </span>
-        <span className="min-w-0">
-          <span className="block truncate text-[13px] text-ink">{[programmeName(row.programme), row.product].filter(Boolean).join(" · ")}</span>
+        <span className="min-w-0 max-md:col-start-1 max-md:row-start-2">
+          <span className="block text-[13px] text-ink md:truncate">{[programmeName(row.programme), row.product].filter(Boolean).join(" · ")}</span>
           <span className="block font-mono text-[11.5px] text-mid">{tonnes(row.annualVolume)} / yr</span>
         </span>
-        <span>
-          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[row.status]}`}>{ZERO_STATUS_LABEL[row.status]}</span>
+        <span className="max-md:col-start-2 max-md:row-start-1 max-md:justify-self-end">
+          <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[row.status]}`}>{ZERO_STATUS_LABEL[row.status]}</span>
         </span>
-        <span className="font-mono text-[11.5px] text-dim">{formatStamp(row.at)}</span>
-        <ChevronDown className={`h-4 w-4 text-dim transition ${open ? "rotate-180" : ""}`} />
+        <span className="font-mono text-[11.5px] text-dim max-md:col-span-2 max-md:col-start-2 max-md:row-start-2 max-md:self-end max-md:text-right">{formatStamp(row.at)}</span>
+        <ChevronDown className={`h-4 w-4 text-dim transition max-md:col-start-3 max-md:row-start-1 ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
         <div className="grid gap-5 border-t border-border bg-s2/20 px-5 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -215,13 +215,13 @@ export function ZeroRegistrationsPanel({ rows }: { rows: ZeroRegistration[] }) {
               role="tab"
               aria-selected={filter === key}
               onClick={() => setFilter(key)}
-              className={`rounded-lg px-2.5 py-1 text-[12.5px] font-semibold transition ${filter === key ? "bg-blue-light text-blue" : "text-mid hover:text-ink"}`}
+              className={`rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold transition sm:py-1 ${filter === key ? "bg-blue-light text-blue" : "text-mid hover:text-ink"}`}
             >
               {key === "all" ? "All" : ZERO_STATUS_LABEL[key]} <span className="font-mono text-[11px] opacity-70">{key === "all" ? byIntent.length : counts[key]}</span>
             </button>
           ))}
         </div>
-        <select value={intent} onChange={(event) => setIntent(event.target.value as "all" | ZeroIntent)} aria-label="Filter by request" className="h-9 rounded-lg border border-border bg-white px-2.5 text-[13px] text-ink">
+        <select value={intent} onChange={(event) => setIntent(event.target.value as "all" | ZeroIntent)} aria-label="Filter by request" className="h-10 min-w-0 flex-1 rounded-lg sm:h-9 sm:flex-none border border-border bg-white px-2.5 text-[13px] text-ink">
           <option value="all">Waitlist and calls</option>
           {ZERO_INTENTS.map((key) => (
             <option key={key} value={key}>
@@ -229,9 +229,9 @@ export function ZeroRegistrationsPanel({ rows }: { rows: ZeroRegistration[] }) {
             </option>
           ))}
         </select>
-        <label className="relative">
+        <label className="relative w-full sm:w-auto">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-dim" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, notes" aria-label="Search registrations" className="h-9 w-56 rounded-lg border border-border bg-white pl-8 pr-3 text-[13px] text-ink" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, company, notes" aria-label="Search registrations" className="h-10 w-full rounded-lg sm:h-9 sm:w-56 border border-border bg-white pl-8 pr-3 text-[13px] text-ink" />
         </label>
       </div>
       <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_110px_120px_20px] gap-3 border-b border-border bg-s2/50 px-5 py-2 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-dim md:grid">

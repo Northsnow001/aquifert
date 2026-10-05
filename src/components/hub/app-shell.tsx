@@ -395,16 +395,18 @@ export function AppShell({
               href={item.href}
               data-tour={item.key}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[11.5px] font-semibold no-underline ${active ? "text-blue" : "text-dim"}`}
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11.5px] font-semibold leading-tight no-underline ${active ? "text-blue" : "text-dim"}`}
             >
-              {Icon === "aquibot" ? <AquibotAvatar size={24} /> : <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />}
-              {item.key === "telex" || item.key === "library" ? t(`short.${item.key}`) : t(`nav.${item.key}`)}
+              {Icon === "aquibot" ? <AquibotAvatar size={24} active={active} /> : <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />}
+              <span className="block max-w-full truncate px-0.5" translate={item.key === "aquibot" ? "no" : undefined}>
+                {item.key === "aquibot" ? "Aquibot" : item.key === "telex" || item.key === "library" ? t(`short.${item.key}`) : t(`nav.${item.key}`)}
+              </span>
             </Link>
           );
         })}
-        <button type="button" onClick={() => setDrawer(true)} className="flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[11.5px] font-semibold text-dim">
+        <button type="button" onClick={() => setDrawer(true)} className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11.5px] font-semibold leading-tight text-dim">
           <MoreHorizontal className="h-6 w-6" strokeWidth={1.8} />
-          {t("top.more")}
+          <span className="block max-w-full truncate px-0.5">{t("top.more")}</span>
         </button>
       </nav>
 

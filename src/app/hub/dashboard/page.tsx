@@ -95,7 +95,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="aq-stagger grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="aq-stagger grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatTile label="Order requests" value={orders.length} icon={Package} tone="blue" href="/hub/order-desk?tab=desk" hint={orders.length ? "With the desk" : "No requests yet"} />
         <StatTile
           label="Nitrogen reports this month"
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
           className="lg:col-span-2"
           bodyClassName="p-4"
           actions={
-            <Link href="/hub/order-desk?tab=desk" className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue no-underline hover:underline">
+            <Link href="/hub/order-desk?tab=desk" className="-my-2 inline-flex items-center gap-1 py-2 text-[13.5px] font-semibold text-blue no-underline hover:underline">
               New request <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           }
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
           className="lg:col-span-3 lg:max-h-[640px]"
           bodyClassName="overflow-y-auto"
           actions={
-            <Link href="/hub/telex" className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-blue no-underline hover:underline">
+            <Link href="/hub/telex" className="-my-2 inline-flex items-center gap-1 py-2 text-[13.5px] font-semibold text-blue no-underline hover:underline">
               Open the feed <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           }

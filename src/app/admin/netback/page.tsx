@@ -106,7 +106,7 @@ export default async function NetbackAdminPage({ searchParams }: { searchParams:
         }
       />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-5 max-xl:[&>:last-child]:col-span-2">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -115,7 +115,7 @@ export default async function NetbackAdminPage({ searchParams }: { searchParams:
           >
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{stat.label}</p>
             <p className={`mt-1 text-[18px] font-bold tracking-tight ${stat.tone}`}>{stat.value}</p>
-            <p className="mt-0.5 truncate text-[12px] text-mid" title={stat.meta}>
+            <p className="mt-0.5 text-[12px] text-mid sm:truncate" title={stat.meta}>
               {stat.meta}
             </p>
           </Link>

@@ -99,7 +99,7 @@ export default async function AquibotAdminPage({ searchParams }: { searchParams:
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Aquibot Trader AI" description="Control how Aquibot answers members: the system prompt, usage limits, retrieval tuning, query vocabulary, the knowledge base and member conversations." />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -108,7 +108,7 @@ export default async function AquibotAdminPage({ searchParams }: { searchParams:
           >
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{stat.label}</p>
             <p className={`mt-1 text-[18px] font-bold tracking-tight ${stat.tone}`}>{stat.value}</p>
-            <p className="mt-0.5 truncate text-[12px] text-mid">{stat.meta}</p>
+            <p className="mt-0.5 text-[12px] text-mid sm:truncate">{stat.meta}</p>
           </Link>
         ))}
       </div>

@@ -211,7 +211,7 @@ export function NetbackCalculator({ ports, config, usage: initialUsage }: { port
     return (
       <section className="space-y-4">
         <h1 className="text-[28px] font-semibold tracking-tight text-ink">Granular Urea — Netback & Landed Cost</h1>
-        <div className="flex min-h-[420px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
+        <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 py-10 text-center lg:min-h-[420px]">
           <PackageOpen className="mb-3 h-8 w-8 text-dim" />
           <p className="text-base font-semibold text-ink">Awaiting pricing data</p>
           <p className="mt-1 max-w-sm text-sm leading-relaxed text-mid">Netback is available again as soon as the team publishes this week&apos;s benchmark prices.</p>
@@ -446,7 +446,7 @@ export function NetbackCalculator({ ports, config, usage: initialUsage }: { port
         </form>
 
         {!run || !shown || !result ? (
-          <div className="flex min-h-[520px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
+          <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 py-10 text-center lg:min-h-[520px]">
             <ArrowLeftRight className="mb-3 h-8 w-8 text-dim" />
             <p className="max-w-sm text-sm leading-relaxed text-mid">
               Select a destination port, set your parameters, and calculate to see the full origin ranking and cost breakdown.

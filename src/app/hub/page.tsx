@@ -1,4 +1,5 @@
-import { Info } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Info } from "lucide-react";
 import { FreightAnalytics } from "@/components/hub/freight-board";
 import { HomeHero } from "@/components/hub/home-hero";
 import { Markdown } from "@/components/hub/markdown";
@@ -8,6 +9,9 @@ import { getHubContent, sortHedge, sortTelex } from "@/lib/hub-content";
 import { getSession } from "@/lib/session";
 
 const ARC = Math.PI * 46;
+
+/** Phones show the latest few messages in the page flow instead of a scroll box inside the page. */
+const MOBILE_TELEX = 3;
 
 /** One colour per card, in order: nitrogen green, phosphate orange, potassium red. */
 const CARD_COLORS = [
@@ -102,10 +106,13 @@ export default async function HomePage() {
               </a>
             </p>
           </div>
-          <div className="max-h-[70dvh] min-h-0 flex-1 overflow-y-auto lg:max-h-none">
+          <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             {telex.length === 0 ? <p className="px-5 py-12 text-center text-sm text-mid">No Telex messages for your plan yet.</p> : null}
-            {telex.map((item) => (
-              <article key={item.id} className="border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-s2/60">
+            {telex.map((item, index) => (
+              <article
+                key={item.id}
+                className={`border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-s2/60 ${index >= MOBILE_TELEX ? "hidden lg:block" : ""}`}
+              >
                 <p className="font-mono text-[12px] uppercase tracking-wide text-dim">{formatTelexDay(item.publishedAt)}</p>
                 <h3 className="mt-1.5 text-[17px] font-semibold leading-snug tracking-[-0.01em] text-ink">{telexHeadline(item)}</h3>
                 <Markdown text={item.paragraphs.join("\n\n")} images className="mt-2.5 text-[15px] text-ink" />
@@ -121,6 +128,14 @@ export default async function HomePage() {
               </article>
             ))}
           </div>
+          {telex.length > MOBILE_TELEX ? (
+            <Link
+              href="/hub/telex"
+              className="flex items-center justify-center gap-1.5 border-t border-border px-5 py-3.5 text-[15px] font-semibold text-blue no-underline hover:bg-s2/60 lg:hidden"
+            >
+              See all {telex.length} TELEX messages <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          ) : null}
         </article>
       </section>
 
@@ -140,15 +155,19 @@ export default async function HomePage() {
             {indicators.map((item, index) => {
               const tone = stance(item.value, index);
               return (
-                <article key={item.name} className="flex min-w-0 flex-col items-center px-4 pb-4 pt-4 text-center">
-                  <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-mid">{item.name}</p>
-                  <Gauge value={item.value} color={tone.color} />
-                  <span className="mt-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: tone.color, background: tone.soft }}>
-                    {tone.label}
-                  </span>
-                  <p className="mt-3 w-full border-t border-border pt-3 text-[14.5px] leading-[1.55] text-ink" title={item.note || undefined}>
-                    {item.summary}
-                  </p>
+                <article key={item.name} className="flex min-w-0 items-center gap-4 p-4 sm:flex-col sm:gap-0 sm:text-center">
+                  <div className="flex w-[92px] shrink-0 flex-col items-center sm:contents">
+                    <Gauge value={item.value} color={tone.color} />
+                    <span className="mt-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em]" style={{ color: tone.color, background: tone.soft }}>
+                      {tone.label}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1 sm:contents">
+                    <p className="font-mono text-[12px] font-semibold uppercase tracking-[0.16em] text-mid sm:order-first">{item.name}</p>
+                    <p className="mt-1 text-[14.5px] leading-[1.55] text-ink sm:mt-3 sm:w-full sm:border-t sm:border-border sm:pt-3" title={item.note || undefined}>
+                      {item.summary}
+                    </p>
+                  </div>
                 </article>
               );
             })}

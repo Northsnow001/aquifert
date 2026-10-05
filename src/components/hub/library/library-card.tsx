@@ -18,10 +18,9 @@ export function LibraryCard({ file, featured = false }: { file: LibraryFile; fea
 
   return (
     <article className={`aq-card aq-lift relative ${featured ? "border-teal-200 bg-gradient-to-br from-teal-50/70 via-white to-white p-5 sm:p-7" : "p-4 sm:p-5"}`}>
-      <div className="flex gap-3 sm:gap-4">
-        <FeedThumb product={fileProduct(file)} size={featured ? 64 : 48} className="mt-0.5" />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 sm:items-start sm:gap-x-4">
+        <FeedThumb product={fileProduct(file)} size={featured ? 64 : 48} className={`sm:row-span-2 sm:mt-0.5 ${featured ? "max-sm:size-12!" : "max-sm:size-10! max-sm:rounded-lg"}`} />
+        <div className="flex flex-wrap items-center gap-1.5">
             {featured ? <Tag tone="teal">Latest</Tag> : null}
             {file.collectionNames.map((name) => (
               <Tag key={name} tone="blue">
@@ -30,7 +29,8 @@ export function LibraryCard({ file, featured = false }: { file: LibraryFile; fea
             ))}
             {facts ? <Tag>{facts}</Tag> : null}
             <AccessBadge access={file.access} className="ml-auto" />
-          </div>
+        </div>
+        <div className="col-span-2 min-w-0 sm:col-span-1 sm:col-start-2">
 
           <h2 className={`mt-2.5 font-semibold leading-snug tracking-[-0.01em] text-ink ${featured ? "text-[20px] sm:text-[24px]" : "text-[17.5px]"}`}>
             <Link href={href} className="text-ink no-underline hover:text-blue hover:underline">

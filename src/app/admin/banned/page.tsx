@@ -71,12 +71,12 @@ export default async function BannedPage() {
         }
       />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{stat.label}</p>
             <p className={`mt-1 text-[18px] font-bold tracking-tight ${stat.tone}`}>{stat.value}</p>
-            <p className="mt-0.5 truncate text-[12px] text-mid" title={stat.meta}>
+            <p className="mt-0.5 text-[12px] text-mid sm:truncate" title={stat.meta}>
               {stat.meta}
             </p>
           </div>

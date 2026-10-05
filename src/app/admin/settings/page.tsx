@@ -86,7 +86,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Settings" description="The emails the Order Desk and Aquifert Zero send, who may register, how email leaves the platform, and where data is stored." />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -95,7 +95,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           >
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{stat.label}</p>
             <p className={`mt-1 text-[18px] font-bold tracking-tight ${stat.tone}`}>{stat.value}</p>
-            <p className="mt-0.5 truncate text-[12px] text-mid" title={stat.meta}>
+            <p className="mt-0.5 text-[12px] text-mid sm:truncate" title={stat.meta}>
               {stat.meta}
             </p>
           </Link>

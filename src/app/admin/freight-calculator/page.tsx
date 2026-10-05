@@ -93,7 +93,7 @@ export default async function FreightCalculatorAdminPage({ searchParams }: { sea
         description="The live inputs behind member freight quotes: BDI and bunker prices, verified fixtures that anchor the rate, pricing rules and usage limits, and every calculation members run."
       />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-5 max-xl:[&>:last-child]:col-span-2">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -102,7 +102,7 @@ export default async function FreightCalculatorAdminPage({ searchParams }: { sea
           >
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{stat.label}</p>
             <p className={`mt-1 text-[18px] font-bold tracking-tight ${stat.tone}`}>{stat.value}</p>
-            <p className="mt-0.5 truncate text-[12px] text-mid">{stat.meta}</p>
+            <p className="mt-0.5 text-[12px] text-mid sm:truncate">{stat.meta}</p>
           </Link>
         ))}
       </div>

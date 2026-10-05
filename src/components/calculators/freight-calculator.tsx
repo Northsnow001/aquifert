@@ -259,7 +259,7 @@ export function FreightCalculator({
         </form>
 
         {!result ? (
-          <div className="flex min-h-[520px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 text-center">
+          <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 py-10 text-center lg:min-h-[520px]">
             <Ship className="mb-3 h-8 w-8 text-dim" />
             <p className="max-w-sm text-sm leading-relaxed text-mid">
               {shared && load && discharge

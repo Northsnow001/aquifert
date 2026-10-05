@@ -81,7 +81,7 @@ export function AquibotBriefing({ rows, persona: initial }: { rows: BriefRow[]; 
       )}
       <footer className="mt-auto flex items-center justify-between gap-3 border-t border-border px-5 py-3">
         <p className="text-[12px] leading-relaxed text-dim">Aquibot restates desk content. Indicative only, not advice.</p>
-        <Link href="/hub/aquibot" className="inline-flex shrink-0 items-center gap-1 text-[13.5px] font-semibold text-blue no-underline hover:underline">
+        <Link href="/hub/aquibot" className="-my-2 inline-flex shrink-0 items-center gap-1 py-2 text-[13.5px] font-semibold text-blue no-underline hover:underline">
           Ask Aquibot <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </footer>
