@@ -92,7 +92,7 @@ export function ProductChip({ product, small = false }: { product: TelexProduct;
 }
 
 /** Fills a positioned box with the flash's own picture, or the product picture when it has none. */
-export function StoryImage({ product, src, pick = 0, sizes, priority = false, className = "" }: { product: TelexProduct; src?: string | null; pick?: number; sizes: string; priority?: boolean; className?: string }) {
+export function StoryImage({ product, src, pick = 0, sizes, priority = false, className = "" }: { product: TelexProduct | "Market"; src?: string | null; pick?: number; sizes: string; priority?: boolean; className?: string }) {
   if (src) {
     const loading = priority ? "eager" : "lazy";
     return (
