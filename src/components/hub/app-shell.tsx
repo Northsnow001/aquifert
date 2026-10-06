@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpenCheck, ChevronDown, ChevronRight, CreditCard, Crown, LayoutDashboard, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, Sparkles, UserCircle, X } from "lucide-react";
+import { BookOpenCheck, ChevronDown, ChevronRight, CirclePlay, CreditCard, Crown, LayoutDashboard, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, UserCircle, X } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { AutoTranslate } from "@/components/app/auto-translate";
 import { toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
@@ -204,7 +204,7 @@ function AccountMenu({ user, admin, paid }: { user: SessionUser; admin: boolean;
                 startTour();
               }}
             >
-              <Sparkles className="h-4 w-4 text-mid" /> {t("top.tour")}
+              <CirclePlay className="h-4 w-4 text-mid" /> {t("top.tour")}
             </button>
             {admin ? (
               <Link href="/admin" role="menuitem" className={item} onClick={() => setOpen(false)}>
@@ -296,7 +296,7 @@ export function AppShell({
       { href: "/hub/account/usage", label: t("nav.plan-usage"), group: "Account", icon: <SlidersHorizontal /> },
       { href: "/hub/account/membership", label: t("nav.membership"), group: "Account", icon: <Crown /> },
       { href: "/hub/account/billing", label: t("nav.billing"), group: "Account", icon: <CreditCard /> },
-      { href: "#tour", label: t("top.tour"), group: "Help", icon: <Sparkles />, action: startTour },
+      { href: "#tour", label: t("top.tour"), group: "Help", icon: <CirclePlay />, action: startTour },
     ];
     return [...pages, ...account, ...(admin ? [{ href: "/admin", label: t("top.admin"), group: "Help", icon: <ADMIN_LINK.icon /> }] : [])];
   }, [nav, admin, unlocked, t]);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { CalendarRange, Check, Copy, FileText, FlaskConical, History, Lock, Newspaper, Send, Sparkles, SquarePen, Square, Trash2, TriangleAlert, User } from "lucide-react";
+import { CalendarRange, Check, Copy, FileText, FlaskConical, History, Lock, Newspaper, Route, Send, SquarePen, Square, Trash2, TriangleAlert, User } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAquibotSession } from "@/app/hub/aquibot/actions";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
@@ -153,7 +153,7 @@ export function AquibotChat({
 
       <section className="aq-card mb-5 px-4 py-4 sm:px-5" aria-label={t("bot.journey")}>
         <p className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.12em] text-mid">
-          <Sparkles className="h-3.5 w-3.5 text-teal-500" /> {t("bot.journey")}
+          <Route className="h-3.5 w-3.5 text-teal-500" /> {t("bot.journey")}
         </p>
         <ol
           ref={stepsRef}

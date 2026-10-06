@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { navFor, tabKeysFor } from "./nav";
+import { navFor, tabKeysFor, tabsFor } from "./nav";
 
 test("the free plan has no dashboard in the menu or the phone tab bar", () => {
   assert.equal(navFor("core", false).some((item) => item.key === "dashboard"), false);
@@ -30,6 +30,18 @@ test("AQ Zero and AQ Analytics sit under Plans and open the Buy Fertilizer page"
     assert.equal(item.href, "/hub/order-desk?tab=zero");
     assert.ok(item.promo?.headline);
   }
+});
+
+test("the Plans tab holds only AQ Zero and AQ Analytics, account pages stay in Account", () => {
+  const plans = tabsFor(navFor("enterprise", false), []).find((tab) => tab.key === "plans");
+  assert.deepEqual(plans?.links.map((link) => link.key), ["zero", "aq-analytics"]);
+});
+
+test("Trader Tools, User Guide and Contact Us are top-level tabs after Plans", () => {
+  const keys = tabsFor(navFor("core", false), []).map((tab) => tab.key);
+  assert.deepEqual(keys.slice(keys.indexOf("plans"), keys.indexOf("plans") + 4), ["plans", "tools", "guide", "contact"]);
+  const order = tabsFor(navFor("core", false), []).find((tab) => tab.key === "order-group");
+  assert.deepEqual(order?.links.map((link) => link.key), ["order"]);
 });
 
 test("AQ ONE follows the agreed order", () => {

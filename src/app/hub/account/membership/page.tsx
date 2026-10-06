@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock, Info, Lock, Sparkles } from "lucide-react";
+import { ArrowRight, Clock, Info, Lock, LockOpen } from "lucide-react";
 import { btnPrimary } from "@/components/app/form";
 import { Tag } from "@/components/hub/kit";
 import { ComparePlans } from "@/components/hub/plans/compare-plans";
@@ -79,7 +79,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
       {fromModule ? (
         <div className="aq-rise flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50/80 p-4">
           <span className="aq-chip flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white">
-            {can(fromModule.key) ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            {can(fromModule.key) ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
           </span>
           <div className="text-[15px] leading-relaxed text-mid">
             <p className="font-semibold text-ink">

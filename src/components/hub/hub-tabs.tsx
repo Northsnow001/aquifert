@@ -15,12 +15,12 @@ const TAB_LABEL: Record<string, string> = {
   "telex-feed": "tab.telexFeed",
   "freight-group": "nav.freight-analytics",
   "order-group": "tab.orderNow",
-  plans: "nav.plan-usage",
+  plans: "section.plans",
   analytics: "section.analytics",
 };
 
 const tabClass = (active: boolean) =>
-  `inline-flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-[13px] 2xl:px-4 xl:px-3 font-bold uppercase tracking-[0.06em] no-underline transition-colors ${
+  `inline-flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-[13px] font-bold uppercase tracking-[0.06em] no-underline transition-colors xl:px-2 xl:text-[12px] xl:tracking-[0.02em] ${
     active ? "border-teal-400 text-white" : "border-transparent text-slate-300 hover:border-white/40 hover:text-white"
   }`;
 
@@ -86,7 +86,7 @@ export function HubTabs({ tabs, pathname }: { tabs: HubTab[]; pathname: string }
   const openTab = open ? tabs.find((tab) => tab.key === open.key) : null;
 
   return (
-    <nav aria-label="Sections" className="aq-tabs-scroll flex items-center gap-0.5 overflow-x-auto px-4 sm:px-7">
+    <nav aria-label="Sections" className="aq-tabs-scroll flex items-center gap-0.5 overflow-x-auto px-4 sm:px-7 xl:gap-0 xl:px-5">
       {tabs.map((tab) => {
         const active = tab.links.some((link) => linkActive(pathname, link));
         if (tab.links.length === 1) {

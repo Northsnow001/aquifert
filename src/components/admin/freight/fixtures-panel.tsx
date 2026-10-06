@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Layers, Pencil, Plus, Search, Sparkles, TableProperties, Trash2 } from "lucide-react";
+import { Layers, Pencil, Plus, ScanText, Search, TableProperties, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { clearFixtureBatch, deleteFixtures, setFixtureStatus } from "@/app/admin/freight-calculator/actions";
 import { BenchmarkTester, type BenchmarkResult } from "@/components/admin/freight/benchmark-tester";
@@ -131,7 +131,7 @@ export function FixturesPanel({
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className={btnSecondary} onClick={() => setPanel({ kind: "ai" })}>
-            <Sparkles className="h-4 w-4" />
+            <ScanText className="h-4 w-4" />
             Read rate sheet with AI
           </button>
           <button type="button" className={btnSecondary} onClick={() => setPanel({ kind: "sheet" })}>

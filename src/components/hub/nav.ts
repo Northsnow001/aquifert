@@ -6,7 +6,6 @@ import {
   Calculator,
   ChartLine,
   CircleUser,
-  Crown,
   FileText,
   FlaskConical,
   Globe,
@@ -22,7 +21,6 @@ import {
   ShieldCheck,
   Ship,
   ShoppingCart,
-  SlidersHorizontal,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -316,12 +314,6 @@ export const ADMIN_LINK = { href: "/admin", label: "Admin console", icon: Shield
 export type HubTabLink = { key: string; href: string; icon: HubNavItem["icon"]; locked: boolean; promo?: string };
 export type HubTab = { key: string; tour?: string; links: HubTabLink[] };
 
-/** Account pages that sit in the tab row but not in the menu list. */
-const TAB_EXTRAS: Record<string, { href: string; icon: LucideIcon }> = {
-  "plan-usage": { href: "/hub/account/usage", icon: SlidersHorizontal },
-  membership: { href: "/hub/account/membership", icon: Crown },
-};
-
 /** Desktop tab row, left to right. A tab with one page is a plain link; more pages open a dropdown. */
 const TAB_GROUPS: { key: string; items: string[] }[] = [
   { key: "dashboard", items: ["dashboard"] },
@@ -332,8 +324,11 @@ const TAB_GROUPS: { key: string; items: string[] }[] = [
   { key: "telex-feed", items: ["telex", "analysis", "signal"] },
   { key: "netback", items: ["netback"] },
   { key: "freight-group", items: ["freight-analytics", "freight", "call"] },
-  { key: "order-group", items: ["order", "tools", "guide", "contact"] },
-  { key: "plans", items: ["plan-usage", "membership", "zero", "aq-analytics"] },
+  { key: "order-group", items: ["order"] },
+  { key: "plans", items: ["zero", "aq-analytics"] },
+  { key: "tools", items: ["tools"] },
+  { key: "guide", items: ["guide"] },
+  { key: "contact", items: ["contact"] },
   { key: "analytics", items: ["a-telex", "a-market", "a-signal", "a-freight", "a-sd", "a-briefing", "a-alerts"] },
 ];
 
@@ -341,8 +336,6 @@ const TAB_GROUPS: { key: string; items: string[] }[] = [
 export function tabsFor(nav: HubNavItem[], unlocked: string[]): HubTab[] {
   return TAB_GROUPS.map((group) => {
     const links = group.items.flatMap((key): HubTabLink[] => {
-      const extra = TAB_EXTRAS[key];
-      if (extra) return [{ key, href: extra.href, icon: extra.icon, locked: false }];
       const item = nav.find((entry) => entry.key === key);
       if (!item) return [];
       return [{ key, href: item.href, icon: item.icon, locked: Boolean(item.module && !unlocked.includes(item.module)), promo: item.promo?.headline }];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition } from "react";
-import { FileUp, History, Sparkles, TableProperties, X } from "lucide-react";
+import { FileUp, History, ScanText, TableProperties, X } from "lucide-react";
 import { toast } from "sonner";
 import { importFixtures, lastExtractionRows } from "@/app/admin/freight-calculator/actions";
 import { MATCH_STYLE, matchText } from "@/components/admin/freight/fixture-form";
@@ -142,7 +142,7 @@ export function FixtureImport({
     <section className="rounded-2xl border border-blue/25 bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-light text-blue">{mode === "ai" ? <Sparkles className="h-4 w-4" /> : <TableProperties className="h-4 w-4" />}</span>
+          <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-light text-blue">{mode === "ai" ? <ScanText className="h-4 w-4" /> : <TableProperties className="h-4 w-4" />}</span>
           <div>
             <h2 className="text-[14px] font-bold text-ink">{mode === "ai" ? "Read a rate sheet with AI" : "Import a pasted sheet"}</h2>
             <p className="mt-0.5 text-[12px] text-dim">
@@ -215,7 +215,7 @@ export function FixtureImport({
                 <input ref={fileRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" className="min-w-0 text-[12.5px] file:mr-3 file:rounded-md file:border-0 file:bg-blue-light file:px-2.5 file:py-1 file:text-[12px] file:font-semibold file:text-blue" />
               </label>
               <button type="button" className={btnPrimary} disabled={reading || busy} onClick={readFile}>
-                <Sparkles className="h-4 w-4" />
+                <ScanText className="h-4 w-4" />
                 {reading ? "Reading…" : "Read with AI"}
               </button>
               {lastExtraction ? (

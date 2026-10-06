@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Bot, CalendarRange, Cpu, Gauge, MessagesSquare, RotateCcw, Ship, Sparkles, TriangleAlert } from "lucide-react";
+import { Bot, CalendarRange, Cpu, FileSearch, Gauge, MessagesSquare, RotateCcw, Ship, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { saveAquibotSettings } from "@/app/admin/actions";
 import { NumberField, Panel, SaveBar, Switch, useEditorGuards } from "@/components/admin/aquibot/shared";
@@ -138,7 +138,7 @@ export function SettingsPanel({ initial }: { initial: AquibotSettings }) {
       </Panel>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <Panel icon={<Sparkles className="h-4 w-4" />} title="Retrieval budget" description="How much source text Aquibot may put in front of the model for one answer.">
+        <Panel icon={<FileSearch className="h-4 w-4" />} title="Retrieval budget" description="How much source text Aquibot may put in front of the model for one answer.">
           <div className="grid gap-4 sm:grid-cols-2">
             <NumberField id="ragTotalBudget" label="Total budget" value={settings.ragTotalBudget} onChange={set("ragTotalBudget")} unit="chars" step={1000} hint="Across every source." />
             <NumberField id="maxTopChunks" label="Top chunks" value={settings.maxTopChunks} onChange={set("maxTopChunks")} unit="max" hint="Ranked chunks kept after scoring." />

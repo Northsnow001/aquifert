@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, Lightbulb, Search, Sparkles } from "lucide-react";
+import { ArrowUpRight, CirclePlay, Lightbulb, Search } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { btnPrimary, fieldClass } from "@/components/app/form";
 import { startTour } from "@/components/app/tour";
@@ -108,7 +108,7 @@ export function GuideBrowser({ limits, plan }: { limits: GuideLimits; plan: Plan
           </p>
         </div>
         <button type="button" onClick={startTour} className={`${btnPrimary} shrink-0 self-start sm:self-auto`}>
-          <Sparkles className="h-4 w-4" />
+          <CirclePlay className="h-4 w-4" />
           Take the tour
         </button>
       </header>

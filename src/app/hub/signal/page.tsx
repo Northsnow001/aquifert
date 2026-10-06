@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, Lock, Newspaper, Radio, Sparkles } from "lucide-react";
+import { Activity, AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, Lock, LockOpen, Newspaper, Radio } from "lucide-react";
 import { SignalWindow } from "@/components/hub/aq1/signal-window";
 import { Disclaimer, EmptyPanel, HubPageHeader, Panel, Sparkline, Tag, ToneBadge } from "@/components/hub/kit";
 import { getHubAccess } from "@/lib/aq-modules/access";
@@ -211,7 +211,7 @@ export default async function SignalPage({ searchParams }: { searchParams: Promi
 
             <Link href="/hub/analytics/signal" className="aq-card aq-lift flex items-start gap-3 p-5 no-underline">
               <span className="aq-chip aq-chip-blue flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-white">
-                {pro ? <Sparkles className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                {pro ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
               </span>
               <div className="min-w-0">
                 <p className="text-[16px] font-semibold text-ink">AQ Signal in AQ Analytics</p>

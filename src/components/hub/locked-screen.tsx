@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, Lock, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Crown, Lock, MessageCircle } from "lucide-react";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { moduleInfo, PLAN_LABEL, type ModuleKey } from "@/lib/aq-modules/types";
 import type { Plan } from "@/lib/session-shared";
@@ -54,7 +54,7 @@ export function LockedScreen({ module, required, plan }: { module: ModuleKey; re
 
             <div className="mt-7 flex flex-wrap gap-2.5">
               <Link href={upgrade} className={btnPrimary}>
-                <Sparkles className="h-4 w-4" /> Upgrade to {PLAN_LABEL[required]}
+                <Crown className="h-4 w-4" /> Upgrade to {PLAN_LABEL[required]}
               </Link>
               <Link href={desk} className={btnSecondary}>
                 <MessageCircle className="h-4 w-4" /> Talk to the desk
