@@ -7,8 +7,7 @@ import { toast } from "sonner";
 import { saveFormEmails, sendTestEmail } from "@/app/admin/settings/actions";
 import { Panel, SaveBar, Switch, useEditorGuards } from "@/components/admin/aquibot/shared";
 import { btnGhost, btnSecondary, input, label, textarea } from "@/components/admin/ui";
-import { sampleFor } from "@/lib/desk-settings/forms";
-import { renderEmail } from "@/lib/desk-settings/render";
+import { formEmail, sampleFor } from "@/lib/desk-settings/forms";
 import { FORM_DETAILS, TEMPLATE_TAGS, type EmailTemplate, type FormEmails, type TemplateKind } from "@/lib/desk-settings/types";
 
 type Draft = FormEmails & { showOnHub?: boolean };
@@ -48,7 +47,7 @@ function TemplateEditor({
   const tags = TEMPLATE_TAGS[kind];
   const known = new Set(tags.map((item) => item.tag));
   const unknown = [...new Set([...`${template.subject} ${template.body}`.matchAll(/\{([a-z_]+)\}/g)].map((match) => match[1]).filter((tag) => !known.has(tag)))];
-  const missingDetails = !template.body.includes(FORM_DETAILS);
+  const missingDetails = audience === "admin" && !template.body.includes(FORM_DETAILS);
   const changed = template.subject !== fallback.subject || template.body !== fallback.body;
   const id = `${kind}-${audience}`;
 
@@ -123,7 +122,10 @@ function TemplateEditor({
             onFocus={() => (lastField.current = "body")}
             onChange={(event) => onChange({ ...template, body: event.target.value })}
           />
-          <p className="mt-1 text-[11.5px] text-dim">A blank line starts a new paragraph. Wrap words in **double stars** for bold.</p>
+          <p className="mt-1 text-[11.5px] text-dim">
+            A blank line starts a new paragraph. Wrap words in **double stars** for bold. Start a line with <span className="font-mono"># </span> for the headline, and put{" "}
+            <span className="font-mono">## Title</span> above numbered lines (1. 2. 3.) for a steps box.
+          </p>
         </div>
         <div>
           <p className={label}>Insert</p>
@@ -202,13 +204,8 @@ export function FormEmailsPanel({
 
   const preview = useMemo(
     () =>
-      renderEmail({
-        template: draft[audience],
-        vars: sample.vars,
-        sections: sample.sections,
-        action: audience === "admin" ? { label: "Open in admin", href: copy.adminPath } : undefined,
-      }),
-    [audience, copy.adminPath, draft, sample],
+      formEmail({ kind, audience, template: draft[audience], data: sample.data, adminHref: copy.adminPath }),
+    [audience, copy.adminPath, draft, kind, sample],
   );
 
   const save = () =>
@@ -269,7 +266,7 @@ export function FormEmailsPanel({
               <label htmlFor={`${kind}-recipient`} className={label}>
                 Desk address
               </label>
-              <input id={`${kind}-recipient`} type="email" className={`${input} mt-1.5`} value={draft.recipient} onChange={(event) => set({ recipient: event.target.value })} placeholder="sales@aquifert.com" />
+              <input id={`${kind}-recipient`} type="email" className={`${input} mt-1.5`} value={draft.recipient} onChange={(event) => set({ recipient: event.target.value })} placeholder="noreply@aquifert.com" />
             </div>
             <div>
               <label htmlFor={`${kind}-success`} className={label}>

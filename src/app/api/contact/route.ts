@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { emailReference } from "@/lib/email/brand";
+import { sendContactReceipt } from "@/lib/email/member-emails";
 import { createAdminClient, notifyAdmins } from "@/lib/supabase/admin";
 
 const CHANNELS = {
@@ -29,14 +31,16 @@ export async function POST(req: NextRequest) {
   const db = createAdminClient();
   if (!db) return NextResponse.json({ error: "Contact form is not configured" }, { status: 503 });
 
-  const { error } = await db.from("contact_messages").insert({ channel, name, email, company, message });
+  const reference = emailReference("C");
+  const { error } = await db.from("contact_messages").insert({ channel, name, email, company, message: `Reference: ${reference}\n${message}` });
   if (error) return NextResponse.json({ error: "Could not send your message." }, { status: 500 });
 
   await notifyAdmins(
     db,
     "CONTACT_MESSAGE",
     `Contact page: ${CHANNELS[channel]}`,
-    `${name} (${email}${company ? ", " + company : ""}): ${message.slice(0, 300)}`,
+    `${reference} · ${name} (${email}${company ? ", " + company : ""}): ${message.slice(0, 300)}`,
   );
+  await sendContactReceipt({ name, email, message, reference, topic: CHANNELS[channel] });
   return NextResponse.json({ ok: true });
 }

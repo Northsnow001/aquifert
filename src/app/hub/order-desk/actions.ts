@@ -2,8 +2,9 @@
 
 import { saveEnquiry } from "@/app/(auth)/actions";
 import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
-import { monthLabel, orderSections, orderVars, type OrderSubmission } from "@/lib/desk-settings/forms";
+import { monthLabel, orderEmailData, type OrderSubmission } from "@/lib/desk-settings/forms";
 import { notifySubmission } from "@/lib/desk-settings/notify";
+import { emailReference } from "@/lib/email/brand";
 import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
 import { resolvePort, portText } from "@/lib/ports";
 import { listInbox } from "@/lib/inbox";
@@ -13,9 +14,9 @@ const WINDOW_MS = 10 * 60 * 1000;
 const MAX_IN_WINDOW = 5;
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-type OrderInput = Omit<OrderSubmission, "submittedAt"> & { website?: string };
+type OrderInput = Omit<OrderSubmission, "submittedAt" | "reference"> & { website?: string };
 
-const REQUIRED: [keyof Omit<OrderSubmission, "submittedAt">, string][] = [
+const REQUIRED: [keyof Omit<OrderSubmission, "submittedAt" | "reference">, string][] = [
   ["name", "your name"],
   ["email", "your email"],
   ["product", "a product"],
@@ -35,7 +36,7 @@ export async function submitOrderEnquiry(input: OrderInput) {
     Object.entries(input)
       .filter(([key]) => key !== "website")
       .map(([key, value]) => [key, String(value ?? "").trim().slice(0, key === "notes" ? 4000 : key === "product" ? 600 : 300)]),
-  ) as Omit<OrderSubmission, "submittedAt">;
+  ) as Omit<OrderSubmission, "submittedAt" | "reference">;
   const missing = REQUIRED.filter(([key]) => !order[key]).map(([, text]) => text);
   if (missing.length) return { ok: false as const, message: `Add ${missing.join(", ")}.` };
   if (!EMAIL_PATTERN.test(order.email)) return { ok: false as const, message: "Enter a valid email address." };
@@ -53,8 +54,9 @@ export async function submitOrderEnquiry(input: OrderInput) {
   const recent = (await listInbox()).filter((item) => item.table === "order_enquiries" && item.payload.account === account && Date.parse(item.at) > since).length;
   if (recent >= MAX_IN_WINDOW) return { ok: false as const, message: "You have sent several enquiries in the last few minutes. Wait a little, then try again." };
 
-  const submission: OrderSubmission = { ...order, submittedAt: new Date().toISOString() };
+  const submission: OrderSubmission = { ...order, reference: emailReference("R"), submittedAt: new Date().toISOString() };
   const notes = [
+    `Reference: ${submission.reference}`,
     `Name: ${order.name}`,
     `Email: ${order.email}`,
     order.company && `Company: ${order.company}`,
@@ -84,14 +86,14 @@ export async function submitOrderEnquiry(input: OrderInput) {
       volume: order.largeVolume,
       call: order.wantsCall,
       notes: order.notes,
+      reference: submission.reference,
       account,
     },
   );
   if (result.saved === "error") return { ok: false as const, message: result.message ?? "The enquiry could not be sent. Try again in a moment." };
 
   await notifySubmission("order", {
-    vars: orderVars(submission),
-    sections: orderSections(submission),
+    data: orderEmailData(submission),
     applicantEmail: order.email,
     adminPath: "/admin/enquiries?type=order",
   });

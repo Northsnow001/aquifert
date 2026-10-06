@@ -3,9 +3,10 @@ import test from "node:test";
 import { DISPOSABLE_MESSAGE, WORK_EMAIL_MESSAGE, checkSignupEmail, cleanEntries } from "./email-rules";
 import { ZERO, toRow } from "../data/tables";
 import { ZERO_INTENT_LABEL, ZERO_NEXT_STEP } from "../zero-types";
-import { ZERO_SAMPLE, zeroSections, zeroVars } from "./forms";
+import { ORDER_SAMPLE, ZERO_SAMPLE, formEmail, orderEmailData, zeroEmailData } from "./forms";
 import { renderEmail } from "./render";
-import { DEFAULT_DESK_SETTINGS } from "./types";
+import { DEFAULT_DESK_SETTINGS, RETIRED_TEMPLATES } from "./types";
+import { analyticsWaitlistEmail, contactReceiptEmail, splitTopic, supabaseAuthTemplates } from "../email/templates";
 
 const rules = { requireWorkEmail: true, blocked: [], allowed: [] };
 
@@ -40,22 +41,46 @@ test("list entries are cleaned to lower-case domains and addresses", () => {
   assert.deepEqual(cleanEntries([" @Rival.com ", "VIP@gmail.com", "nonsense", "", "rival.com"]), ["rival.com", "vip@gmail.com"]);
 });
 
-test("templates fill tags, escape member input and place the details table", () => {
+test("templates fill tags, escape member input and place the details card", () => {
   const email = renderEmail({
     template: DEFAULT_DESK_SETTINGS.orderDesk.applicant,
-    vars: { user_name: "Amara <script>", product: "Urea - Granular" },
+    vars: { first_name: "Amara <script>", product: "Urea - Granular", reference: "AQ-R-1" },
     sections: [{ title: "Product details", rows: [["Product", "Urea - Granular"], ["Grade", ""]] }],
-    year: 2026,
   });
-  assert.equal(email.subject, "Your Aquifert enquiry has been received — Urea - Granular");
-  assert.ok(email.html.includes("Hi Amara &lt;script&gt;,"));
+  assert.equal(email.subject, "Your requirement is with the Aquifert trade desk — Urea - Granular");
+  assert.ok(email.html.includes("Your requirement is with the desk, Amara &lt;script&gt;"));
   assert.ok(!email.html.includes("<script>"));
   assert.ok(email.html.includes("Product details"));
   assert.ok(!email.html.includes(">Grade<"));
-  assert.ok(email.html.includes('<strong style="color:#111827;">Aquifert Trading Team</strong>'));
+  assert.ok(email.html.includes("/storage/v1/object/public/logo/logo-v2.png"));
+  assert.ok(email.html.includes("Matt &amp; Phil"));
   assert.ok(email.text.includes("PRODUCT DETAILS\nProduct: Urea - Granular"));
-  assert.ok(email.html.indexOf("Thank you") < email.html.indexOf("Product details"));
-  assert.ok(email.html.indexOf("Product details") < email.html.indexOf("Best regards"));
+  assert.ok(email.text.includes("WHAT HAPPENS NEXT\n1. The desk reviews your requirement"));
+  assert.ok(email.html.indexOf("Thank you for submitting") < email.html.indexOf("Product details"));
+  assert.ok(email.html.indexOf("Product details") < email.html.indexOf("What happens next"));
+});
+
+test("Trading Desk confirmation quotes the reference and links back to the desk", () => {
+  const email = formEmail({ kind: "order", audience: "applicant", template: DEFAULT_DESK_SETTINGS.orderDesk.applicant, data: orderEmailData(ORDER_SAMPLE), deskEmail: "desk@aquifert.com", adminHref: "/admin/enquiries" });
+  assert.deepEqual(email.unknownTags, []);
+  assert.ok(email.text.includes("Reference: AQ-R-7K2M9Q"));
+  assert.ok(email.text.includes("Volume: 25,000 MT"));
+  assert.ok(!email.text.includes("Prepayment"));
+  assert.ok(email.html.includes("mailto:desk@aquifert.com?subject=Requirement%20AQ-R-7K2M9Q"));
+  assert.ok(email.html.indexOf("Add detail to this requirement") < email.html.indexOf("Need to change anything?"));
+
+  const desk = formEmail({ kind: "order", audience: "admin", template: DEFAULT_DESK_SETTINGS.orderDesk.admin, data: orderEmailData(ORDER_SAMPLE), adminHref: "https://x.test/admin/enquiries" });
+  assert.ok(desk.text.includes("Prepayment: 20%"));
+  assert.ok(desk.text.includes("Open in admin: https://x.test/admin/enquiries"));
+  assert.ok(!desk.html.includes("Matt &amp; Phil"));
+});
+
+test("saved templates that still match an old default are not mistaken for custom ones", () => {
+  const old = RETIRED_TEMPLATES.order.applicant[0];
+  assert.ok(old.body.includes("Best regards"));
+  assert.notEqual(old.body, DEFAULT_DESK_SETTINGS.orderDesk.applicant.body);
+  const legacy = renderEmail({ template: old, vars: { user_name: "Ola", product: "DAP" }, sections: [] });
+  assert.ok(!legacy.html.includes("Matt &amp; Phil"), "a template with its own sign-off skips the shared signature");
 });
 
 test("unknown tags are reported and left visible", () => {
@@ -73,22 +98,49 @@ test("empty tags do not leave dangling separators in the subject", () => {
   assert.equal(renderEmail({ template: { subject: "{a} · Desk | {b}", body: "b" }, vars: { a: "", b: "Zero" }, sections: [] }).subject, "Desk | Zero");
 });
 
-test("the Zero confirmation says what happens next, with call details only for call requests", () => {
+test("the Zero confirmation says what happens next for waitlist and call requests", () => {
   const call = { ...ZERO_SAMPLE, request: ZERO_INTENT_LABEL.call, nextStep: ZERO_NEXT_STEP.call };
   const waitlist = { ...ZERO_SAMPLE, request: ZERO_INTENT_LABEL.waitlist, nextStep: ZERO_NEXT_STEP.waitlist, phone: "", callDate: "", callWindow: "", timezone: "" };
-  const render = (zero: typeof call) => renderEmail({ template: DEFAULT_DESK_SETTINGS.zero.applicant, vars: zeroVars(zero), sections: zeroSections(zero) });
+  const render = (zero: typeof call) => formEmail({ kind: "zero", audience: "applicant", template: DEFAULT_DESK_SETTINGS.zero.applicant, data: zeroEmailData(zero), adminHref: "/admin/zero" });
 
   const callEmail = render(call);
-  assert.ok(callEmail.text.includes(ZERO_NEXT_STEP.call));
-  assert.ok(callEmail.text.includes("Preferred call day: Tuesday, 6 October 2026"));
-  assert.ok(callEmail.text.includes("Phone: +234 801 234 5678"));
+  assert.ok(callEmail.text.includes(`2. ${ZERO_NEXT_STEP.call}`));
+  assert.ok(callEmail.text.startsWith("AQ ZERO · CALL REQUEST RECEIVED"));
   assert.deepEqual(callEmail.unknownTags, []);
 
   const waitlistEmail = render(waitlist);
+  assert.equal(waitlistEmail.subject, "You are on the list for AQ Zero Harvest");
+  assert.ok(waitlistEmail.text.startsWith("AQ ZERO · WAITLIST CONFIRMED\n\nYou are on the list, Amara"));
   assert.ok(waitlistEmail.text.includes("We will get back to you as soon as Aquifert Zero is live."));
-  assert.ok(waitlistEmail.text.includes("Request: Join the waitlist"));
-  assert.ok(!waitlistEmail.text.includes("Preferred call"));
+  assert.ok(waitlistEmail.html.includes("mailto:noreply@aquifert.com?subject=AQ%20Zero%20question"));
   assert.ok(!waitlistEmail.text.includes("Phone:"));
+
+  const desk = formEmail({ kind: "zero", audience: "admin", template: DEFAULT_DESK_SETTINGS.zero.admin, data: zeroEmailData(call), adminHref: "/admin/zero" });
+  assert.ok(desk.text.includes("Preferred call day: Tuesday, 6 October 2026"));
+});
+
+test("the AQ Analytics waitlist and contact receipt use the shared design", () => {
+  const analytics = analyticsWaitlistEmail({ name: "Amara Okafor", deskEmail: "desk@aquifert.com" });
+  assert.equal(analytics.subject, "You are on the AQ Analytics waitlist");
+  assert.ok(analytics.html.includes("You are on the list, Amara"));
+  assert.ok(analytics.html.includes("mailto:desk@aquifert.com?subject=AQ%20Analytics%20question"));
+
+  const parsed = splitTopic("About: Weekly Market Call\n\nWhen is the next one?");
+  assert.deepEqual(parsed, { topic: "Weekly Market Call", body: "When is the next one?" });
+  assert.deepEqual(splitTopic("Hello there"), { topic: "General enquiry", body: "Hello there" });
+  const receipt = contactReceiptEmail({ name: "Ola <b>", reference: "AQ-C-1", topic: parsed.topic, message: parsed.body });
+  assert.equal(receipt.subject, "We have received your message — AQ-C-1");
+  assert.ok(receipt.html.includes("Thank you, Ola"));
+  assert.ok(!receipt.html.includes("<b>"));
+  assert.ok(receipt.text.includes("Topic: Weekly Market Call"));
+});
+
+test("Supabase auth templates keep Supabase placeholders intact", () => {
+  const { verification, reset } = supabaseAuthTemplates();
+  assert.ok(verification.html.includes("{{ .Token }}"));
+  assert.ok(verification.html.includes("Hello{{ if .Data.name }} {{ .Data.name }}{{ end }},"));
+  assert.ok(reset.html.includes('href="{{ .ConfirmationURL }}"'));
+  assert.ok(!reset.html.includes("{{FIRST_NAME}}"));
 });
 
 test("waitlist rows fill the Supabase columns, treating older registrations as waitlist sign-ups", () => {
@@ -109,5 +161,5 @@ test("waitlist rows fill the Supabase columns, treating older registrations as w
 test("an action button is appended when given", () => {
   const email = renderEmail({ template: { subject: "s", body: "b" }, vars: {}, sections: [], action: { label: "Open in admin", href: "https://example.com/admin?a=1&b=2" } });
   assert.ok(email.html.includes('href="https://example.com/admin?a=1&amp;b=2"'));
-  assert.ok(email.text.endsWith("Open in admin: https://example.com/admin?a=1&b=2"));
+  assert.ok(email.text.includes("b\n\nOpen in admin: https://example.com/admin?a=1&b=2"));
 });

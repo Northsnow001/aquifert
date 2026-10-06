@@ -1,7 +1,11 @@
-import type { DetailSection } from "@/lib/desk-settings/render";
-import type { TemplateKind } from "@/lib/desk-settings/types";
+import { renderEmail, type DetailSection, type EmailAction, type EmailFrame } from "@/lib/desk-settings/render";
+import type { EmailTemplate, TemplateKind } from "@/lib/desk-settings/types";
+import { DESK_EMAIL, firstName } from "@/lib/email/brand";
+import { ZERO_INTENT_LABEL } from "@/lib/zero-types";
 
 export type OrderSubmission = {
+  /** Quoted back to the member so replies can be matched to the enquiry. */
+  reference: string;
   name: string;
   email: string;
   company: string;
@@ -72,6 +76,8 @@ const tonnes = (value: string) => {
 
 export function orderVars(order: OrderSubmission): Record<string, string> {
   return {
+    first_name: firstName(order.name),
+    reference: order.reference,
     user_name: order.name,
     user_email: order.email,
     user_company: order.company,
@@ -86,7 +92,7 @@ export function orderVars(order: OrderSubmission): Record<string, string> {
 export function orderSections(order: OrderSubmission): DetailSection[] {
   const price = Number(order.targetPrice);
   return [
-    { title: "Contact information", rows: [["Name", order.name], ["Email", order.email], ["Company", order.company]] },
+    { title: "Contact information", rows: [["Reference", order.reference], ["Name", order.name], ["Email", order.email], ["Company", order.company]] },
     {
       title: "Product details",
       rows: [["Product", order.product], ["Grade", order.grade], ["Quantity", tonnes(order.quantity)], ["Packaging", order.packaging], ["Pallets required", order.pallets], ["Customised packaging", order.customPackaging]],
@@ -114,8 +120,25 @@ export function orderSections(order: OrderSubmission): DetailSection[] {
   ];
 }
 
+/** The short card in the member's confirmation; the desk alert gets every section. */
+export function orderSummary(order: OrderSubmission): DetailSection[] {
+  return [
+    {
+      title: "Your requirement",
+      rows: [
+        ["Reference", order.reference],
+        ["Product", order.grade ? `${order.product} (${order.grade})` : order.product],
+        ["Volume", tonnes(order.quantity)],
+        ["Destination", order.destination],
+        ["Shipping window", [monthLabel(order.shipFrom), monthLabel(order.shipTo)].filter(Boolean).join(" to ")],
+      ],
+    },
+  ];
+}
+
 export function zeroVars(zero: ZeroSubmission): Record<string, string> {
   return {
+    first_name: firstName(zero.name),
     user_name: zero.name,
     user_email: zero.email,
     user_company: zero.company,
@@ -150,7 +173,83 @@ export function zeroSections(zero: ZeroSubmission): DetailSection[] {
   ];
 }
 
+export function zeroSummary(zero: ZeroSubmission): DetailSection[] {
+  return [
+    {
+      title: "Your registration",
+      rows: [
+        ["Programme", zero.programme],
+        ["Request", zero.request],
+        ["Estimated annual volume", tonnes(zero.annualVolume)],
+        ["Primary product", zero.product],
+      ],
+    },
+  ];
+}
+
+export type FormEmailData = { vars: Record<string, string>; sections: DetailSection[]; summary: DetailSection[] };
+
+export const orderEmailData = (order: OrderSubmission): FormEmailData => ({ vars: orderVars(order), sections: orderSections(order), summary: orderSummary(order) });
+export const zeroEmailData = (zero: ZeroSubmission): FormEmailData => ({ vars: zeroVars(zero), sections: zeroSections(zero), summary: zeroSummary(zero) });
+
+function frameFor(kind: TemplateKind, audience: "applicant" | "admin", vars: Record<string, string>, deskEmail: string): Partial<EmailFrame> {
+  if (audience === "admin") {
+    return {
+      preheader: kind === "order" ? `${vars.user_name || "A member"} sent an enquiry for ${vars.product || "fertilizer"}.` : `${vars.user_name || "A member"}: ${vars.request || "Aquifert Zero registration"}.`,
+      tagline: "Trading desk alert",
+      eyebrow: kind === "order" ? "New enquiry" : "Aquifert Zero",
+      heading: kind === "order" ? "New enquiry" : "New Aquifert Zero registration",
+      detailsTitle: "Submission",
+      footerNote: `Sent to the desk address set in Admin → Settings → ${kind === "order" ? "Order Desk" : "Aquifert Zero"}.`,
+      signature: false,
+      deskEmail,
+    };
+  }
+  if (kind === "order") {
+    return {
+      preheader: "Your trading requirement has been received. The desk is reviewing it and will come back to you.",
+      tagline: "The governed fertilizer trading platform",
+      eyebrow: "Trading desk · Requirement received",
+      heading: "Your requirement is with the desk",
+      detailsTitle: "Your requirement",
+      footerNote: "You received this email because you submitted a requirement to the Aquifert trade desk.",
+      deskEmail,
+    };
+  }
+  const call = vars.request === ZERO_INTENT_LABEL.call;
+  return {
+    preheader: call
+      ? "Thank you for registering for AQ Zero. Pick your call time and the desk will see you there."
+      : "Thank you for joining the AQ Zero waitlist. The trade desk will be in touch when we are live.",
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: call ? "AQ Zero · Call request received" : "AQ Zero · Waitlist confirmed",
+    heading: "You are on the list",
+    detailsTitle: "Your registration",
+    footerNote: call ? "You received this email because you registered for AQ Zero." : "You received this email because you joined the AQ Zero waitlist.",
+    deskEmail,
+  };
+}
+
+function actionFor(kind: TemplateKind, audience: "applicant" | "admin", vars: Record<string, string>, deskEmail: string, adminHref: string): EmailAction {
+  if (audience === "admin") return { label: "Open in admin", href: adminHref };
+  const subject = kind === "order" ? `Requirement ${vars.reference ?? ""}`.trim() : "AQ Zero question";
+  return { label: kind === "order" ? "Add detail to this requirement" : "Talk to the trade desk", href: `mailto:${deskEmail}?subject=${encodeURIComponent(subject)}` };
+}
+
+/** One form email, framed for its audience. Used for real sends, admin tests and the admin preview. */
+export function formEmail(input: { kind: TemplateKind; audience: "applicant" | "admin"; template: EmailTemplate; data: FormEmailData; deskEmail?: string; adminHref: string }) {
+  const desk = input.deskEmail?.trim() || DESK_EMAIL;
+  return renderEmail({
+    template: input.template,
+    vars: input.data.vars,
+    sections: input.audience === "applicant" ? input.data.summary : input.data.sections,
+    action: actionFor(input.kind, input.audience, input.data.vars, desk, input.adminHref),
+    frame: frameFor(input.kind, input.audience, input.data.vars, desk),
+  });
+}
+
 export const ORDER_SAMPLE: OrderSubmission = {
+  reference: "AQ-R-7K2M9Q",
   name: "Amara Okafor",
   email: "amara@harvestco.com",
   company: "Harvest Co",
@@ -194,7 +293,5 @@ export const ZERO_SAMPLE: ZeroSubmission = {
 };
 
 export function sampleFor(kind: TemplateKind) {
-  return kind === "order"
-    ? { vars: orderVars(ORDER_SAMPLE), sections: orderSections(ORDER_SAMPLE), email: ORDER_SAMPLE.email }
-    : { vars: zeroVars(ZERO_SAMPLE), sections: zeroSections(ZERO_SAMPLE), email: ZERO_SAMPLE.email };
+  return kind === "order" ? { data: orderEmailData(ORDER_SAMPLE), email: ORDER_SAMPLE.email } : { data: zeroEmailData(ZERO_SAMPLE), email: ZERO_SAMPLE.email };
 }

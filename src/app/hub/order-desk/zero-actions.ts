@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isCalendlyInvitee } from "@/lib/calendly";
 import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
-import { zeroSections, zeroVars } from "@/lib/desk-settings/forms";
+import { zeroEmailData } from "@/lib/desk-settings/forms";
 import { notifySubmission } from "@/lib/desk-settings/notify";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { ZERO_PRODUCTS } from "@/lib/desk-settings/types";
@@ -67,7 +67,7 @@ export async function registerZeroInterest(input: {
     notes,
     submittedAt: row.at,
   };
-  await notifySubmission("zero", { vars: zeroVars(submission), sections: zeroSections(submission), applicantEmail: email, adminPath: "/admin/zero" });
+  await notifySubmission("zero", { data: zeroEmailData(submission), applicantEmail: email, adminPath: "/admin/zero" });
   revalidatePath("/admin", "layout");
   return { ok: true as const, at: row.at };
 }

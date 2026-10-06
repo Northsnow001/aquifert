@@ -1,13 +1,34 @@
+import { brandedHtml, brandedText, escapeHtml, type BrandedEmail, type DetailSection, type EmailBlock } from "@/lib/email/brand";
 import { FORM_DETAILS, type EmailTemplate } from "@/lib/desk-settings/types";
 
-export type DetailSection = { title: string; rows: Array<[string, string]> };
+export type { DetailSection } from "@/lib/email/brand";
 export type EmailAction = { label: string; href: string };
 export type RenderedEmail = { subject: string; html: string; text: string; unknownTags: string[] };
 
-const escapeHtml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+/** The parts of the branded frame that come from the form rather than the admin-written template. */
+export type EmailFrame = {
+  preheader: string;
+  tagline: string;
+  eyebrow: string;
+  /** Used when the template has no `# headline` line. */
+  heading: string;
+  footerNote: string;
+  detailsTitle?: string;
+  deskEmail?: string;
+  signature?: boolean;
+  buttonTone?: "navy" | "teal";
+};
+
+const DEFAULT_FRAME: EmailFrame = {
+  preheader: "",
+  tagline: "The governed fertilizer trading platform",
+  eyebrow: "Aquifert",
+  heading: "",
+  footerNote: "This is an automated message from Aquifert.",
+};
 
 const TAG = /\{([a-z_]+)\}/g;
+const STEP = /^\s*\d+[.)]\s+/;
 
 function fill(text: string, vars: Record<string, string>, escape: boolean) {
   return text.replace(TAG, (whole, key: string) => (key in vars ? (escape ? escapeHtml(vars[key]) : vars[key]) : escape ? escapeHtml(whole) : whole));
@@ -33,94 +54,96 @@ function tidySubject(subject: string) {
   return kept.join("");
 }
 
-function detailsHtml(sections: DetailSection[]) {
-  return sections
-    .map((section) => {
-      const rows = section.rows.filter(([, value]) => value.trim());
-      if (!rows.length) return "";
-      return [
-        '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:collapse;">',
-        `<tr><td colspan="2" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6b7280;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">${escapeHtml(section.title)}</td></tr>`,
-        ...rows.map(
-          ([label, value]) =>
-            `<tr><td width="170" style="padding:6px 12px 6px 0;font-size:13px;color:#6b7280;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 0;font-size:13px;color:#111827;vertical-align:top;white-space:pre-line;">${escapeHtml(value)}</td></tr>`,
-        ),
-        "</table>",
-      ].join("");
-    })
-    .join("");
-}
+const formatted = (text: string, vars: Record<string, string>) =>
+  fill(escapeHtml(text), vars, true)
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#16304D;">$1</strong>')
+    .replace(/\n/g, "<br>");
 
-function detailsText(sections: DetailSection[]) {
-  return sections
-    .map((section) => {
-      const rows = section.rows.filter(([, value]) => value.trim());
-      return rows.length ? [section.title.toUpperCase(), ...rows.map(([label, value]) => `${label}: ${value}`)].join("\n") : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-function paragraphHtml(block: string, vars: Record<string, string>) {
-  const formatted = fill(escapeHtml(block), vars, true).replace(/\*\*(.+?)\*\*/g, '<strong style="color:#111827;">$1</strong>').replace(/\n/g, "<br>");
-  return `<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px;">${formatted}</p>`;
-}
-
-function wrap(content: string, year: number) {
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
-<tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;">
-<tr><td style="background:#1e3a5f;padding:24px 32px;">
-<table width="100%" cellpadding="0" cellspacing="0"><tr>
-<td style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Aquifert</td>
-<td style="color:#6baa8e;font-size:13px;text-align:right;font-weight:500;">Trading Desk</td>
-</tr></table>
-</td></tr>
-<tr><td style="padding:32px 32px 16px;">${content}</td></tr>
-<tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center;">&copy; ${year} Aquifert. All rights reserved.</td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
-}
+const isSteps = (lines: string[]) => lines.length > 0 && lines.every((line) => STEP.test(line));
 
 /**
  * Turns an admin-written template into a branded email. Blank lines start a new paragraph, **text** is bold,
- * {tags} are filled from the submission and [form-details] becomes the submission table.
+ * `# ` starts the headline, `## Title` followed by numbered lines becomes a steps box, {tags} are filled from
+ * the submission and [form-details] becomes the submission card.
  */
 export function renderEmail({
   template,
   vars,
   sections,
   action,
-  year = new Date().getFullYear(),
+  frame: frameInput,
 }: {
   template: EmailTemplate;
   vars: Record<string, string>;
   sections: DetailSection[];
   action?: EmailAction;
+  frame?: Partial<EmailFrame>;
+  /** Kept for callers that still pass it; the frame no longer prints a year. */
   year?: number;
 }): RenderedEmail {
+  const frame = { ...DEFAULT_FRAME, ...frameInput };
   const subject = tidySubject(fill(template.subject, vars, false));
-  const blocks = template.body
+  const parts = template.body
     .replace(/\r\n/g, "\n")
     .split(FORM_DETAILS)
-    .flatMap((part, index, parts) => [...part.split(/\n{2,}/), ...(index < parts.length - 1 ? [FORM_DETAILS] : [])])
+    .flatMap((part, index, all) => [...part.split(/\n{2,}/), ...(index < all.length - 1 ? [FORM_DETAILS] : [])])
     .map((block) => block.replace(/^\n+|\n+$/g, ""))
     .filter((block) => block.trim());
 
-  const htmlParts = blocks.map((block) => (block === FORM_DETAILS ? detailsHtml(sections) : paragraphHtml(block, vars)));
-  const textParts = blocks.map((block) => (block === FORM_DETAILS ? detailsText(sections) : fill(block, vars, false).replace(/\*\*(.+?)\*\*/g, "$1")));
-  if (action) {
-    htmlParts.push(
-      `<p style="margin:8px 0 16px;"><a href="${escapeHtml(action.href)}" style="display:inline-block;padding:10px 20px;background:#1e3a5f;color:#ffffff;text-decoration:none;border-radius:4px;font-size:14px;">${escapeHtml(action.label)}</a></p>`,
-    );
-    textParts.push(`${action.label}: ${action.href}`);
+  let heading = "";
+  let pendingTitle: string | null = null;
+  const blocks: EmailBlock[] = [];
+  const flushTitle = () => {
+    if (pendingTitle) blocks.push({ kind: "text", html: `<strong style="color:#16304D;">${formatted(pendingTitle, vars)}</strong>` });
+    pendingTitle = null;
+  };
+
+  for (const part of parts) {
+    if (part === FORM_DETAILS) {
+      flushTitle();
+      blocks.push({ kind: "details", title: frame.detailsTitle, sections });
+      continue;
+    }
+    let lines = part.split("\n");
+    if (!heading && lines[0].startsWith("# ")) {
+      heading = fill(lines[0].slice(2).trim(), vars, false).replace(/\*\*/g, "");
+      lines = lines.slice(1);
+      if (!lines.some((line) => line.trim())) continue;
+    }
+    if (lines[0].startsWith("## ")) {
+      flushTitle();
+      pendingTitle = lines[0].slice(3).trim();
+      lines = lines.slice(1);
+      if (!lines.some((line) => line.trim())) continue;
+    }
+    if (isSteps(lines)) {
+      blocks.push({ kind: "steps", title: pendingTitle ? fill(pendingTitle, vars, false) : "", items: lines.map((line) => formatted(line.replace(STEP, ""), vars)) });
+      pendingTitle = null;
+      continue;
+    }
+    flushTitle();
+    blocks.push({ kind: "text", html: formatted(lines.join("\n"), vars) });
   }
-  return { subject, html: wrap(htmlParts.join("\n"), year), text: textParts.join("\n\n"), unknownTags: unknownTags(template, vars) };
+  flushTitle();
+
+  if (action) {
+    const button: EmailBlock = { kind: "button", label: action.label, href: action.href, tone: frame.buttonTone };
+    const last = blocks.at(-1);
+    if (last?.kind === "text" && blocks.some((block) => block.kind === "steps")) blocks.splice(blocks.length - 1, 1, button, { kind: "note", html: last.html });
+    else blocks.push(button);
+  }
+
+  const signs = /\b(regards|sincerely|thanks,|cheers)\b/i.test(template.body);
+  const email: BrandedEmail = {
+    title: subject,
+    preheader: frame.preheader || subject,
+    tagline: frame.tagline,
+    eyebrow: frame.eyebrow,
+    heading: heading || frame.heading || subject,
+    blocks,
+    footerNote: frame.footerNote,
+    deskEmail: frame.deskEmail,
+    signature: frame.signature !== false && !signs,
+  };
+  return { subject, html: brandedHtml(email), text: brandedText(email), unknownTags: unknownTags(template, vars) };
 }

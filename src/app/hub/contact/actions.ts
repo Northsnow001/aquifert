@@ -1,6 +1,8 @@
 "use server";
 
 import { saveEnquiry } from "@/app/(auth)/actions";
+import { emailReference } from "@/lib/email/brand";
+import { sendContactReceipt } from "@/lib/email/member-emails";
 
 export async function sendContactMessage(input: {
   name: string;
@@ -15,13 +17,15 @@ export async function sendContactMessage(input: {
   if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || message.length < 4) {
     return { ok: false as const, message: "Check your name, email, and message, then try again." };
   }
+  const reference = emailReference("C");
   const result = await saveEnquiry("contact_messages", {
     channel: "message",
     name,
     email,
     company,
-    message,
+    message: `Reference: ${reference}\n${message}`,
   });
   if (result.saved === "error") return { ok: false as const, message: result.message ?? "Could not send your message." };
+  await sendContactReceipt({ name, email, message, reference });
   return { ok: true as const, delivered: result.saved === "remote" };
 }

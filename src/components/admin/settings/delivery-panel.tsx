@@ -17,6 +17,8 @@ const KIND: Record<string, string> = {
   "order-admin": "Order Desk · desk",
   "zero-applicant": "Zero · member",
   "zero-admin": "Zero · desk",
+  "analytics-applicant": "AQ Analytics waitlist · member",
+  "contact-applicant": "Contact · member",
   test: "Test",
 };
 
@@ -122,7 +124,7 @@ export function DeliveryPanel({
               <label htmlFor="delivery-reply" className={label}>
                 Replies go to
               </label>
-              <input id="delivery-reply" type="email" className={`${input} mt-1.5`} value={draft.replyTo} onChange={(event) => setDraft((current) => ({ ...current, replyTo: event.target.value }))} placeholder="sales@aquifert.com" />
+              <input id="delivery-reply" type="email" className={`${input} mt-1.5`} value={draft.replyTo} onChange={(event) => setDraft((current) => ({ ...current, replyTo: event.target.value }))} placeholder="noreply@aquifert.com" />
             </div>
           </div>
           <p className="mt-3 truncate rounded-lg bg-s2 px-3 py-2 font-mono text-[12px] text-mid">From: {sender}</p>

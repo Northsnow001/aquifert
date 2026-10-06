@@ -4,9 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { EMAIL_PATTERN, cleanEntries } from "@/lib/desk-settings/email-rules";
-import { sampleFor } from "@/lib/desk-settings/forms";
+import { formEmail, sampleFor } from "@/lib/desk-settings/forms";
 import { siteOrigin } from "@/lib/desk-settings/notify";
-import { renderEmail } from "@/lib/desk-settings/render";
 import { getDeskSettings, updateDeskSettings } from "@/lib/desk-settings/store";
 import type { DeskSettings, EmailTemplate, FormEmails, MemberRules, TemplateKind } from "@/lib/desk-settings/types";
 import { clearOutbox, sendEmail } from "@/lib/mailer";
@@ -86,15 +85,16 @@ export async function sendTestEmail(kind: TemplateKind, audience: "applicant" | 
   const user = await requireAdmin();
   const cleaned = cleanTemplate(template, audience === "applicant" ? "member confirmation" : "desk alert");
   if (typeof cleaned === "string") return { ok: false, message: cleaned };
-  const sample = sampleFor(kind);
-  const origin = await siteOrigin();
-  const email = renderEmail({
+  const { delivery } = await getDeskSettings();
+  const email = formEmail({
+    kind,
+    audience,
     template: cleaned,
-    vars: sample.vars,
-    sections: sample.sections,
-    action: audience === "admin" ? { label: "Open in admin", href: `${origin}${kind === "order" ? "/admin/enquiries" : "/admin/zero"}` } : undefined,
+    data: sampleFor(kind).data,
+    deskEmail: delivery.replyTo,
+    adminHref: `${await siteOrigin()}${kind === "order" ? "/admin/enquiries" : "/admin/zero"}`,
   });
-  const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, (await getDeskSettings()).delivery);
+  const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, delivery);
   refresh();
   return { ok: true, status: entry.status, to: user.email, error: entry.error };
 }

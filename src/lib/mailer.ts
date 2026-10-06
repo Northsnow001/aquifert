@@ -5,7 +5,7 @@ import { clearRecords, getRecord, listRecords, putRecords } from "@/lib/data/rec
 import { OUTBOX } from "@/lib/data/tables";
 import type { DeliverySettings } from "@/lib/desk-settings/types";
 
-export type MailKind = "order-applicant" | "order-admin" | "zero-applicant" | "zero-admin" | "test";
+export type MailKind = "order-applicant" | "order-admin" | "zero-applicant" | "zero-admin" | "analytics-applicant" | "contact-applicant" | "test";
 
 type Message = { to: string; subject: string; html: string; text: string };
 

@@ -10,8 +10,8 @@ export function SuspendedNotice({ email }: { email: string }) {
         <h1 className="mt-5 text-xl font-bold tracking-tight text-ink">Your access is suspended</h1>
         <p className="mt-2 text-sm leading-relaxed text-mid">
           The account <span className="font-semibold text-ink">{email}</span> can no longer open Aquifert ONE. If you think this is a mistake, write to{" "}
-          <a href="mailto:sales@aquifert.com" className="font-semibold text-blue">
-            sales@aquifert.com
+          <a href="mailto:noreply@aquifert.com" className="font-semibold text-blue">
+            noreply@aquifert.com
           </a>
           .
         </p>

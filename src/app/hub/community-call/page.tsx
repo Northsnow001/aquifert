@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CalendarDays, Check, Clock, Mail, Mic, PlayCircle, UserRound } from "lucide-react";
 import { btnSecondary } from "@/components/app/form";
-import { CallRegistration, QuickRegister, type RegistrationDefaults } from "@/components/hub/aq1/call-registration";
+import { CallRegistration, QuickRegister } from "@/components/hub/aq1/call-registration";
 import { CallWhen, Countdown } from "@/components/hub/aq1/call-time";
 import { Disclaimer, EmptyPanel, HubPageHeader, Panel, Tag } from "@/components/hub/kit";
 import { getHubAccess } from "@/lib/aq-modules/access";
-import { myRegistrations } from "@/lib/aq-modules/members";
 import { upcomingCalls } from "@/lib/aq-modules/store";
 import { formatDay } from "@/lib/content-types";
 
@@ -16,10 +15,6 @@ export const dynamic = "force-dynamic";
 export default async function CommunityCallPage() {
   const { user, modules } = await getHubAccess();
   const { next, later, past } = upcomingCalls(modules);
-  const rows = await myRegistrations(user).catch(() => []);
-  const active = new Set(rows.filter((row) => row.status === "registered").map((row) => row.callId));
-  const last = [...rows].sort((a, b) => (b.updatedAt ?? b.at).localeCompare(a.updatedAt ?? a.at))[0];
-  const defaults: RegistrationDefaults = { company: last?.company ?? "", country: last?.country || user.country || "", reminders: last?.reminders ?? true };
   const recordings = past.filter((call) => call.recordingUrl);
   const deskLink = `/hub/contact?topic=${encodeURIComponent("Weekly Market Call")}`;
 
@@ -28,8 +23,8 @@ export default async function CommunityCallPage() {
       <HubPageHeader
         eyebrow="AQ ONE Free plan"
         title="Weekly Market Call"
-        description="A free live call with the Aquifert desk on fertilizer prices and freight. Register in one click, add it to your calendar and send in the question you want answered."
-        tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan. The joining link appears on this page 15 minutes before the start."
+        description="A free live call with the Aquifert desk on fertilizer prices and freight. Register on Calendly and it emails you the invite and joining link."
+        tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan and runs through Calendly, which sends the invite and joining link."
         guide="call"
       />
 
@@ -41,11 +36,6 @@ export default async function CommunityCallPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone="teal">Next call</Tag>
                   <Countdown startsAt={next.startsAt} durationMinutes={next.durationMinutes} />
-                  {active.has(next.id) ? (
-                    <Tag tone="green">
-                      <Check className="h-3 w-3" aria-hidden /> Registered
-                    </Tag>
-                  ) : null}
                 </div>
                 <h2 id="next-call-title" className="mt-3 text-[22px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[26px]">
                   {next.topic}
@@ -67,13 +57,11 @@ export default async function CommunityCallPage() {
                 {next.description ? <p className="mt-4 text-[15.5px] leading-relaxed text-mid">{next.description}</p> : null}
               </div>
               <div className="p-5 sm:p-6">
-                {!active.has(next.id) ? (
-                  <div className="mb-4">
-                    <h3 className="text-[16.5px] font-semibold text-ink">Register for the call</h3>
-                    <p className="mt-0.5 text-[14.5px] text-mid">Takes a few seconds. Your name and email come from your account.</p>
-                  </div>
-                ) : null}
-                <CallRegistration call={next} registered={active.has(next.id)} name={user.name} email={user.email} defaults={defaults} />
+                <div className="mb-4">
+                  <h3 className="text-[16.5px] font-semibold text-ink">Register for the call</h3>
+                  <p className="mt-0.5 text-[14.5px] text-mid">Pick your place in Calendly. Your name and email are filled in from your account.</p>
+                </div>
+                <CallRegistration name={user.name} email={user.email} topic={next.topic} />
               </div>
             </section>
           ) : (
@@ -109,7 +97,7 @@ export default async function CommunityCallPage() {
           </Panel>
 
           {later.length ? (
-            <Panel title="Later calls" sub="Register ahead in one click" icon={CalendarDays} tone="blue">
+            <Panel title="Later calls" sub="Register ahead on Calendly" icon={CalendarDays} tone="blue">
               <ul className="divide-y divide-border">
                 {later.map((call) => (
                   <li key={call.id} className="flex items-start gap-3 px-5 py-3.5">
@@ -122,7 +110,7 @@ export default async function CommunityCallPage() {
                         {call.host || "Aquifert desk"} · {call.durationMinutes} min
                       </p>
                     </div>
-                    <QuickRegister callId={call.id} registered={active.has(call.id)} defaults={defaults} />
+                    <QuickRegister name={user.name} email={user.email} topic={call.topic} />
                   </li>
                 ))}
               </ul>
@@ -147,7 +135,7 @@ export default async function CommunityCallPage() {
                 ))}
               </ul>
             ) : (
-              <p className="px-5 py-6 text-[14.5px] leading-relaxed text-mid">Recordings of past calls are posted here. Register for the next call to hear it live and put your question to the desk.</p>
+              <p className="px-5 py-6 text-[14.5px] leading-relaxed text-mid">Recordings of past calls are posted here. Register for the next call to hear it live and ask the desk your question.</p>
             )}
           </Panel>
         </div>

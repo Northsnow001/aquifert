@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Check, ClipboardCheck, PhoneCall, Rocket, Search, Sprout, Wheat, X } from "lucide-react";
 import { SalesHero } from "@/components/hub/sales-hero";
+import { ComparePlans } from "@/components/hub/plans/compare-plans";
+import { planAllowances } from "@/components/hub/plans/load";
 import { ClosingCta, CrossSell, Eyebrow, heroGhost, heroPrimary, PlanBadge } from "@/components/hub/plans/sales";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { MEMBERSHIP_OFFERS, type MembershipTier } from "@/lib/aq-modules/membership";
@@ -26,8 +28,8 @@ const STEPS = [
 const TALK = "/hub/contact?topic=AQ%20Zero";
 
 export default async function AqZeroPlanPage() {
-  const { user } = await getHubAccess();
-  const [registration, requests] = await Promise.all([findZeroRegistration(user).catch(() => null), myMembershipRequests(user).catch(() => [])]);
+  const { user, modules } = await getHubAccess();
+  const [registration, requests, allowances] = await Promise.all([findZeroRegistration(user).catch(() => null), myMembershipRequests(user).catch(() => []), planAllowances(modules)]);
   const currentTier =
     user.plan === "enterprise" ? ([...requests].sort((a, b) => b.at.localeCompare(a.at)).find((item) => item.status === "done" && item.requestedPlan === "enterprise" && item.tier)?.tier ?? null) : null;
   const tiers = MEMBERSHIP_OFFERS.filter((offer): offer is (typeof offer & { tier: MembershipTier }) => offer.tier !== null);
@@ -131,6 +133,8 @@ export default async function AqZeroPlanPage() {
           12 pilot slots per quarter. Fast-start: commit within 7 days of being offered a slot.
         </p>
       </section>
+
+      <ComparePlans plan={user.plan} allowances={allowances} access={modules.access} />
 
       <section className="aq-card p-6 sm:p-9">
         <Eyebrow>How AQ Zero works</Eyebrow>

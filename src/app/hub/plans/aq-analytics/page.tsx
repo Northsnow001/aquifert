@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Activity, ArrowRight, Bell, BookOpen, Check, LineChart, Newspaper, Scale, Ship, X } from "lucide-react";
 import { SalesHero } from "@/components/hub/sales-hero";
-import { ComparePlans } from "@/components/hub/plans/compare-plans";
-import { planAllowances } from "@/components/hub/plans/load";
 import { ClosingCta, CrossSell, heroGhost, heroPrimary, PlanBadge } from "@/components/hub/plans/sales";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { MEMBERSHIP_OFFERS, offerState } from "@/lib/aq-modules/membership";
@@ -27,7 +25,6 @@ const TALK = "/hub/contact?topic=AQ%20Analytics";
 
 export default async function AqAnalyticsPlanPage() {
   const { user, admin, modules } = await getHubAccess();
-  const allowances = await planAllowances(modules);
   const offer = MEMBERSHIP_OFFERS.find((item) => item.id === "analytics")!;
   const state = offerState(offer, { plan: user.plan, admin });
   const owned = state !== "open";
@@ -111,8 +108,6 @@ export default async function AqAnalyticsPlanPage() {
           })}
         </ul>
       </section>
-
-      <ComparePlans plan={user.plan} allowances={allowances} access={modules.access} />
 
       <CrossSell eyebrow="AQ Zero" line="Ready to buy at supplier cost? AQ Zero adds physical trading to everything here." href="/hub/plans/aq-zero" cta="Explore AQ Zero" />
 

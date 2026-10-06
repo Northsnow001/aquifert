@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
-import { ArrowLeft, CalendarDays, Check, CircleAlert, Loader2, MapPin, RotateCcw, Ship, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, CircleAlert, MapPin, RotateCcw, Ship } from "lucide-react";
 import { toast } from "sonner";
 import { generateReport } from "@/app/hub/nitrogen-report/actions";
+import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { CountrySelect } from "@/components/app/country-select";
 import { btnPrimary, btnSecondary, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { SalesHero } from "@/components/hub/sales-hero";
@@ -293,7 +294,7 @@ export function NitrogenBriefForm({ ports, onClose, onReset, blocked }: { ports:
           </button>
         </div>
         <button type="submit" disabled={pending || Boolean(blocked)} className={btnPrimary}>
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          <AquibotAvatar size={24} active={pending} />
           {pending ? "Writing your brief…" : "Generate AI report"}
         </button>
       </div>

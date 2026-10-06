@@ -2,7 +2,7 @@ import "server-only";
 
 import { headers } from "next/headers";
 import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
-import { renderEmail, type DetailSection } from "@/lib/desk-settings/render";
+import { formEmail, type FormEmailData } from "@/lib/desk-settings/forms";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import type { TemplateKind } from "@/lib/desk-settings/types";
 import { sendEmail, type OutboxEntry } from "@/lib/mailer";
@@ -17,17 +17,18 @@ export async function siteOrigin() {
 }
 
 /** Sends the member confirmation and the desk alert for a submission, as the Settings page configures them. */
-export async function notifySubmission(kind: TemplateKind, input: { vars: Record<string, string>; sections: DetailSection[]; applicantEmail: string; adminPath: string }) {
+export async function notifySubmission(kind: TemplateKind, input: { data: FormEmailData; applicantEmail: string; adminPath: string }) {
   const settings = await getDeskSettings();
   const form = kind === "order" ? settings.orderDesk : settings.zero;
+  const adminHref = `${await siteOrigin()}${input.adminPath}`;
+  const base = { kind, data: input.data, deskEmail: settings.delivery.replyTo, adminHref };
   const sent: OutboxEntry[] = [];
   if (form.sendApplicant && EMAIL_PATTERN.test(input.applicantEmail)) {
-    const email = renderEmail({ template: form.applicant, vars: input.vars, sections: input.sections });
+    const email = formEmail({ ...base, audience: "applicant", template: form.applicant });
     sent.push(await sendEmail({ kind: `${kind}-applicant`, to: input.applicantEmail, ...email }, settings.delivery));
   }
   if (form.sendAdmin && EMAIL_PATTERN.test(form.recipient.trim())) {
-    const origin = await siteOrigin();
-    const email = renderEmail({ template: form.admin, vars: input.vars, sections: input.sections, action: { label: "Open in admin", href: `${origin}${input.adminPath}` } });
+    const email = formEmail({ ...base, audience: "admin", template: form.admin });
     sent.push(await sendEmail({ kind: `${kind}-admin`, to: form.recipient.trim(), ...email }, settings.delivery));
   }
   return { settings, sent };
