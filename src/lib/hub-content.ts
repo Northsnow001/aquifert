@@ -19,6 +19,7 @@ import {
   type ToolsCommentary,
 } from "@/lib/content-types";
 import { AQUIBOT_SEED, isAquibotModel, type AquibotConfig } from "@/lib/aquibot";
+import { buildVocabulary, isUnslashedText, repairUnslashedText } from "@/lib/wp-import/unslash";
 
 export type { Collection, FreightBoard, HedgeReport, Indicator, LibraryDocument, TelexItem, ToolsCommentary } from "@/lib/content-types";
 
@@ -154,16 +155,30 @@ function normalizeAquibot(raw: unknown, base: AquibotConfig): AquibotConfig {
   };
 }
 
+/** Narratives imported from the old WordPress site lost their line breaks; repair them on read so every reader, and the next save, gets clean text. */
+function repairHedgeNarratives(reports: HedgeReport[], telex: TelexItem[]): HedgeReport[] {
+  if (!reports.some((report) => typeof report.narrative === "string" && isUnslashedText(report.narrative))) return reports;
+  const vocab = buildVocabulary([
+    ...telex.flatMap((item) => [item.headline, ...item.paragraphs]),
+    ...reports.map((report) => (isUnslashedText(report.narrative) ? "" : report.narrative)),
+  ]);
+  return reports.map((report) => (isUnslashedText(report.narrative) ? { ...report, narrative: repairUnslashedText(report.narrative, vocab) } : report));
+}
+
 function normalize(raw: Record<string, unknown>): HubContent {
   const base = seed();
   const collections = Array.isArray(raw.collections) ? (raw.collections as Collection[]) : base.collections;
-  const hedgeReports = Array.isArray(raw.hedgeReports)
-    ? (raw.hedgeReports as HedgeReport[])
-    : Array.isArray(raw.hedgeBriefs)
-      ? (raw.hedgeBriefs as LegacyBrief[]).map(briefToReport)
-      : base.hedgeReports;
+  const telex = Array.isArray(raw.telex) ? normalizeTelex(raw.telex) : base.telex;
+  const hedgeReports = repairHedgeNarratives(
+    Array.isArray(raw.hedgeReports)
+      ? (raw.hedgeReports as HedgeReport[])
+      : Array.isArray(raw.hedgeBriefs)
+        ? (raw.hedgeBriefs as LegacyBrief[]).map(briefToReport)
+        : base.hedgeReports,
+    telex,
+  );
   return {
-    telex: Array.isArray(raw.telex) ? normalizeTelex(raw.telex) : base.telex,
+    telex,
     indicators: Array.isArray(raw.indicators) ? (raw.indicators as Indicator[]) : base.indicators,
     indicatorsUpdatedAt: typeof raw.indicatorsUpdatedAt === "string" ? raw.indicatorsUpdatedAt : null,
     hedgeReports,

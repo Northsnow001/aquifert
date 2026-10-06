@@ -13,6 +13,7 @@ import {
   type TelexAccess,
   type TelexItem,
 } from "@/lib/content-types";
+import { buildVocabulary, repairUnslashedText } from "@/lib/wp-import/unslash";
 
 /* ---------------- Export file shape (see wordpress/aquifert-export) ---------------- */
 
@@ -298,7 +299,7 @@ export function hedgeSections(postId: number, rows: WpHedgeRow[]): HedgeSection[
 export function mapHedge(post: WpHedge): HedgeReport {
   const rows = post.data?.rows ?? [];
   let sections = hedgeSections(post.id, rows);
-  let narrative = (post.data?.narrative ?? "").trim();
+  let narrative = repairUnslashedText((post.data?.narrative ?? "").trim(), buildVocabulary([plainText(post.content)]));
   if (sections.length === 0 && post.content.trim()) {
     const parsed = parseHedgeReport(plainText(post.content));
     sections = parsed.sections;

@@ -117,11 +117,20 @@ function Legend() {
   );
 }
 
+/** A long opening paragraph keeps only its first sentence as the bold lead; the rest reads as body text. */
+function leadOf(paragraph: string): { lead: string; more: string } {
+  if (paragraph.length <= 200) return { lead: paragraph, more: "" };
+  const match = paragraph.match(/^(.{30,}?[.!?])\s+(?=[A-Z])/);
+  return match ? { lead: match[1], more: paragraph.slice(match[0].length).trim() } : { lead: paragraph, more: "" };
+}
+
 /** The latest published Direct Hedge report on the hub: one forward-curve board plus the desk's read of it. */
 export function PaperForwardBrief({ reports, className = "" }: { reports: HedgeReport[]; className?: string }) {
   const report = reports[0];
   if (!report) return null;
-  const [lead, ...rest] = splitParagraphs(report.narrative);
+  const [first = "", ...others] = splitParagraphs(report.narrative);
+  const { lead, more } = leadOf(first);
+  const rest = more ? [more, ...others] : others;
   const sections = report.sections.filter((section) => section.commodities.some((commodity) => commodity.rows.length)).sort(UREA_FIRST);
 
   return (
