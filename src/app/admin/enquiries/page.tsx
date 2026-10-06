@@ -22,6 +22,8 @@ const LABELS: Record<string, string> = {
   target: "Target price",
   payment: "Payment",
   frequency: "Frequency",
+  volume: "Over 1,000 t a year",
+  call: "Interested in a call",
   account: "Signed in as",
 };
 

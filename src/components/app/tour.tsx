@@ -5,23 +5,24 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { TOUR_STOPS } from "@/components/hub/nav";
 
-const KEY = "aq.tour.v1";
+/** Bump the version when the menu changes enough that everyone should see the tour again. */
+const VERSION = "v2";
 const CARD = 320;
 
 type Saved = { status: "done" | "skipped" | "running"; step: number; offered?: boolean };
 
-function read(): Saved | null {
+function read(key: string): Saved | null {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as Saved) : null;
   } catch {
     return null;
   }
 }
 
-function save(value: Saved) {
+function write(key: string, value: Saved) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // Private mode: the tour simply runs again next visit.
   }
@@ -39,47 +40,62 @@ export function startTour() {
   window.dispatchEvent(new Event("aq:tour"));
 }
 
-/** First-run coach marks on the real menu items. Skippable, keyboard operable, resumable once, restartable from the guide. */
-export function Tour({ stops = TOUR_STOPS }: { stops?: typeof TOUR_STOPS }) {
+/**
+ * Coach marks on the real menu items, shown once to each member on their first visit after signing in, and again
+ * whenever VERSION changes. Skippable, keyboard operable, resumable once, restartable from the Account menu and the guide.
+ */
+export function Tour({ userId, stops = TOUR_STOPS }: { userId: string; stops?: typeof TOUR_STOPS }) {
   const pathname = usePathname();
+  const key = `aq.tour.${VERSION}.${userId}`;
+  const [run, setRun] = useState(stops);
   const [step, setStep] = useState<number | null>(null);
   const [resume, setResume] = useState<number | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const total = stops.length;
+  const total = run.length;
+  const save = useCallback((value: Saved) => write(key, value), [key]);
+
+  /** Only the stops this member can see on this screen: phones skip the desktop tabs, free plans skip paid pages. */
+  const visibleStops = useCallback(() => stops.filter((stop) => stop.anchor === false || anchorFor(stop.key)), [stops]);
 
   useEffect(() => {
     const restart = () => {
+      setRun(visibleStops());
       setResume(null);
       setStep(0);
       save({ status: "running", step: 0, offered: true });
     };
     window.addEventListener("aq:tour", restart);
     return () => window.removeEventListener("aq:tour", restart);
-  }, []);
+  }, [visibleStops, save]);
 
+  const onHub = pathname === "/hub" || pathname.startsWith("/hub/");
   useEffect(() => {
-    if (pathname !== "/hub") return;
-    const saved = read();
+    if (!onHub) return;
+    const saved = read(key);
+    const unfinished = saved?.status === "running" && !saved.offered;
+    if (saved && !unfinished) return;
     const timer = setTimeout(() => {
-      if (!saved) {
+      const visible = visibleStops();
+      setRun(visible);
+      if (!saved || saved.step === 0) {
         setStep(0);
         save({ status: "running", step: 0 });
-      } else if (saved.status === "running" && saved.step > 0 && !saved.offered) {
-        setResume(Math.min(saved.step, total - 1));
+      } else {
+        setResume(Math.min(saved.step, visible.length - 1));
       }
     }, 900);
     return () => clearTimeout(timer);
-  }, [pathname, total]);
+  }, [onHub, key, visibleStops, save]);
 
   const measure = useCallback(() => {
-    if (step === null) return;
-    const node = anchorFor(stops[step].key);
+    if (step === null || !run[step]) return;
+    const node = run[step].anchor === false ? undefined : anchorFor(run[step].key);
     setRect(node ? node.getBoundingClientRect() : null);
-  }, [step, stops]);
+  }, [step, run]);
 
   useEffect(() => {
-    if (step === null) return;
-    anchorFor(stops[step].key)?.scrollIntoView({ block: "nearest" });
+    if (step === null || !run[step]) return;
+    if (run[step].anchor !== false) anchorFor(run[step].key)?.scrollIntoView({ block: "nearest", inline: "nearest" });
     const frame = requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
@@ -88,14 +104,14 @@ export function Tour({ stops = TOUR_STOPS }: { stops?: typeof TOUR_STOPS }) {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
-  }, [step, stops, measure]);
+  }, [step, run, measure]);
 
   const finish = useCallback(
     (status: "done" | "skipped") => {
       save({ status, step: step ?? 0, offered: true });
       setStep(null);
     },
-    [step],
+    [step, save],
   );
 
   const go = useCallback(
@@ -105,7 +121,7 @@ export function Tour({ stops = TOUR_STOPS }: { stops?: typeof TOUR_STOPS }) {
       setStep(next);
       save({ status: "running", step: next });
     },
-    [finish, total],
+    [finish, total, save],
   );
 
   useEffect(() => {
@@ -159,18 +175,16 @@ export function Tour({ stops = TOUR_STOPS }: { stops?: typeof TOUR_STOPS }) {
     );
   }
 
-  const stop = stops[step];
+  const stop = run[step];
+  if (!stop) return null;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   let style: React.CSSProperties;
   if (!rect) {
     style = { left: Math.max(16, (vw - CARD) / 2), top: Math.max(16, vh / 2 - 100) };
-  } else if (rect.right + 16 + CARD <= vw - 12) {
-    style = { left: rect.right + 16, top: Math.min(Math.max(12, rect.top - 12), vh - 200) };
-  } else if (rect.top > vh / 2) {
-    style = { left: Math.min(Math.max(12, rect.left + rect.width / 2 - CARD / 2), vw - CARD - 12), bottom: vh - rect.top + 14 };
   } else {
-    style = { left: Math.min(Math.max(12, rect.left), vw - CARD - 12), top: rect.bottom + 14 };
+    const left = Math.min(Math.max(12, rect.left + rect.width / 2 - CARD / 2), vw - CARD - 12);
+    style = rect.top > vh / 2 ? { left, bottom: vh - rect.top + 14 } : { left, top: rect.bottom + 14 };
   }
 
   return createPortal(
@@ -195,10 +209,8 @@ export function Tour({ stops = TOUR_STOPS }: { stops?: typeof TOUR_STOPS }) {
           <p className="font-mono text-[12px] font-semibold text-dim">
             {step + 1} of {total}
           </p>
-          <div className="flex gap-1" aria-hidden>
-            {stops.map((item, index) => (
-              <span key={item.key} className={`h-1.5 rounded-full transition-all ${index === step ? "w-4 bg-blue" : "w-1.5 bg-[#d5dde6]"}`} />
-            ))}
+          <div className="h-1.5 w-28 overflow-hidden rounded-full bg-[#d5dde6]" aria-hidden>
+            <div className="h-full rounded-full bg-blue transition-all duration-300" style={{ width: `${((step + 1) / total) * 100}%` }} />
           </div>
         </div>
         <h3 className="mt-1.5 text-[17px] font-semibold text-ink">{stop.title}</h3>

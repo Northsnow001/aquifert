@@ -1,33 +1,22 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { HomeHero } from "@/components/hub/home-hero";
-import { TelexLead } from "@/components/hub/home-telex";
-import { HomeTelexFilter } from "@/components/hub/home-telex-filter";
+import { HomeTelex } from "@/components/hub/home-telex";
 import { FeedThumb } from "@/components/hub/kit";
 import { PaperForwardBrief } from "@/components/hub/paper-forward";
-import { TelexWire, type WireRow } from "@/components/hub/telex-wire";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getPrefs } from "@/lib/aq-modules/members";
 import { publishedAnalysis } from "@/lib/aq-modules/store";
 import { publishedTelex } from "@/lib/aq-modules/telex";
-import { productOf, TELEX_PRODUCTS, type AnalysisNote, type TelexProduct } from "@/lib/aq-modules/types";
+import { productOf, TELEX_PRODUCTS, type AnalysisNote } from "@/lib/aq-modules/types";
 import { deskNow, formatDay } from "@/lib/content-types";
 import { getHubContent, sortHedge } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
-/** The newest flashes fill the lead box and the four boxes beside it; the list starts after them. */
-const LEAD_COUNT = 5;
-
-const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
-
-/** No `p` means "open on the saved default"; `p=all` means the member cleared it. Same rule as the TELEX page. */
-function parseProducts(raw: string | undefined, fallback: TelexProduct[]): TelexProduct[] {
-  if (raw === undefined) return fallback;
-  if (raw === "all" || !raw.trim()) return [];
-  const picked = raw.split(",").map((item) => item.trim());
-  return TELEX_PRODUCTS.filter((item) => picked.includes(item));
-}
+/** AQ View and TELEX sit side by side; TELEX drops to four rows when AQ View is short, so the columns stay close in height. */
+const FEED_COUNT = 5;
+const TELEX_MIN = 4;
 
 const noteProduct = (note: AnalysisNote) => productOf(`${note.products.join(" ")} ${note.title}`);
 
@@ -85,59 +74,35 @@ function AqViewCard({ notes }: { notes: AnalysisNote[] }) {
   );
 }
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const params = await searchParams;
+export default async function HomePage() {
   const { user, admin, modules } = await getHubAccess();
   const [content, prefs] = await Promise.all([getHubContent(), getPrefs(user)]);
-  const now = deskNow();
 
   const readable = publishedTelex(content.telex, admin ? "all" : user.plan).filter((item) => item.readable);
   const saved = TELEX_PRODUCTS.filter((item) => prefs.telexProducts.includes(item));
-  const selected = parseProducts(first(params.p), saved);
-  const shown = selected.length ? readable.filter((item) => selected.includes(item.product)) : readable;
-  const lead = shown.slice(0, LEAD_COUNT);
-  const wire: WireRow[] = shown.slice(LEAD_COUNT).map(({ id, headline, excerpt, tags, product, access, readable: canRead, publishedAt, updatedAt, thumb, pick }) => ({
-    id,
-    headline,
-    excerpt,
-    tags,
-    product,
-    access,
-    readable: canRead,
-    publishedAt,
-    updatedAt,
-    thumb,
-    pick,
-  }));
+  const shown = saved.length ? readable.filter((item) => saved.includes(item.product)) : readable;
 
-  const notes = publishedAnalysis(modules);
+  const notes = publishedAnalysis(modules).slice(0, FEED_COUNT);
+  const telexCount = notes.length >= FEED_COUNT ? FEED_COUNT : TELEX_MIN;
   const hedgeReports = sortHedge(content.hedgeReports).filter((item) => item.status === "published");
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 pb-2">
       <HomeHero name={user.name} variant="hub" />
 
-      <TelexWire
-        items={wire}
-        total={shown.length}
-        latest={readable[0]?.publishedAt}
-        now={now}
-        filters={readable.length ? <HomeTelexFilter selected={selected} saved={saved} /> : null}
-      />
-
-      <TelexLead items={lead} />
-
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <AqViewCard notes={notes.slice(0, 5)} />
-        {hedgeReports.length ? (
-          <PaperForwardBrief reports={hedgeReports} />
-        ) : (
-          <section className="aq-card p-5">
-            <h2 className="text-[16.5px] font-semibold text-ink">Direct Hedge</h2>
-            <p className="mt-1 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
-          </section>
-        )}
+        <AqViewCard notes={notes} />
+        <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} />
       </div>
+
+      {hedgeReports.length ? (
+        <PaperForwardBrief reports={hedgeReports} />
+      ) : (
+        <section className="aq-card p-5">
+          <h2 className="text-[16.5px] font-semibold text-ink">Direct Hedge</h2>
+          <p className="mt-1 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Eye, Trash2 } from "lucide-react";
 import { deleteTelex, duplicateTelex } from "@/app/admin/actions";
 import { ConfirmSubmit } from "@/components/admin/form-controls";
 import { TelexEditor } from "@/components/admin/telex-editor";
@@ -39,6 +39,10 @@ export default async function EditTelexPage({
         actions={
           <form className="flex gap-2">
             <input type="hidden" name="id" value={item.id} />
+            <Link href={`/admin/telex/${item.id}/reads`} className={btnSecondary}>
+              <Eye className="h-4 w-4" />
+              Reads
+            </Link>
             <Link href="/admin/telex/new" className={btnSecondary}>
               New message
             </Link>

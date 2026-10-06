@@ -1,7 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useRef, useState, type MouseEvent } from "react";
+import { Crown, Lock, MessageCircle } from "lucide-react";
+import { btnPrimary, btnSecondary } from "@/components/app/form";
 import markers from "@/data/tools-markers.json";
+import { PLAN_LABEL } from "@/lib/aq-modules/types";
+import type { Plan } from "@/lib/session-shared";
 import { GLOSSARY, HOW_IT_IS_MADE, PHOSPHATE_CURVE, ureaCurve } from "@/lib/tools/academy";
 import { ammoniaCost, productCosts } from "@/lib/tools/costs";
 import {
@@ -30,7 +35,7 @@ const LAYERS: Array<{ id: Layer; label: string; dot: string }> = [
   { id: "mop", label: "MOP / Potash Mines", dot: "bg-[#dc2626]" },
 ];
 
-export function ToolsBoard({ commentaryHtml }: { commentaryHtml: string }) {
+export function ToolsBoard({ commentaryHtml, mapLocked = false, plan }: { commentaryHtml: string; mapLocked?: boolean; plan: Plan }) {
   const [tab, setTab] = useState<Tab>("map");
   const [layers, setLayers] = useState<Record<Layer, boolean>>({
     nh3: true,
@@ -61,22 +66,33 @@ export function ToolsBoard({ commentaryHtml }: { commentaryHtml: string }) {
       </div>
 
       <div className="flex items-end border-b border-border">
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
-            className={`border-b-2 px-4 py-2.5 text-xs font-medium ${
-              tab === item.id ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+        {TABS.map((item) => {
+          const locked = mapLocked && item.id === "map";
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              title={locked ? `Included in ${PLAN_LABEL.growth} and ${PLAN_LABEL.enterprise}` : undefined}
+              className={`inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium ${
+                tab === item.id ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
+              }`}
+            >
+              {item.label}
+              {locked ? (
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-navy-700 text-white">
+                  <Lock className="h-2.5 w-2.5" strokeWidth={2.6} aria-label="locked" />
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
         <span className="mb-2.5 ml-auto hidden text-[10px] text-dim md:block">Global fertilizer trade · interactive guide</span>
       </div>
 
-      {tab === "map" ? (
+      {tab === "map" && mapLocked ? <LockedMap plan={plan} urea={urea} /> : null}
+
+      {tab === "map" && !mapLocked ? (
         <MapTab
           layers={layers}
           urea={urea}
@@ -383,6 +399,44 @@ function MapTab({
         </article>
       ) : null}
     </div>
+  );
+}
+
+const ALL_LAYERS: Record<Layer, boolean> = { nh3: true, urea: true, phos: true, mop: true };
+
+/** The map and curves are reference data already in the page bundle, so the blur is an upgrade prompt, not a protection. */
+function LockedMap({ plan, urea }: { plan: Plan; urea: ReturnType<typeof ureaCurve> }) {
+  return (
+    <section aria-label="World Map, locked" className="relative min-w-0 overflow-hidden rounded-xl border border-border bg-surface">
+      <div inert aria-hidden className="pointer-events-none max-h-[640px] select-none space-y-3 overflow-hidden p-3 blur-[5px]">
+        <WorldMap layers={ALL_LAYERS} onCountry={() => {}} />
+        <UreaChart rows={urea} />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/20 to-white/80" />
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="aq-rise w-full max-w-md rounded-2xl border border-border bg-white/95 p-6 text-center shadow-[0_24px_60px_-24px_rgb(16_38_59/0.45)] backdrop-blur">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-navy-700 text-white shadow-[0_0_0_6px_rgb(16_38_59/0.08)]">
+            <Lock className="h-6 w-6" strokeWidth={2.2} />
+          </span>
+          <h2 className="mt-4 text-[19px] font-semibold leading-snug text-ink">World Map is not in your plan</h2>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-mid">
+            NH₃ terminals, urea exporters, phosphate producers and potash mines on one interactive map, with export and ex-works cost curves. Included in{" "}
+            {PLAN_LABEL.growth} and {PLAN_LABEL.enterprise}.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+            <Link href="/hub/account/membership?plan=growth&from=tools-map" className={btnPrimary}>
+              <Crown className="h-4 w-4" /> Upgrade to {PLAN_LABEL.growth}
+            </Link>
+            <Link href={`/hub/contact?topic=${encodeURIComponent("Unlock World Map")}`} className={btnSecondary}>
+              <MessageCircle className="h-4 w-4" /> Talk to the desk
+            </Link>
+          </div>
+          <p className="mt-3 text-[12.5px] text-dim">
+            You are on <strong className="font-semibold text-mid">{PLAN_LABEL[plan]}</strong>. Cost Calculator, How It&apos;s Made and Glossary stay open on your plan.
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 

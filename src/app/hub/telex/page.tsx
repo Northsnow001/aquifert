@@ -11,6 +11,7 @@ import { publishedTelex, type TelexView } from "@/lib/aq-modules/telex";
 import { TELEX_PRODUCTS, type TelexProduct } from "@/lib/aq-modules/types";
 import { formatStamp } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
+import { readTelexIds } from "@/lib/telex-reads/store";
 
 export const metadata: Metadata = { title: "TELEX" };
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ const haystack = (item: TelexView) => [item.headline, item.tags.join(" "), item.
 export default async function TelexPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const { user, admin, can } = await getHubAccess();
-  const [content, prefs] = await Promise.all([getHubContent(), getPrefs(user)]);
+  const [content, prefs, readIds] = await Promise.all([getHubContent(), getPrefs(user), readTelexIds(user)]);
 
   const telex = publishedTelex(content.telex, admin ? "all" : user.plan);
   const saved = TELEX_PRODUCTS.filter((item) => prefs.telexProducts.includes(item));
@@ -86,7 +87,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
         </div>
 
         {matches.length ? (
-          <TelexList items={shown} mode="full" />
+          <TelexList items={shown} mode="preview" readIds={readIds} />
         ) : telex.length ? (
           <div className="p-5">
             <EmptyPanel

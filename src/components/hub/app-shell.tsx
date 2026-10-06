@@ -16,7 +16,7 @@ import { NavHoverCard } from "@/components/app/nav-hover-card";
 import { startTour, Tour } from "@/components/app/tour";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { HubTabs } from "@/components/hub/hub-tabs";
-import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, TOUR_STOPS, type HubNavItem } from "@/components/hub/nav";
+import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
 
@@ -166,6 +166,7 @@ function AccountMenu({ user, admin, paid }: { user: SessionUser; admin: boolean;
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t("top.account")}
+        data-tour="account"
         className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-white/10 sm:pr-2"
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12.5px] font-bold text-white shadow-sm ring-1 ring-white/20">
@@ -275,8 +276,6 @@ export function AppShell({
 
   const nav = useMemo(() => navFor(user.plan, admin), [user.plan, admin]);
   const hubTabs = useMemo(() => tabsFor(nav, unlocked), [nav, unlocked]);
-  const tourStops = useMemo(() => TOUR_STOPS.filter((stop) => nav.some((item) => item.key === stop.key)), [nav]);
-
   const palette = useMemo<PaletteItem[]>(() => {
     const pages: PaletteItem[] = nav.map((item) => ({
       href: item.href,
@@ -326,13 +325,14 @@ export function AppShell({
                 type="button"
                 onClick={openPalette}
                 aria-label="Search"
+                data-tour="search"
                 className="hidden h-9 w-56 items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3.5 text-[14px] text-white/70 transition hover:bg-white/10 md:flex xl:w-60"
               >
                 <Search className="h-3.5 w-3.5" />
                 <span className="flex-1 truncate text-start">{t("top.search")}</span>
                 <kbd className="rounded border border-white/15 px-1 font-mono text-[10.5px] font-semibold text-white/50">Ctrl K</kbd>
               </button>
-              <button type="button" onClick={openPalette} aria-label="Search" className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden">
+              <button type="button" onClick={openPalette} aria-label="Search" data-tour="search" className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden">
                 <Search className="h-[18px] w-[18px]" />
               </button>
               <button
@@ -395,7 +395,7 @@ export function AppShell({
             </Link>
           );
         })}
-        <button type="button" onClick={() => setDrawer(true)} className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11.5px] font-semibold leading-tight text-dim">
+        <button type="button" onClick={() => setDrawer(true)} data-tour="more" className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11.5px] font-semibold leading-tight text-dim">
           <MoreHorizontal className="h-6 w-6" strokeWidth={1.8} />
           <span className="block max-w-full truncate px-0.5">{t("top.more")}</span>
         </button>
@@ -432,7 +432,7 @@ export function AppShell({
         </div>
       ) : null}
 
-      <Tour stops={tourStops} />
+      <Tour userId={user.id} />
       <CommandPalette items={palette} />
       <AutoTranslate />
     </div>

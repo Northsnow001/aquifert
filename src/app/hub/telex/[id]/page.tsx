@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 import { btnPrimary } from "@/components/app/form";
 import { Disclaimer, FeedThumb, ProductChip, StoryImage, Tag, ToneBadge } from "@/components/hub/kit";
 import { Markdown } from "@/components/hub/markdown";
+import { TelexReadTracker } from "@/components/hub/telex-read-tracker";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { publishedTelex, telexView } from "@/lib/aq-modules/telex";
 import { FILE_ACCESS_LABEL, formatStamp, telexHeadline } from "@/lib/content-types";
@@ -64,7 +65,11 @@ export default async function TelexStoryPage({ params }: PageProps<"/hub/telex/[
             {edited ? <> · Updated {formatStamp(item.updatedAt)}</> : null}
           </p>
 
-          {item.readable ? (
+          {item.readable && source.status === "published" ? (
+            <TelexReadTracker telexId={item.id}>
+              <Markdown text={item.paragraphs.join("\n\n")} images className="mt-5 text-[16px] leading-relaxed text-ink" />
+            </TelexReadTracker>
+          ) : item.readable ? (
             <Markdown text={item.paragraphs.join("\n\n")} images className="mt-5 text-[16px] leading-relaxed text-ink" />
           ) : (
             <div className="mt-5 flex flex-col items-start gap-3 rounded-xl border border-blue/20 bg-blue-light/50 p-5">

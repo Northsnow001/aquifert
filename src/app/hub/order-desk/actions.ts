@@ -2,7 +2,7 @@
 
 import { saveEnquiry } from "@/app/(auth)/actions";
 import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
-import { orderSections, orderVars, type OrderSubmission } from "@/lib/desk-settings/forms";
+import { monthLabel, orderSections, orderVars, type OrderSubmission } from "@/lib/desk-settings/forms";
 import { notifySubmission } from "@/lib/desk-settings/notify";
 import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
 import { resolvePort, portText } from "@/lib/ports";
@@ -11,6 +11,7 @@ import { getSession } from "@/lib/session";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_IN_WINDOW = 5;
+const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 type OrderInput = Omit<OrderSubmission, "submittedAt"> & { website?: string };
 
@@ -21,10 +22,8 @@ const REQUIRED: [keyof Omit<OrderSubmission, "submittedAt">, string][] = [
   ["quantity", "a quantity"],
   ["packaging", "packaging"],
   ["destination", "a destination"],
-  ["shipFrom", "the shipping period start"],
-  ["shipTo", "the shipping period end"],
-  ["targetPrice", "a target price"],
-  ["paymentTerms", "payment terms"],
+  ["shipFrom", "the preferred shipment month"],
+  ["shipTo", "the preferred arrival month"],
 ];
 
 export async function submitOrderEnquiry(input: OrderInput) {
@@ -35,7 +34,7 @@ export async function submitOrderEnquiry(input: OrderInput) {
   const order = Object.fromEntries(
     Object.entries(input)
       .filter(([key]) => key !== "website")
-      .map(([key, value]) => [key, String(value ?? "").trim().slice(0, key === "notes" ? 4000 : 300)]),
+      .map(([key, value]) => [key, String(value ?? "").trim().slice(0, key === "notes" ? 4000 : key === "product" ? 600 : 300)]),
   ) as Omit<OrderSubmission, "submittedAt">;
   const missing = REQUIRED.filter(([key]) => !order[key]).map(([, text]) => text);
   if (missing.length) return { ok: false as const, message: `Add ${missing.join(", ")}.` };
@@ -44,7 +43,10 @@ export async function submitOrderEnquiry(input: OrderInput) {
   const port = resolvePort(order.destination, activePorts(await getFreightDesk()));
   if (!port) return { ok: false as const, message: "Choose a destination port from the list." };
   order.destination = portText(port);
-  if (order.shipTo < order.shipFrom) return { ok: false as const, message: "The shipping period ends before it starts." };
+  if (!MONTH.test(order.shipFrom) || !MONTH.test(order.shipTo)) return { ok: false as const, message: "Choose the shipment and arrival months from the lists." };
+  if (order.shipTo < order.shipFrom) return { ok: false as const, message: "The arrival month is before the shipment month." };
+  if (![order.largeVolume, order.wantsCall].every((answer) => answer === "yes" || answer === "no"))
+    return { ok: false as const, message: "Answer the two questions under Additional information." };
 
   const account = user.email.toLowerCase();
   const since = Date.now() - WINDOW_MS;
@@ -59,11 +61,12 @@ export async function submitOrderEnquiry(input: OrderInput) {
     order.grade && `Grade: ${order.grade}`,
     `Packaging: ${order.packaging}`,
     `Pallets: ${order.pallets || "no"}`,
-    `Shipping: ${order.shipFrom} to ${order.shipTo}`,
-    `Target: ${order.currency} ${order.targetPrice} ${order.incoterm}`,
-    order.prepayment && `Prepayment: ${order.prepayment}%`,
-    `Payment: ${order.paymentTerms}`,
-    order.frequency && `Frequency: ${order.frequency}`,
+    `Customised packaging: ${order.customPackaging || "no"}`,
+    `Shipment month: ${monthLabel(order.shipFrom)}`,
+    `Arrival month: ${monthLabel(order.shipTo)}`,
+    `Incoterm: ${order.incoterm || "CFR"}`,
+    `Over 1,000 t a year: ${order.largeVolume}`,
+    `Interested in a call: ${order.wantsCall}`,
     order.notes,
   ]
     .filter(Boolean)
@@ -76,11 +79,10 @@ export async function submitOrderEnquiry(input: OrderInput) {
       name: order.name,
       email: order.email,
       company: order.company,
-      packaging: `${order.packaging}${order.pallets === "yes" ? ", palletised" : ""}`,
-      shipping: `${order.shipFrom} to ${order.shipTo}`,
-      target: `${order.currency} ${order.targetPrice} ${order.incoterm}`,
-      payment: [order.paymentTerms, order.prepayment && `${order.prepayment}% prepaid`].filter(Boolean).join(" · "),
-      frequency: order.frequency,
+      packaging: `${order.packaging}${order.pallets === "yes" ? ", palletised" : ""}${order.customPackaging === "yes" ? ", customised" : ""}`,
+      shipping: `Ships ${monthLabel(order.shipFrom)}, arrives ${monthLabel(order.shipTo)}`,
+      volume: order.largeVolume,
+      call: order.wantsCall,
       notes: order.notes,
       account,
     },

@@ -10,6 +10,8 @@ export type OrderSubmission = {
   quantity: string;
   packaging: string;
   pallets: string;
+  customPackaging: string;
+  /** No longer asked on the form; kept so older enquiries still show their origin. */
   origins: string;
   destination: string;
   incoterm: string;
@@ -20,6 +22,10 @@ export type OrderSubmission = {
   prepayment: string;
   paymentTerms: string;
   frequency: string;
+  /** "yes" or "no": can the buyer receive or arrange more than 1,000 tonnes a year. */
+  largeVolume: string;
+  /** "yes" or "no": would the buyer like a call from the desk. */
+  wantsCall: string;
   notes: string;
   submittedAt: string;
 };
@@ -52,6 +58,13 @@ const stamp = (iso: string) => {
   return Number.isNaN(date.getTime()) ? iso : `${date.toISOString().slice(0, 16).replace("T", " ")} UTC`;
 };
 
+/** "2026-11" reads as "November 2026"; full dates from older enquiries pass through unchanged. */
+export const monthLabel = (value: string) => {
+  if (!/^\d{4}-\d{2}$/.test(value)) return value;
+  const date = new Date(`${value}-01T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+};
+
 const tonnes = (value: string) => {
   const number = Number(value);
   return Number.isFinite(number) && value.trim() ? `${number.toLocaleString("en-GB")} MT` : value;
@@ -65,8 +78,8 @@ export function orderVars(order: OrderSubmission): Record<string, string> {
     product: order.product,
     qty: order.quantity,
     destination: order.destination,
-    ship_from: order.shipFrom,
-    ship_to: order.shipTo,
+    ship_from: monthLabel(order.shipFrom),
+    ship_to: monthLabel(order.shipTo),
   };
 }
 
@@ -76,20 +89,27 @@ export function orderSections(order: OrderSubmission): DetailSection[] {
     { title: "Contact information", rows: [["Name", order.name], ["Email", order.email], ["Company", order.company]] },
     {
       title: "Product details",
-      rows: [["Product", order.product], ["Grade", order.grade], ["Quantity", tonnes(order.quantity)], ["Packaging", order.packaging], ["Pallets required", order.pallets]],
+      rows: [["Product", order.product], ["Grade", order.grade], ["Quantity", tonnes(order.quantity)], ["Packaging", order.packaging], ["Pallets required", order.pallets], ["Customised packaging", order.customPackaging]],
     },
-    { title: "Origin and destination", rows: [["Origin", order.origins], ["Destination", order.destination], ["Incoterm", order.incoterm]] },
-    { title: "Shipping period", rows: [["From", order.shipFrom], ["To", order.shipTo]] },
+    { title: order.origins ? "Origin and destination" : "Destination", rows: [["Origin", order.origins], ["Destination", order.destination], ["Incoterm", order.incoterm]] },
+    { title: "Shipping period", rows: [["Preferred shipment month", monthLabel(order.shipFrom)], ["Preferred arrival month", monthLabel(order.shipTo)]] },
     {
       title: "Pricing and payment",
       rows: [
         ["Target price", order.targetPrice && Number.isFinite(price) ? `${order.currency} ${price.toFixed(2)} ${order.incoterm}` : ""],
         ["Prepayment", order.prepayment ? `${order.prepayment}%` : ""],
         ["Payment terms", order.paymentTerms],
-        ["Purchase frequency", order.frequency],
       ],
     },
-    { title: "Additional notes", rows: [["Notes", order.notes]] },
+    {
+      title: "Additional information",
+      rows: [
+        ["Receives or arranges over 1,000 t a year", order.largeVolume],
+        ["Interested in a call", order.wantsCall],
+        ["Purchase frequency", order.frequency],
+        ["Notes", order.notes],
+      ],
+    },
     { title: "Submission", rows: [["Submitted", stamp(order.submittedAt)]] },
   ];
 }
@@ -139,16 +159,19 @@ export const ORDER_SAMPLE: OrderSubmission = {
   quantity: "25000",
   packaging: "50kg",
   pallets: "no",
-  origins: "Arab Gulf, North Africa",
+  customPackaging: "no",
+  origins: "",
   destination: "Lagos",
   incoterm: "CFR",
-  shipFrom: "2026-11-01",
-  shipTo: "2026-11-30",
+  shipFrom: "2026-11",
+  shipTo: "2026-12",
   currency: "USD",
   targetPrice: "455",
   prepayment: "20",
   paymentTerms: "LC at sight",
-  frequency: "Quarterly",
+  frequency: "",
+  largeVolume: "yes",
+  wantsCall: "yes",
   notes: "Split discharge between Lagos and Onne is possible.",
   submittedAt: "2026-09-30T09:15:00.000Z",
 };

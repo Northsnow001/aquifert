@@ -1,6 +1,7 @@
 import type { CallRegistration, MemberAlert, MemberPrefs, MembershipRequest, NitrogenReport } from "@/lib/aq-modules/member-types";
 import type { CalcLog, DebugEntry } from "@/lib/freight-desk/types";
 import type { NetbackLog } from "@/lib/netback-desk/types";
+import type { TelexVisit } from "@/lib/telex-reads/stats";
 import type { ZeroRegistration } from "@/lib/zero-types";
 
 /** Admin-edited documents: one JSON row each in `app_documents`, or `data/<key>.json` on a local machine. */
@@ -131,6 +132,13 @@ export const MEMBERSHIP_REQUESTS: RecordSpec<MembershipRequest> = {
   keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
 };
 
+export const TELEX_VISITS: RecordSpec<TelexVisit> = {
+  table: "telex_reads",
+  file: "telex-reads.json",
+  keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
+  columns: (row) => ({ telex_id: row.telexId, read_at: row.readAt }),
+};
+
 export const RECORD_SPECS = [
   FREIGHT_LOGS,
   FREIGHT_DEBUG,
@@ -145,6 +153,7 @@ export const RECORD_SPECS = [
   MEMBER_ALERTS,
   MEMBER_PREFS,
   MEMBERSHIP_REQUESTS,
+  TELEX_VISITS,
 ] as RecordSpec<unknown>[];
 
 /** The row written to Supabase for one record. */

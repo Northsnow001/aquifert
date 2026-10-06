@@ -1,12 +1,26 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Copy, PenLine, Search, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, Eye, PenLine, Search, Trash2 } from "lucide-react";
 import { bulkTelex, deleteTelex, duplicateTelex } from "@/app/admin/actions";
 import { BulkApply, BulkBar, ConfirmSubmit, FilterSelect, SelectAll } from "@/components/admin/form-controls";
 import { Card, EmptyState, Flash, PageHeader, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
 import { TELEX_ACCESS, excerpt, formatStamp, telexHeadline, type PublishStatus } from "@/lib/content-types";
 import { getHubContent, sortTelex } from "@/lib/hub-content";
+import { formatDuration, statsByTelex, type TelexReadStats } from "@/lib/telex-reads/stats";
+import { listVisits } from "@/lib/telex-reads/store";
 
 export const dynamic = "force-dynamic";
+
+function ReadsCell({ id, stats }: { id: string; stats?: TelexReadStats }) {
+  if (!stats) return <span className="text-[12px] text-dim">No visits yet</span>;
+  return (
+    <Link href={`/admin/telex/${id}/reads`} className="block no-underline" title="See who read it">
+      <span className="text-[13px] font-semibold text-ink">{stats.read} read</span>
+      <span className="block text-[11.5px] text-mid">
+        of {stats.opened} opened{stats.read ? ` · ${formatDuration(stats.avgSeconds)}` : ""}
+      </span>
+    </Link>
+  );
+}
 
 const PAGE_SIZE = 20;
 
@@ -21,7 +35,9 @@ const DONE_LABEL: Record<string, string> = {
 
 export default async function TelexAdminPage({ searchParams }: { searchParams: Promise<Search> }) {
   const params = await searchParams;
-  const all = sortTelex((await getHubContent()).telex);
+  const [content, visits] = await Promise.all([getHubContent(), listVisits().catch(() => [])]);
+  const all = sortTelex(content.telex);
+  const reads = statsByTelex(visits.filter((visit) => !visit.admin));
   const status = (["published", "draft", "private"].includes(params.status ?? "") ? params.status : "all") as PublishStatus | "all";
   const q = (params.q ?? "").trim().toLowerCase();
   const tags = Array.from(new Set(all.flatMap((item) => item.tags))).sort((a, b) => a.localeCompare(b));
@@ -78,10 +94,16 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
         title="Telex"
         description="The intel feed on the hub home page. Published messages appear in the order of their publish time, filtered by each member's plan."
         actions={
-          <Link href="/admin/telex/new" className={btnPrimary}>
-            <PenLine className="h-4 w-4" />
-            New message
-          </Link>
+          <>
+            <Link href="/admin/telex/reads" className={btnSecondary}>
+              <Eye className="h-4 w-4" />
+              Read report
+            </Link>
+            <Link href="/admin/telex/new" className={btnPrimary}>
+              <PenLine className="h-4 w-4" />
+              New message
+            </Link>
+          </>
         }
       />
       <Flash saved={doneMessage} message={doneMessage} />
@@ -173,7 +195,7 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
               </BulkBar>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] table-fixed text-left">
+              <table className="w-full min-w-[980px] table-fixed text-left">
                 <thead>
                   <tr className="border-b border-border font-mono text-[10.5px] uppercase tracking-[0.1em] text-dim">
                     <th className="w-12 px-4 py-2.5">
@@ -181,7 +203,8 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
                     </th>
                     <th className="py-2.5 pr-6 font-medium">Summary</th>
                     <th className="w-28 py-2.5 pr-4 font-medium">Access</th>
-                    <th className="w-44 py-2.5 pr-4 font-medium">Tags</th>
+                    <th className="w-40 py-2.5 pr-4 font-medium">Tags</th>
+                    <th className="w-32 py-2.5 pr-4 font-medium">Reads</th>
                     <th className="w-44 py-2.5 pr-4 font-medium">Status</th>
                     <th className="w-28 py-2.5 pr-4" />
                   </tr>
@@ -215,6 +238,9 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
                             <span className="text-[12px] text-dim">—</span>
                           )}
                         </div>
+                      </td>
+                      <td className="py-3.5 pr-4">
+                        <ReadsCell id={item.id} stats={reads.get(item.id)} />
                       </td>
                       <td className="py-3.5 pr-4">
                         <StatusBadge status={item.status} />

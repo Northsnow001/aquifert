@@ -13,6 +13,7 @@ import { publishedTelex } from "@/lib/aq-modules/telex";
 import { TELEX_PRODUCTS } from "@/lib/aq-modules/types";
 import { formatDay, formatStamp } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
+import { readTelexIds } from "@/lib/telex-reads/store";
 
 export const metadata: Metadata = { title: "AQ TELEX" };
 export const dynamic = "force-dynamic";
@@ -24,7 +25,8 @@ export default async function AqTelexPage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const filter = parseTelexFilter(params);
   const count = parseCount(params);
-  const all = publishedTelex((await getHubContent()).telex, "all");
+  const [content, readIds] = await Promise.all([getHubContent(), readTelexIds(user)]);
+  const all = publishedTelex(content.telex, "all");
   const tags = allTags(all);
   const matches = filterTelex(all, filter);
   const shown = matches.slice(0, count);
@@ -126,7 +128,7 @@ export default async function AqTelexPage({ searchParams }: { searchParams: Prom
         <EmptyPanel title="The wire is quiet for now" body="The desk publishes flashes through the trading day. New ones appear here the moment they are filed." />
       ) : matches.length ? (
         <Panel title="Desk wire" sub="Newest first, grouped by day" icon={RadioTower} tone="blue">
-          <TelexList items={shown} mode="full" thumb={48} />
+          <TelexList items={shown} mode="preview" thumb={48} readIds={readIds} />
           {shown.length < matches.length ? (
             <div className="flex flex-col items-center gap-1.5 border-t border-border px-5 py-5">
               <Link href={telexQuery(filter, { n: count + TELEX_PAGE })} scroll={false} className={btnSecondary}>

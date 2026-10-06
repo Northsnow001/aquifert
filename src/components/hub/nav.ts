@@ -321,13 +321,13 @@ const TAB_GROUPS: { key: string; items: string[] }[] = [
   { key: "nitrogen", items: ["nitrogen"] },
   { key: "library", items: ["library"] },
   { key: "aquibot", items: ["aquibot"] },
-  { key: "telex-feed", items: ["telex", "analysis", "signal"] },
-  { key: "netback", items: ["netback"] },
-  { key: "freight-group", items: ["freight-analytics", "freight", "call"] },
+  { key: "telex-feed", items: ["telex"] },
+  { key: "analysis", items: ["analysis"] },
+  { key: "calculators", items: ["freight", "netback"] },
   { key: "order-group", items: ["order"] },
   { key: "plans", items: ["zero", "aq-analytics"] },
   { key: "tools", items: ["tools"] },
-  { key: "guide", items: ["guide"] },
+  { key: "call", items: ["call"] },
   { key: "contact", items: ["contact"] },
   { key: "analytics", items: ["a-telex", "a-market", "a-signal", "a-freight", "a-sd", "a-briefing", "a-alerts"] },
 ];
@@ -359,14 +359,28 @@ export function tabKeysFor(plan: Plan, admin: boolean) {
   return hasPaidPages(plan, admin) ? ["dashboard", "home", "telex", "aquibot"] : ["home", "library", "telex", "aquibot"];
 }
 
-export const TOUR_STOPS: { key: string; title: string; body: string }[] = [
+/**
+ * Tour stops in menu order. Each one points at the element carrying `data-tour={key}`; stops whose element is not
+ * on screen (pages outside the member's plan, desktop tabs on a phone) are skipped. `anchor: false` shows a centred card.
+ */
+export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: false }[] = [
+  { key: "welcome", anchor: false, title: "Welcome to Aquifert ONE", body: "A one-minute walk through the menu, so you know where everything lives. Use the arrow keys or the buttons, and skip whenever you like." },
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },
-  { key: "home", title: "Hub", body: "The market desk: Telex, top stories and the market ticker show what moved overnight." },
-  { key: "telex", title: "TELEX", body: "Desk flashes, newest first. Save a product filter as your default." },
-  { key: "nitrogen", title: "Nitrogen Report", body: "Four short sections, one tailored nitrogen report you can keep." },
-  { key: "netback", title: "Netback", body: "Work out your real landed cost, or what a farm-gate price implies at FOB." },
-  { key: "a-telex", title: "AQ Analytics", body: "Deeper data and the full wire. A lock means your plan does not include it yet; open it to see how to unlock." },
-  { key: "aquibot", title: "Aquibot Trader AI", body: "Ask anything about the market. You can replay this tour from the User Guide." },
+  { key: "home", title: "Hub", body: "Start here each day: ask Aquibot a question, then read AQ View, the latest Telex flashes and the Direct Hedge curves." },
+  { key: "nitrogen", title: "Nitrogen Report", body: "Answer four short sections and get a nitrogen report tailored to your market, yours to keep." },
+  { key: "library", title: "Library", body: "Reports, guides and desk files, organised in collections you can search." },
+  { key: "aquibot", title: "Aquibot", body: "Your trader AI. Ask about prices, freight, market news or how a product is made." },
+  { key: "telex", title: "Telex Feed", body: "Desk flashes, newest first. Read the opening lines, press Read more for the full story, and save a product filter as your default." },
+  { key: "analysis", title: "AQ View", body: "The desk's market analysis notes: where prices are heading and why." },
+  { key: "freight", title: "Calculators", body: "Price a freight route or work out your netback: real landed cost, or what a farm-gate price implies at FOB." },
+  { key: "order", title: "Order Fertilizer Now", body: "Send the trading desk an enquiry for the products, quantity and months you need." },
+  { key: "zero", title: "Plans", body: "See AQ ZERO and AQ Analytics, and what each plan adds." },
+  { key: "tools", title: "AQ Trader Tools", body: "The world map, price charts and cost tools traders use every day." },
+  { key: "call", title: "Weekly Market Call", body: "Join the desk's weekly call on the fertilizer markets, or catch up on the last one." },
+  { key: "contact", title: "Contact Us", body: "Reach the desk by WhatsApp, a booked meeting or a message." },
+  { key: "more", title: "More", body: "Everything else in the menu lives here: calculators, AQ View, plans, the Library and help." },
+  { key: "search", title: "Search", body: "Jump to any page or tool. Press Ctrl K from anywhere." },
+  { key: "account", title: "Your account", body: "Profile, plan and billing, the User Guide, and this tour if you want to see it again." },
 ];
 
 const EXTRA_TITLES: [string, string][] = [
