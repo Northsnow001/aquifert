@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AquibotBriefing, type BriefRow } from "@/components/hub/aquibot-briefing";
 import { HomeHero } from "@/components/hub/home-hero";
 import { TelexLead } from "@/components/hub/home-telex";
 import { HomeTelexFilter } from "@/components/hub/home-telex-filter";
@@ -11,8 +10,8 @@ import { getHubAccess } from "@/lib/aq-modules/access";
 import { getPrefs } from "@/lib/aq-modules/members";
 import { publishedAnalysis } from "@/lib/aq-modules/store";
 import { publishedTelex } from "@/lib/aq-modules/telex";
-import { productOf, TELEX_PRODUCTS, toneOf, type AnalysisNote, type TelexProduct } from "@/lib/aq-modules/types";
-import { deskNow, formatDay, plainText } from "@/lib/content-types";
+import { productOf, TELEX_PRODUCTS, type AnalysisNote, type TelexProduct } from "@/lib/aq-modules/types";
+import { deskNow, formatDay } from "@/lib/content-types";
 import { getHubContent, sortHedge } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
@@ -112,23 +111,12 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   }));
 
   const notes = publishedAnalysis(modules);
-  const brief: BriefRow[] = [
-    ...readable.slice(0, 3).map((item) => ({ id: `t-${item.id}`, headline: item.headline, product: item.product, tone: item.tone, source: "Telex", href: `/hub/telex/${item.id}`, thumb: item.thumb, pick: item.pick })),
-    ...notes.slice(0, 2).map((note, index) => ({
-      id: `a-${note.id}`,
-      headline: note.title,
-      product: noteProduct(note),
-      tone: toneOf(`${note.title} ${plainText(note.body)}`),
-      source: "AQ View",
-      href: `/hub/analysis/${note.slug}`,
-      pick: index,
-    })),
-  ];
   const hedgeReports = sortHedge(content.hedgeReports).filter((item) => item.status === "published");
-  const briefLatest = [readable[0]?.publishedAt, notes[0]?.publishedAt].filter((stamp): stamp is string => Boolean(stamp)).sort().at(-1);
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 pb-2">
+      <HomeHero name={user.name} variant="hub" />
+
       <TelexWire
         items={wire}
         total={shown.length}
@@ -138,8 +126,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       />
 
       <TelexLead items={lead} />
-
-      <HomeHero name={user.name} variant="hub" />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <AqViewCard notes={notes.slice(0, 5)} />
@@ -152,8 +138,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           </section>
         )}
       </div>
-
-      <AquibotBriefing rows={brief} persona={prefs.persona} variant="hub" latest={briefLatest} now={now} />
     </div>
   );
 }

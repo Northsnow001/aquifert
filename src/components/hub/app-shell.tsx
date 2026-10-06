@@ -16,7 +16,7 @@ import { NavHoverCard } from "@/components/app/nav-hover-card";
 import { startTour, Tour } from "@/components/app/tour";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { HubTabs } from "@/components/hub/hub-tabs";
-import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, pageTitle, SECTIONS, tabKeysFor, tabsFor, TOUR_STOPS, type HubNavItem } from "@/components/hub/nav";
+import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, TOUR_STOPS, type HubNavItem } from "@/components/hub/nav";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
 
@@ -229,7 +229,6 @@ function Masthead({ t }: { t: (key: string) => string }) {
     <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-8 lg:py-4">
       <Link href="/hub" className="block text-white no-underline transition-opacity hover:opacity-85">
         <span className="block text-[20px] font-bold leading-tight tracking-tight lg:text-[26px]">Aquifert ONE</span>
-        <span className="block text-[12.5px] leading-tight text-slate-300 lg:text-[14px]">{t("top.tagline")}</span>
       </Link>
       <div className="hidden items-center gap-3 text-right md:flex">
         <span className="rounded-full bg-white/10 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.14em] text-teal-300">{t("top.portal")}</span>
@@ -261,10 +260,6 @@ export function AppShell({
   const [drawer, setDrawer] = useState(false);
   const onAquibotPage = isActive(pathname, "/hub/aquibot");
   const dockOpen = useAquibotDock().open && !onAquibotPage;
-  const englishTitle = pageTitle(pathname);
-  const titleItem = HUB_NAV.find((item) => item.label === englishTitle);
-  const title = titleItem ? t(`nav.${titleItem.key}`) : englishTitle;
-
   useEffect(() => {
     if (!drawer) return;
     const onKey = (event: KeyboardEvent) => {
@@ -325,18 +320,6 @@ export function AppShell({
             <Link href="/hub" aria-label="Aquifert home" className="shrink-0 no-underline transition-opacity hover:opacity-85">
               <Image src="/brand/logo-v2-light.png" alt="Aquifert" width={814} height={214} className="h-7 w-auto lg:h-10" priority />
             </Link>
-            <div className="ms-2 hidden min-w-0 items-center gap-2 text-[14.5px] lg:flex" aria-label="Current page">
-              <span className="text-slate-300">Aquifert ONE</span>
-              <span className="text-white/40">/</span>
-              <span className="truncate font-semibold text-white">{title}</span>
-              <Link
-                href="/hub/account/usage"
-                title={t("nav.plan-usage")}
-                className="ms-1 inline-flex shrink-0 items-center rounded-full border border-teal-400/30 bg-teal-400/10 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-teal-200 no-underline hover:bg-teal-400/20"
-              >
-                {PLAN_LABEL[user.plan]}
-              </Link>
-            </div>
 
             <div className="ms-auto flex items-center gap-1 sm:gap-2">
               <button
