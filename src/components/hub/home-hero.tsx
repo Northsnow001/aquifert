@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeftRight, ArrowUp, Calculator, Library } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 
@@ -19,18 +19,11 @@ const ACTIONS = [
   { href: "/hub/library", label: "Open the Library", icon: Library },
 ];
 
-const noop = () => () => {};
-const partOfDay = () => {
-  const hour = new Date().getHours();
-  return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-};
-
-/** `hub` is the hub's centred greeting: time of day from the reader's clock, no shortcut buttons. */
+/** `hub` is the hub's centred greeting, without the shortcut buttons. */
 export function HomeHero({ name, variant = "dashboard" }: { name: string; variant?: "dashboard" | "hub" }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [hint, setHint] = useState(0);
-  const greeting = useSyncExternalStore(noop, partOfDay, () => "Hello");
   const first = name.trim().split(/\s+/)[0] || "there";
 
   useEffect(() => {
@@ -49,7 +42,7 @@ export function HomeHero({ name, variant = "dashboard" }: { name: string; varian
     <section className={`aq-rise flex flex-col items-center px-1 text-center ${hub ? "py-4" : "pb-2 pt-2 sm:pt-4"}`}>
       {hub ? (
         <h1 className="text-[24px] font-normal leading-tight tracking-tight text-ink sm:text-[32px] sm:leading-[40px]">
-          {greeting}, <span translate="no">{first}</span>! What do you want to look at today?
+          Hi, <span translate="no">{first}</span>! What do you want to check today?
         </h1>
       ) : (
         <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]">

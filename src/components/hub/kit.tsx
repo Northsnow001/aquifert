@@ -94,9 +94,15 @@ export function ProductChip({ product, small = false }: { product: TelexProduct;
 /** Fills a positioned box with the flash's own picture, or the product picture when it has none. */
 export function StoryImage({ product, src, pick = 0, sizes, priority = false, className = "" }: { product: TelexProduct; src?: string | null; pick?: number; sizes: string; priority?: boolean; className?: string }) {
   if (src) {
+    const loading = priority ? "eager" : "lazy";
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- desk uploads and links to any host
-      <img src={src} alt="" loading={priority ? "eager" : "lazy"} referrerPolicy="no-referrer" className={`absolute inset-0 h-full w-full object-cover ${className}`} />
+      <>
+        {/* Desk graphics carry text, so they are never cropped; a blurred copy fills any space the box shape leaves. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- desk uploads and links to any host */}
+        <img src={src} alt="" aria-hidden loading={loading} referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- desk uploads and links to any host */}
+        <img src={src} alt="" loading={loading} referrerPolicy="no-referrer" className={`absolute inset-0 h-full w-full object-contain ${className}`} />
+      </>
     );
   }
   return <Image src={productThumb(product, pick)} alt="" fill sizes={sizes} priority={priority} className={`object-cover ${className}`} />;

@@ -217,10 +217,14 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
             <p className="text-[12.5px] font-semibold text-ink">Hub preview</p>
             <span className="ml-auto text-[12px] text-dim">{status === "published" ? `Visible to ${ACCESS_AUDIENCE[access]}` : "Hidden from members until published"}</span>
           </div>
-          <article className="grid gap-4 px-5 py-4 sm:grid-cols-[132px_minmax(0,1fr)]">
-            <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-s2">
+          <article className="grid gap-4 px-5 py-4 sm:grid-cols-[192px_minmax(0,1fr)]">
+            <div className="relative aspect-video self-start overflow-hidden rounded-lg border border-border bg-s2">
+              {thumbPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element -- local previews and links to any host
+                <img src={thumbPreview} alt="" aria-hidden referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl" />
+              ) : null}
               {/* eslint-disable-next-line @next/next/no-img-element -- local previews and links to any host */}
-              <img src={thumbPreview ?? THUMBS[product]} alt="" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={thumbPreview ?? THUMBS[product]} alt="" referrerPolicy="no-referrer" className={`absolute inset-0 h-full w-full ${thumbPreview ? "object-contain" : "object-cover"}`} />
             </div>
             <div className="min-w-0">
               <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatTelexDay(publishedAt)}</p>
@@ -325,15 +329,19 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
               setDragging(false);
               void pickImage(event.dataTransfer.files[0]);
             }}
-            className={`relative mt-1.5 aspect-[16/10] overflow-hidden rounded-xl border bg-s2 ${dragging ? "border-blue ring-2 ring-blue/25" : "border-border"}`}
+            className={`relative mt-1.5 aspect-video overflow-hidden rounded-xl border bg-s2 ${dragging ? "border-blue ring-2 ring-blue/25" : "border-border"}`}
           >
+            {thumbPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element -- local previews and links to any host
+              <img src={thumbPreview} alt="" aria-hidden referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl" />
+            ) : null}
             {/* eslint-disable-next-line @next/next/no-img-element -- local previews and links to any host */}
             <img
               src={thumbPreview ?? THUMBS[product]}
               alt=""
               referrerPolicy="no-referrer"
               onError={() => thumbPreview && setThumbError("That image did not load. Check the link, or upload the file instead.")}
-              className={`absolute inset-0 h-full w-full object-cover ${thumbPreview ? "" : "opacity-60 grayscale-[30%]"}`}
+              className={`absolute inset-0 h-full w-full ${thumbPreview ? "object-contain" : "object-cover opacity-60 grayscale-[30%]"}`}
             />
             {!thumbPreview ? (
               <span className="absolute inset-x-2 bottom-2 rounded-md bg-white/90 px-2 py-1 text-center text-[11.5px] font-medium text-mid shadow-sm">
@@ -381,7 +389,7 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
           />
           {thumbError ? <p className="mt-2 text-[12px] font-medium text-danger">{thumbError}</p> : null}
           <p className="mt-2 text-[12px] leading-relaxed text-dim">
-            JPG, PNG, WebP or GIF. Drop a file on the box or upload it; large photos are resized for you. The newest five flashes fill the boxes at the top of the hub, the newest in the large one.
+            JPG, PNG, WebP or GIF. Best at 16:9, for example 1280 × 720, the shape of the hub boxes. The whole picture always shows, nothing is cropped; other shapes get a soft blurred fill at the edges, as in this box. Large photos are resized for you. The newest five flashes fill the boxes at the top of the hub, the newest in the large one.
           </p>
         </section>
 
