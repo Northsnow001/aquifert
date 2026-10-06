@@ -7,22 +7,9 @@ import { deleteNitrogenReport, nitrogenReportsThisMonth, saveNitrogenReport } fr
 import type { NitrogenReport } from "@/lib/aq-modules/member-types";
 import { limitFor } from "@/lib/aq-modules/types";
 import { activePorts, getFreightDesk, nextReset } from "@/lib/freight-desk/store";
-import {
-  ADDITIVES,
-  CROPS,
-  EMPTY_ANSWERS,
-  firstName,
-  generateNitrogenReport,
-  METHODS,
-  PACKAGING,
-  PRIORITIES,
-  SOILS,
-  SOURCES,
-  stepProblem,
-  upcomingMonths,
-  type NitrogenAnswers,
-} from "@/lib/nitrogen/engine";
+import { briefMarkdown, briefProblem, buildBrief, PACKING, PRODUCTS, SHIPMENT_TYPES, upcomingMonths, type NitrogenAnswers } from "@/lib/nitrogen/engine";
 import { resolvePort } from "@/lib/ports";
+import { findZeroRegistration } from "@/lib/zero-interest";
 
 type Failure = { ok: false; message: string };
 
@@ -31,24 +18,16 @@ const option = (value: unknown, options: string[]) => (options.includes(String(v
 const options = (value: unknown, allowed: string[]) => (Array.isArray(value) ? allowed.filter((item) => value.includes(item)) : []);
 
 function clean(input: Partial<NitrogenAnswers>): NitrogenAnswers {
-  const priority = PRIORITIES.find((item) => item.value === input.priority)?.value ?? EMPTY_ANSWERS.priority;
-  const additives = options(input.additives, ADDITIVES);
   return {
     destinationCountry: text(input.destinationCountry, 80),
     destinationPort: text(input.destinationPort, 80),
     preferredOrigin: text(input.preferredOrigin, 80),
-    preferredMonths: options(input.preferredMonths, upcomingMonths()),
-    packaging: option(input.packaging, PACKAGING),
-    nitrogenSources: options(input.nitrogenSources, SOURCES),
-    annualVolume: text(input.annualVolume, 20),
+    products: options(input.products, PRODUCTS),
+    annualTonnage: text(input.annualTonnage, 20),
+    arrivalMonths: options(input.arrivalMonths, upcomingMonths()),
+    shipmentType: option(input.shipmentType, SHIPMENT_TYPES),
+    packing: option(input.packing, PACKING),
     warehouseCapacity: text(input.warehouseCapacity, 20),
-    cropType: option(input.cropType, CROPS),
-    areaHectares: text(input.areaHectares, 20),
-    soilTexture: option(input.soilTexture, SOILS),
-    applicationMethod: option(input.applicationMethod, METHODS),
-    priority,
-    additives: additives.includes("None") && additives.length > 1 ? additives.filter((item) => item !== "None") : additives,
-    siteNotes: String(input.siteNotes ?? "").trim().slice(0, 1000),
   };
 }
 
@@ -67,11 +46,8 @@ const saveProblem = (error: unknown) =>
 
 export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{ ok: true; id: string } | Failure> {
   const answers = clean(input ?? {});
-  for (const step of [0, 1, 2]) {
-    const problem = stepProblem(step, answers);
-    if (problem) return { ok: false, message: problem };
-  }
-  if (!PRIORITIES.some((item) => item.value === answers.priority)) return { ok: false, message: "Choose what matters most this season." };
+  const problem = briefProblem(answers);
+  if (problem) return { ok: false, message: problem };
   if (answers.destinationPort) {
     const port = resolvePort(`${answers.destinationPort}, ${answers.destinationCountry}`, activePorts(await getFreightDesk()));
     if (!port) return { ok: false, message: "Choose the destination port from the list, or leave it as not sure yet." };
@@ -88,16 +64,18 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
       };
     }
     const now = new Date();
-    const preparedFor = firstName(user.name);
+    const company = (await findZeroRegistration(user).catch(() => null))?.company?.trim();
+    const preparedFor = company || user.name.trim();
+    const refNo = refNumber(now);
     const row: NitrogenReport = {
       id: `nr-${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
-      refNo: refNumber(now),
+      refNo,
       at: now.toISOString(),
       userId: user.id,
       email: user.email.trim().toLowerCase(),
       preparedFor,
       answers,
-      reportMd: generateNitrogenReport(answers, { preparedFor, date: now }),
+      reportMd: briefMarkdown(buildBrief(answers, { refNo, partner: preparedFor, date: now })),
     };
     await saveNitrogenReport(row, admin ? 0 : limitFor(modules.limits.savedReports, user.plan));
     revalidatePath("/hub/nitrogen-report");

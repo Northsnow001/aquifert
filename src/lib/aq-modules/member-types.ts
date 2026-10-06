@@ -1,5 +1,5 @@
 import type { BillingCycle, MembershipTier } from "@/lib/aq-modules/membership";
-import type { NitrogenAnswers } from "@/lib/nitrogen/engine";
+import type { StoredNitrogenAnswers } from "@/lib/nitrogen/engine";
 import type { Plan } from "@/lib/session-shared";
 import type { Persona, TelexProduct } from "@/lib/aq-modules/types";
 
@@ -9,9 +9,9 @@ export type NitrogenReport = {
   at: string;
   userId: string;
   email: string;
-  /** Member's first name at the time; reports saved earlier lack it. */
+  /** Who the report is addressed to: the member's company or name at the time (first name on older reports, missing on the oldest). */
   preparedFor?: string;
-  answers: NitrogenAnswers;
+  answers: StoredNitrogenAnswers;
   reportMd: string;
 };
 

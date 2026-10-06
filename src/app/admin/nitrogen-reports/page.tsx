@@ -4,6 +4,7 @@ import { MissingTableNotice } from "@/components/admin/aq-data/table-notice";
 import { Card, EmptyState, PageHeader, btnSecondary } from "@/components/admin/ui";
 import { listAllNitrogenReports } from "@/lib/aq-modules/members";
 import { formatStamp } from "@/lib/content-types";
+import { reportTopic } from "@/lib/nitrogen/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function NitrogenReportsAdminPage({ searchParams }: { searc
   const rows = await listAllNitrogenReports(LIMIT);
   const needle = q.trim().toLowerCase();
   const shown = needle
-    ? rows.filter((row) => [row.refNo, row.email, row.answers?.cropType, row.answers?.destinationCountry].some((value) => (value ?? "").toLowerCase().includes(needle)))
+    ? rows.filter((row) => [row.refNo, row.email, reportTopic(row.answers), row.answers?.destinationCountry].some((value) => (value ?? "").toLowerCase().includes(needle)))
     : rows;
   const members = new Set(rows.map((row) => row.email)).size;
 
@@ -34,7 +35,7 @@ export default async function NitrogenReportsAdminPage({ searchParams }: { searc
             <input
               name="q"
               defaultValue={q}
-              placeholder="Search ref, email, crop, country"
+              placeholder="Search ref, email, product, country"
               aria-label="Search reports"
               className="h-9 w-72 rounded-lg border border-border bg-white pl-8 pr-3 text-[13px] text-ink"
             />
@@ -59,7 +60,7 @@ export default async function NitrogenReportsAdminPage({ searchParams }: { searc
                 <tr>
                   <th className="px-5 py-2 font-semibold">Ref</th>
                   <th className="px-3 py-2 font-semibold">Member</th>
-                  <th className="px-3 py-2 font-semibold">Crop</th>
+                  <th className="px-3 py-2 font-semibold">Products / crop</th>
                   <th className="px-3 py-2 font-semibold">Country</th>
                   <th className="px-3 py-2 font-semibold">Generated (UTC)</th>
                   <th className="w-10 px-5 py-2" />
@@ -74,7 +75,7 @@ export default async function NitrogenReportsAdminPage({ searchParams }: { searc
                       </Link>
                     </td>
                     <td className="max-w-[240px] truncate px-3 py-2.5 text-ink">{row.email}</td>
-                    <td className="px-3 py-2.5 text-ink">{row.answers?.cropType || <span className="text-dim">Not given</span>}</td>
+                    <td className="max-w-[240px] truncate px-3 py-2.5 text-ink">{reportTopic(row.answers) || <span className="text-dim">Not given</span>}</td>
                     <td className="px-3 py-2.5 text-ink">{row.answers?.destinationCountry || <span className="text-dim">Not given</span>}</td>
                     <td className="px-3 py-2.5 font-mono text-[11.5px] text-dim">{formatStamp(row.at)}</td>
                     <td className="px-5 py-2.5 text-right">

@@ -156,6 +156,134 @@ body::before {
 .aq-app ::selection {
   background: rgb(47 111 179 / 0.18);
 }
+
+/* Hub dark mode. The hub shell carries .dark (and sets it on <html> while open, so portals
+   follow); admin and the marketing site never do. Tokens flip here; the remaps below catch
+   the hard-coded light colours older markup still uses. */
+.aq-app.dark,
+.dark .aq-app {
+  color-scheme: dark;
+  --color-bg: #0b1520;
+  --color-surface: #121e2b;
+  --color-s2: #172433;
+  --color-s3: #1f2e3f;
+  --color-border: #273a4e;
+  --color-blue: #72aceb;
+  --color-blue-dim: #94c0f2;
+  --color-blue-light: rgb(114 172 235 / 0.14);
+  --color-teal: #7cc3a5;
+  --color-ink: #e8eef5;
+  --color-mid: #b5c3d1;
+  --color-dim: #8798aa;
+  --color-danger: #f47b70;
+  --color-navy-50: rgb(130 171 203 / 0.12);
+  --color-navy-100: rgb(130 171 203 / 0.2);
+  --color-teal-50: rgb(110 154 142 / 0.13);
+  --color-teal-100: rgb(110 154 142 / 0.22);
+  --color-teal-200: rgb(110 154 142 / 0.34);
+  --color-teal-700: #92c9b6;
+  --color-teal-800: #a6d6c5;
+  --color-red-50: rgb(244 123 112 / 0.12);
+  --color-red-200: rgb(244 123 112 / 0.35);
+  --aq-canvas: #0c1722;
+  --aq-rail: #101c28;
+  --aq-shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 30px -18px rgb(0 0 0 / 0.7);
+  --aq-shadow-float: 0 2px 6px rgb(0 0 0 / 0.4), 0 28px 64px -20px rgb(0 0 0 / 0.75);
+  scrollbar-color: rgb(255 255 255 / 0.18) transparent;
+}
+.aq-app.dark ::selection,
+.dark .aq-app ::selection {
+  background: rgb(114 172 235 / 0.3);
+}
+@layer utilities {
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-white) {
+    background-color: var(--color-surface);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-white\/95, .bg-white\/90, .bg-white\/80) {
+    background-color: rgb(18 30 43 / 0.92);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-white\/70, .bg-white\/60) {
+    background-color: rgb(18 30 43 / 0.6);
+  }
+  :is(.aq-app.dark, .dark .aq-app) :is(.hover\:bg-white:hover) {
+    background-color: var(--color-s3);
+  }
+  :is(.aq-app.dark, .dark .aq-app) :is(.hover\:bg-white\/70:hover) {
+    background-color: rgb(255 255 255 / 0.06);
+  }
+  :where(.aq-app.dark, .dark .aq-app) .group\/feed[data-view="grid"] :is(.group-data-\[view\=grid\]\/feed\:bg-white) {
+    background-color: var(--color-s2);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-navy-600, .text-navy-700, .text-navy-800, .text-navy-900) {
+    color: var(--color-ink);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-teal-200) {
+    color: #bbd3ca;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-blue) {
+    background-color: #3577bd;
+  }
+  :is(.aq-app.dark, .dark .aq-app) :is(.hover\:bg-blue-dim:hover) {
+    background-color: #2c67a6;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-\[\#25598f\]) {
+    color: var(--color-blue);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.border-\[\#cdd7e1\]) {
+    border-color: var(--color-border);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-\[\#d5dde6\], .bg-\[\#d9e2ea\], .bg-\[\#e4ebf1\], .bg-\[\#c3ced8\]) {
+    background-color: var(--color-s3);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-\[\#f1faf4\], .bg-\[\#e7f6ee\], .bg-\[\#e3f5ea\], .bg-\[\#e8f7ee\], .bg-\[\#eaf7f0\], .bg-\[\#f4fbf7\], .bg-\[\#f7fdf9\]) {
+    background-color: rgb(47 168 101 / 0.14);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.border-\[\#cdebd8\], .border-\[\#b7e0c8\], .border-\[\#d7efe3\]) {
+    border-color: rgb(47 168 101 / 0.35);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-\[\#1f7a45\], .text-\[\#1b7a47\], .text-\[\#1f8a4c\], .text-\[\#178a4c\], .text-\[\#2f8a66\]) {
+    color: #74d39f;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-\[\#fff4de\], .bg-\[\#fff4df\], .bg-\[\#fff6e5\], .bg-\[\#fff8e1\], .bg-\[\#fff7e8\], .bg-\[\#fff8ea\], .bg-\[\#fffaf0\]) {
+    background-color: rgb(217 149 31 / 0.15);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.border-\[\#f3e3b0\], .border-\[\#f5dfb3\], .border-\[\#f3dca9\]) {
+    border-color: rgb(217 149 31 / 0.3);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-\[\#9a5b00\], .text-\[\#8a6508\], .text-\[\#8a5300\], .text-\[\#7a4a00\], .text-\[\#b45309\], .text-\[\#c2410c\]) {
+    color: #f1b65c;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-\[\#fdecea\], .bg-\[\#fdecec\], .bg-\[\#fdf2f1\], .bg-\[\#fdf1f1\]) {
+    background-color: rgb(244 123 112 / 0.14);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.border-\[\#f3c9c5\], .border-\[\#f5c2c2\]) {
+    border-color: rgb(244 123 112 / 0.35);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-\[\#b53a2f\], .text-\[\#b42318\]) {
+    color: #f6978e;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-amber-50, .bg-amber-100) {
+    background-color: rgb(217 149 31 / 0.15);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.border-amber-200) {
+    border-color: rgb(217 149 31 / 0.3);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-amber-800) {
+    color: #f1b65c;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-emerald-50, .bg-emerald-100) {
+    background-color: rgb(47 168 101 / 0.14);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-emerald-700, .text-emerald-800) {
+    color: #74d39f;
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.bg-red-100) {
+    background-color: rgb(244 123 112 / 0.18);
+  }
+  :where(.aq-app.dark, .dark .aq-app) :is(.text-red-800) {
+    color: #f6978e;
+  }
+}
 /* Surfaces sit in the components layer so utilities on the same element still win. */
 @layer components {
 .aq-frame {
@@ -172,8 +300,11 @@ body::before {
   -webkit-backdrop-filter: saturate(180%) blur(18px);
   backdrop-filter: saturate(180%) blur(18px);
 }
+:where(.aq-app.dark, .dark .aq-app) .aq-glass {
+  background: rgb(18 30 43 / 0.84);
+}
 .aq-card {
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-2xl);
   box-shadow: var(--aq-shadow-card);
@@ -513,6 +644,74 @@ body::before {
 .aq-gauge-arc {
   animation: aq-gauge 0.9s var(--aq-ease) both;
 }
+
+/* Desk launcher on the hub: a router node that branches to the Weekly Market Call and a booked call. */
+.aq-router {
+  background: radial-gradient(circle at 32% 26%, #2f6690 0%, #163049 52%, #0e2031 100%);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.18),
+    inset 0 0 0 1.5px rgb(224 180 90 / 0.55),
+    0 10px 24px -8px rgb(11 30 45 / 0.55);
+  transition: transform 0.3s var(--aq-ease), box-shadow 0.3s ease;
+}
+.aq-router:hover,
+.aq-router:focus-visible,
+.aq-router[aria-expanded="true"] {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.22),
+    inset 0 0 0 1.5px rgb(224 180 90 / 0.9),
+    0 0 0 6px rgb(224 180 90 / 0.12),
+    0 14px 28px -8px rgb(11 30 45 / 0.6);
+}
+.aq-router:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 3px;
+}
+.aq-router:active {
+  transform: scale(0.94);
+  transition-duration: 0.12s;
+}
+/* With pathLength 1, a 0.14 dash travels from before the start (0.14) to past the end (-1). */
+.aq-router-spark {
+  stroke-dasharray: 0.14 1;
+  stroke-dashoffset: 0.14;
+  animation: aq-router-spark 6s ease-in-out 1.5s infinite;
+}
+@keyframes aq-router-spark {
+  0% { stroke-dashoffset: 0.14; }
+  24%, 100% { stroke-dashoffset: -1; }
+}
+.aq-branch-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: aq-branch-draw 0.5s var(--aq-ease) forwards;
+}
+@keyframes aq-branch-draw {
+  to { stroke-dashoffset: 0; }
+}
+.aq-node-pop {
+  animation: aq-node-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes aq-node-pop {
+  from { opacity: 0; transform: scale(0.4); }
+  to { opacity: 1; transform: none; }
+}
+.aq-branch-card {
+  animation: aq-branch-card 0.35s var(--aq-ease) both;
+}
+.aq-canvas-in {
+  transform-origin: calc(100% - 36px) calc(100% - 36px);
+  animation: aq-canvas-in 0.3s var(--aq-ease) both;
+}
+@keyframes aq-canvas-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes aq-branch-card {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: none; }
+}
 .aq-skeleton {
   border-radius: var(--radius-lg);
   background: linear-gradient(90deg, #edf1f5 25%, #f7f9fb 37%, #edf1f5 63%);
@@ -607,6 +806,17 @@ body::before {
   }
   .aq-avatar::before {
     animation-name: aq-heart-glow-soft;
+  }
+  .aq-router-spark, .aq-node-pop, .aq-branch-card, .aq-canvas-in {
+    animation: none !important;
+  }
+  .aq-branch-draw {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+  .aq-router, .aq-router:hover, .aq-router:active {
+    transition: none !important;
+    transform: none !important;
   }
   .aq-lift, .aq-lift:hover, .aq-app button:active {
     transition: none !important;

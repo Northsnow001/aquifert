@@ -7,10 +7,10 @@ import { toast } from "sonner";
 import { deleteReport } from "@/app/hub/nitrogen-report/actions";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { EmptyPanel, Panel } from "@/components/hub/kit";
-import { NitrogenWizard } from "@/components/hub/nitrogen/wizard";
+import { NitrogenBriefForm } from "@/components/hub/nitrogen/brief-form";
 import type { PortRecord } from "@/lib/ports";
 
-export type ReportRow = { id: string; refNo: string; crop: string; country: string; date: string };
+export type ReportRow = { id: string; refNo: string; topic: string; country: string; date: string };
 
 function ReportItem({ row }: { row: ReportRow }) {
   const [confirming, setConfirming] = useState(false);
@@ -23,7 +23,7 @@ function ReportItem({ row }: { row: ReportRow }) {
         </span>
         <span className="min-w-0">
           <span className="block font-mono text-[14.5px] font-semibold text-ink group-hover:text-blue">{row.refNo}</span>
-          <span className="block truncate text-[13.5px] text-mid">{[row.crop, row.country, row.date].filter(Boolean).join(" · ")}</span>
+          <span className="block truncate text-[13.5px] text-mid">{[row.topic, row.country, row.date].filter(Boolean).join(" · ")}</span>
         </span>
       </Link>
       <div className="flex shrink-0 items-center gap-2">
@@ -77,31 +77,33 @@ export function NitrogenWorkspace({
   limitReached,
   limitNote,
   keepNote,
+  startOpen = false,
 }: {
   reports: ReportRow[];
   ports: PortRecord[];
   limitReached: boolean;
   limitNote: string;
   keepNote: string;
+  startOpen?: boolean;
 }) {
-  const [view, setView] = useState<"list" | "form">("list");
+  const [view, setView] = useState<"list" | "form">(startOpen ? "form" : "list");
   const [draft, setDraft] = useState(0);
 
   const start = (
     <button type="button" onClick={() => setView("form")} disabled={limitReached} className={btnPrimary}>
-      <FlaskConical className="h-4 w-4" /> New assessment
+      <FlaskConical className="h-4 w-4" /> New report
     </button>
   );
 
   return (
     <>
       <div hidden={view !== "form"}>
-        <NitrogenWizard key={draft} ports={ports} blocked={limitReached ? limitNote : null} onClose={() => setView("list")} onReset={() => setDraft((value) => value + 1)} />
+        <NitrogenBriefForm key={draft} ports={ports} blocked={limitReached ? limitNote : null} onClose={() => setView("list")} onReset={() => setDraft((value) => value + 1)} />
       </div>
 
       <div hidden={view !== "list"} className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-[15px] leading-relaxed text-mid">Four short sections, about three minutes. Your answers stay put if you step back to check something.</p>
+          <p className="max-w-xl text-[15px] leading-relaxed text-mid">Six questions on one page, about two minutes. Your answers stay put if you step back to check something.</p>
           {limitReached ? (
             <div className="flex flex-wrap items-center gap-2">
               {start}
@@ -124,12 +126,12 @@ export function NitrogenWorkspace({
             </ul>
           ) : (
             <EmptyPanel
-              title="No assessments yet"
-              body="Your finished reports appear here, ready to open, print or send to the desk for a quote."
+              title="No reports yet"
+              body="Your finished briefs appear here, ready to open, download as a PDF or send to the desk for a quote."
               action={
                 limitReached ? null : (
                   <button type="button" onClick={() => setView("form")} className={btnPrimary}>
-                    <FlaskConical className="h-4 w-4" /> Start your first assessment
+                    <FlaskConical className="h-4 w-4" /> Start your first report
                   </button>
                 )
               }

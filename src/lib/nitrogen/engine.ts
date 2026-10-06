@@ -1,56 +1,56 @@
 /**
- * Nitrogen assessment: turns the four-section questionnaire into a Markdown report.
- * Deterministic desk rules, so the same answers always give the same report.
+ * Nitrogen Report: turns the one-page, six-question survey into an AQ View Special Edition
+ * brief. Deterministic desk rules over desk reference data, so the same answers always give
+ * the same brief. The brief is structured data; the report page, the PDF and the stored
+ * Markdown all render from it.
+ *
+ * Editorial rules: British spelling, metric tonnes (t), no em dashes, exclamation marks or
+ * ellipses, short sentences with one point per paragraph, and no invented transactions.
  */
 
-export type NitrogenPriority = "COST" | "BALANCED" | "EFFICIENCY";
+import type { LegacyNitrogenAnswers } from "@/lib/nitrogen/legacy";
 
 export type NitrogenAnswers = {
   destinationCountry: string;
   destinationPort: string;
   preferredOrigin: string;
+  products: string[];
+  annualTonnage: string;
   /** Months as YYYY-MM, picked from the next twelve. */
-  preferredMonths: string[];
-  /** Reports saved before preferred months asked for a single delivery window instead. */
-  deliveryWindow?: string;
-  packaging: string;
-  nitrogenSources: string[];
-  annualVolume: string;
+  arrivalMonths: string[];
+  shipmentType: string;
+  packing: string;
   warehouseCapacity: string;
-  cropType: string;
-  areaHectares: string;
-  soilTexture: string;
-  applicationMethod: string;
-  priority: NitrogenPriority;
-  additives: string[];
-  siteNotes: string;
 };
 
-export const PACKAGING = ["Bulk", "Big bags (500–1,000 kg)", "50 kg bags", "25 kg bags"];
-export const SOURCES = ["Urea", "Ammonium Nitrate", "CAN", "UAN solution", "Ammonium Sulphate", "Inhibited urea"];
-const ORDER_PRODUCT: Record<string, string> = {
-  Urea: "Urea - Granular",
-  "Inhibited urea": "Urea - Granular",
-  "Ammonium Nitrate": "AN",
-  CAN: "CAN",
-  "UAN solution": "UAN",
-  "Ammonium Sulphate": "Amsul",
+/** What a saved report holds: this survey, or the four-section one used before it. */
+export type StoredNitrogenAnswers = NitrogenAnswers | LegacyNitrogenAnswers;
+
+export const PRODUCTS = ["Urea", "Ammonium Nitrate", "CAN", "UAN solution", "Ammonium Sulphate", "Inhibited urea"];
+export const SHIPMENT_TYPES = ["Bulk", "Break Bulk", "Container"];
+export const PACKING = ["Big Bags", "50kg", "25kg"];
+
+export const EMPTY_ANSWERS: NitrogenAnswers = {
+  destinationCountry: "",
+  destinationPort: "",
+  preferredOrigin: "",
+  products: [],
+  annualTonnage: "",
+  arrivalMonths: [],
+  shipmentType: "",
+  packing: "",
+  warehouseCapacity: "",
 };
 
-/** Order Desk link with the report's product and destination filled in. */
-export function orderDeskHref(a: Pick<NitrogenAnswers, "nitrogenSources" | "destinationPort" | "destinationCountry">) {
-  const params = new URLSearchParams();
-  const product = ORDER_PRODUCT[a.nitrogenSources?.[0] ?? ""];
-  const destination = [a.destinationPort, a.destinationCountry].map((part) => part?.trim()).filter(Boolean).join(", ");
-  if (product) params.set("product", product);
-  if (destination) params.set("destination", destination);
-  const query = params.toString();
-  return query ? `/hub/order-desk?${query}` : "/hub/order-desk";
+export const isBriefAnswers = (answers: unknown): answers is NitrogenAnswers =>
+  Boolean(answers) && Array.isArray((answers as NitrogenAnswers).products) && typeof (answers as NitrogenAnswers).shipmentType === "string";
+
+/* ---------------------------------------------------------------- helpers */
+
+export function parseNumber(value: string): number {
+  const match = value.replace(/,/g, "").match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : 0;
 }
-
-export const CROPS = ["Winter wheat", "Winter barley", "Oilseed rape", "Maize", "Sugar beet", "Potatoes", "Grassland (grazed)", "Grassland (silage)", "Other"];
-export const SOILS = ["Sandy", "Sandy loam", "Loam", "Clay loam", "Clay", "Peaty"];
-export const METHODS = ["Broadcast (granular)", "Liquid injection", "Fertigation", "Foliar feed", "Precision placement"];
 
 /** The current month and the eleven after it, as YYYY-MM in UTC so server and browser agree. */
 export function upcomingMonths(from = new Date(), count = 12): string[] {
@@ -69,173 +69,257 @@ export function monthLabel(value: string, style: "short" | "long" = "short") {
   return `${style === "short" ? name.slice(0, 3) : name} ${year}`;
 }
 
-/** Preferred months for display, falling back to the delivery window older reports stored. */
-export function deliveryText(a: Pick<NitrogenAnswers, "preferredMonths" | "deliveryWindow">, style: "short" | "long" = "short") {
-  return a.preferredMonths?.length ? a.preferredMonths.map((month) => monthLabel(month, style)).join(", ") : (a.deliveryWindow ?? "");
-}
-export const ADDITIVES = ["Urease inhibitor", "Nitrification inhibitor", "Sulphur blend", "None"];
-export const PRIORITIES: { value: NitrogenPriority; label: string; hint: string }[] = [
-  { value: "COST", label: "Lowest cost", hint: "Urea backbone, shoulder-season buying" },
-  { value: "BALANCED", label: "Balanced", hint: "Urea base with efficient top-ups" },
-  { value: "EFFICIENCY", label: "Maximum efficiency", hint: "Inhibited and nitrate sources, tight timing" },
-];
+export const firstName = (name: string | null | undefined) => name?.trim().split(/\s+/)[0] ?? "";
 
-export const EMPTY_ANSWERS: NitrogenAnswers = {
-  destinationCountry: "",
-  destinationPort: "",
-  preferredOrigin: "",
-  preferredMonths: [],
-  packaging: "",
-  nitrogenSources: [],
-  annualVolume: "",
-  warehouseCapacity: "",
-  cropType: "",
-  areaHectares: "",
-  soilTexture: "",
-  applicationMethod: "",
-  priority: "BALANCED",
-  additives: [],
-  siteNotes: "",
-};
-
-/** Indicative kg N/ha bands per crop, before the soil adjustment. */
-export const N_RATE: Record<string, [number, number]> = {
-  "Winter wheat": [170, 220],
-  "Winter barley": [130, 170],
-  "Oilseed rape": [180, 220],
-  Maize: [150, 200],
-  "Sugar beet": [100, 140],
-  Potatoes: [160, 220],
-  "Grassland (grazed)": [120, 200],
-  "Grassland (silage)": [200, 280],
-  Other: [120, 180],
-};
-
-const SOIL_ADJ: Record<string, { delta: number; note: string }> = {
-  Sandy: { delta: 10, note: "sandy, free-draining soils raise leaching risk, so split applications and consider a nitrification inhibitor" },
-  "Sandy loam": { delta: 5, note: "sandy loam drains freely, so favour split applications to protect uptake efficiency" },
-  Loam: { delta: 0, note: "loam soils give the most predictable nitrogen response, so standard programmes apply" },
-  "Clay loam": { delta: -5, note: "heavier clay loam holds ammonium well, so slightly lower rates with good timing usually suffice" },
-  Clay: { delta: -5, note: "clay soils buffer nitrogen effectively, so watch waterlogging rather than leaching" },
-  Peaty: { delta: -15, note: "organic peaty soils mineralise significant nitrogen, so reduce applied rates accordingly" },
-};
-
-const METHOD_NOTE: Record<string, string> = {
-  "Broadcast (granular)": "Broadcast granular application suits urea and AN/CAN; apply ahead of rain or irrigation to move nitrogen into the root zone.",
-  "Liquid injection": "Liquid injection pairs with UAN solutions; keep boom or injector spacing even to avoid striping.",
-  Fertigation: "Fertigation supports little-and-often dosing; soluble sources such as urea or AN solution fit best.",
-  "Foliar feed": "Foliar feeding is a supplement, not a base programme, so plan soil-applied nitrogen as the backbone.",
-  "Precision placement": "Precision placement cuts rates materially; let variable-rate maps drive the purchase split.",
-};
-
-export function parseNumber(value: string): number {
-  const match = value.replace(/,/g, "").match(/(\d+(?:\.\d+)?)/);
-  return match ? Number(match[1]) : 0;
+/** ISO 8601 week, e.g. "W41 2026". */
+export function weekLabel(date: Date) {
+  const day = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  day.setUTCDate(day.getUTCDate() + 4 - (day.getUTCDay() || 7));
+  const yearStart = Date.UTC(day.getUTCFullYear(), 0, 1);
+  return `W${Math.ceil(((day.getTime() - yearStart) / 864e5 + 1) / 7)} ${day.getUTCFullYear()}`;
 }
 
-/** The kg N/ha band after the soil adjustment, shown live while members fill the form. */
-export function rateBand(crop: string, soil: string): [number, number] | null {
-  if (!crop) return null;
-  const [lo, hi] = N_RATE[crop] ?? N_RATE.Other;
-  const delta = SOIL_ADJ[soil]?.delta ?? 0;
-  return [Math.max(40, lo + delta), Math.max(60, hi + delta)];
-}
-
-/** Returns the first problem with a step, or null when it can move on. */
-export function stepProblem(step: number, a: NitrogenAnswers): string | null {
-  if (step === 0) {
-    if (!a.destinationCountry.trim()) return "Add the destination country.";
-    if (!a.preferredMonths.length) return "Choose at least one preferred month.";
-    if (!a.packaging) return "Choose the shipment packing.";
-  }
-  if (step === 1) {
-    if (!a.nitrogenSources.length) return "Pick at least one nitrogen source.";
-    if (!(parseNumber(a.annualVolume) > 0)) return "Add your annual volume in tonnes.";
-  }
-  if (step === 2) {
-    if (!a.cropType) return "Choose the crop.";
-    if (!(parseNumber(a.areaHectares) > 0)) return "Add the area in hectares.";
-    if (!a.soilTexture) return "Choose the soil texture.";
-    if (!a.applicationMethod) return "Choose how you apply.";
-  }
+/** Returns the first problem with the answers, or null when the brief can be built. */
+export function briefProblem(a: NitrogenAnswers): string | null {
+  if (!a.destinationCountry.trim()) return "Add the destination country.";
+  if (!a.products.length) return "Pick at least one product.";
+  if (!(parseNumber(a.annualTonnage) > 0)) return "Add your annual tonnage.";
+  if (!a.arrivalMonths.length) return "Choose at least one preferred arrival month.";
+  if (!a.shipmentType) return "Choose the shipment type.";
+  if (!a.packing) return "Choose the packing.";
   return null;
 }
 
-export const firstName = (name: string | null | undefined) => name?.trim().split(/\s+/)[0] ?? "";
+/** How many of the six required answers are in, for the progress bar. */
+export const answeredCount = (a: NitrogenAnswers) =>
+  [a.destinationCountry.trim(), a.products.length, parseNumber(a.annualTonnage) > 0, a.arrivalMonths.length, a.shipmentType, a.packing].filter(Boolean).length;
 
-/** Markdown table rows must sit on consecutive lines, so each table is one block. */
-const table = (rows: [string, string][]) => ["| Parameter | Value |", "|---|---|", ...rows.map(([name, value]) => `| ${name} | ${value.replace(/\|/g, "/")} |`)].join("\n");
+const ORDER_PRODUCT: Record<string, string> = {
+  Urea: "Urea - Granular",
+  "Inhibited urea": "Urea - Granular",
+  "Ammonium Nitrate": "AN",
+  CAN: "CAN",
+  "UAN solution": "UAN",
+  "Ammonium Sulphate": "Amsul",
+};
 
-export function generateNitrogenReport(a: NitrogenAnswers, { preparedFor = "", date = new Date() }: { preparedFor?: string; date?: Date } = {}): string {
-  const area = parseNumber(a.areaHectares);
-  const soil = SOIL_ADJ[a.soilTexture] ?? SOIL_ADJ.Loam;
-  const [adjLo, adjHi] = rateBand(a.cropType || "Other", a.soilTexture) ?? [120, 180];
-  const totalLo = area ? Math.round((area * adjLo) / 100) / 10 : null;
-  const totalHi = area ? Math.round((area * adjHi) / 100) / 10 : null;
-  const annualVol = parseNumber(a.annualVolume);
-  const sources = a.nitrogenSources.length ? a.nitrogenSources : ["Urea"];
-  const additives = a.additives.filter((item) => item !== "None");
+const productsOf = (a: Partial<StoredNitrogenAnswers>) =>
+  ("products" in a && Array.isArray(a.products) ? a.products : "nitrogenSources" in a && Array.isArray(a.nitrogenSources) ? a.nitrogenSources : []) as string[];
 
-  const priorityLine =
-    a.priority === "COST"
-      ? "Your stated priority is **cost**. The programme leans on urea as the backbone, the lowest cost per unit of nitrogen, buys in the seasonal shoulder and accepts slightly wider application windows."
-      : a.priority === "EFFICIENCY"
-        ? "Your stated priority is **efficiency**. The programme favours inhibited and ammonium-nitrate-based sources, tighter split timing and placement accuracy over headline price."
-        : "Your stated priority is **balanced cost and efficiency**. The programme blends a urea backbone with inhibited or nitrate-based top-ups where response is most reliable.";
+/** Order Desk link with the report's product and destination filled in. */
+export function orderDeskHref(a: Partial<StoredNitrogenAnswers>) {
+  const params = new URLSearchParams();
+  const product = ORDER_PRODUCT[productsOf(a)[0] ?? ""];
+  const destination = [a.destinationPort, a.destinationCountry].map((part) => part?.trim()).filter(Boolean).join(", ");
+  if (product) params.set("product", product);
+  if (destination) params.set("destination", destination);
+  const query = params.toString();
+  return query ? `/hub/order-desk?${query}` : "/hub/order-desk";
+}
 
-  const inhibitorNote = additives.length
-    ? [
-        `You selected ${additives.join(" and ")}.`,
-        additives.includes("Nitrification inhibitor") ? "A nitrification inhibitor holds ammonium in the root zone through wet periods." : "",
-        additives.includes("Urease inhibitor") ? "A urease inhibitor is strongly advised wherever urea is surface-applied without incorporation, cutting volatilisation losses." : "",
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : "No additives selected. If any urea is surface-applied without incorporation, the desk would flag a urease inhibitor as the cheapest efficiency gain available.";
+/** Short "what was this report about" line for lists. */
+export function reportTopic(a: Partial<StoredNitrogenAnswers> | null | undefined) {
+  if (!a) return "";
+  if ("cropType" in a && a.cropType) return a.cropType;
+  return productsOf(a).join(", ");
+}
 
-  const capacity = parseNumber(a.warehouseCapacity) || 50;
-  const shipments = Math.max(1, Math.min(6, Math.round(annualVol / Math.max(25, capacity)) || 1));
+/* --------------------------------------------------------- desk reference */
 
-  const months = deliveryText(a, "long");
-  const title = [a.destinationCountry || "Destination", a.destinationPort, sources.join(", ")].filter(Boolean).join(" / ");
+export type PulseSignal = "Firm" | "Soft" | "Balanced" | "Watch";
 
-  return [
-    `# Nitrogen Assessment: ${title}`,
-    preparedFor.trim() ? `**Prepared for:** ${preparedFor.trim()}` : "",
-    `**Date:** ${date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`,
-    `---`,
-    `## 1. Agronomic nitrogen allocation`,
-    table([
-      ["Crop", a.cropType || "Not given"],
-      ["Area", a.areaHectares ? `${a.areaHectares} ha` : "Not given"],
-      ["Soil texture", a.soilTexture || "Not given"],
-      ["Application method", a.applicationMethod || "Not given"],
-      ["Indicative N rate", `${adjLo}–${adjHi} kg N/ha`],
-      ["Total seasonal N requirement", totalLo != null ? `${totalLo}–${totalHi} t N` : "Not computed, area not given"],
-    ]),
-    `The indicative band for **${a.cropType || "your crop"}** is adjusted for your soils: ${soil.note}. ${METHOD_NOTE[a.applicationMethod] ?? ""}`.trim(),
-    `## 2. Sourcing and delivery schedule`,
-    table([
-      ["Preferred sources", sources.join(", ")],
-      ["Annual volume", a.annualVolume ? `${a.annualVolume} t` : "Not given"],
-      ["Destination", [a.destinationPort, a.destinationCountry].filter(Boolean).join(", ") || "Not given"],
+const PRODUCT_PULSE: Record<string, { view: string; signal: PulseSignal }> = {
+  Urea: {
+    view: "The deepest and most liquid nitrogen market. Origin competition is wide and prompt availability is adequate. Brazilian and European programmes set the tone into the next quarter.",
+    signal: "Firm",
+  },
+  "Ammonium Nitrate": {
+    view: "European supply is orderly and demand is seasonal. Regulatory handling limits keep trade regional rather than global.",
+    signal: "Balanced",
+  },
+  CAN: {
+    view: "Stable European grade with steady seasonal interest. Availability is comfortable across northern ports.",
+    signal: "Balanced",
+  },
+  "UAN solution": {
+    view: "Freight weight per unit of N keeps UAN a regional trade. Rouen and Hamburg sets are quoted flat to slightly easier.",
+    signal: "Soft",
+  },
+  "Ammonium Sulphate": {
+    view: "Chinese auction clears and Brazilian granular demand underpin the complex. Export allocation is the near-term swing factor.",
+    signal: "Firm",
+  },
+  "Inhibited urea": {
+    view: "A premium efficiency grade following the underlying urea complex. Margins over standard urea are steady.",
+    signal: "Firm",
+  },
+};
+
+const PRODUCT_NOTE: Record<string, string> = {
+  Urea: "Urea (46% N) is the reference nitrogen market, with the widest origin competition and typically the lowest cost per unit of N.",
+  "Ammonium Nitrate": "Ammonium nitrate (33.5-34.5% N) offers fast, reliable uptake. Storage and transport regulation is tighter in several jurisdictions.",
+  CAN: "CAN (27% N) is a stable calcium ammonium nitrate grade popular across Europe, easier to store and handle than straight AN.",
+  "UAN solution": "UAN suits liquid application systems and blending. Freight is weight-heavy per unit of N, so regional sourcing matters.",
+  "Ammonium Sulphate": "Ammonium sulphate (21% N plus 24% S) adds a sulphur credit and is competitive where sulphur deficiency is a factor.",
+  "Inhibited urea": "Inhibited urea adds a urease or nitrification inhibitor to standard urea, protecting efficiency where incorporation is delayed.",
+};
+
+const SHIPMENT_GUIDANCE: Record<string, string> = {
+  Bulk: "Bulk vessel shipment is the lowest-cost mode per tonne and suits single-product parcels of 3,000 t and up. It requires berth access, grab or conveyor discharge and covered bulk storage at destination. Demurrage risk is managed with clear laytime terms and an agreed discharge rate.",
+  "Break Bulk":
+    "Break bulk shipment carries bagged or big-bag cargo in a geared vessel's holds. It suits multi-product consignments and ports without bulk handling. It adds stevedoring cost and weather-sensitive discharge, so arrival windows should carry buffer days.",
+  Container:
+    "Containerised shipment gives the most flexible routing, the widest port coverage and the simplest onward distribution in smaller lots, at the highest per-tonne freight. It suits parcels under roughly 500 t and buyers with limited storage.",
+};
+
+const PACKING_GUIDANCE: Record<string, string> = {
+  "Big Bags": "Big bags (500-1,000 kg) suit forklift handling and direct transfer to spreaders or blending lines. They keep port and store handling simple at moderate volumes.",
+  "50kg": "Fifty-kilogram bags suit manual handling and merchant distribution. Palletised and shrink-wrapped presentation protects the product through onward retail channels.",
+  "25kg": "Twenty-five-kilogram bags suit specialty and retail channels. Unit handling cost is highest, so packing at origin should be confirmed against the resale format.",
+};
+
+const FREIGHT_PULSE: Record<string, { view: string; signal: PulseSignal }> = {
+  Bulk: { view: "Dry bulk rates are range-bound; prompt handysize and supramax tonnage is available on the main nitrogen routes.", signal: "Balanced" },
+  "Break Bulk": { view: "Geared tonnage is available on most nitrogen routes; stevedoring capacity at discharge is the constraint to watch.", signal: "Balanced" },
+  Container: { view: "Container indices remain elevated on main east-west lanes; booking lead times of three to four weeks are prudent.", signal: "Watch" },
+};
+
+/* ------------------------------------------------------------------ brief */
+
+export const BRIEF_TITLE = "AQ VIEW SPECIAL EDITION | Nitrogen Brief";
+export const BRIEF_QUOTE = { text: "The intelligent investor is a realist who sells to optimists and buys from pessimists.", source: "Benjamin Graham, The Intelligent Investor, 1949" };
+export const BRIEF_FOOTER = "Aquifert ONE Hub | aquifert.com | 71-75 Shelton Street, London WC2H 9JQ";
+
+export type NitrogenBrief = {
+  refNo: string;
+  partner: string;
+  week: string;
+  date: string;
+  disclaimer: string;
+  requirement: [string, string][];
+  pulse: { market: string; view: string; signal: PulseSignal }[];
+  position: string[];
+  products: { name: string; note: string; view: string }[];
+  logistics: string[];
+  recommendations: { label: string; text: string }[];
+};
+
+export function buildBrief(a: NitrogenAnswers, { refNo, partner: partnerName = "", date = new Date() }: { refNo: string; partner?: string; date?: Date }): NitrogenBrief {
+  const annual = parseNumber(a.annualTonnage);
+  const warehouse = parseNumber(a.warehouseCapacity);
+  const products = a.products.length ? a.products : ["Urea"];
+  const type = a.shipmentType || "Bulk";
+  const months = [...a.arrivalMonths].sort().map((month) => monthLabel(month, "long"));
+  const partner = partnerName.trim() || "Partner";
+  const destination = [a.destinationCountry, a.destinationPort].filter(Boolean).join(", ") || "the stated destination";
+  const tonnage = annual > 0 ? annual.toLocaleString("en-GB") : "";
+
+  // Parcels sized against warehouse capacity, or against what the shipment mode carries.
+  const modeCap = type === "Container" ? 300 : type === "Break Bulk" ? 1500 : 3000;
+  const lotSize = warehouse > 0 ? warehouse : annual > 0 ? Math.min(annual, modeCap) : 0;
+  const parcels = annual > 0 && lotSize > 0 ? Math.max(1, Math.min(12, Math.ceil(annual / lotSize))) : null;
+  const parcelSize = parcels ? Math.round(annual / parcels).toLocaleString("en-GB") : null;
+  const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? "s" : ""}`;
+
+  const monthSpan = months.length === 0 ? "the stated window" : months.length === 1 ? months[0] : `${months[0]} to ${months[months.length - 1]}`;
+
+  const position = [
+    `${partner} is buying ${products.join(", ")} into ${destination}. The stated programme is ${tonnage ? `${tonnage} t` : "an undisclosed volume"} per year, arriving ${monthSpan}. That profile shapes every recommendation in this brief.`,
+    products.length > 1
+      ? `The basket spreads risk across ${products.length} nitrogen sources. That is sensible. It lets the desk arbitrage origins and switch grades if one complex tightens.`
+      : `${products[0]} is the core of the programme. Concentration keeps execution simple but ties the cost base to one complex.`,
+    type === "Bulk"
+      ? `Bulk shipment into ${a.destinationPort || destination} implies port discharge and covered storage are in place. ${parcels ? `Against the stated programme the desk would structure ${plural(parcels, "parcel")} of roughly ${parcelSize} t.` : "Parcel sizing follows once annual tonnage is confirmed."}`
+      : type === "Break Bulk"
+        ? `Break bulk suits the packing specification. ${parcels ? `The desk would structure ${plural(parcels, "parcel")} of roughly ${parcelSize} t across ${monthSpan}.` : "Parcel sizing follows once annual tonnage is confirmed."}`
+        : `Containerised arrival gives flexibility across ${monthSpan}. ${parcels ? `The programme divides into approximately ${plural(parcels, "container consignment")}.` : "Consignment sizing follows once annual tonnage is confirmed."}`,
+    a.preferredOrigin
+      ? `The stated origin preference, ${a.preferredOrigin}, is noted. The desk will quote it alongside at least one alternative origin so the freight-adjusted spread is visible before commitment.`
+      : "No origin preference was stated. The desk will quote the two or three most competitive origins on a freight-adjusted, landed-cost basis.",
+  ];
+
+  const read = (signal: PulseSignal) =>
+    signal === "Firm" ? "a market to cover in tranches rather than chase" : signal === "Soft" ? "a market where patience is rewarded" : "a balanced market where timing matters more than direction";
+
+  return {
+    refNo,
+    partner,
+    week: weekLabel(date),
+    date: date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }),
+    disclaimer: `Prepared exclusively for ${partner}. Assessments are indicative and drawn from desk reference data. Prices are not quotations and do not constitute trading recommendations.`,
+    requirement: [
+      ["Products", products.join(", ")],
+      ["Annual tonnage", tonnage ? `${tonnage} t` : "Not stated"],
+      ["Destination", destination],
       ["Preferred origin", a.preferredOrigin || "Open"],
-      [a.preferredMonths?.length ? "Preferred months" : "Delivery window", months || "Not given"],
-      ["Shipment packing", a.packaging || "Not given"],
-      ["Warehouse capacity", a.warehouseCapacity ? `${a.warehouseCapacity} t` : "Not given"],
-    ]),
-    `Given the stated warehouse capacity, the desk would structure this as **${shipments} shipment${shipments > 1 ? "s" : ""}** across ${a.preferredMonths?.length ? "your preferred months" : "the delivery window"}, protecting you against a single delayed vessel and smoothing working capital. ${
-      a.preferredOrigin
-        ? `Your origin preference (${a.preferredOrigin}) is noted; the desk quotes it alongside at least one alternative so you can see the freight-adjusted spread.`
-        : "No origin preference was given, so the desk quotes the two or three most competitive origins on a freight-adjusted basis."
-    }`,
-    `## 3. Cost and efficiency recommendations`,
-    priorityLine,
-    inhibitorNote,
-    a.siteNotes.trim() ? `**Site notes recorded:** ${a.siteNotes.trim()}` : "",
+      ["Preferred arrival months", months.length ? months.join(", ") : "Flexible"],
+      ["Shipment type", type],
+      ["Packing", a.packing || "Not stated"],
+      ["Warehouse capacity", warehouse > 0 ? `${warehouse.toLocaleString("en-GB")} t` : "Not stated"],
+    ],
+    pulse: [
+      ...products.map((name) => ({ market: name, ...(PRODUCT_PULSE[name] ?? { view: "A recognised nitrogen source; the desk will quote availability across origins.", signal: "Balanced" as const }) })),
+      { market: `Freight / ${type}`, ...(FREIGHT_PULSE[type] ?? FREIGHT_PULSE.Bulk) },
+    ],
+    position,
+    products: products.map((name) => {
+      const pulse = PRODUCT_PULSE[name];
+      return {
+        name,
+        note: PRODUCT_NOTE[name] ?? "The desk will quote availability across vetted origins.",
+        view: pulse
+          ? `${pulse.view} For a buyer programme into ${destination}, the desk reads this as ${read(pulse.signal)}.`
+          : `The desk will assess ${name} availability against the arrival months stated before quoting.`,
+      };
+    }),
+    logistics: [
+      SHIPMENT_GUIDANCE[type] ?? "The desk will structure the shipment mode against parcel size and port capability.",
+      PACKING_GUIDANCE[a.packing] ?? "Packing is confirmed at origin against the resale and handling format.",
+      parcels
+        ? `Against the stated programme, the desk structures ${plural(parcels, "shipment")} across ${monthSpan}. This spreads arrival risk and smooths working capital.`
+        : "Share annual tonnage and storage capacity and the desk will structure a shipment schedule against them.",
+    ],
+    recommendations: [
+      {
+        label: "What to do now",
+        text: "Send this brief to the desk as a sourcing request on Aquifert ONE, with the products, tonnage and arrival months stated. The desk returns anonymised, landed-cost quotations from vetted suppliers: cost plus pass-through freight and a stated fee, with a full document trail.",
+      },
+      {
+        label: "What to watch",
+        text: `${products.includes("Urea") ? "Brazilian import pace and Chinese export quota announcements set the urea tone into the next quarter. " : ""}${
+          type === "Container" ? "Container freight indices on the relevant lanes, booked three to four weeks ahead. " : "Freight availability for the arrival window, fixed at enquiry stage. "
+        }Arrival scheduling across ${monthSpan} should be confirmed against storage capacity${warehouse > 0 ? ` of ${warehouse.toLocaleString("en-GB")} t` : ""}.`,
+      },
+      {
+        label: "What to avoid",
+        text: "Do not concentrate the full annual programme into a single arrival month. Do not commit to an origin before seeing the freight-adjusted spread. Avoid open exposure past the first stated arrival month without a desk review.",
+      },
+    ],
+  };
+}
+
+const cell = (value: string) => value.replace(/\|/g, "/");
+
+/** The brief as Markdown, stored with the report and shown in the admin console. */
+export function briefMarkdown(b: NitrogenBrief): string {
+  return [
+    `# ${BRIEF_TITLE}`,
+    `**${b.partner} Partnership Intelligence** | Prepared by the Aquifert Trading Desk`,
+    `**${b.week}** | ${b.date} | Reference ${b.refNo} | Confidential. Not for redistribution.`,
+    `*${b.disclaimer}*`,
+    `## Supply Requirement`,
+    ["| Parameter | Value |", "|---|---|", ...b.requirement.map(([name, value]) => `| ${name} | ${cell(value)} |`)].join("\n"),
+    `## Market Pulse | ${b.week}`,
+    [`| Market | ${b.week} View | Signal |`, "|---|---|---|", ...b.pulse.map((row) => `| ${cell(row.market)} | ${cell(row.view)} | ${row.signal} |`)].join("\n"),
+    `## The Position`,
+    ...b.position,
+    ...b.products.flatMap((item) => [`## ${item.name}`, item.note, item.view]),
+    `## Logistics and Shipment Plan`,
+    ...b.logistics,
+    `## Recommendations`,
+    ...b.recommendations.map((item) => `**${item.label}.** ${item.text}`),
     `---`,
-    `*This assessment is indicative, generated from your answers and desk reference data. It is not an offer or agronomic advice; confirm final programmes with a qualified agronomist.*`,
-  ]
-    .filter((line) => line !== "")
-    .join("\n\n");
+    `*“${BRIEF_QUOTE.text}” ${BRIEF_QUOTE.source}*`,
+    `*${BRIEF_FOOTER}*`,
+  ].join("\n\n");
 }

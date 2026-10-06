@@ -17,8 +17,10 @@ import { startTour, Tour } from "@/components/app/tour";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { HubTabs } from "@/components/hub/hub-tabs";
 import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
+import { ThemeToggle } from "@/components/hub/theme-toggle";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
+import { THEME_COOKIE, type Theme } from "@/lib/theme";
 
 function NavIcon({ item, locked = false }: { item: HubNavItem; locked?: boolean }) {
   if (item.icon === "aquibot") return <AquibotAvatar size={22} />;
@@ -29,7 +31,8 @@ function NavIcon({ item, locked = false }: { item: HubNavItem; locked?: boolean 
 function Brand() {
   return (
     <Link href="/hub" aria-label="Aquifert home" className="flex items-center no-underline transition-opacity hover:opacity-80">
-      <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-8 w-auto" />
+      <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-8 w-auto dark:hidden" />
+      <Image src="/brand/logo-v2-light.png" alt="" width={814} height={214} className="hidden h-8 w-auto dark:block" />
     </Link>
   );
 }
@@ -247,18 +250,30 @@ export function AppShell({
   user,
   admin = false,
   unlocked = [],
+  theme: initialTheme = "light",
   ticker,
   children,
 }: {
   user: SessionUser;
   admin?: boolean;
   unlocked?: string[];
+  theme?: Theme;
   ticker?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const { t } = useI18n();
   const [drawer, setDrawer] = useState(false);
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    return () => root.classList.remove("dark");
+  }, [theme]);
+  const changeTheme = (next: Theme) => {
+    setTheme(next);
+    document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+  };
   const onAquibotPage = isActive(pathname, "/hub/aquibot");
   const dockOpen = useAquibotDock().open && !onAquibotPage;
   useEffect(() => {
@@ -298,7 +313,7 @@ export function AppShell({
   const tabs = tabKeysFor(user.plan, admin).map((key) => HUB_NAV.find((item) => item.key === key)!);
 
   return (
-    <div className="aq-app aq-frame h-dvh overflow-hidden lg:p-2.5 xl:flex xl:gap-2.5">
+    <div className={`aq-app aq-frame h-dvh overflow-hidden lg:p-2.5 xl:flex xl:gap-2.5 ${theme === "dark" ? "dark" : ""}`}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[99] focus:rounded-lg focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
@@ -347,6 +362,7 @@ export function AppShell({
                 <AquibotAvatar size={28} active={dockOpen} />
                 {t("top.askAquibot")}
               </button>
+              <ThemeToggle theme={theme} onChange={changeTheme} />
               <LanguageMenu dark />
               <AccountMenu user={user} admin={admin} paid={hasPaidPages(user.plan, admin)} />
             </div>

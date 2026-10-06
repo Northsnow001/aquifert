@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Check, Link2, Printer, ShoppingCart, Trash2 } from "lucide-react";
+import { Check, Download, Link2, Loader2, Printer, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteReport } from "@/app/hub/nitrogen-report/actions";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
+import type { NitrogenBrief } from "@/lib/nitrogen/engine";
 
-export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk" }: { id: string; refNo: string; quoteHref?: string }) {
+export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk", brief }: { id: string; refNo: string; quoteHref?: string; brief?: NitrogenBrief }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [pending, startTransition] = useTransition();
 
   async function copyLink() {
@@ -22,6 +24,19 @@ export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk" }: { id
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Your browser blocked copying. Copy the address from the address bar instead.");
+    }
+  }
+
+  async function download() {
+    if (!brief) return;
+    setSaving(true);
+    try {
+      const { downloadBriefPdf } = await import("@/components/hub/nitrogen/brief-pdf");
+      await downloadBriefPdf(brief);
+    } catch {
+      toast.error("The PDF could not be made just now. Use Print and choose Save as PDF instead.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -40,8 +55,13 @@ export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk" }: { id
 
   return (
     <div className="flex flex-wrap items-center gap-2 print:hidden">
+      {brief ? (
+        <button type="button" onClick={download} disabled={saving} className={btnSecondary}>
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} {saving ? "Preparing PDF…" : "Download PDF"}
+        </button>
+      ) : null}
       <button type="button" onClick={() => window.print()} className={btnSecondary}>
-        <Printer className="h-4 w-4" /> Print / save as PDF
+        <Printer className="h-4 w-4" /> {brief ? "Print" : "Print / save as PDF"}
       </button>
       <button type="button" onClick={copyLink} className={btnSecondary} aria-live="polite">
         {copied ? <Check className="h-4 w-4 text-teal-600" /> : <Link2 className="h-4 w-4" />} {copied ? "Copied" : "Copy link"}

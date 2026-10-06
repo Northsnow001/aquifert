@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { deliveryText, EMPTY_ANSWERS, generateNitrogenReport, monthLabel, orderDeskHref, rateBand, upcomingMonths } from "../nitrogen/engine";
+import { answeredCount, briefMarkdown, briefProblem, buildBrief, EMPTY_ANSWERS, isBriefAnswers, monthLabel, orderDeskHref, reportTopic, upcomingMonths } from "../nitrogen/engine";
+import { deliveryText, EMPTY_LEGACY_ANSWERS, generateLegacyReport, rateBand } from "../nitrogen/legacy";
 import { evaluateAlerts } from "./alerts";
 import type { MemberAlert } from "./member-types";
 import { parsePoints, signalFor } from "./signal";
@@ -73,12 +74,59 @@ test("modules unlock by plan rank, and admins see everything", () => {
   assert.equal(unlockedModules(DEFAULT_ACCESS, { plan: "enterprise" }).length, 7);
 });
 
-test("the nitrogen report adjusts the rate band for soil and is addressed to the member", () => {
+test("the nitrogen brief follows the AQ View format and sizes parcels to storage", () => {
+  const answers = {
+    ...EMPTY_ANSWERS,
+    destinationCountry: "Kenya",
+    destinationPort: "Mombasa",
+    products: ["Urea", "CAN"],
+    annualTonnage: "1,200",
+    arrivalMonths: ["2027-01", "2026-11"],
+    shipmentType: "Break Bulk",
+    packing: "Big Bags",
+    warehouseCapacity: "400",
+  };
+  assert.equal(briefProblem(answers), null);
+  assert.equal(briefProblem({ ...answers, packing: "" }), "Choose the packing.");
+  assert.equal(answeredCount({ ...EMPTY_ANSWERS, destinationCountry: "Kenya", products: ["Urea"] }), 2);
+  const brief = buildBrief(answers, { refNo: "NR-261006-ABCD", partner: "Harvest Co", date: new Date("2026-10-06T09:00:00Z") });
+  assert.equal(brief.week, "W41 2026");
+  assert.deepEqual(brief.requirement[4], ["Preferred arrival months", "November 2026, January 2027"]);
+  assert.deepEqual(
+    brief.pulse.map((row) => [row.market, row.signal]),
+    [
+      ["Urea", "Firm"],
+      ["CAN", "Balanced"],
+      ["Freight / Break Bulk", "Balanced"],
+    ],
+  );
+  assert.match(brief.position[2], /3 parcels of roughly 400 t across November 2026 to January 2027/);
+  assert.deepEqual(
+    brief.recommendations.map((item) => item.label),
+    ["What to do now", "What to watch", "What to avoid"],
+  );
+  const md = briefMarkdown(brief);
+  assert.match(md, /^# AQ VIEW SPECIAL EDITION \| Nitrogen Brief$/m);
+  assert.match(md, /^\*\*Harvest Co Partnership Intelligence\*\*/m);
+  assert.match(md, /\| Annual tonnage \| 1,200 t \|/);
+  assert.doesNotMatch(md, /—|!|…/);
+  assert.equal(buildBrief({ ...answers, warehouseCapacity: "", shipmentType: "Container" }, { refNo: "NR-1" }).partner, "Partner");
+  assert.match(buildBrief({ ...answers, warehouseCapacity: "", shipmentType: "Container" }, { refNo: "NR-1" }).position[2], /approximately 4 container consignments/);
+});
+
+test("saved answers from the old survey still read as the old report", () => {
+  assert.equal(isBriefAnswers({ ...EMPTY_LEGACY_ANSWERS }), false);
+  assert.equal(isBriefAnswers({ ...EMPTY_ANSWERS }), true);
+  assert.equal(reportTopic({ ...EMPTY_LEGACY_ANSWERS, cropType: "Maize" }), "Maize");
+  assert.equal(reportTopic({ ...EMPTY_ANSWERS, products: ["Urea", "CAN"] }), "Urea, CAN");
+});
+
+test("the legacy nitrogen report adjusts the rate band for soil and is addressed to the member", () => {
   assert.deepEqual(rateBand("Winter wheat", "Loam"), [170, 220]);
   assert.deepEqual(rateBand("Winter wheat", "Sandy"), [180, 230]);
   assert.equal(rateBand("", "Loam"), null);
   const answers = {
-    ...EMPTY_ANSWERS,
+    ...EMPTY_LEGACY_ANSWERS,
     destinationCountry: "Kenya",
     destinationPort: "Mombasa",
     nitrogenSources: ["Urea", "CAN"],
@@ -88,14 +136,14 @@ test("the nitrogen report adjusts the rate band for soil and is addressed to the
     soilTexture: "Loam",
     areaHectares: "200",
   };
-  const report = generateNitrogenReport(answers, { preparedFor: "Kayode", date: new Date("2026-09-30") });
+  const report = generateLegacyReport(answers, { preparedFor: "Kayode", date: new Date("2026-09-30") });
   assert.match(report, /^# Nitrogen Assessment: Kenya \/ Mombasa \/ Urea, CAN$/m);
   assert.match(report, /\*\*Prepared for:\*\* Kayode/);
   assert.doesNotMatch(report, /Reference|Prepared by/);
   assert.match(report, /\| Parameter \| Value \|\n\|---\|---\|\n\| Crop \| Winter wheat \|/);
   assert.match(report, /\| Preferred months \| November 2026, January 2027 \|/);
   assert.match(report, /\| Shipment packing \| Bulk \|/);
-  assert.match(generateNitrogenReport({ ...answers, destinationPort: "" }), /^# Nitrogen Assessment: Kenya \/ Urea, CAN$/m);
+  assert.match(generateLegacyReport({ ...answers, destinationPort: "" }), /^# Nitrogen Assessment: Kenya \/ Urea, CAN$/m);
 });
 
 test("preferred months run twelve months from the current one and older reports keep their window", () => {
@@ -105,6 +153,7 @@ test("preferred months run twelve months from the current one and older reports 
 });
 
 test("a report's quote link fills in the order desk product and destination", () => {
-  assert.equal(orderDeskHref({ nitrogenSources: ["CAN"], destinationPort: "Mombasa", destinationCountry: "Kenya" }), "/hub/order-desk?product=CAN&destination=Mombasa%2C+Kenya");
-  assert.equal(orderDeskHref({ nitrogenSources: ["Unknown"], destinationPort: "", destinationCountry: "" }), "/hub/order-desk");
+  assert.equal(orderDeskHref({ ...EMPTY_ANSWERS, products: ["CAN"], destinationPort: "Mombasa", destinationCountry: "Kenya" }), "/hub/order-desk?product=CAN&destination=Mombasa%2C+Kenya");
+  assert.equal(orderDeskHref({ ...EMPTY_LEGACY_ANSWERS, nitrogenSources: ["Inhibited urea"] }), "/hub/order-desk?product=Urea+-+Granular");
+  assert.equal(orderDeskHref({ ...EMPTY_ANSWERS, products: ["Unknown"] }), "/hub/order-desk");
 });

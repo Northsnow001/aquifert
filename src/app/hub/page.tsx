@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { DeskConnect } from "@/components/hub/desk-connect";
 import { FeedCardHeader, FeedGrid, FeedItem, tileSizes } from "@/components/hub/feed-card";
 import { FeedViewFrame } from "@/components/hub/feed-view";
 import { HomeHero } from "@/components/hub/home-hero";
@@ -16,7 +17,7 @@ import { getHubContent, sortHedge } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
-/** AQ View and TELEX sit side by side; TELEX drops to four rows when AQ View is short, so the columns stay close in height. */
+/** TELEX and AQ View sit side by side; TELEX drops to four rows when AQ View is short, so the columns stay close in height. */
 const FEED_COUNT = 5;
 const TELEX_MIN = 4;
 
@@ -73,10 +74,11 @@ export default async function HomePage() {
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 pb-2">
       <HomeHero name={user.name} variant="hub" />
+      <DeskConnect name={user.name} email={user.email} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <AqViewCard notes={notes} view={parseFeedView(jar.get(feedViewCookie("analysis"))?.value)} />
         <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} />
+        <AqViewCard notes={notes} view={parseFeedView(jar.get(feedViewCookie("analysis"))?.value)} />
       </div>
 
       {hedgeReports.length ? (
