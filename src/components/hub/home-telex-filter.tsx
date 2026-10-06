@@ -57,9 +57,6 @@ export function HomeTelexFilter({ selected, saved }: { selected: TelexProduct[];
             );
           })}
         </div>
-        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin text-dim" aria-label="Updating" /> : null}
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
         {chips.length ? (
           <button type="button" onClick={() => go([])} className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[12px] font-semibold text-mid hover:bg-white hover:text-ink">
             <RotateCcw className="h-3 w-3" /> Show everything
@@ -74,6 +71,7 @@ export function HomeTelexFilter({ selected, saved }: { selected: TelexProduct[];
           {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : isDefault ? <Check className="h-3 w-3" /> : <Save className="h-3 w-3" />}
           {isDefault ? "Your default" : "Save as my default"}
         </button>
+        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin text-dim" aria-label="Updating" /> : null}
       </div>
     </div>
   );

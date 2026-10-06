@@ -141,7 +141,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
       <HomeHero name={user.name} variant="hub" />
 
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <AqViewCard notes={notes.slice(0, 5)} />
         {hedgeReports.length ? (
           <PaperForwardBrief reports={hedgeReports} />
@@ -151,8 +151,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <p className="mt-1 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
           </section>
         )}
-        <AquibotBriefing rows={brief} persona={prefs.persona} variant="hub" latest={briefLatest} now={now} />
       </div>
+
+      <AquibotBriefing rows={brief} persona={prefs.persona} variant="hub" latest={briefLatest} now={now} />
     </div>
   );
 }

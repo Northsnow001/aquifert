@@ -117,9 +117,11 @@ export function TelexWire({ items, total, latest, now, filters }: { items: WireR
       {filters ? <div className="mt-3">{filters}</div> : null}
 
       {shown.length === 0 ? (
-        <p className="mt-4 rounded-lg border border-dashed border-border p-5 text-center text-[14px] text-mid">
-          {total ? "The newest flashes are in the boxes below. Older ones show here as the desk files more." : "No TELEX flashes match your filters. The desk publishes through the trading day."}
-        </p>
+        total ? null : (
+          <p className="mt-4 rounded-lg border border-dashed border-border p-5 text-center text-[14px] text-mid">
+            No TELEX flashes match your filters. The desk publishes through the trading day.
+          </p>
+        )
       ) : view === "tile" ? (
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((item) => (
