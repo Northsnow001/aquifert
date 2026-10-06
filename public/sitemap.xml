@@ -37,7 +37,7 @@
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aquifert.com/legal/terms-of-trading</loc>
+    <loc>https://aquifert.com/legal/terms</loc>
     <lastmod>2026-10-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
@@ -61,7 +61,7 @@
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://aquifert.com/legal/payments-and-refunds</loc>
+    <loc>https://aquifert.com/legal/payments</loc>
     <lastmod>2026-10-04</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

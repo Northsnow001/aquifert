@@ -35,6 +35,17 @@ function useViewer(isAuthenticated: boolean) {
   return viewer;
 }
 
+const PUBLIC_DISPLAY: Record<MembershipOffer["id"], { name: string; tagline: string; features?: string[] }> = {
+  sprout: { name: "AQ ZERO Sprout", tagline: "Up to 200tons/month" },
+  harvest: { name: "AQ ZERO Harvest", tagline: "201 Tons /month" },
+  scale: { name: "AQ ZERO Scale", tagline: "Unlimited tons/month" },
+  analytics: {
+    name: "AQ Analytics",
+    tagline: "Analytics only, no physical fertiliser",
+    features: ["AQ View market analysis", "TELEX desk intelligence", "Trend Analytics dashboards", "Weekly expert trader commentary"],
+  },
+};
+
 const startHref = (offer: MembershipOffer) => (offer.tier ? `/hub/account/membership?plan=enterprise&tier=${offer.tier}` : "/hub/account/membership?plan=growth");
 
 const NOTES = [
@@ -124,11 +135,12 @@ export function MembershipPage() {
       >
         <Reveal>
           <h1 className="aqf-hero-title mx-auto max-w-3xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">
-            One membership. <span className="text-teal-300">Every fertilizer market.</span>
+            Advisory &amp; Physical fertiliser. <span className="text-teal-300">AQ Suite has everything covered.</span>
           </h1>
           <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl text-lg leading-relaxed sm:text-xl">
-            Fertilizer membership tiers scale with your volumes, from first trade to full market
-            making. The desk confirms pricing for your tier with you directly.
+            AQ ZERO tiers scale with your volumes, from first trade to full market. Choose monthly
+            flexibility with 100% money back if not satisfied. Don&rsquo;t require physical fertiliser?
+            We have you covered with our AQ Analytics option
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <a
@@ -149,9 +161,10 @@ export function MembershipPage() {
 
       {/* Plan cards */}
       <section id="plans" className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {MEMBERSHIP_OFFERS.map((plan, i) => {
             const PlanIcon = PLAN_ICONS[plan.id];
+            const display = PUBLIC_DISPLAY[plan.id];
             const state = viewer.plan ? offerState(plan, { plan: viewer.plan, admin: viewer.admin }) : "open";
             const owned = state !== "open";
             return (
@@ -177,11 +190,11 @@ export function MembershipPage() {
                   ) : null}
                   <PlanIcon className="h-5 w-5 text-teal-700 dark:text-teal-400" aria-hidden="true" />
                   <div className="mt-4">
-                    <p className="text-lg font-bold text-navy-900 dark:text-white">{plan.name}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">{plan.tagline}</p>
+                    <p className="text-lg font-bold text-navy-900 dark:text-white">{display.name}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{display.tagline}</p>
                   </div>
                   <ul className="mt-5 flex-1 space-y-2.5 border-t border-slate-200 pt-5 text-sm leading-relaxed text-slate-700 dark:border-slate-700 dark:text-slate-300">
-                    {plan.features.map((f) => (
+                    {(display.features ?? plan.features).map((f) => (
                       <li key={f} className="flex items-start gap-2.5">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
                         {f}
@@ -191,7 +204,7 @@ export function MembershipPage() {
                   {owned ? (
                     <Link
                       to="/hub"
-                      aria-label={`${plan.name} is ${state === "current" ? "your current plan" : "included in your plan"}, open the hub`}
+                      aria-label={`${display.name} is ${state === "current" ? "your current plan" : "included in your plan"}, open the hub`}
                       className="mt-6 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-[#2fa865] bg-[#f1faf4] text-sm font-semibold text-[#1f7a45] transition-colors hover:bg-[#e3f5ea]"
                     >
                       <Check className="h-4 w-4" aria-hidden="true" />
@@ -200,12 +213,12 @@ export function MembershipPage() {
                   ) : (
                     <Link
                       to={signedIn ? startHref(plan) : "/login"}
-                      aria-label={`Start with the ${plan.name} membership`}
+                      aria-label={`Start with the ${display.name} membership`}
                       className={`mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold text-white transition-colors aqf-btn-press ${
                         plan.popular ? "bg-teal-600 hover:bg-teal-500" : "bg-navy-600 hover:bg-navy-500"
                       }`}
                     >
-                      Start with {plan.name} <ArrowRight className="ml-1.5 h-4 w-4" />
+                      Start with {display.name} <ArrowRight className="ml-1.5 h-4 w-4" />
                     </Link>
                   )}
                 </div>

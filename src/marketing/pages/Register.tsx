@@ -211,6 +211,12 @@ export default function Register() {
           >
             {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Send verification code"}
           </Button>
+          <p className="text-center text-[11.5px] leading-relaxed text-slate-500">
+            By creating an account you agree to our{" "}
+            <Link to="/legal/terms" className="font-medium text-navy-700 underline-offset-2 hover:underline">Terms &amp; Conditions</Link>,{" "}
+            <Link to="/legal/terms-of-use" className="font-medium text-navy-700 underline-offset-2 hover:underline">Terms of Use</Link> and{" "}
+            <Link to="/legal/privacy" className="font-medium text-navy-700 underline-offset-2 hover:underline">Privacy Policy</Link>.
+          </p>
           <p className="text-center text-[13px] text-slate-600">
             Already have an account?{" "}
             <Link to="/login" className="font-semibold text-navy-700 underline-offset-2 hover:underline">

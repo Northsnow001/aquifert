@@ -36,9 +36,9 @@ const WHY_BREADCRUMB = breadcrumbJsonLd([
 
 const WHY = [
   { icon: Globe2, title: "Global fertilizer market expertise", desc: "Deep coverage of nitrogen, phosphate and potash markets, fertilizer pricing, trade flows and supply signals across four regions." },
-  { icon: Ship, title: "Established shipping network", desc: "Extensive fertilizer supply chain experience from factories to ports to buyers, with carriers we have worked with for years." },
+  { icon: Ship, title: "Established Network", desc: "Extensive fertilizer supply chain experience from factories to ports to buyers, with carriers we have worked with for years." },
   { icon: ShieldCheck, title: "Strict due diligence", desc: "We only deal with reputable parties. Every fertilizer buyer and supplier passes KYC/KYB checks before their first trade on the platform." },
-  { icon: Handshake, title: "20+ years of fertilizer trading", desc: "More than two decades of global fertilizer trading experience behind every quote, route and recommendation." },
+  { icon: Handshake, title: "30+ years experience", desc: "More than two decades of global fertilizer trading experience behind every quote, route and recommendation." },
   { icon: Leaf, title: "Sustainability focus", desc: "Water-soluble and specialty fertilizer grades that raise yield per tonne, efficiency for the supply chain and the field." },
 ];
 
@@ -73,12 +73,12 @@ export default function WhyAquifert() {
       >
         <Reveal>
           <h1 className="aqf-hero-title max-w-3xl text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">
-            Sustainability for farming. <span className="text-teal-300">Efficiency for the supply chain.</span>
+            Sustainability for farming <span className="text-teal-300">and your balance sheet.</span>
           </h1>
           <p className="aqf-hero-sub mt-6 max-w-xl text-lg leading-relaxed sm:text-xl">
-            Aquifert brings both sides of the fertilizer trade into one transparent,
-            well-governed marketplace, so good product moves faster, at fairer prices,
-            with less waste from factory to field.
+            Aquifert brings both sides of the fertilizer trade into one transparent Hub.
+            Integrated reviews ensure your requirements move faster, at fairer prices,
+            with less time in a few clicks.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link
@@ -148,7 +148,7 @@ export default function WhyAquifert() {
       <section className="mx-auto max-w-6xl px-4 py-20">
         <SectionHeader
           kicker="The Aquifert difference"
-          title="Built by fertilizer traders, governed like an institution"
+          title="Built to provide accurate market levels for simple transactions"
           sub="Every feature exists because twenty years of fertilizer trading showed us where the industry leaks time, money and trust."
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

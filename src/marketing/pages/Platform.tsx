@@ -81,11 +81,11 @@ export default function Platform() {
       >
         <Reveal>
           <h1 className="aqf-hero-title mx-auto max-w-3xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">
-            One platform for the entire fertilizer trade
+            AQ ZERO + AQ Analytics for the entire fertilizer stream
           </h1>
           <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl text-lg leading-relaxed sm:text-xl">
-            The workspace for teams buying, selling and shipping specialty fertilizer, 
-            market intelligence, freight context, documents and AI assistance in a single flow.
+            Trader level market analysis for the fertiliser market designed to let you make
+            an informed decision. Physical fertiliser available.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <Link
@@ -98,7 +98,7 @@ export default function Platform() {
               to="/membership"
               className="inline-flex items-center rounded-full border border-white/50 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-xs transition-colors hover:bg-white/10"
             >
-              Become a member
+              Access AQ ZERO &amp; AQ ONE for a complete sourcing requirements
             </Link>
           </div>
         </Reveal>

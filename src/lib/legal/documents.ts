@@ -33,7 +33,7 @@ const section = (title: string, body: LegalBlock[], id?: string): LegalSection =
 
 export const LEGAL_DOCS: LegalDoc[] = [
   {
-    slug: "terms-of-trading",
+    slug: "terms",
     title: "Terms & Conditions of Trading",
     summary: "The contractual terms that govern requests, quotations, orders and deliveries of fertilizer and related products traded through the Aquifert platform.",
     sections: [
@@ -260,7 +260,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
     ],
   },
   {
-    slug: "payments-and-refunds",
+    slug: "payments",
     title: "Payment & Refund Policy",
     summary: "How membership fees, transaction margins and invoices are billed; payment methods; late payment; cancellations, cooling-off and refunds.",
     sections: [
@@ -315,11 +315,9 @@ export const LEGAL_DOCS: LegalDoc[] = [
 export const legalDoc = (slug: string | undefined) => LEGAL_DOCS.find((doc) => doc.slug === slug);
 
 export const LEGAL_LINKS = [
-  { to: "/legal/terms-of-trading", label: "Terms of Trading" },
+  { to: "/legal/terms", label: "Terms & Conditions" },
   { to: "/legal/terms-of-use", label: "Terms of Use" },
   { to: "/legal/privacy", label: "Privacy Policy" },
-  { to: "/legal/privacy#cookies", label: "Cookie Policy" },
-  { to: "/legal/data-protection", label: "Data Protection & GDPR" },
-  { to: "/legal/payments-and-refunds", label: "Payment & Refunds" },
-  { to: "/legal/terms-of-use#market-data", label: "Disclaimer" },
+  { to: "/legal/data-protection", label: "Data Protection / GDPR" },
+  { to: "/legal/payments", label: "Payment & Refunds" },
 ];

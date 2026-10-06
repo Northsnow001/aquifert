@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/admin/import/plugin": ["./wordpress/aquifert-export/**/*"],
   },
+  redirects: async () => [
+    { source: "/legal/terms-of-trading", destination: "/legal/terms", permanent: true },
+    { source: "/legal/payments-and-refunds", destination: "/legal/payments", permanent: true },
+  ],
 };
 
 export default nextConfig;

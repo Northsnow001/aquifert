@@ -17,7 +17,7 @@ import { MediaCard } from "@/marketing/components/shared/MediaCard";
 import { Seo, ORGANIZATION_JSONLD } from "@/marketing/components/shared/Seo";
 import { Faq, SectionHeader, faqJsonLd, type FaqItem } from "@/marketing/components/shared/Faq";
 import { CookieConsent } from "@/marketing/components/CookieConsent";
-import { MarketUpdatesCard } from "@/marketing/components/LeadMagnet";
+import { LeadMagnet, MarketUpdatesCard } from "@/marketing/components/LeadMagnet";
 
 /* ---------------------------------------------------------------- */
 /* Reveal: 12px rise, 320ms, once, staggered via delay               */
@@ -105,31 +105,34 @@ function Hero() {
       <div className="relative mx-auto flex min-h-[70vh] max-w-6xl flex-col justify-center px-4 py-24 sm:min-h-[84vh] sm:px-6">
         <Reveal>
           <h1 className="max-w-4xl text-5xl font-extrabold leading-[1.02] tracking-tight text-white sm:text-7xl">
-            Connecting global fertilizer markets to feed the world sustainably
+            Connecting Clients in the Global Fertiliser Market
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-white">
-            Aquifert specialises in the trading and distribution of specialty fertilizers,
-            including water solubles and micronutrients, one governed platform from
-            producer port to farm gate.
+            Aquifert takes a completely new and unique approach to fertiliser supply.
+            We give you live information, advisory on the market from our propriety
+            sources. Backed by 3 decades of experience to let you make informed
+            decisions easily. To compliment advisory, we provide fertiliser delivered
+            with a completely transparent cost structure. No hidden margins with
+            option of a compelling client pricing.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               to="/platform"
               className="inline-flex items-center rounded-full bg-teal-500 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
             >
-              Explore Aquifert ONE <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              Explore Aquifert ONE for ZERO Cost <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
               to="/membership"
               className="inline-flex items-center rounded-full border border-white/50 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-xs transition-colors hover:bg-white/10"
             >
-              Become a member
+              Become Globally Informed for FREE
             </Link>
             <a
               href="mailto:enquiry@aquifert.com"
               className="text-sm font-semibold text-white underline-offset-4 hover:underline"
             >
-              Talk to the desk
+              Talk to the Fertiliser desk
             </a>
           </div>
         </Reveal>
@@ -155,17 +158,17 @@ function TradeInMotion() {
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <Reveal>
           <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-teal-700">
-            From factory gate to farm gate
+            Analytics for informed decisions, margin-free trading, &ldquo;at cost&rdquo; fertiliser
           </p>
           <h2
             id="motion-heading"
             className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy-900 sm:text-5xl"
           >
-            The trade, in motion
+            AQ ONE offers premier analytics
           </h2>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-600">
-            Every tonne we move is visible at each stage. Follow a consignment through
-            the Aquifert network.
+            AQ ONE is the HUB where you can see daily market moving news coupled
+            with expert trader commentary
           </p>
         </Reveal>
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -174,8 +177,8 @@ function TradeInMotion() {
               video="/media/port-terminal.mp4"
               poster="/media/port-terminal.jpg"
               label="Gantry cranes loading fertilizer cargo at a bulk port terminal"
-              tagline="From producer ports"
-              cta="See the platform"
+              tagline="ZERO Guessing - ZERO extra costs"
+              cta="Check AQ ONE Hub"
               to="/platform"
             />
           </Reveal>
@@ -184,8 +187,8 @@ function TradeInMotion() {
               video="/media/ship-ocean.mp4"
               poster="/media/ship-ocean.jpg"
               label="Loaded bulk carrier moving through open ocean"
-              tagline="Across every ocean lane"
-              cta="Freight analytics"
+              tagline="In the Warehouse"
+              cta="Market analytics"
               to="/platform"
             />
           </Reveal>
@@ -216,8 +219,8 @@ function TradeInMotion() {
               video="/media/fields-sunrise.mp4"
               poster="/media/fields-sunrise.jpg"
               label="Misty sunrise over farmland seen from the air"
-              tagline="Water-soluble nutrition, measured to the hectare"
-              cta="Explore products & services"
+              tagline="Not just yield-focused — optimal output"
+              cta="Explore AQ ONE Free"
               to="/why-aquifert"
               ratio="aspect-[16/7]"
             />
@@ -233,13 +236,13 @@ function TradeInMotion() {
 /* ---------------------------------------------------------------- */
 const ONE_FEATURES = [
   { icon: Radio, title: "TELEX Intelligence", desc: "Desk-issued market flashes and structured trade signals, delivered the moment they clear review." },
-  { icon: Ship, title: "Freight Analytics", desc: "Handysize to container rates by lane, with landed-cost impact per tonne." },
-  { icon: LineChart, title: "Market Indicators", desc: "Region-filtered price indications across nitrogen, phosphates and potash." },
+  { icon: Ship, title: "Trend Analytics", desc: "Handysize to container rates by lane, with landed-cost impact per tonne." },
+  { icon: LineChart, title: "AQ View", desc: "Region-filtered price indications across nitrogen, phosphates and potash." },
   { icon: FileStack, title: "Vantage Files & Hedges", desc: "Contract files, hedge positions and exposure summaries in one governed workspace." },
   { icon: Route, title: "Voyage Analytics", desc: "Milestone-by-milestone voyage performance, exceptions and revised ETAs." },
   { icon: Bot, title: "Aquibot AI Assistant", desc: "AI-drafted quotes, summaries and answers, always human-approved before anything sends." },
   { icon: Calculator, title: "Freight Calculator", desc: "Instant cost-to-cost estimates: product, ocean freight, clearing and duties." },
-  { icon: BookOpen, title: "Academy", desc: "Structured learning on fertilizer trade, Incoterms and risk management." },
+  { icon: BookOpen, title: "Tools", desc: "Structured learning on fertilizer trade, Incoterms and risk management." },
   { icon: Compass, title: "Order Desk", desc: "Live order book with margin-gated pricing and full audit trail." },
 ];
 
@@ -252,10 +255,10 @@ function OnePlatform() {
             Aquifert ONE
           </p>
           <h2 id="one-heading" className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy-900 sm:text-5xl">
-            One workspace for the entire trade
+            AQ ONE - Your Free workspace for an informed choice.
           </h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-600">
-            Every tool the fertilizer trade needs, in one governed platform.
+            Trader tools for fertiliser price management
           </p>
         </Reveal>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -306,7 +309,7 @@ const PRODUCTS_SERVICES = [
     alt: "Sunrise over cultivated fields",
   },
   {
-    title: "Supply chain expertise",
+    title: "Market Analysis",
     desc: "Agricultural supply chain and global network, sourcing, ocean freight, clearing and delivery managed end to end.",
     img: "/media/port-terminal.jpg",
     alt: "Bulk cargo terminal at a port",
@@ -354,11 +357,11 @@ function ProductsServices() {
 /* 7, Why choose Aquifert                                           */
 /* ---------------------------------------------------------------- */
 const WHY = [
-  { title: "Global expertise", desc: "Producers, buyers and logistics partners across every major fertilizer market." },
-  { title: "Supply chain experience", desc: "End-to-end management from factory gate to farm gate, on DDP, FOB or CIF terms." },
-  { title: "Shipping networks", desc: "Established bulk and container lanes into Felixstowe, Liverpool, Southampton and beyond." },
+  { title: "Global expertise", desc: "Aquifert has a global view of the fertiliser market we aim to keep our clients completely up to date. This enables informed purchasing decisions and an effective way to manage prices over seasons." },
+  { title: "Transparency on Prices", desc: "Know the actual costs, know the market. Manage your prices and be informed about market moves." },
+  { title: "Restricted Client roster", desc: "We have learnt we cannot be a one stop shop for everyone. Aquifert focuses on supporting and serving a specific client base." },
   { title: "Due diligence", desc: "Every counterparty vetted before a single quote is exchanged, nothing reaches either side unreviewed." },
-  { title: "20+ years' trading experience", desc: "A desk that has traded through cycles, shocks and shortages across two decades." },
+  { title: "30+ years' trading experience", desc: "A desk that has traded through cycles, shocks and shortages across two decades." },
   { title: "Quality assurance", desc: "Specification-checked product with documentation verified at every stage of the trade." },
 ];
 
@@ -391,9 +394,9 @@ function WhyAquifert() {
 /* 8, For sellers / for buyers                                      */
 /* ---------------------------------------------------------------- */
 const SELLERS = [
-  { title: "Market expansion", desc: "Reach vetted buyers in new regions without building a local sales force." },
-  { title: "Buyer vetting", desc: "Every buyer is credit- and compliance-checked before they ever see your offer." },
-  { title: "Trading support", desc: "Documentation, logistics and financing handled by one desk, end to end." },
+  { title: "Reach", desc: "Reach vetted buyers in new regions without building a local sales force." },
+  { title: "Supplier vetting", desc: "Reaching vetted genuine suppliers. Actionable prices delivered weekly. All prices tailored to your specific quality, quantity, packing and destination. To your whatsapp or email. No guessing." },
+  { title: "Trading support", desc: "Documentation, logistics and financing handled in our portal or in your existing channel. No gimmicks, updated on a schedule of your choice." },
 ];
 const BUYERS = [
   { title: "Full portfolio access", desc: "Water solubles, micronutrients and bulk commodities from vetted global producers." },
@@ -424,7 +427,7 @@ function SellersBuyers() {
             Two sides, one desk
           </p>
           <h2 id="sb-heading" className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight text-navy-900 sm:text-5xl">
-            Built for both sides of the trade
+            Built for Fertiliser delivery and Market Analysis
           </h2>
         </Reveal>
         {/* Mobile segmented toggle */}
@@ -439,16 +442,16 @@ function SellersBuyers() {
                 side === s_ ? "bg-navy-700 text-white" : "text-slate-600"
               }`}
             >
-              For {s_}
+              {s_ === "sellers" ? "For Fertiliser" : "For Analysis"}
             </button>
           ))}
         </div>
         <div className="mt-8 sm:hidden">
-          <Reveal>{side === "sellers" ? panel("For sellers", SELLERS) : panel("For buyers", BUYERS)}</Reveal>
+          <Reveal>{side === "sellers" ? panel("For Fertiliser", SELLERS) : panel("For Analysis", BUYERS)}</Reveal>
         </div>
         <div className="mt-12 hidden gap-12 sm:grid sm:grid-cols-2">
-          <Reveal>{panel("For sellers", SELLERS)}</Reveal>
-          <Reveal delay={60}>{panel("For buyers", BUYERS)}</Reveal>
+          <Reveal>{panel("For Fertiliser", SELLERS)}</Reveal>
+          <Reveal delay={60}>{panel("For Analysis", BUYERS)}</Reveal>
         </div>
       </div>
     </section>
@@ -465,27 +468,28 @@ function MembershipBand() {
         <div className="overflow-hidden rounded-[2rem] bg-navy-900 px-6 py-14 sm:px-12 sm:py-20">
           <Reveal>
             <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-teal-300">
-              Membership
+              AQ ZERO
             </p>
             <h2
               id="membership-band-heading"
               className="mt-4 max-w-2xl text-3xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl"
             >
-              One membership. Every fertilizer market.
+              One Place. Every fertiliser market.
             </h2>
             <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-white">
-              Members trade at supplier cost plus pass-through freight and a stated fee, 
-              full document trail. Choose the tier that matches your tonnage.
+              AQ ZERO Clients source at supplier cost plus pass-through freight and a stated fee,
+              full document trail. Choose the tier that matches your tonnage. Our AQ Analytics
+              ensure an informed choice and is included with ZERO.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 to="/membership"
                 className="inline-flex items-center rounded-full bg-teal-500 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
               >
-                See membership plans <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                AQ ZERO plans <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Link>
               <span className="text-[13px] font-medium text-white">
-                AQ Zero Sprout, AQ Zero Harvest, AQ Zero Scale and AQ Analytics · cancel anytime
+                Set fees · cancel anytime
               </span>
             </div>
           </Reveal>
@@ -546,7 +550,7 @@ function ClosingCta() {
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 border-t border-white/10 px-4 py-16 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-20">
         <Reveal>
           <h2 id="cta-heading" className="max-w-xl text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Trade fertilizer with the discipline of an exchange.
+            Knowledge & Fertiliser Delivered
           </h2>
         </Reveal>
         <Reveal delay={60}>
@@ -555,7 +559,7 @@ function ClosingCta() {
               to="/platform"
               className="inline-flex items-center rounded-full bg-teal-500 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
             >
-              Explore Aquifert ONE <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              Register of AQ ZERO <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
             <a
               href="mailto:enquiry@aquifert.com"
@@ -612,8 +616,9 @@ export default function Landing() {
       {/* Inline updates card, only for visitors who declined marketing cookies */}
       <MarketUpdatesCard />
 
-      {/* Consent banner (lead capture hidden for exploratory phase) */}
+      {/* Consent banner; the lead form opens only from "Request access" (auto-popup hidden for exploratory phase) */}
       <CookieConsent />
+      <LeadMagnet auto={false} />
     </LandingLayout>
   );
 }

@@ -184,7 +184,7 @@ const inputCls =
 const labelCls = "text-[13px] font-semibold text-navy-900";
 const errCls = "mt-1 text-[12px] text-red-700";
 
-export function LeadMagnet() {
+export function LeadMagnet({ auto = true }: { auto?: boolean }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -216,7 +216,7 @@ export function LeadMagnet() {
 
   /* Trigger: window load → marketing consent → 4s */
   useEffect(() => {
-    if (isAuthenticated || hasPaidCampaignParam() || dismissedRecently()) return;
+    if (!auto || isAuthenticated || hasPaidCampaignParam() || dismissedRecently()) return;
     let timer: number | undefined;
     const maybeOpen = () => {
       if (!marketingAllowed() || dismissedRecently()) return;
@@ -236,7 +236,7 @@ export function LeadMagnet() {
       window.clearTimeout(timer);
       window.removeEventListener("aq:consent-recorded", onConsent);
     };
-  }, [isAuthenticated]);
+  }, [auto, isAuthenticated]);
 
   /* Explicit open, "Request access" in the header opens the form directly,
      bypassing the consent/timer/dismissal guards (user-initiated). */
