@@ -21,6 +21,16 @@ const ACCESS_OPTIONS: { value: TelexAccess; label: string }[] = [
 
 const ORDER: SectionKey[] = ["telex", "indicators", "hedge", "freight", "tools", "library", "enquiries"];
 
+/** Vercel refuses request bodies over 4.5 MB. Exports are mostly repeated text, so gzip shrinks them about three to five times. */
+async function gzip(file: File): Promise<Blob | null> {
+  if (typeof CompressionStream === "undefined") return null;
+  try {
+    return await new Response(file.stream().pipeThrough(new CompressionStream("gzip"))).blob();
+  } catch {
+    return null;
+  }
+}
+
 function stamp(iso: string) {
   if (!iso) return "";
   const date = new Date(iso);
@@ -84,10 +94,16 @@ export function WpImport({ ready, lastRunAt }: { ready: Ready | null; lastRunAt:
   async function upload(file: File | undefined) {
     if (!file) return;
     setUploading(true);
-    const form = new FormData();
-    form.append("file", file);
     try {
+      const packed = await gzip(file);
+      const form = new FormData();
+      form.append("file", packed ?? file, file.name);
+      form.append("encoding", packed ? "gzip" : "identity");
       const response = await fetch("/admin/import/upload", { method: "POST", body: form });
+      if (response.status === 413) {
+        toast.error("The export is too large to upload. Ask the developer to raise the limit.");
+        return;
+      }
       const result = (await response.json()) as { ok: boolean; message?: string; telex?: number; files?: number };
       if (!result.ok) {
         toast.error(result.message ?? "The file could not be read.");

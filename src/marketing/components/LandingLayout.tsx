@@ -204,7 +204,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               </p>
               <p className="mt-4 text-[13px] text-slate-400">
                 @Aquiferts ·{" "}
-                <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="text-white underline-offset-2 hover:underline">
+                <a href="https://www.linkedin.com/company/aquifert/" target="_blank" rel="noopener noreferrer" className="text-white underline-offset-2 hover:underline">
                   LinkedIn
                 </a>{" "}
                 ·{" "}

@@ -42,6 +42,14 @@ test("Telex keeps a real headline but drops the title WordPress generated from t
   assert.equal(titled.access, "growth");
 });
 
+test("Telex by the site admin or a test account shows as Aquifert Desk; real names stay", () => {
+  const telex = (author: string) => mapTelex({ ...base, id: 9, title: "", content: "Urea firms.", author, tags: [] }, "public").author;
+  assert.equal(telex("Admin"), "Aquifert Desk");
+  assert.equal(telex("Demo Analyst"), "Aquifert Desk");
+  assert.equal(telex("S. Bot"), "Aquifert Desk");
+  assert.equal(telex("Phil Sunderland"), "Phil Sunderland");
+});
+
 test("hedge rows group into sections and commodities like the WordPress template", () => {
   const report = mapHedge({
     ...base,

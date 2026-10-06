@@ -220,6 +220,14 @@ export const wpId = {
 
 export const isWpId = (id: string) => id.startsWith("wp-");
 
+/** WordPress accounts that are not a person members should see as the author: the site admin and the desk's test accounts. */
+const DESK_ACCOUNTS = new Set(["admin", "administrator", "demo analyst", "team member", "s. bot", "a. fert", "j. market"]);
+
+function authorName(value: string) {
+  const name = decodeEntities(value).trim();
+  return !name || DESK_ACCOUNTS.has(name.toLowerCase()) ? "Aquifert Desk" : name;
+}
+
 /** WordPress fills an empty Telex title with its first eight words, so that title is dropped and the hub derives it again. */
 function telexHeadline(title: string, paragraphs: string[]) {
   const clean = decodeEntities(title).trim();
@@ -238,7 +246,7 @@ export function mapTelex(post: WpTelex, access: TelexAccess): TelexItem {
     tags: post.tags.map((tag) => decodeEntities(tag).trim()).filter(Boolean),
     access,
     status: status(post.status),
-    author: decodeEntities(post.author).trim() || "Aquifert Desk",
+    author: authorName(post.author),
     publishedAt: deskTime(post.date),
     updatedAt: deskTime(post.modified || post.date),
   };
@@ -376,7 +384,7 @@ export function mapFile(file: WpFile, productAccess: Record<string, TelexAccess>
     summary,
     access: file.productId > 0 ? productAccess[String(file.productId)] ?? "growth" : "public",
     private: existing?.private ?? false,
-    author: decodeEntities(file.author).trim() || "Aquifert Desk",
+    author: authorName(file.author),
     storedName: existing?.storedName ?? null,
   };
 }
