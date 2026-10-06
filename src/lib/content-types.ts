@@ -26,7 +26,19 @@ export type TelexItem = {
   /** Desk time, `YYYY-MM-DDTHH:mm`, no zone. */
   publishedAt: string;
   updatedAt: string;
+  /** An https image link, or the name of an uploaded file. Empty falls back to the product picture. */
+  thumbnail?: string | null;
 };
+
+export const isThumbLink = (value: string) => /^https:\/\//i.test(value);
+
+/** Where the browser loads a flash's thumbnail from, or null when it has none. */
+export function telexThumbSrc(item: Pick<TelexItem, "id" | "thumbnail">) {
+  const value = item.thumbnail?.trim();
+  if (!value) return null;
+  if (isThumbLink(value)) return value;
+  return `/hub/telex/${encodeURIComponent(item.id)}/thumbnail?v=${encodeURIComponent(value)}`;
+}
 
 export type Indicator = {
   name: string;

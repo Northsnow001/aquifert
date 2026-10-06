@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ArrowLeftRight, ArrowUp, Calculator, Library } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 
@@ -19,10 +19,18 @@ const ACTIONS = [
   { href: "/hub/library", label: "Open the Library", icon: Library },
 ];
 
-export function HomeHero({ name }: { name: string }) {
+const noop = () => () => {};
+const partOfDay = () => {
+  const hour = new Date().getHours();
+  return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+};
+
+/** `hub` is the hub's centred greeting: time of day from the reader's clock, no shortcut buttons. */
+export function HomeHero({ name, variant = "dashboard" }: { name: string; variant?: "dashboard" | "hub" }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [hint, setHint] = useState(0);
+  const greeting = useSyncExternalStore(noop, partOfDay, () => "Hello");
   const first = name.trim().split(/\s+/)[0] || "there";
 
   useEffect(() => {
@@ -35,45 +43,55 @@ export function HomeHero({ name }: { name: string }) {
     router.push(`/hub/aquibot?q=${encodeURIComponent(text)}`);
   };
 
+  const hub = variant === "hub";
+
   return (
-    <section className="aq-rise flex flex-col items-center px-1 pb-2 pt-2 text-center sm:pt-4">
-      <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]">
-        Hi, <span translate="no">{first}</span>.
-        <span className="block text-mid sm:inline"> What do you want to check today?</span>
-      </h1>
+    <section className={`aq-rise flex flex-col items-center px-1 text-center ${hub ? "py-4" : "pb-2 pt-2 sm:pt-4"}`}>
+      {hub ? (
+        <h1 className="text-[24px] font-normal leading-tight tracking-tight text-ink sm:text-[32px] sm:leading-[40px]">
+          {greeting}, <span translate="no">{first}</span>! What do you want to look at today?
+        </h1>
+      ) : (
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-[32px]">
+          Hi, <span translate="no">{first}</span>.
+          <span className="block text-mid sm:inline"> What do you want to check today?</span>
+        </h1>
+      )}
       <form
-        className="mt-5 w-full max-w-[640px]"
+        className={`mt-5 w-full ${hub ? "max-w-[520px]" : "max-w-[640px]"}`}
         onSubmit={(event) => {
           event.preventDefault();
           ask();
         }}
       >
         <div className="flex items-center gap-2 rounded-full border border-black/[.08] bg-white py-1.5 pl-1.5 pr-1.5 shadow-[0_10px_32px_-14px_rgb(11_30_45/0.3)] transition-shadow focus-within:shadow-[0_10px_32px_-10px_rgb(47_111_179/0.4)] focus-within:ring-2 focus-within:ring-blue/40">
-          <AquibotAvatar size={36} />
+          <AquibotAvatar size={hub ? 32 : 36} />
           <input
             value={value}
             onChange={(event) => setValue(event.target.value)}
             placeholder={PROMPTS[hint]}
             aria-label="Ask Aquibot"
-            className="min-w-0 flex-1 bg-transparent px-1 text-[16.5px] text-ink outline-none"
+            className={`min-w-0 flex-1 bg-transparent px-1 text-ink outline-none ${hub ? "text-[16px] sm:text-[15px]" : "text-[16.5px]"}`}
           />
           <button type="submit" aria-label="Ask Aquibot" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue text-white transition hover:bg-blue-dim">
             <ArrowUp className="h-4 w-4" />
           </button>
         </div>
       </form>
-      <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
-        {ACTIONS.map((action) => (
-          <Link
-            key={action.href}
-            href={action.href}
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/[.07] bg-white px-3.5 py-2 text-[14.5px] font-medium text-ink no-underline shadow-[0_1px_2px_rgb(16_38_59/0.05)] transition hover:-translate-y-px hover:border-blue/30 hover:text-blue"
-          >
-            <action.icon className="h-3.5 w-3.5 text-blue" />
-            {action.label}
-          </Link>
-        ))}
-      </div>
+      {hub ? null : (
+        <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
+          {ACTIONS.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/[.07] bg-white px-3.5 py-2 text-[14.5px] font-medium text-ink no-underline shadow-[0_1px_2px_rgb(16_38_59/0.05)] transition hover:-translate-y-px hover:border-blue/30 hover:text-blue"
+            >
+              <action.icon className="h-3.5 w-3.5 text-blue" />
+              {action.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

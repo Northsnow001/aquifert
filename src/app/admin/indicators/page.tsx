@@ -10,7 +10,7 @@ export default async function IndicatorsAdminPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Market Indicators"
-        description="Nitrogen, phosphate and potassium sentiment. Each reading drives a dial on the hub home page. The caption sits under the dial, and the notes fill the AQ View - Trader Analysis column."
+        description="Nitrogen, phosphate and potassium sentiment. Each reading sets the direction in the hub's moving market ticker: Firming above 66, Steady from 34 to 66, Softening below 34. The caption runs beside it, and the notes give Aquibot the reasoning."
       />
       <IndicatorsForm indicators={indicators} updatedAt={indicatorsUpdatedAt} />
     </div>

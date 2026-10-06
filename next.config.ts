@@ -14,6 +14,10 @@ if (supabaseAnonKey) env.NEXT_PUBLIC_SUPABASE_ANON_KEY = supabaseAnonKey;
 
 const nextConfig: NextConfig = {
   env,
+  experimental: {
+    // TELEX thumbnails ride along with the editor form.
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   outputFileTracingIncludes: {
     "/admin/import/plugin": ["./wordpress/aquifert-export/**/*"],
   },

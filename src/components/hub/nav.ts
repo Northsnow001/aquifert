@@ -6,6 +6,7 @@ import {
   Calculator,
   ChartLine,
   CircleUser,
+  Crown,
   FileText,
   FlaskConical,
   Globe,
@@ -21,6 +22,7 @@ import {
   ShieldCheck,
   Ship,
   ShoppingCart,
+  SlidersHorizontal,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -67,7 +69,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Hub",
     icon: House,
     section: "AQ ONE",
-    tip: "The market desk: sentiment gauges for nitrogen, phosphate and potash, the Telex feed of desk intelligence, commentary and the paper forward curve.",
+    tip: "The market desk: the Telex feed and top stories, the market ticker for nitrogen, phosphate and potash, market analysis and the paper forward curve.",
   },
   {
     key: "library",
@@ -162,23 +164,23 @@ export const HUB_NAV: HubNavItem[] = [
 
   {
     key: "zero",
-    href: "/hub/account/membership?plan=enterprise",
+    href: "/hub/order-desk?tab=zero",
     label: "AQ Zero",
     short: "AQ Zero",
     icon: Globe,
     section: "Plans",
     promo: { headline: "Transparent Global Fertiliser Access" },
-    tip: "Transparent Global Fertiliser Access. See the AQ Zero memberships on the Membership page.",
+    tip: "Transparent Global Fertiliser Access. Register your interest on the Buy Fertilizer page.",
   },
   {
     key: "aq-analytics",
-    href: "/hub/account/membership?plan=growth",
+    href: "/hub/order-desk?tab=zero",
     label: "AQ Analytics",
     short: "Analytics",
     icon: ChartLine,
     section: "Plans",
     promo: { headline: "Advisory for the Global Market", line: "The trader working for you" },
-    tip: "Advisory for the Global Market. The trader working for you. See AQ Analytics on the Membership page.",
+    tip: "Advisory for the Global Market. The trader working for you. Register your interest on the Buy Fertilizer page.",
   },
   {
     key: "signal",
@@ -311,6 +313,45 @@ export const HUB_NAV: HubNavItem[] = [
 
 export const ADMIN_LINK = { href: "/admin", label: "Admin console", icon: ShieldCheck };
 
+export type HubTabLink = { key: string; href: string; icon: HubNavItem["icon"]; locked: boolean; promo?: string };
+export type HubTab = { key: string; tour?: string; links: HubTabLink[] };
+
+/** Account pages that sit in the tab row but not in the menu list. */
+const TAB_EXTRAS: Record<string, { href: string; icon: LucideIcon }> = {
+  "plan-usage": { href: "/hub/account/usage", icon: SlidersHorizontal },
+  membership: { href: "/hub/account/membership", icon: Crown },
+};
+
+/** Desktop tab row, left to right. A tab with one page is a plain link; more pages open a dropdown. */
+const TAB_GROUPS: { key: string; items: string[] }[] = [
+  { key: "dashboard", items: ["dashboard"] },
+  { key: "home", items: ["home"] },
+  { key: "nitrogen", items: ["nitrogen"] },
+  { key: "library", items: ["library"] },
+  { key: "aquibot", items: ["aquibot"] },
+  { key: "telex-feed", items: ["telex", "analysis", "signal"] },
+  { key: "netback", items: ["netback"] },
+  { key: "freight-group", items: ["freight-analytics", "freight", "call"] },
+  { key: "order-group", items: ["order", "tools", "guide", "contact"] },
+  { key: "plans", items: ["plan-usage", "membership", "zero", "aq-analytics"] },
+  { key: "analytics", items: ["a-telex", "a-market", "a-signal", "a-freight", "a-sd", "a-briefing", "a-alerts"] },
+];
+
+/** Tabs built from the member's own menu, so hidden and paid-only pages stay out exactly as they do in the drawer. */
+export function tabsFor(nav: HubNavItem[], unlocked: string[]): HubTab[] {
+  return TAB_GROUPS.map((group) => {
+    const links = group.items.flatMap((key): HubTabLink[] => {
+      const extra = TAB_EXTRAS[key];
+      if (extra) return [{ key, href: extra.href, icon: extra.icon, locked: false }];
+      const item = nav.find((entry) => entry.key === key);
+      if (!item) return [];
+      return [{ key, href: item.href, icon: item.icon, locked: Boolean(item.module && !unlocked.includes(item.module)), promo: item.promo?.headline }];
+    });
+    const tour = TOUR_STOPS.find((stop) => links.some((link) => link.key === stop.key))?.key;
+    return { key: group.key, tour, links };
+  }).filter((tab) => tab.links.length > 0);
+}
+
 export const SECTIONS: HubSection[] = ["Main", "AQ ONE", "Plans", "AQ Analytics", "Help", "You"];
 
 export const hasPaidPages = (plan: Plan, admin: boolean) => admin || plan !== "core";
@@ -327,7 +368,7 @@ export function tabKeysFor(plan: Plan, admin: boolean) {
 
 export const TOUR_STOPS: { key: string; title: string; body: string }[] = [
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },
-  { key: "home", title: "Hub", body: "The market desk: gauges, Telex and commentary show what moved overnight." },
+  { key: "home", title: "Hub", body: "The market desk: Telex, top stories and the market ticker show what moved overnight." },
   { key: "telex", title: "TELEX", body: "Desk flashes, newest first. Save a product filter as your default." },
   { key: "nitrogen", title: "Nitrogen Report", body: "Four short sections, one tailored nitrogen report you can keep." },
   { key: "netback", title: "Netback", body: "Work out your real landed cost, or what a farm-gate price implies at FOB." },

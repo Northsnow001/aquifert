@@ -6,7 +6,7 @@ import { Flag } from "@/components/app/flag";
 import { useI18n } from "@/components/app/i18n";
 import { LANGUAGES, languageFor } from "@/lib/i18n/locales";
 
-export function LanguageMenu() {
+export function LanguageMenu({ dark = false }: { dark?: boolean }) {
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -37,11 +37,11 @@ export function LanguageMenu() {
         aria-expanded={open}
         aria-label={`${t("top.language")}: ${current.nativeName}`}
         title={t("top.language")}
-        className="flex h-9 items-center gap-1.5 rounded-full px-2 text-ink transition-colors hover:bg-black/[.05]"
+        className={`flex h-9 items-center gap-1.5 rounded-full px-2 transition-colors ${dark ? "text-white hover:bg-white/10" : "text-ink hover:bg-black/[.05]"}`}
       >
         <Flag country={current.country} className="h-[15px] w-[22px]" />
-        <span className="hidden font-mono text-[11.5px] font-semibold uppercase tracking-wide text-mid xl:inline">{current.code}</span>
-        <ChevronDown className={`hidden h-3.5 w-3.5 text-dim transition-transform sm:block ${open ? "rotate-180" : ""}`} />
+        <span className={`hidden font-mono text-[11.5px] font-semibold uppercase tracking-wide xl:inline ${dark ? "text-white/75" : "text-mid"}`}>{current.code}</span>
+        <ChevronDown className={`hidden h-3.5 w-3.5 transition-transform sm:block ${dark ? "text-white/60" : "text-dim"} ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
         <div role="menu" translate="no" aria-label={t("top.language")} className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-60 rounded-2xl border border-border bg-white p-1.5">

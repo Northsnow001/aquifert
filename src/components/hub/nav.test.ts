@@ -23,11 +23,11 @@ test("hidden items stay out of the menu on every plan", () => {
   }
 });
 
-test("AQ Zero and AQ Analytics sit under Plans and open the membership page", () => {
+test("AQ Zero and AQ Analytics sit under Plans and open the Buy Fertilizer page", () => {
   const plans = navFor("core", false).filter((item) => item.section === "Plans");
   assert.deepEqual(plans.map((item) => item.key), ["zero", "aq-analytics"]);
   for (const item of plans) {
-    assert.ok(item.href.startsWith("/hub/account/membership"));
+    assert.equal(item.href, "/hub/order-desk?tab=zero");
     assert.ok(item.promo?.headline);
   }
 });

@@ -138,9 +138,9 @@ export default async function AnalysisPage({ searchParams }: { searchParams: Pro
 
           {rest.length ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {rest.map((item) => (
+              {rest.map((item, index) => (
                 <Link key={item.note.id} href={`/hub/analysis/${item.note.slug}`} className="aq-card aq-lift group flex gap-4 p-4 no-underline sm:p-5">
-                  <FeedThumb product={item.product} size={64} />
+                  <FeedThumb product={item.product} pick={index + 1} size={64} />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <NoteTags item={item} />
                     <h2 className="mt-2 text-[17px] font-semibold leading-snug text-ink group-hover:text-blue">{item.note.title}</h2>

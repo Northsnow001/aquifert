@@ -187,7 +187,7 @@ export function IndicatorsForm({ indicators, updatedAt }: { indicators: Indicato
               <div>
                 <div className="flex items-end justify-between">
                   <label className={label} htmlFor={`summary-${item.name}`}>
-                    Caption under the dial
+                    Caption in the market ticker
                   </label>
                   <span className={`font-mono text-[11px] ${item.summary.length > CAPTION_LIMIT ? "text-[#9a5b00]" : "text-dim"}`}>
                     {item.summary.length}/{CAPTION_LIMIT}
@@ -197,13 +197,13 @@ export function IndicatorsForm({ indicators, updatedAt }: { indicators: Indicato
                   id={`summary-${item.name}`}
                   value={item.summary}
                   onChange={(event) => patch(index, { summary: event.target.value })}
-                  placeholder="One line members read under the dial"
+                  placeholder="One line that scrolls past in the hub's market ticker"
                   className={`${field} mt-1.5 h-10 w-full`}
                 />
               </div>
               <div>
                 <label className={label} htmlFor={`note-${item.name}`}>
-                  Notes <span className="font-normal normal-case tracking-normal text-dim">(optional, shown in AQ View - Trader Analysis)</span>
+                  Notes <span className="font-normal normal-case tracking-normal text-dim">(optional, used by Aquibot)</span>
                 </label>
                 <textarea
                   id={`note-${item.name}`}

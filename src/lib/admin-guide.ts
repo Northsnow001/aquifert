@@ -108,6 +108,7 @@ export const GUIDE: GuideSection[] = [
           "Format with Markdown: **bold**, *italic*, headings, lists, quotes, links, code, --- rules, images from an https address, and pipe tables with :--- alignment. The Hub preview shows exactly how members read it.",
           "Choose who can read it: AQ ONE, AQ Analytics and AQ ZERO members; AQ Analytics and AQ ZERO; or AQ ZERO only.",
           "Add tags. Suggestions come from tags you have used before, which keeps them consistent.",
+          "Add a thumbnail: upload or drop an image (large photos are resized for you), or paste an https image link. Without one, members see the product picture. The newest five flashes fill the picture boxes at the top of the hub, the newest in the large box, and every flash opens on its own page with the picture and full message.",
           "Set the status to Published and save. Leave it as Draft to finish later, or Private to keep it from members.",
         ],
       },
@@ -128,15 +129,15 @@ export const GUIDE: GuideSection[] = [
     icon: "indicators",
     href: "/admin/indicators",
     summary:
-      "Nitrogen, phosphate and potassium sentiment. Each reading drives a dial on the hub home page, with a caption under the dial and notes in the AQ View - Trader Analysis column.",
+      "Nitrogen, phosphate and potassium sentiment. Each reading sets the direction shown in the hub's moving market ticker, with the caption beside it. The notes give Aquibot the reasoning.",
     tasks: [
       {
         title: "Move the dials",
         steps: [
-          "Set each reading from 0 to 100. Above 66 reads Bullish, 34 to 66 Neutral, and below 34 Bearish.",
-          "Write the caption as one line members can take in at a glance.",
-          "Use the notes for the reasoning. They fill the AQ View - Trader Analysis column.",
-          "Save. The dashboard shows the dials as members now see them.",
+          "Set each reading from 0 to 100. Above 66 reads Bullish (Firming in the ticker), 34 to 66 Neutral (Steady), and below 34 Bearish (Softening).",
+          "Write the caption as one line members can take in at a glance. It scrolls past in the ticker.",
+          "Use the notes for the reasoning. Aquibot uses them in its answers, and the ticker shows them when the caption is empty.",
+          "Save. The dashboard shows the dials as you set them, and the hub ticker updates.",
         ],
       },
     ],

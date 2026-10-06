@@ -1004,6 +1004,30 @@ body::before {
   @page { margin: 14mm; }
   html, body { background: #fff !important; }
   .aq-app, .aq-canvas, #aq-scroll, #main-content, .aq-page { height: auto !important; overflow: visible !important; display: block !important; padding: 0 !important; margin: 0 !important; max-width: none !important; box-shadow: none !important; border-radius: 0 !important; background: #fff !important; animation: none !important; }
-  .aq-rail, .aq-drawer, #aq-scroll > header, nav[aria-label="Quick menu"], [data-sonner-toaster] { display: none !important; }
+  .aq-rail, .aq-drawer, #aq-scroll > header, .aq-masthead, nav[aria-label="Quick menu"], [data-sonner-toaster] { display: none !important; }
   .aq-card { box-shadow: none !important; }
+}
+
+/* Hub masthead: tab row and the moving market ticker. */
+@keyframes aq-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.aq-ticker-track {
+  animation: aq-ticker var(--aq-ticker-time, 42s) linear infinite;
+  will-change: transform;
+}
+.aq-ticker:hover .aq-ticker-track,
+.aq-ticker:focus-within .aq-ticker-track {
+  animation-play-state: paused;
+}
+.aq-tabs-scroll {
+  scrollbar-width: none;
+}
+.aq-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .aq-ticker-track { animation: none; }
+  .aq-ticker-window { overflow-x: auto; }
 }

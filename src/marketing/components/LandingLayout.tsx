@@ -3,7 +3,7 @@
 /**
  * LandingLayout, landing-page-only chrome in an institutional grammar:
  * 72px sticky main header with utility links folded in (border + shadow past
- * 100px scroll), deep multi-column footer with the Market Data registry.
+ * 100px scroll), deep multi-column footer.
  * MarketingLayout (used by every other page) is untouched.
  */
 import { useEffect, useState, type ReactNode } from "react";
@@ -12,7 +12,6 @@ import { Menu, Search, X } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
-import { PRICE_SOURCES } from "@/marketing/lib/prices";
 import { LEGAL_LINKS } from "@/lib/legal/documents";
 
 const PRIMARY_NAV = [
@@ -32,44 +31,7 @@ const UTILITY_NAV = [
 export const OPEN_LEAD_MAGNET_EVENT = "aq:open-lead-magnet";
 
 const MARKET_DATA_DISCLAIMER =
-  "Fertilizer price indications are compiled from the sources listed above and from Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.";
-
-/** Footer "Market Data" block, rendered FROM the price_sources registry,
- *  never hard-coded (licence compliance). Hidden when the registry is empty. */
-function MarketDataBlock() {
-  const sources = PRICE_SOURCES;
-  if (sources.length === 0) return null;
-  return (
-    <div className="mt-12 border-t border-white/10 pt-6">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-        Market Data
-      </h3>
-      <ul className="mt-3 grid gap-x-8 gap-y-2 text-[12px] sm:grid-cols-2">
-        {sources.map((s) => (
-          <li key={s.code}>
-            <a
-              href={s.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-300 underline-offset-2 hover:text-white hover:underline"
-            >
-              {s.name}
-            </a>
-            <span className="text-slate-500">
-              {" "}· data as of{" "}
-              {s.dataAsOf
-                ? new Date(s.dataAsOf).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
-                : "N/A"}
-            </span>
-            {s.attributionText && (
-              <span className="block text-[11px] leading-relaxed text-slate-500">{s.attributionText}</span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+  "Fertilizer price indications are compiled from public sources and Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.";
 
 export function LandingLayout({ children }: { children: ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
@@ -277,7 +239,6 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               </ul>
             </nav>
           </div>
-          <MarketDataBlock />
           <div className="mt-12 border-t border-white/10 pt-6">
             <p className="text-[12px] text-slate-400">© 2026 Aquifert. All rights reserved.</p>
             <p className="mt-3 text-[11px] leading-relaxed text-slate-500">{MARKET_DATA_DISCLAIMER}</p>

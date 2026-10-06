@@ -1,18 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, Info, X } from "lucide-react";
+import { Eye, ImagePlus, Info, Loader2, Trash2, X } from "lucide-react";
 import { saveTelex } from "@/app/admin/actions";
 import { PendingButton } from "@/components/admin/form-controls";
 import { Markdown } from "@/components/hub/markdown";
 import { btnPrimary, btnSecondary, field, input, label, textarea } from "@/components/admin/ui";
+import { telexProduct } from "@/lib/aq-modules/telex";
+import { THUMBS } from "@/lib/aq-modules/types";
 import {
   PUBLISH_STATUS,
   TELEX_ACCESS,
   deskNow,
   formatTelexDay,
+  isThumbLink,
   splitParagraphs,
   telexHeadline,
+  telexThumbSrc,
   type PublishStatus,
   type TelexAccess,
   type TelexItem,
@@ -24,6 +28,37 @@ const ACCESS_AUDIENCE: Record<TelexAccess, string> = {
   enterprise: "AQ ZERO members only",
 };
 
+const THUMB_MAX_BYTES = 3 * 1024 * 1024;
+const THUMB_EDGE = 1600;
+
+/** Phone photos run to 10 MB; resize to a sharp hub-sized JPEG before it is sent. GIFs keep their animation. */
+async function shrinkImage(file: File): Promise<File> {
+  if (file.type === "image/gif") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, THUMB_EDGE / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size <= 900_000 && file.type !== "image/heic") {
+      bitmap.close();
+      return file;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const context = canvas.getContext("2d");
+    if (!context) return file;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    return blob ? new File([blob], `${file.name.replace(/\.[^.]+$/, "") || "thumbnail"}.jpg`, { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
+}
+
+type ThumbMode = "keep" | "file" | "url" | "remove";
+
 export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexItem; knownTags: string[]; defaultAuthor: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [headline, setHeadline] = useState(item?.headline ?? "");
@@ -33,9 +68,81 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
   const [publishedAt, setPublishedAt] = useState(item?.publishedAt ?? deskNow());
   const [tags, setTags] = useState<string[]>(item?.tags ?? []);
   const [tagDraft, setTagDraft] = useState("");
+  const savedThumb = item ? telexThumbSrc(item) : null;
+  const [thumbMode, setThumbMode] = useState<ThumbMode>("keep");
+  const [thumbPreview, setThumbPreview] = useState<string | null>(savedThumb);
+  const [thumbLink, setThumbLink] = useState(item?.thumbnail && isThumbLink(item.thumbnail) ? item.thumbnail : "");
+  const [thumbBusy, setThumbBusy] = useState(false);
+  const [thumbError, setThumbError] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const objectUrl = useRef<string | null>(null);
 
   const paragraphs = useMemo(() => splitParagraphs(body), [body]);
   const words = body.split(/\s+/).filter(Boolean).length;
+  const product = telexProduct({ headline, paragraphs, tags });
+
+  useEffect(
+    () => () => {
+      if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    },
+    [],
+  );
+
+  const showPreview = (src: string | null, local = false) => {
+    if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+    objectUrl.current = local ? src : null;
+    setThumbPreview(src);
+  };
+
+  const clearFile = () => {
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const pickImage = async (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setThumbError("That file is not an image. Use a JPG, PNG, WebP or GIF.");
+      clearFile();
+      return;
+    }
+    setThumbError("");
+    setThumbBusy(true);
+    const ready = await shrinkImage(file);
+    setThumbBusy(false);
+    if (ready.size > THUMB_MAX_BYTES || !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(ready.type)) {
+      setThumbError(ready.size > THUMB_MAX_BYTES ? "That image is over 3 MB even after resizing. Pick a smaller one." : "Use a JPG, PNG, WebP or GIF.");
+      clearFile();
+      return;
+    }
+    const transfer = new DataTransfer();
+    transfer.items.add(ready);
+    if (fileRef.current) fileRef.current.files = transfer.files;
+    showPreview(URL.createObjectURL(ready), true);
+    setThumbLink("");
+    setThumbMode("file");
+  };
+
+  const typeLink = (value: string) => {
+    setThumbLink(value);
+    setThumbError("");
+    if (isThumbLink(value.trim())) {
+      clearFile();
+      showPreview(value.trim());
+      setThumbMode("url");
+    } else if (thumbMode === "url") {
+      showPreview(savedThumb);
+      setThumbMode("keep");
+    }
+  };
+
+  const removeThumb = () => {
+    clearFile();
+    setThumbLink("");
+    setThumbError("");
+    showPreview(null);
+    setThumbMode("remove");
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -110,23 +217,29 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
             <p className="text-[12.5px] font-semibold text-ink">Hub preview</p>
             <span className="ml-auto text-[12px] text-dim">{status === "published" ? `Visible to ${ACCESS_AUDIENCE[access]}` : "Hidden from members until published"}</span>
           </div>
-          <article className="px-5 py-4">
-            <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatTelexDay(publishedAt)}</p>
-            <h3 className="mt-2 text-[15px] font-bold uppercase leading-snug tracking-wide text-ink">{telexHeadline({ headline, paragraphs })}</h3>
-            {paragraphs.length ? (
-              <Markdown text={paragraphs.join("\n\n")} images className="mt-3 text-[13.5px] text-ink" />
-            ) : (
-              <p className="mt-3 text-[13.5px] text-dim">The message body shows here.</p>
-            )}
-            {tags.length ? (
-              <div className="mt-3 flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <span key={tag} className="rounded-md bg-blue-light px-1.5 py-0.5 text-[11px] font-semibold text-blue">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : null}
+          <article className="grid gap-4 px-5 py-4 sm:grid-cols-[132px_minmax(0,1fr)]">
+            <div className="relative aspect-square overflow-hidden rounded-lg border border-border bg-s2">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local previews and links to any host */}
+              <img src={thumbPreview ?? THUMBS[product]} alt="" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatTelexDay(publishedAt)}</p>
+              <h3 className="mt-2 text-[15px] font-bold uppercase leading-snug tracking-wide text-ink">{telexHeadline({ headline, paragraphs })}</h3>
+              {paragraphs.length ? (
+                <Markdown text={paragraphs.join("\n\n")} images className="mt-3 text-[13.5px] text-ink" />
+              ) : (
+                <p className="mt-3 text-[13.5px] text-dim">The message body shows here.</p>
+              )}
+              {tags.length ? (
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {tags.map((tag) => (
+                    <span key={tag} className="rounded-md bg-blue-light px-1.5 py-0.5 text-[11px] font-semibold text-blue">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </article>
         </section>
       </div>
@@ -193,6 +306,83 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
               </PendingButton>
             ) : null}
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
+          <input type="hidden" name="thumbnailMode" value={thumbMode} />
+          <div className="flex items-baseline justify-between gap-2">
+            <p className={label}>Thumbnail</p>
+            {thumbMode !== "keep" ? <span className="text-[11.5px] font-semibold text-blue">Saves with the message</span> : null}
+          </div>
+          <div
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragging(false);
+              void pickImage(event.dataTransfer.files[0]);
+            }}
+            className={`relative mt-1.5 aspect-[16/10] overflow-hidden rounded-xl border bg-s2 ${dragging ? "border-blue ring-2 ring-blue/25" : "border-border"}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- local previews and links to any host */}
+            <img
+              src={thumbPreview ?? THUMBS[product]}
+              alt=""
+              referrerPolicy="no-referrer"
+              onError={() => thumbPreview && setThumbError("That image did not load. Check the link, or upload the file instead.")}
+              className={`absolute inset-0 h-full w-full object-cover ${thumbPreview ? "" : "opacity-60 grayscale-[30%]"}`}
+            />
+            {!thumbPreview ? (
+              <span className="absolute inset-x-2 bottom-2 rounded-md bg-white/90 px-2 py-1 text-center text-[11.5px] font-medium text-mid shadow-sm">
+                No thumbnail yet. Members see the {product.toLowerCase()} picture.
+              </span>
+            ) : null}
+            {thumbBusy ? (
+              <span className="absolute inset-0 flex items-center justify-center gap-2 bg-white/70 text-[12.5px] font-semibold text-ink">
+                <Loader2 className="h-4 w-4 animate-spin" /> Preparing image…
+              </span>
+            ) : null}
+          </div>
+          <input
+            ref={fileRef}
+            id="thumbnail-file"
+            name="thumbnailFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            onChange={(event) => void pickImage(event.target.files?.[0])}
+          />
+          <div className="mt-2.5 flex gap-2">
+            <label htmlFor="thumbnail-file" className={`${btnSecondary} flex-1 cursor-pointer justify-center`}>
+              <ImagePlus className="h-4 w-4" />
+              {thumbPreview ? "Replace image" : "Upload image"}
+            </label>
+            {thumbPreview ? (
+              <button type="button" onClick={removeThumb} className={btnSecondary} aria-label="Remove thumbnail">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+          <label className={`${label} mt-3`} htmlFor="thumbnail-url">
+            Or paste an image link
+          </label>
+          <input
+            id="thumbnail-url"
+            name="thumbnailUrl"
+            type="text"
+            inputMode="url"
+            value={thumbLink}
+            onChange={(event) => typeLink(event.target.value)}
+            placeholder="https://…"
+            className={`${input} mt-1.5 font-mono text-[12.5px]`}
+          />
+          {thumbError ? <p className="mt-2 text-[12px] font-medium text-danger">{thumbError}</p> : null}
+          <p className="mt-2 text-[12px] leading-relaxed text-dim">
+            JPG, PNG, WebP or GIF. Drop a file on the box or upload it; large photos are resized for you. The newest five flashes fill the boxes at the top of the hub, the newest in the large one.
+          </p>
         </section>
 
         <section className="rounded-2xl border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(26,58,92,0.05)]">

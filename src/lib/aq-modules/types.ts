@@ -188,21 +188,32 @@ export type TelexProduct = (typeof TELEX_PRODUCTS)[number];
 /** Nutrient category a headline or tag belongs to, for thumbnails and filters. */
 export function productOf(text: string): TelexProduct {
   const value = text.toLowerCase();
-  if (/urea|ammoni|nitrate|\buan\b|nitrogen|\bcan\b|\bas\b/.test(value)) return "Nitrogen";
+  // AS and CAN only in capitals: lower case they are the English words ("flat as supramax", "buyers can wait").
+  if (/urea|ammoni|nitrate|\buan\b|nitrogen/.test(value) || /\b(AS|CAN)\b/.test(text)) return "Nitrogen";
   if (/\bdap\b|\bmap\b|\btsp\b|\bssp\b|phosph|\bnps\b/.test(value)) return "Phosphate";
   if (/\bmop\b|\bsop\b|potash|potassium/.test(value)) return "Potash";
   if (/freight|vessel|baltic|charter|route|shipping|bunker|handysize|supramax/.test(value)) return "Freight";
   return "General";
 }
 
-export const THUMBS: Record<TelexProduct | "Market", string> = {
-  Nitrogen: "/media/thumbs/nitrogen.jpg",
-  Phosphate: "/media/thumbs/phosphate.jpg",
-  Potash: "/media/thumbs/potash.jpg",
-  Freight: "/media/thumbs/freight.jpg",
-  General: "/media/thumbs/general.jpg",
-  Market: "/media/thumbs/market.jpg",
+/** Product pictures used when an item has none of its own. Nitrogen has the most, since most flashes are nitrogen. */
+const THUMB_SETS: Record<TelexProduct | "Market", string[]> = {
+  Nitrogen: ["urea", "sprayer-aerial", "plant", "spreader", "tanker", "sprayer"].map((name) => `/media/thumbs/nitrogen-${name}.jpg`),
+  Phosphate: ["mine", "pit"].map((name) => `/media/thumbs/phosphate-${name}.jpg`),
+  Potash: ["ponds", "tunnel", "pit"].map((name) => `/media/thumbs/potash-${name}.jpg`),
+  Freight: ["bulk-carrier", "at-sea", "cranes", "port"].map((name) => `/media/thumbs/freight-${name}.jpg`),
+  General: ["wheat", "soil", "crops"].map((name) => `/media/thumbs/general-${name}.jpg`),
+  Market: ["/media/thumbs/market-port.jpg"],
 };
+
+/** The main picture for each product. */
+export const THUMBS = Object.fromEntries(Object.entries(THUMB_SETS).map(([key, set]) => [key, set[0]])) as Record<TelexProduct | "Market", string>;
+
+/** One of the product's pictures; neighbouring picks differ, so a run of same-product items does not repeat. */
+export function productThumb(product: TelexProduct | "Market", pick = 0) {
+  const set = THUMB_SETS[product] ?? THUMB_SETS.General;
+  return set[Math.abs(pick) % set.length];
+}
 
 export type Tone = "up" | "down" | "flat";
 

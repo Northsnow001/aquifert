@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CheckCircle2, XCircle, type LucideIcon } from "lucide-react";
 import { InfoTip } from "@/components/app/info-tip";
-import { THUMBS, type TelexProduct, type Tone } from "@/lib/aq-modules/types";
+import { productThumb, type TelexProduct, type Tone } from "@/lib/aq-modules/types";
 
 /** Page title row used across the hub: optional eyebrow, title with (i) tip, description and actions. */
 export function HubPageHeader({
@@ -46,10 +46,25 @@ export function AccountIntro({ description, actions }: { description: React.Reac
   );
 }
 
-export function FeedThumb({ product, size = 56, className = "" }: { product: TelexProduct | "Market"; size?: number; className?: string }) {
+export function FeedThumb({ product, src, pick = 0, size = 56, className = "" }: { product: TelexProduct | "Market"; src?: string | null; pick?: number; size?: number; className?: string }) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- desk uploads and links to any host
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        className={`shrink-0 select-none rounded-xl object-cover ring-1 ring-black/[.06] ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <Image
-      src={THUMBS[product] ?? THUMBS.General}
+      src={productThumb(product, pick)}
       alt=""
       width={size}
       height={size}
@@ -57,6 +72,34 @@ export function FeedThumb({ product, size = 56, className = "" }: { product: Tel
       style={{ width: size, height: size }}
     />
   );
+}
+
+/** One colour per product, so the TELEX tape scans like a wire. */
+export const PRODUCT_STYLE: Record<TelexProduct, { chip: string; border: string; top: string; wash: string }> = {
+  Nitrogen: { chip: "bg-[#31648F] text-white", border: "border-l-[#31648F]", top: "border-t-[#31648F]", wash: "bg-[#31648F]/[0.06]" },
+  Phosphate: { chip: "bg-[#B07A2A] text-white", border: "border-l-[#B07A2A]", top: "border-t-[#B07A2A]", wash: "bg-[#B07A2A]/[0.07]" },
+  Potash: { chip: "bg-[#6B5B95] text-white", border: "border-l-[#6B5B95]", top: "border-t-[#6B5B95]", wash: "bg-[#6B5B95]/[0.07]" },
+  Freight: { chip: "bg-[#3E8E6E] text-white", border: "border-l-[#3E8E6E]", top: "border-t-[#3E8E6E]", wash: "bg-[#3E8E6E]/[0.07]" },
+  General: { chip: "bg-slate-500 text-white", border: "border-l-slate-400", top: "border-t-slate-400", wash: "bg-slate-400/[0.08]" },
+};
+
+export function ProductChip({ product, small = false }: { product: TelexProduct; small?: boolean }) {
+  return (
+    <span className={`rounded-full font-semibold uppercase tracking-wide ${small ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[11px]"} ${PRODUCT_STYLE[product].chip}`}>
+      {product}
+    </span>
+  );
+}
+
+/** Fills a positioned box with the flash's own picture, or the product picture when it has none. */
+export function StoryImage({ product, src, pick = 0, sizes, priority = false, className = "" }: { product: TelexProduct; src?: string | null; pick?: number; sizes: string; priority?: boolean; className?: string }) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- desk uploads and links to any host
+      <img src={src} alt="" loading={priority ? "eager" : "lazy"} referrerPolicy="no-referrer" className={`absolute inset-0 h-full w-full object-cover ${className}`} />
+    );
+  }
+  return <Image src={productThumb(product, pick)} alt="" fill sizes={sizes} priority={priority} className={`object-cover ${className}`} />;
 }
 
 const TAG_TONE = {
@@ -84,6 +127,43 @@ export function ToneBadge({ tone }: { tone: Tone }) {
       <Icon className="h-3 w-3" strokeWidth={2.6} aria-hidden />
       {TONE_LABEL[tone]}
     </Tag>
+  );
+}
+
+const FRESH_STYLE = {
+  green: { className: "bg-emerald-100 text-emerald-800", icon: CheckCircle2 },
+  amber: { className: "bg-amber-100 text-amber-800", icon: AlertTriangle },
+  red: { className: "bg-red-100 text-red-800", icon: XCircle },
+} as const;
+
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function ago(minutes: number) {
+  if (minutes < 2) return "just now";
+  if (minutes < 60) return `${minutes} minutes ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return hours === 1 ? "about 1 hour ago" : `about ${hours} hours ago`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
+}
+
+/**
+ * "As of 05 Oct, 11:32 · about 18 hours ago". Both stamps are desk time (`YYYY-MM-DDTHH:mm`), so `now` comes from the
+ * server's `deskNow()` and the badge renders the same on server and client. Green within `freshHours`, amber up to
+ * twice that, red beyond.
+ */
+export function FreshnessBadge({ stamp, now, freshHours = 24 }: { stamp?: string | null; now: string; freshHours?: number }) {
+  if (!stamp) return null;
+  const minutes = Math.max(0, Math.round((Date.parse(`${now}Z`) - Date.parse(`${stamp.slice(0, 16)}Z`)) / 60_000));
+  if (Number.isNaN(minutes)) return null;
+  const level = minutes <= freshHours * 60 ? "green" : minutes <= freshHours * 120 ? "amber" : "red";
+  const { className, icon: Icon } = FRESH_STYLE[level];
+  const day = `${stamp.slice(8, 10)} ${SHORT_MONTHS[Number(stamp.slice(5, 7)) - 1] ?? ""}, ${stamp.slice(11, 16)}`;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${className}`}>
+      <Icon className="h-3 w-3" aria-hidden />
+      As of {day} · {ago(minutes)}
+    </span>
   );
 }
 

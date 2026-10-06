@@ -4,23 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpenCheck, ChevronDown, ChevronRight, ChevronsLeft, ChevronsRight, CreditCard, Crown, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, Sparkles, UserCircle, X } from "lucide-react";
+import { BookOpenCheck, ChevronDown, ChevronRight, CreditCard, Crown, LayoutDashboard, Lock, LogOut, Menu, MoreHorizontal, Search, SlidersHorizontal, Sparkles, UserCircle, X } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { AutoTranslate } from "@/components/app/auto-translate";
-import { closeAquibot, toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
+import { toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
 import { useI18n } from "@/components/app/i18n";
 import { InfoTip } from "@/components/app/info-tip";
 import { LanguageMenu } from "@/components/app/language-menu";
 import { NavHoverCard } from "@/components/app/nav-hover-card";
 import { startTour, Tour } from "@/components/app/tour";
-import { useStoredFlag } from "@/components/app/use-stored-flag";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
-import { ADMIN_LINK, HUB_NAV, isActive, navFor, pageTitle, SECTIONS, tabKeysFor, TOUR_STOPS, type HubNavItem } from "@/components/hub/nav";
+import { HubTabs } from "@/components/hub/hub-tabs";
+import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, pageTitle, SECTIONS, tabKeysFor, tabsFor, TOUR_STOPS, type HubNavItem } from "@/components/hub/nav";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
-
-const RAIL_KEY = "aq.rail.collapsed";
 
 function NavIcon({ item, locked = false }: { item: HubNavItem; locked?: boolean }) {
   if (item.icon === "aquibot") return <AquibotAvatar size={22} />;
@@ -28,14 +26,10 @@ function NavIcon({ item, locked = false }: { item: HubNavItem; locked?: boolean 
   return <Icon className={`h-5 w-5 shrink-0 ${locked ? "opacity-45" : ""}`} strokeWidth={1.75} aria-hidden />;
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+function Brand() {
   return (
     <Link href="/hub" aria-label="Aquifert home" className="flex items-center no-underline transition-opacity hover:opacity-80">
-      {compact ? (
-        <Image src="/brand/mark.png" alt="Aquifert" width={148} height={214} className="h-[30px] w-auto" priority />
-      ) : (
-        <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-8 w-auto" priority />
-      )}
+      <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-8 w-auto" />
     </Link>
   );
 }
@@ -142,7 +136,7 @@ function NavList({
   );
 }
 
-function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
+function AccountMenu({ user, admin, paid }: { user: SessionUser; admin: boolean; paid: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -172,12 +166,12 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t("top.account")}
-        className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-black/[.05] sm:pr-2"
+        className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-white/10 sm:pr-2"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12.5px] font-bold text-white shadow-sm">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12.5px] font-bold text-white shadow-sm ring-1 ring-white/20">
           {initials(user.name)}
         </span>
-        <ChevronDown className={`hidden h-3.5 w-3.5 text-dim transition-transform sm:block ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`hidden h-3.5 w-3.5 text-white/60 transition-transform sm:block ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
         <div role="menu" className="aq-drop aq-float absolute end-0 top-[calc(100%+8px)] z-50 w-64 rounded-2xl border border-border bg-white p-1.5">
@@ -190,6 +184,11 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
           </div>
           <div className="h-px bg-border" />
           <div className="py-1">
+            {paid ? (
+              <Link href="/hub/dashboard" role="menuitem" className={item} onClick={() => setOpen(false)}>
+                <LayoutDashboard className="h-4 w-4 text-mid" /> {t("nav.dashboard")}
+              </Link>
+            ) : null}
             <Link href="/hub/account" role="menuitem" className={item} onClick={() => setOpen(false)}>
               <UserCircle className="h-4 w-4 text-mid" /> {t("top.account")}
             </Link>
@@ -225,24 +224,43 @@ function AccountMenu({ user, admin }: { user: SessionUser; admin: boolean }) {
   );
 }
 
+function Masthead({ t }: { t: (key: string) => string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-8 lg:py-4">
+      <Link href="/hub" className="block text-white no-underline transition-opacity hover:opacity-85">
+        <span className="block text-[20px] font-bold leading-tight tracking-tight lg:text-[26px]">Aquifert ONE</span>
+        <span className="block text-[12.5px] leading-tight text-slate-300 lg:text-[14px]">{t("top.tagline")}</span>
+      </Link>
+      <div className="hidden items-center gap-3 text-right md:flex">
+        <span className="rounded-full bg-white/10 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.14em] text-teal-300">{t("top.portal")}</span>
+        <span className="text-[13px] text-slate-300" suppressHydrationWarning>
+          {new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const NAVY = "bg-gradient-to-r from-[#0C1C2E] via-[#16324F] to-[#1E4265] text-white";
+
 export function AppShell({
   user,
   admin = false,
   unlocked = [],
+  ticker,
   children,
 }: {
   user: SessionUser;
   admin?: boolean;
   unlocked?: string[];
+  ticker?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const { t } = useI18n();
-  const [railPinned, toggleRail] = useStoredFlag(RAIL_KEY);
   const [drawer, setDrawer] = useState(false);
   const onAquibotPage = isActive(pathname, "/hub/aquibot");
   const dockOpen = useAquibotDock().open && !onAquibotPage;
-  const collapsed = railPinned || dockOpen;
   const englishTitle = pageTitle(pathname);
   const titleItem = HUB_NAV.find((item) => item.label === englishTitle);
   const title = titleItem ? t(`nav.${titleItem.key}`) : englishTitle;
@@ -261,6 +279,7 @@ export function AppShell({
   }, [drawer]);
 
   const nav = useMemo(() => navFor(user.plan, admin), [user.plan, admin]);
+  const hubTabs = useMemo(() => tabsFor(nav, unlocked), [nav, unlocked]);
   const tourStops = useMemo(() => TOUR_STOPS.filter((stop) => nav.some((item) => item.key === stop.key)), [nav]);
 
   const palette = useMemo<PaletteItem[]>(() => {
@@ -292,49 +311,31 @@ export function AppShell({
       >
         Skip to content
       </a>
-      <div className="aq-canvas flex h-full min-w-0 overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)] xl:flex-1">
-        <aside
-          className={`aq-rail hidden shrink-0 flex-col border-r border-black/[.06] transition-[width] duration-200 lg:flex ${collapsed ? "w-[76px]" : "w-[272px]"}`}
-        >
-          <div className={`flex h-16 shrink-0 items-center ${collapsed ? "justify-center" : "px-5"}`}>
-            <Brand compact={collapsed} />
-          </div>
-          <NavList pathname={pathname} collapsed={collapsed} items={nav} admin={admin} unlocked={unlocked} />
-          <div className="shrink-0 border-t border-black/[.06] p-3">
-            <button
-              type="button"
-              onClick={dockOpen && !railPinned ? closeAquibot : toggleRail}
-              aria-label={collapsed ? t("top.expand") : t("top.collapse")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium text-dim transition hover:bg-white hover:text-ink hover:shadow-sm"
-            >
-              {collapsed ? (
-                <ChevronsRight className="h-4 w-4" />
-              ) : (
-                <>
-                  <ChevronsLeft className="h-4 w-4" /> {t("top.collapse")}
-                </>
-              )}
-            </button>
-          </div>
-        </aside>
-
-        <div id="aq-scroll" className="relative flex min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-          <header className="aq-glass sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-black/[.06] px-3 sm:px-5 lg:h-16">
+      <div className="flex h-full min-w-0 flex-col overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)] xl:flex-1">
+        <div className="aq-masthead relative z-30 shrink-0">
+          <header className={`flex h-14 items-center gap-2 border-b border-white/10 px-3 sm:px-5 lg:h-[72px] ${NAVY}`}>
             <button
               type="button"
               onClick={() => setDrawer(true)}
               aria-label={t("top.menu")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-ink transition hover:bg-black/[.05] lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white transition hover:bg-white/10 lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="lg:hidden">
-              <Brand />
-            </div>
-            <div className="hidden min-w-0 items-center gap-2 text-[15.5px] lg:flex" aria-label="Current page">
-              <span className="text-dim">Aquifert ONE</span>
-              <span className="text-[#c5cfd9]">/</span>
-              <span className="truncate font-semibold text-ink">{title}</span>
+            <Link href="/hub" aria-label="Aquifert home" className="shrink-0 no-underline transition-opacity hover:opacity-85">
+              <Image src="/brand/logo-v2-light.png" alt="Aquifert" width={814} height={214} className="h-7 w-auto lg:h-10" priority />
+            </Link>
+            <div className="ms-2 hidden min-w-0 items-center gap-2 text-[14.5px] lg:flex" aria-label="Current page">
+              <span className="text-slate-300">Aquifert ONE</span>
+              <span className="text-white/40">/</span>
+              <span className="truncate font-semibold text-white">{title}</span>
+              <Link
+                href="/hub/account/usage"
+                title={t("nav.plan-usage")}
+                className="ms-1 inline-flex shrink-0 items-center rounded-full border border-teal-400/30 bg-teal-400/10 px-2 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wide text-teal-200 no-underline hover:bg-teal-400/20"
+              >
+                {PLAN_LABEL[user.plan]}
+              </Link>
             </div>
 
             <div className="ms-auto flex items-center gap-1 sm:gap-2">
@@ -342,13 +343,13 @@ export function AppShell({
                 type="button"
                 onClick={openPalette}
                 aria-label="Search"
-                className="hidden h-9 w-56 items-center gap-2 rounded-full border border-black/[.08] bg-black/[.03] px-3.5 text-[14.5px] text-dim transition hover:bg-black/[.05] md:flex"
+                className="hidden h-9 w-56 items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3.5 text-[14px] text-white/70 transition hover:bg-white/10 md:flex xl:w-60"
               >
                 <Search className="h-3.5 w-3.5" />
-                <span className="flex-1 text-start">{t("top.search")}</span>
-                <kbd className="rounded border border-black/10 px-1 font-mono text-[11px] font-semibold">Ctrl K</kbd>
+                <span className="flex-1 truncate text-start">{t("top.search")}</span>
+                <kbd className="rounded border border-white/15 px-1 font-mono text-[10.5px] font-semibold text-white/50">Ctrl K</kbd>
               </button>
-              <button type="button" onClick={openPalette} aria-label="Search" className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-black/[.05] md:hidden">
+              <button type="button" onClick={openPalette} aria-label="Search" className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden">
                 <Search className="h-[18px] w-[18px]" />
               </button>
               <button
@@ -356,24 +357,31 @@ export function AppShell({
                 onClick={() => (onAquibotPage ? document.getElementById("aquibot-input")?.focus() : toggleAquibot())}
                 aria-expanded={dockOpen}
                 aria-controls="aquibot-dock"
-                className={`aq-ai-pill hidden h-9 items-center gap-1.5 rounded-full pl-1 pr-3.5 text-[13.5px] font-semibold shadow-[0_6px_16px_-8px_rgb(47_111_179/0.7)] transition hover:brightness-110 sm:inline-flex ${
-                  dockOpen ? "ring-2 ring-blue/30 ring-offset-2 ring-offset-white" : ""
+                className={`aq-ai-pill hidden h-9 items-center gap-1.5 rounded-full pl-1 pr-3.5 text-[13.5px] font-semibold shadow-[0_6px_16px_-8px_rgb(0_0_0/0.6)] transition hover:brightness-110 sm:inline-flex ${
+                  dockOpen ? "ring-2 ring-white/40 ring-offset-2 ring-offset-[#16324F]" : ""
                 }`}
               >
                 <AquibotAvatar size={28} active={dockOpen} />
                 {t("top.askAquibot")}
               </button>
-              <Link
-                href="/hub/account/usage"
-                title={t("nav.plan-usage")}
-                className="hidden rounded-full border border-black/[.08] bg-white px-2.5 py-1 font-mono text-[11.5px] font-semibold uppercase tracking-wide text-mid no-underline hover:text-blue md:inline-flex"
-              >
-                {PLAN_LABEL[user.plan]}
-              </Link>
-              <LanguageMenu />
-              <AccountMenu user={user} admin={admin} />
+              <LanguageMenu dark />
+              <AccountMenu user={user} admin={admin} paid={hasPaidPages(user.plan, admin)} />
             </div>
           </header>
+          <div className={`hidden lg:block ${NAVY}`}>
+            <Masthead t={t} />
+            <HubTabs tabs={hubTabs} pathname={pathname} />
+          </div>
+          <div className="hidden lg:block">{ticker}</div>
+        </div>
+
+        <div id="aq-scroll" className="aq-canvas relative flex min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+          <div className="lg:hidden">
+            <div className={NAVY}>
+              <Masthead t={t} />
+            </div>
+            {ticker}
+          </div>
 
           <main id="main-content" className="flex-1 px-4 pb-28 pt-5 transition-opacity duration-300 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
             <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">

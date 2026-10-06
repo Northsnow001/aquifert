@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import {
   deskNow,
+  isThumbLink,
   newId,
   slugify,
   splitParagraphs,
@@ -27,9 +28,10 @@ import {
 } from "@/lib/aquibot";
 import { syncKnowledgeLater } from "@/lib/aquibot-engine/indexer";
 import { removeLibraryFiles } from "@/lib/data/files";
-import { updateHubContent } from "@/lib/hub-content";
+import { getHubContent, updateHubContent } from "@/lib/hub-content";
 import { sanitizeRichText } from "@/lib/sanitize";
 import { getSession } from "@/lib/session";
+import { readTelexThumb, removeTelexThumb, saveTelexThumb, THUMB_MAX_BYTES, THUMB_TYPES, thumbContentType } from "@/lib/telex-thumbs";
 
 async function requireAdmin() {
   const user = await getSession();
@@ -71,6 +73,7 @@ export async function saveTelex(formData: FormData) {
   if (paragraphs.length === 0) redirect(existingId ? `/admin/telex/${existingId}?error=1` : "/admin/telex/new?error=1");
 
   const id = existingId || newId("tx");
+  const thumb = await telexThumbFrom(formData, id);
   const item: TelexItem = {
     id,
     headline: text(formData, "headline"),
@@ -85,12 +88,39 @@ export async function saveTelex(formData: FormData) {
 
   await updateHubContent((content) => {
     const index = content.telex.findIndex((entry) => entry.id === id);
-    if (index >= 0) content.telex[index] = item;
-    else content.telex.unshift(item);
+    const next = { ...item, thumbnail: thumb.value === undefined ? (content.telex[index]?.thumbnail ?? null) : thumb.value };
+    if (index >= 0) content.telex[index] = next;
+    else content.telex.unshift(next);
   });
   syncKnowledgeLater([`telex:${id}`]);
   refresh();
-  redirect(`/admin/telex/${id}?saved=${status}`);
+  redirect(`/admin/telex/${id}?saved=${status}${thumb.failed ? "&error=thumb" : ""}`);
+}
+
+/** `value: undefined` keeps whatever thumbnail the flash already has. */
+async function telexThumbFrom(formData: FormData, id: string): Promise<{ value?: string | null; failed?: true }> {
+  const mode = text(formData, "thumbnailMode");
+  if (mode === "remove") {
+    await removeTelexThumb(id);
+    return { value: null };
+  }
+  if (mode === "url") {
+    const link = text(formData, "thumbnailUrl");
+    if (!isThumbLink(link) || link.length > 2000 || !URL.canParse(link)) return { failed: true };
+    await removeTelexThumb(id);
+    return { value: link };
+  }
+  if (mode === "file") {
+    const file = formData.get("thumbnailFile");
+    if (!(file instanceof File) || file.size === 0 || file.size > THUMB_MAX_BYTES || !THUMB_TYPES[file.type]) return { failed: true };
+    try {
+      return { value: await saveTelexThumb(id, new Uint8Array(await file.arrayBuffer()), file.type) };
+    } catch (error) {
+      console.error("[telex] thumbnail upload failed", error);
+      return { failed: true };
+    }
+  }
+  return {};
 }
 
 export async function deleteTelex(formData: FormData) {
@@ -99,6 +129,7 @@ export async function deleteTelex(formData: FormData) {
   await updateHubContent((content) => {
     content.telex = content.telex.filter((item) => item.id !== id);
   });
+  await removeTelexThumb(id).catch(() => undefined);
   syncKnowledgeLater([`telex:${id}`]);
   refresh();
   redirect("/admin/telex?done=deleted");
@@ -108,9 +139,15 @@ export async function duplicateTelex(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id");
   const copyId = newId("tx");
+  const source = (await getHubContent()).telex.find((item) => item.id === id);
+  let thumbnail = source?.thumbnail ?? null;
+  if (thumbnail && !isThumbLink(thumbnail)) {
+    const bytes = await readTelexThumb(id, thumbnail).catch(() => null);
+    thumbnail = bytes ? await saveTelexThumb(copyId, bytes, thumbContentType(thumbnail)).catch(() => null) : null;
+  }
   await updateHubContent((content) => {
-    const source = content.telex.find((item) => item.id === id);
-    if (source) content.telex.unshift({ ...source, id: copyId, status: "draft", publishedAt: deskNow(), updatedAt: deskNow() });
+    const original = content.telex.find((item) => item.id === id);
+    if (original) content.telex.unshift({ ...original, id: copyId, thumbnail, status: "draft", publishedAt: deskNow(), updatedAt: deskNow() });
   });
   refresh();
   redirect(`/admin/telex/${copyId}?saved=draft`);
@@ -131,6 +168,7 @@ export async function bulkTelex(formData: FormData) {
     if (!STATUSES.includes(status)) return;
     content.telex = content.telex.map((item) => (ids.has(item.id) ? { ...item, status, updatedAt: deskNow() } : item));
   });
+  if (action === "delete") await Promise.all(Array.from(ids, (id) => removeTelexThumb(id).catch(() => undefined)));
   syncKnowledgeLater(Array.from(ids, (id) => `telex:${id}`));
   refresh();
   const join = back.includes("?") ? "&" : "?";
