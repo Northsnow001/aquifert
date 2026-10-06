@@ -82,9 +82,9 @@ export default async function HomePage() {
       {hedgeReports.length ? (
         <PaperForwardBrief reports={hedgeReports} />
       ) : (
-        <section className="aq-card p-5">
-          <h2 className="text-[16.5px] font-semibold text-ink">Direct Hedge</h2>
-          <p className="mt-1 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
+        <section className="aq-card px-5 py-4">
+          <h2 className="text-[19px] font-extrabold uppercase leading-none tracking-[0.12em] text-navy-800">Direct Hedge</h2>
+          <p className="mt-2 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
         </section>
       )}
     </div>

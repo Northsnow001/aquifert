@@ -27,12 +27,13 @@ export function FeedCardHeader({ id, title, subtitle, href, extra }: { id: strin
 }
 
 export function FeedGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid flex-1 grid-cols-1 content-start gap-2.5 p-3.5 group-data-[view=grid]/feed:gap-3 sm:group-data-[view=grid]/feed:grid-cols-2">{children}</div>;
+  return <div className="grid flex-1 grid-cols-1 content-start gap-2.5 p-3.5 group-data-[view=grid]/feed:content-stretch group-data-[view=grid]/feed:gap-3 sm:group-data-[view=grid]/feed:grid-cols-2">{children}</div>;
 }
 
 /**
  * One story, laid out as a row in list view or an image tile in tile view.
  * `lead` widens the first tile across both columns so an odd count leaves no gap.
+ * Tile images grow past 16:9 when the card beside this one is taller, so the two hub cards end level.
  */
 export function FeedItem({ href, lead = false, thumb, image, chips, title, meta }: { href: string; lead?: boolean; thumb: React.ReactNode; image: React.ReactNode; chips?: React.ReactNode; title: string; meta: React.ReactNode }) {
   return (
@@ -41,8 +42,8 @@ export function FeedItem({ href, lead = false, thumb, image, chips, title, meta 
       className={`group/item flex min-w-0 items-start gap-3 rounded-xl border border-border bg-s2/40 p-2.5 no-underline transition hover:border-navy-400/50 hover:bg-s2 group-data-[view=grid]/feed:flex-col group-data-[view=grid]/feed:gap-0 group-data-[view=grid]/feed:overflow-hidden group-data-[view=grid]/feed:bg-white group-data-[view=grid]/feed:p-0 group-data-[view=grid]/feed:hover:shadow-md ${lead ? "sm:group-data-[view=grid]/feed:col-span-2" : ""}`}
     >
       <span className="shrink-0 group-data-[view=grid]/feed:hidden">{thumb}</span>
-      <span className={`relative hidden aspect-[16/9] w-full overflow-hidden bg-s2 group-data-[view=grid]/feed:block ${lead ? "sm:aspect-[16/7]" : ""}`}>{image}</span>
-      <span className="block min-w-0 flex-1 group-data-[view=grid]/feed:w-full group-data-[view=grid]/feed:p-3">
+      <span className={`relative hidden aspect-[16/9] w-full grow overflow-hidden bg-s2 group-data-[view=grid]/feed:block ${lead ? "sm:aspect-[16/7]" : ""}`}>{image}</span>
+      <span className="block min-w-0 flex-1 group-data-[view=grid]/feed:w-full group-data-[view=grid]/feed:flex-none group-data-[view=grid]/feed:p-3">
         {chips ? <span className="flex flex-wrap items-center gap-1">{chips}</span> : null}
         <span className="mt-1 line-clamp-2 block text-[13.5px] font-semibold leading-snug text-ink group-hover/item:underline">{title}</span>
         <span className="mt-0.5 block text-[11.5px] text-dim">{meta}</span>
