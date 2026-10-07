@@ -40,7 +40,8 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(login, response);
   }
 
-  if (signedIn && SIGNED_IN_BOUNCE.has(pathname)) {
+  const previewingHome = pathname === "/" && request.nextUrl.searchParams.has("preview");
+  if (signedIn && SIGNED_IN_BOUNCE.has(pathname) && !previewingHome) {
     const requested = pathname === "/login" ? request.nextUrl.searchParams.get("redirect_to") : null;
     const dest = new URL(safePath(requested) ?? "/hub", request.url);
     return redirectWithCookies(dest, response);

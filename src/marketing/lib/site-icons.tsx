@@ -1,0 +1,61 @@
+import {
+  Anchor, Award, BarChart3, BookOpen, Bot, Briefcase, Calculator, ChartLine, Check, Clock, Compass, Droplets, Factory,
+  FileStack, FlaskConical, Globe2, Handshake, Landmark, Layers, Leaf, Lightbulb, Lock, Mail, Map, MessageCircle, Package,
+  Phone, Radio, RefreshCw, Rocket, Route, Search, ShieldCheck, Ship, ShoppingCart, Sparkles, Sprout, Star, Sun, Target,
+  TrendingUp, Truck, Users, Wallet, Wheat, Zap, type LucideIcon,
+} from "lucide-react";
+import type { SiteIconName } from "@/lib/site-content/normalize";
+
+export const SITE_ICONS: Record<SiteIconName, LucideIcon> = {
+  radio: Radio,
+  ship: Ship,
+  "line-chart": ChartLine,
+  "file-stack": FileStack,
+  route: Route,
+  bot: Bot,
+  calculator: Calculator,
+  "book-open": BookOpen,
+  compass: Compass,
+  wallet: Wallet,
+  "shield-check": ShieldCheck,
+  globe: Globe2,
+  handshake: Handshake,
+  leaf: Leaf,
+  landmark: Landmark,
+  refresh: RefreshCw,
+  factory: Factory,
+  "shopping-cart": ShoppingCart,
+  sprout: Sprout,
+  wheat: Wheat,
+  rocket: Rocket,
+  check: Check,
+  star: Star,
+  zap: Zap,
+  truck: Truck,
+  package: Package,
+  anchor: Anchor,
+  "bar-chart": BarChart3,
+  users: Users,
+  lock: Lock,
+  clock: Clock,
+  target: Target,
+  lightbulb: Lightbulb,
+  award: Award,
+  briefcase: Briefcase,
+  map: Map,
+  search: Search,
+  flask: FlaskConical,
+  droplets: Droplets,
+  sun: Sun,
+  mail: Mail,
+  phone: Phone,
+  message: MessageCircle,
+  "trending-up": TrendingUp,
+  layers: Layers,
+  sparkles: Sparkles,
+};
+
+export function SiteIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = SITE_ICONS[name as SiteIconName] ?? Check;
+  return <Icon className={className} aria-hidden="true" />;
+}

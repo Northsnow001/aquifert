@@ -14,6 +14,7 @@ import {
   FlaskConical,
   FolderTree,
   Gauge,
+  Globe2,
   Import,
   Inbox,
   KeyRound,
@@ -59,6 +60,7 @@ export const ADMIN_ICONS = {
   briefing: Newspaper,
   requests: UserPlus,
   nitrogen: FlaskConical,
+  website: Globe2,
 };
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ADMIN_ICONS; badge?: string | number };
@@ -66,6 +68,7 @@ export type NavGroup = { title: string; items: NavItem[] };
 
 const GROUP_TONE: Record<string, string> = {
   Overview: "aq-chip-blue",
+  "Public site": "aq-chip-blue",
   "AQ Modules": "aq-chip-blue",
   Calculators: "aq-chip-blue",
   Desk: "aq-chip-amber",

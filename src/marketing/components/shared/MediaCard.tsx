@@ -7,8 +7,8 @@
  * prefers-reduced-motion the video never plays; the poster carries the story.
  */
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@/marketing/router";
 import { ArrowUpRight } from "lucide-react";
+import { SiteLink } from "@/marketing/components/shared/SiteLink";
 
 export function MediaCard({
   video,
@@ -35,7 +35,7 @@ export function MediaCard({
   // Gentle ambient autoplay on desktops that allow motion; pause when out of view.
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !video) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const io = new IntersectionObserver(
       ([e]) => {
@@ -49,7 +49,7 @@ export function MediaCard({
     );
     io.observe(v);
     return () => io.disconnect();
-  }, []);
+  }, [video]);
 
   const play = () => {
     setActive(true);
@@ -61,52 +61,59 @@ export function MediaCard({
   };
 
   return (
-    <Link
-      to={to}
+    <SiteLink
+      href={to}
       onMouseEnter={play}
       onMouseLeave={stop}
       onFocus={play}
       onBlur={stop}
       className={`group relative block overflow-hidden rounded-3xl bg-navy-900 ${ratio} focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2`}
-      aria-label={`${tagline}, ${cta}`}
+      aria-label={cta ? `${tagline}, ${cta}` : tagline}
     >
-      <img
-        src={poster}
-        alt=""
-        aria-hidden="true"
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-        }}
-        className="absolute inset-0 h-full w-full object-cover"
-        loading="lazy"
-      />
-      <video
-        ref={videoRef}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster={poster}
-        role="img"
-        aria-label={label}
-        className="absolute inset-0 h-full w-full object-cover"
-      >
-        <source src={video} type="video/mp4" />
-      </video>
+      {poster ? (
+        <img
+          src={poster}
+          alt=""
+          aria-hidden="true"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+        />
+      ) : null}
+      {video ? (
+        <video
+          key={video}
+          ref={videoRef}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={poster || undefined}
+          role="img"
+          aria-label={label || undefined}
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          <source src={video} type="video/mp4" />
+        </video>
+      ) : null}
       <div
         className="absolute inset-0 bg-gradient-to-t from-navy-900/85 via-navy-900/20 to-transparent transition-opacity duration-500 group-hover:from-navy-900/70"
         aria-hidden
       />
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
         <p className="text-lg font-bold leading-snug text-white sm:text-xl">{tagline}</p>
-        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-[12px] font-semibold text-white backdrop-blur-xs transition-colors group-hover:bg-teal-500">
-          {cta}
-          <ArrowUpRight
-            className={`h-3.5 w-3.5 transition-transform duration-300 ${active ? "-translate-y-0.5 translate-x-0.5" : ""}`}
-            aria-hidden="true"
-          />
-        </span>
+        {cta ? (
+          <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-[12px] font-semibold text-white backdrop-blur-xs transition-colors group-hover:bg-teal-500">
+            {cta}
+            <ArrowUpRight
+              className={`h-3.5 w-3.5 transition-transform duration-300 ${active ? "-translate-y-0.5 translate-x-0.5" : ""}`}
+              aria-hidden="true"
+            />
+          </span>
+        ) : null}
       </div>
-    </Link>
+    </SiteLink>
   );
 }

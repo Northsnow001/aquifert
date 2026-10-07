@@ -37,6 +37,7 @@ export function Seo({
   jsonLd?: Record<string, unknown>[];
 }) {
   useEffect(() => {
+    const shareImage = /^https?:\/\//.test(image) ? image : `${SITE}${image}`;
     document.title = title;
     upsertMeta("name", "description", description);
     if (keywords) upsertMeta("name", "keywords", keywords);
@@ -46,11 +47,11 @@ export function Seo({
     upsertMeta("property", "og:title", title);
     upsertMeta("property", "og:description", description);
     upsertMeta("property", "og:url", `${SITE}${path}`);
-    upsertMeta("property", "og:image", `${SITE}${image}`);
+    upsertMeta("property", "og:image", shareImage);
     upsertMeta("name", "twitter:card", "summary_large_image");
     upsertMeta("name", "twitter:title", title);
     upsertMeta("name", "twitter:description", description);
-    upsertMeta("name", "twitter:image", `${SITE}${image}`);
+    upsertMeta("name", "twitter:image", shareImage);
 
     let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!canonical) {
@@ -69,7 +70,7 @@ export function Seo({
       return s;
     });
     return () => scripts.forEach((s) => s.remove());
-  }, [title, description, path, keywords, jsonLd]);
+  }, [title, description, path, keywords, image, jsonLd]);
 
   return null;
 }

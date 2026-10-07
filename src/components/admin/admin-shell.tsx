@@ -43,6 +43,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
 
   const groups: NavGroup[] = [
     { title: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }] },
+    { title: "Public site", items: [{ href: "/admin/site-content", label: "Website content", icon: "website" }] },
     {
       title: "Publishing",
       items: [

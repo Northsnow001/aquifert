@@ -12,6 +12,7 @@ import {
   Compass,
   FolderTree,
   Gauge,
+  Globe2,
   Import,
   Inbox,
   Lightbulb,
@@ -32,6 +33,7 @@ import { GUIDE_GROUPS, sectionText, type GuideIcon, type GuideSection } from "@/
 const ICONS: Record<GuideIcon, typeof Radio> = {
   start: Compass,
   routine: CalendarCheck,
+  website: Globe2,
   telex: Radio,
   indicators: Gauge,
   hedge: Table2,

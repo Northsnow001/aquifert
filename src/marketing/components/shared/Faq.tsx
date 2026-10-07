@@ -10,7 +10,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
   return (
     <div className="divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card shadow-[0_2px_4px_rgb(14_32_49/0.06),0_24px_48px_-24px_rgb(37_79_118/0.3)]">
       {items.map((f, i) => (
-        <details key={f.q} className="group px-6 py-5 open:bg-muted/40 sm:px-8" name="faq">
+        <details key={i} className="group px-6 py-5 open:bg-muted/40 sm:px-8" name="faq">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left text-base font-semibold text-navy-900 marker:hidden dark:text-white [&::-webkit-details-marker]:hidden">
             <span>
               <span className="mr-3 font-data text-sm font-bold text-teal-600 dark:text-teal-400">
@@ -20,7 +20,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
             </span>
             <ChevronDown className="h-5 w-5 shrink-0 text-slate-500 transition-transform duration-300 group-open:rotate-180 dark:text-slate-400" />
           </summary>
-          <p className="mt-3 max-w-3xl pl-9 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{f.a}</p>
+          <p className="mt-3 max-w-3xl whitespace-pre-line pl-9 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{f.a}</p>
         </details>
       ))}
     </div>
@@ -47,14 +47,14 @@ export function SectionHeader({
   sub,
   center = false,
 }: {
-  kicker: string;
+  kicker?: string;
   title: string;
   sub?: string;
   center?: boolean;
 }) {
   return (
     <Reveal className={center ? "text-center" : ""}>
-      <p className="text-sm font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400">{kicker}</p>
+      {kicker ? <p className="text-sm font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400">{kicker}</p> : null}
       <h2 className={`mt-2 text-3xl font-bold tracking-tight text-navy-900 dark:text-white sm:text-4xl ${center ? "mx-auto max-w-3xl text-balance" : ""}`}>
         {title}
       </h2>

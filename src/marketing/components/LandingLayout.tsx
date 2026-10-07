@@ -13,6 +13,8 @@ import { Logo } from "@/marketing/components/shared/Logo";
 import { OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
 import { LEGAL_LINKS } from "@/lib/legal/documents";
+import { fillYear } from "@/lib/site-content/normalize";
+import { useSiteGlobal } from "@/marketing/lib/site-global";
 
 const PRIMARY_NAV = [
   { to: "/", label: "Home" },
@@ -30,10 +32,8 @@ const UTILITY_NAV = [
 /** Event the LeadMagnet modal listens for, Request access opens the lead form. */
 export const OPEN_LEAD_MAGNET_EVENT = "aq:open-lead-magnet";
 
-const MARKET_DATA_DISCLAIMER =
-  "Fertilizer price indications are compiled from public sources and Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.";
-
 export function LandingLayout({ children }: { children: ReactNode }) {
+  const { header, footer } = useSiteGlobal();
   const [scrolled, setScrolled] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -123,14 +123,14 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             to="/login"
             className="hidden h-9 items-center text-[12px] font-semibold uppercase tracking-wide text-navy-800 underline-offset-4 hover:underline sm:inline-flex"
           >
-            Log in
+            {header.loginLabel}
           </Link>
           <button
             type="button"
             onClick={() => window.dispatchEvent(new Event(OPEN_LEAD_MAGNET_EVENT))}
             className="hidden h-9 items-center rounded bg-navy-700 px-4 text-[12px] font-semibold uppercase tracking-wide text-white hover:bg-navy-800 sm:inline-flex"
           >
-            Request access
+            {header.accessLabel}
           </button>
           <button
             type="button"
@@ -174,14 +174,14 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               to="/login"
               className="mt-6 inline-flex h-11 items-center justify-center rounded border border-navy-700 px-4 text-sm font-semibold uppercase tracking-wide text-navy-800"
             >
-              Log in
+              {header.loginLabel}
             </Link>
             <button
               type="button"
               onClick={() => window.dispatchEvent(new Event(OPEN_LEAD_MAGNET_EVENT))}
               className="mt-2 inline-flex h-11 items-center justify-center rounded bg-navy-700 px-4 text-sm font-semibold uppercase tracking-wide text-white"
             >
-              Request access
+              {header.accessLabel}
             </button>
           </nav>
         </div>
@@ -197,20 +197,21 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <div>
               <Logo size={34} light />
-              <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-slate-400">
-                Aquifert aims to provide its select clients an absolute advantage in their
-                fertiliser timing and sourcing. We offer a unique combination of analytic
-                and transparent sourcing options.
-              </p>
+              {footer.about ? <p className="mt-4 max-w-xs whitespace-pre-line text-[13px] leading-relaxed text-slate-400">{footer.about}</p> : null}
               <p className="mt-4 text-[13px] text-slate-400">
-                @Aquiferts ·{" "}
-                <a href="https://www.linkedin.com/company/aquifert/" target="_blank" rel="noopener noreferrer" className="text-white underline-offset-2 hover:underline">
-                  LinkedIn
-                </a>{" "}
-                ·{" "}
-                <a href="mailto:enquiry@aquifert.com" className="text-white underline-offset-2 hover:underline">
-                  enquiry@aquifert.com
-                </a>
+                {[
+                  footer.handle ? <span key="handle">{footer.handle}</span> : null,
+                  footer.linkedin ? (
+                    <a key="linkedin" href={footer.linkedin} target="_blank" rel="noopener noreferrer" className="text-white underline-offset-2 hover:underline">
+                      LinkedIn
+                    </a>
+                  ) : null,
+                  <a key="email" href={`mailto:${footer.email}`} className="text-white underline-offset-2 hover:underline">
+                    {footer.email}
+                  </a>,
+                ]
+                  .filter(Boolean)
+                  .flatMap((part, i) => (i ? [<span key={`dot-${i}`}> · </span>, part] : [part]))}
               </p>
             </div>
             <nav aria-label="Platform">
@@ -254,8 +255,8 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             </nav>
           </div>
           <div className="mt-12 border-t border-white/10 pt-6">
-            <p className="text-[12px] text-slate-400">© 2026 Aquifert. All rights reserved.</p>
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">{MARKET_DATA_DISCLAIMER}</p>
+            {footer.copyright ? <p className="text-[12px] text-slate-400">{fillYear(footer.copyright)}</p> : null}
+            {footer.disclaimer ? <p className="mt-3 whitespace-pre-line text-[11px] leading-relaxed text-slate-500">{footer.disclaimer}</p> : null}
           </div>
         </div>
       </footer>

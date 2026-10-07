@@ -2,98 +2,23 @@
 
 /**
  * Help, public help centre with the Aquibot assistant. Aquibot answers from
- * a curated knowledge base of the platform, membership and trading process;
- * anything it can't answer routes to the human desk.
+ * the answers kept in the admin's Public website editor; anything it can't
+ * answer routes to the human desk.
  */
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@/marketing/router";
 import { ArrowRight, Bot, Send, User } from "lucide-react";
+import type { SiteContent } from "@/lib/site-content/schema";
+import { pickAnswer, splitLines } from "@/lib/site-content/normalize";
 import { MarketingLayout } from "@/marketing/components/MarketingLayout";
 import { Seo } from "@/marketing/components/shared/Seo";
 import { Reveal } from "@/marketing/components/shared/Reveal";
+import { SiteLink } from "@/marketing/components/shared/SiteLink";
 
+type Help = SiteContent["help"];
 type Msg = { from: "bot" | "user"; text: string };
 
-const KB: { match: string[]; answer: string }[] = [
-  {
-    match: ["member", "pricing", "plan", "cost", "price of membership", "subscription", "sprout", "harvest", "scale"],
-    answer:
-      "Membership replaces per-tonne margin with one flat fee: AQ Zero Sprout (up to 200t a month), AQ Zero Harvest (201–600t) and AQ Zero Scale (unlimited). AQ Analytics covers licensed market data and analysis without physical trading. The desk confirms pricing for your tier with you directly. Full details are on the Membership page.",
-  },
-  {
-    match: ["quote", "request", "buy", "purchase", "order", "source", "sourcing"],
-    answer:
-      "Create a free account, then raise a sourcing request with product, tonnage, destination and delivery window. Our desk matches you with vetted suppliers and returns a landed-cost quote, product, freight, clearing and duties itemised.",
-  },
-  {
-    match: ["freight", "shipping", "delivery", "voyage", "tracking", "container", "port"],
-    answer:
-      "Every order carries a live shipment record, vessel, container, bill of lading and ten milestone checkpoints from gate-in to out-for-delivery, with revised ETAs surfaced automatically. The Freight Calculator gives instant cost estimates before you commit.",
-  },
-  {
-    match: ["price", "prices", "market", "data", "index", "assessment"],
-    answer:
-      "Signed-in users see live market data in the Hub, nitrogen, phosphate and potash gauges, desk commentary, price boards and freight analytics. Price indications are compiled from public sources and Aquifert desk assessments; they are information only, not a price assessment.",
-  },
-  {
-    match: ["supplier", "sell", "producer", "selling"],
-    answer:
-      "Suppliers pass KYC/KYB review, then receive vetted buyer demand through the supplier portal, AI-polished quotes, escrowed payouts and advisory support on execution from factory to port. Register and choose the supplier path to start.",
-  },
-  {
-    match: ["financ", "credit", "invoice", "payment terms"],
-    answer:
-      "AQ Zero Harvest and AQ Zero Scale members can finance up to 85% of a verified invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules.",
-  },
-  {
-    match: ["account", "register", "sign up", "signup", "log in", "login", "password"],
-    answer:
-      "Use Create an account to register with your work email. We send a 6-digit verification code — enter it on the next screen, set a password, then you'll land in the portal. Sign-in after that is email + password. If you're locked out, use Forgot password on the login page.",
-  },
-  {
-    match: ["product", "urea", "dap", "map", "mop", "npk", "micronutrient", "water soluble", "zinc", "iron"],
-    answer:
-      "We trade water-soluble and specialty fertilizers, Urea, DAP, MOP, MAP and NPK grades for fertigation and foliar programmes, plus micronutrients including Zinc and Iron for high-value crops.",
-  },
-  {
-    match: ["contact", "human", "person", "phone", "email", "desk", "talk"],
-    answer:
-      "The desk is at enquiry@aquifert.com. Include your company, product and tonnage and the right trader will reply within one business day.",
-  },
-  {
-    match: ["safe", "trust", "vet", "kyc", "compliance", "anonymous"],
-    answer:
-      "Every counterparty passes credit and compliance checks before a quote is exchanged, and nothing that could reveal a supplier ever reaches a buyer. The engine flags, a human clears, that rule runs through the whole platform.",
-  },
-];
-
-const FALLBACK =
-  "That's beyond what I can answer confidently. The desk can, write to enquiry@aquifert.com with your question and a human will reply within one business day. Meanwhile, the Help topics below cover membership, quoting, freight and accounts.";
-
-const SUGGESTIONS = [
-  "How much does membership cost?",
-  "How do I request a quote?",
-  "How does shipment tracking work?",
-  "How do I sell on Aquifert?",
-];
-
-function answer(q: string): string {
-  const lower = q.toLowerCase();
-  let best: { score: number; text: string } = { score: 0, text: FALLBACK };
-  for (const k of KB) {
-    const score = k.match.reduce((a, m) => a + (lower.includes(m) ? m.length : 0), 0);
-    if (score > best.score) best = { score, text: k.answer };
-  }
-  return best.text;
-}
-
-function Aquibot() {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    {
-      from: "bot",
-      text: "Hello, I'm Aquibot, the Aquifert assistant. Ask me about membership, quoting, freight, market data or your account. Anything I can't answer goes straight to the human desk.",
-    },
-  ]);
+function Aquibot({ c }: { c: Help["assistant"] }) {
+  const [msgs, setMsgs] = useState<Msg[]>([{ from: "bot", text: c.greeting }]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -104,9 +29,11 @@ function Aquibot() {
   const send = (text: string) => {
     const q = text.trim();
     if (!q) return;
-    setMsgs((m) => [...m, { from: "user", text: q }, { from: "bot", text: answer(q) }]);
+    setMsgs((m) => [...m, { from: "user", text: q }, { from: "bot", text: pickAnswer(q, c.answers, c.fallback) }]);
     setInput("");
   };
+
+  const suggestions = splitLines(c.suggestions);
 
   return (
     <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-[0_2px_4px_rgb(14_32_49/0.08),0_28px_60px_-20px_rgb(37_79_118/0.35)]">
@@ -130,7 +57,7 @@ function Aquibot() {
               {m.from === "bot" ? <Bot className="h-4 w-4" aria-hidden="true" /> : <User className="h-4 w-4" aria-hidden="true" />}
             </span>
             <p
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-[13.5px] leading-relaxed ${
+              className={`max-w-[80%] whitespace-pre-line rounded-2xl px-4 py-2.5 text-[13.5px] leading-relaxed ${
                 m.from === "bot" ? "rounded-tl-sm bg-muted text-navy-900" : "rounded-tr-sm bg-navy-700 text-white"
               }`}
             >
@@ -140,18 +67,20 @@ function Aquibot() {
         ))}
       </div>
       <div className="border-t border-border px-4 py-3">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => send(s)}
-              className="rounded-full border border-slate-300 px-3 py-1 text-[12px] font-medium text-slate-600 transition-colors hover:border-teal-600 hover:text-teal-700"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        {suggestions.length ? (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => send(s)}
+                className="rounded-full border border-slate-300 px-3 py-1 text-[12px] font-medium text-slate-600 transition-colors hover:border-teal-600 hover:text-teal-700"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <form
           className="flex items-center gap-2"
           onSubmit={(e) => {
@@ -180,35 +109,13 @@ function Aquibot() {
   );
 }
 
-const TOPICS = [
-  {
-    title: "Membership & billing",
-    body: "Tiers, tonnage limits and cancellations, AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale compared.",
-    to: "/membership",
-  },
-  {
-    title: "Requesting quotes",
-    body: "Raise a sourcing request, receive landed-cost quotes from vetted suppliers, accept and fund.",
-    to: "/platform",
-  },
-  {
-    title: "Freight & tracking",
-    body: "Ten milestone checkpoints, live vessel positions, revised ETAs and documents on every order.",
-    to: "/platform",
-  },
-  {
-    title: "Why Aquifert",
-    body: "Due diligence, the supply-chain network and twenty years of trading behind every quote.",
-    to: "/why-aquifert",
-  },
-];
-
-export default function Help() {
+export default function Help({ content }: { content: Help }) {
+  const { seo, hero, assistant, topics, desk } = content;
   return (
     <MarketingLayout>
       <Seo
-        title="Help & Aquibot, Aquifert Support"
-        description="Get help with Aquifert: ask Aquibot about membership, quoting, freight tracking and accounts, or browse help topics and contact the trading desk."
+        title={seo.title}
+        description={seo.description}
         keywords="aquifert help, aquibot, fertilizer trading support, membership questions, freight tracking help"
         path="/help"
       />
@@ -216,14 +123,12 @@ export default function Help() {
       <section className="bg-navy-900" aria-labelledby="help-heading">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <Reveal>
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-teal-300">Help centre</p>
+            {hero.kicker ? <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-teal-300">{hero.kicker}</p> : null}
             <h1 id="help-heading" className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl">
-              Ask Aquibot. <span className="text-teal-300">Or ask the desk.</span>
+              {hero.title}
+              {hero.highlight ? <> <span className="text-teal-300">{hero.highlight}</span></> : null}
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-300">
-              Instant answers on membership, quoting, freight and your account, 
-              with a human trader behind every escalation.
-            </p>
+            {hero.body ? <p className="mt-5 max-w-xl whitespace-pre-line text-lg leading-relaxed text-slate-300">{hero.body}</p> : null}
           </Reveal>
         </div>
       </section>
@@ -231,35 +136,35 @@ export default function Help() {
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6" aria-label="Aquibot assistant">
         <div className="grid items-start gap-10 lg:grid-cols-[1fr_380px]">
           <Reveal>
-            <Aquibot />
+            <Aquibot c={assistant} />
           </Reveal>
           <Reveal delay={100}>
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white">Browse help topics</h2>
-              {TOPICS.map((t) => (
-                <Link
-                  key={t.title}
-                  to={t.to}
+              <h2 className="text-lg font-bold text-navy-900 dark:text-white">{topics.title}</h2>
+              {topics.items.map((t, i) => (
+                <SiteLink
+                  key={i}
+                  href={t.link || "/"}
                   className="group block rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <p className="flex items-center justify-between text-sm font-semibold text-navy-900 dark:text-white">
                     {t.title}
                     <ArrowRight className="h-4 w-4 text-teal-600 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   </p>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">{t.body}</p>
-                </Link>
+                  {t.body ? <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">{t.body}</p> : null}
+                </SiteLink>
               ))}
               <div className="rounded-2xl bg-navy-900 p-5">
-                <p className="text-sm font-semibold text-white">Still need a human?</p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-slate-300">
-                  The desk answers within one business day.
-                </p>
-                <a
-                  href="mailto:enquiry@aquifert.com"
-                  className="mt-4 inline-flex items-center rounded-full bg-teal-500 px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-teal-400"
-                >
-                  Email the desk <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                </a>
+                <p className="text-sm font-semibold text-white">{desk.title}</p>
+                {desk.body ? <p className="mt-1.5 text-[13px] leading-relaxed text-slate-300">{desk.body}</p> : null}
+                {desk.primaryLabel ? (
+                  <SiteLink
+                    href={desk.primaryLink || "/contact"}
+                    className="mt-4 inline-flex items-center rounded-full bg-teal-500 px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-teal-400"
+                  >
+                    {desk.primaryLabel} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                  </SiteLink>
+                ) : null}
               </div>
             </div>
           </Reveal>

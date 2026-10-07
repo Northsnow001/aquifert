@@ -1,6 +1,7 @@
 export type GuideIcon =
   | "start"
   | "routine"
+  | "website"
   | "telex"
   | "indicators"
   | "hedge"
@@ -44,7 +45,7 @@ export const GUIDE: GuideSection[] = [
       {
         title: "Find your way around",
         steps: [
-          "The sidebar groups modules the way the hub does: Publishing, Library, Calculators, Desk, Assistant and Members.",
+          "The sidebar groups modules the way the hub does: Publishing, Library, Calculators, Desk, Assistant and Members. Public site holds the wording of the public website.",
           "Badges beside a module flag what needs you: drafts waiting, stale prices, ports to review, new enquiries.",
           "The tiles at the top of each page summarise its state at a glance.",
           "Pages with several jobs split them into tabs. The tab is part of the address, so you can bookmark or share it.",
@@ -89,6 +90,46 @@ export const GUIDE: GuideSection[] = [
           "Review ports flagged in Ports, and duty records members looked up in Netback, Import duties.",
         ],
       },
+    ],
+  },
+  {
+    id: "website",
+    group: "Public site",
+    title: "Website content",
+    icon: "website",
+    href: "/admin/site-content",
+    summary:
+      "The wording, pictures, videos and links on the public website: Home, Platform, Why Aquifert, Membership, Contact, Help, and the header and footer. A save shows on the live site straight away.",
+    tasks: [
+      {
+        title: "Change a page",
+        steps: [
+          "Pick the page from the tabs at the top. Each panel is one section of that page, in the order visitors see it.",
+          "Edit the text, then press Save changes or Ctrl+S. Fields marked with a star must have something in them.",
+          "Leave a button's text empty to hide the button. Most optional headings and notes hide themselves when empty too.",
+          "Open the page with View live page to check it. The preview beside the editor refreshes after each save.",
+        ],
+      },
+      {
+        title: "Lists, pictures and videos",
+        steps: [
+          "Lists such as questions, cards and features have Add, Move up, Move down and Remove buttons on each row.",
+          "Pictures: upload a JPG, PNG, WebP or GIF up to 3 MB, pick one of the site's own pictures, or paste an https:// address.",
+          "Videos: pick one of the site's own videos or paste a direct https:// link to an MP4 file. Leave a video empty to show the still picture only.",
+          "Links can be a site page (/membership), a section on the page (#plans), an email (mailto:desk@example.com), a phone number (tel:+44...) or a web address.",
+        ],
+      },
+      {
+        title: "Undo",
+        steps: [
+          "Discard changes drops everything since the last save.",
+          "Reset section puts that section back to the launch wording. Reset page does the same for the whole page. Either way, nothing changes on the site until you save.",
+        ],
+      },
+    ],
+    tips: [
+      "Membership prices and who can buy each plan live in AQ Modules, Access & allowances. This editor only changes the wording on the plan cards.",
+      "Search & sharing sets what Google, LinkedIn and WhatsApp show for each page. Keep titles under about 65 characters and descriptions under about 160.",
     ],
   },
   {

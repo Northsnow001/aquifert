@@ -8,6 +8,7 @@ import { Logo } from "@/marketing/components/shared/Logo";
 import { Reveal } from "@/marketing/components/shared/Reveal";
 import { Button } from "@/marketing/components/ui/button";
 import { useAuth } from "@/marketing/hooks/useAuth";
+import { useSiteGlobal } from "@/marketing/lib/site-global";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -19,6 +20,7 @@ const NAV = [
 
 /** Shared shell for the public marketing pages, consistent nav + footer. */
 export function MarketingLayout({ children }: { children: ReactNode }) {
+  const { footer } = useSiteGlobal();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const cta = isAuthenticated ? "/hub" : "/login";
@@ -68,9 +70,11 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-500">
-            © {new Date().getFullYear()} Aquifert Ltd · London · Water-soluble fertilizer trading, reimagined
-          </p>
+          {footer.tagline ? (
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-500">
+              © {new Date().getFullYear()} {footer.tagline}
+            </p>
+          ) : null}
         </div>
       </footer>
     </div>
@@ -78,7 +82,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 }
 
 /** Solid navy CTA band, white text on a flat, high-contrast surface. */
-export function CtaBand({ title, subtitle, ctaLabel = "Launch the demo" }: { title: string; subtitle: string; ctaLabel?: string }) {
+export function CtaBand({ title, subtitle, ctaLabel = "Launch the demo" }: { title: string; subtitle?: string; ctaLabel?: string }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   return (
@@ -86,7 +90,7 @@ export function CtaBand({ title, subtitle, ctaLabel = "Launch the demo" }: { tit
       <div className="mx-auto max-w-6xl px-4 py-20 text-center">
         <Reveal>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h2>
-          <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white">{subtitle}</p>
+          {subtitle ? <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white">{subtitle}</p> : null}
           <Button
             size="lg"
             className="mt-8 bg-teal-600 font-semibold text-white hover:bg-teal-500 aqf-btn-press"
