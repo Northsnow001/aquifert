@@ -10,6 +10,7 @@ import { AutoTranslate } from "@/components/app/auto-translate";
 import { toggleAquibot, useAquibotDock } from "@/components/app/aquibot-dock-store";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
 import { useI18n } from "@/components/app/i18n";
+import { IdleTimeout } from "@/components/app/idle-timeout";
 import { InfoTip } from "@/components/app/info-tip";
 import { LanguageMenu } from "@/components/app/language-menu";
 import { NavHoverCard } from "@/components/app/nav-hover-card";
@@ -451,6 +452,7 @@ export function AppShell({
       <Tour userId={user.id} />
       <CommandPalette items={palette} />
       <AutoTranslate />
+      <IdleTimeout email={user.email} />
     </div>
   );
 }

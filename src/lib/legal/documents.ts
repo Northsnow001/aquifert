@@ -1,11 +1,12 @@
-/** Fill these in once registration is complete; every document reads them from here. */
-export const COMPANY_NUMBER = "[●]";
-export const REGISTERED_OFFICE = "[●]";
+/** Every document, legal page and the site footer read the company details from here. */
+export const COMPANY_NUMBER = "14506592";
+export const REGISTERED_OFFICE = "71-75 Shelton Street, Covent Garden, London WC2H 9JQ, United Kingdom";
+export const COMPANY_DETAILS = `Aquifert Ltd is registered in England and Wales, company number ${COMPANY_NUMBER}. Registered office: ${REGISTERED_OFFICE}.`;
 
 export const LEGAL_UPDATED = "October 2026";
 export const LEGAL_CONTACT = "Aquifert Ltd · London · enquiry@aquifert.com";
 
-const ENTITY = `Aquifert Ltd (company number ${COMPANY_NUMBER}), whose registered office is at ${REGISTERED_OFFICE}, United Kingdom (“Aquifert”, “we”, “us”, “our”)`;
+const ENTITY = `Aquifert Ltd (company number ${COMPANY_NUMBER}), whose registered office is at ${REGISTERED_OFFICE} (“Aquifert”, “we”, “us”, “our”)`;
 
 /** A string is a paragraph; an array of strings is a bulleted list. */
 export type LegalBlock = string | string[];
@@ -203,7 +204,7 @@ export const LEGAL_DOCS: LegalDoc[] = [
         ],
       ]),
       section("Exercising your rights and complaints", [
-        "Email privacy@aquifert.com. We respond within one month. You also have the right to complain to the UK Information Commissioner’s Office (ICO), Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF, ico.org.uk — though we would welcome the chance to resolve your concern first.",
+        `Email privacy@aquifert.com, or write to Aquifert Ltd, ${REGISTERED_OFFICE}. We respond within one month. You also have the right to complain to the UK Information Commissioner’s Office (ICO), Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF, ico.org.uk — though we would welcome the chance to resolve your concern first.`,
       ]),
       section("Cookies", [
         "We use strictly necessary cookies to operate the Platform and, with your consent via the cookie banner or Cookie Preferences, analytics cookies. You can change your choices at any time via Cookie Preferences in the site footer.",
@@ -256,7 +257,9 @@ export const LEGAL_DOCS: LegalDoc[] = [
         "We maintain a breach response procedure. Breaches likely to risk individuals’ rights and freedoms are reported to the ICO within 72 hours of becoming aware, and affected individuals are notified without undue delay where there is a high risk.",
       ]),
       section("Retention", ["Retention periods are set out in our Privacy Policy (section 6). Data is deleted or irreversibly anonymised at the end of its retention period, subject to legal holds."]),
-      section("Contact", ["Data protection lead, Aquifert Ltd — privacy@aquifert.com. Supervisory authority: UK Information Commissioner’s Office (ico.org.uk)."]),
+      section("Contact", [
+        `Data protection lead, Aquifert Ltd, ${REGISTERED_OFFICE} — privacy@aquifert.com. Supervisory authority: UK Information Commissioner’s Office (ico.org.uk).`,
+      ]),
     ],
   },
   {

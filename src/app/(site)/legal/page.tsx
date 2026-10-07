@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, FileText } from "lucide-react";
 import { MarketingLayout } from "@/marketing/components/MarketingLayout";
-import { LEGAL_CONTACT, LEGAL_DOCS, LEGAL_UPDATED } from "@/lib/legal/documents";
+import { COMPANY_DETAILS, LEGAL_CONTACT, LEGAL_DOCS, LEGAL_UPDATED } from "@/lib/legal/documents";
 
 export const metadata: Metadata = {
   title: "Legal, Aquifert",
@@ -48,6 +48,7 @@ export default function LegalIndexPage() {
           ))}
         </ul>
         <p className="mt-10 text-sm text-slate-500">{LEGAL_CONTACT}</p>
+        <p className="mt-2 text-sm text-slate-500">{COMPANY_DETAILS}</p>
       </section>
     </MarketingLayout>
   );

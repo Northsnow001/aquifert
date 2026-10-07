@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { MarketingLayout } from "@/marketing/components/MarketingLayout";
 import { LegalContents, LegalSections } from "@/components/legal/legal-document";
-import { LEGAL_CONTACT, LEGAL_DOCS, LEGAL_UPDATED, legalDoc } from "@/lib/legal/documents";
+import { COMPANY_DETAILS, LEGAL_CONTACT, LEGAL_DOCS, LEGAL_UPDATED, legalDoc } from "@/lib/legal/documents";
 
 export const dynamicParams = false;
 
@@ -74,6 +74,7 @@ export default async function LegalDocumentPage({ params }: PageProps<"/legal/[s
             </a>
             .
           </p>
+          <p className="mt-3 text-sm text-slate-500">{COMPANY_DETAILS}</p>
         </article>
       </div>
     </MarketingLayout>

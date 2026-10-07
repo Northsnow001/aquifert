@@ -13,7 +13,7 @@ import { SiteLink, SiteNavLink } from "@/marketing/components/shared/SiteLink";
 import { CookieConsent, OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
 import { LeadMagnet, OPEN_LEAD_MAGNET_EVENT } from "@/marketing/components/LeadMagnet";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
-import { LEGAL_LINKS } from "@/lib/legal/documents";
+import { COMPANY_DETAILS, LEGAL_LINKS } from "@/lib/legal/documents";
 import { fillYear } from "@/lib/site-content/normalize";
 import { useSiteGlobal } from "@/marketing/lib/site-global";
 
@@ -223,6 +223,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="mt-12 border-t border-white/10 pt-6">
             {footer.copyright ? <p className="text-[12px] text-slate-400">{fillYear(footer.copyright)}</p> : null}
+            <p className="mt-1 text-[12px] text-slate-400">{COMPANY_DETAILS}</p>
             {footer.disclaimer ? <p className="mt-3 whitespace-pre-line text-[11px] leading-relaxed text-slate-500">{footer.disclaimer}</p> : null}
           </div>
         </div>

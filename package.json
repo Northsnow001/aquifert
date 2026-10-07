@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "data:push": "tsx --env-file-if-exists=.env.local scripts/push-data-to-supabase.ts",
-    "test": "tsx --test src/lib/freight/calculate.test.ts src/lib/netback/calculate.test.ts src/lib/tools/costs.test.ts src/lib/aquibot-engine/engine.test.ts src/lib/wp-import/map.test.ts src/lib/wp-import/unslash.test.ts src/lib/freight-desk/benchmark.test.ts src/lib/freight-desk/parse.test.ts src/lib/freight-desk/port-quality.test.ts src/lib/netback-desk/parse.test.ts src/lib/desk-settings/desk-settings.test.ts src/lib/aq-modules/modules.test.ts src/lib/i18n/machine-text.test.ts src/components/hub/nav.test.ts src/lib/ports.test.ts src/components/hub/markdown.test.tsx src/lib/telex-reads/stats.test.ts src/lib/site-content/site-content.test.ts"
+    "test": "tsx --test src/lib/freight/calculate.test.ts src/lib/netback/calculate.test.ts src/lib/tools/costs.test.ts src/lib/aquibot-engine/engine.test.ts src/lib/wp-import/map.test.ts src/lib/wp-import/unslash.test.ts src/lib/freight-desk/benchmark.test.ts src/lib/freight-desk/parse.test.ts src/lib/freight-desk/port-quality.test.ts src/lib/netback-desk/parse.test.ts src/lib/desk-settings/desk-settings.test.ts src/lib/aq-modules/modules.test.ts src/lib/i18n/machine-text.test.ts src/components/hub/nav.test.ts src/lib/ports.test.ts src/components/hub/markdown.test.tsx src/lib/telex-reads/stats.test.ts src/lib/site-content/site-content.test.ts src/lib/idle-timeout.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",

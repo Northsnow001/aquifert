@@ -4,11 +4,12 @@ import { ACTIVITY_COOKIE } from "@/lib/idle-timeout";
 import { DEMO_COOKIE } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 
-export async function POST(request: Request) {
+/** Ends this browser's session after the inactivity limit. Other devices stay signed in. */
+export async function POST() {
   const supabase = await createClient();
-  if (supabase) await supabase.auth.signOut();
+  if (supabase) await supabase.auth.signOut({ scope: "local" });
   const jar = await cookies();
   jar.delete(DEMO_COOKIE);
   jar.delete(ACTIVITY_COOKIE);
-  return NextResponse.redirect(new URL("/", request.url), 303);
+  return new NextResponse(null, { status: 204 });
 }

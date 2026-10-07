@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, LogOut, Menu, Search, X } from "lucide-react";
 import { AdminNav, AdminNavIcon, isAdminActive, type NavGroup } from "@/components/admin/admin-nav";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
+import { IdleTimeout } from "@/components/app/idle-timeout";
 import { initials, type SessionUser } from "@/lib/session-shared";
 
 function Brand() {
@@ -173,6 +174,7 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
       ) : null}
 
       <CommandPalette items={palette} askHref={null} />
+      <IdleTimeout email={user.email} />
     </div>
   );
 }
