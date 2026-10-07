@@ -208,7 +208,7 @@ function frameFor(kind: TemplateKind, audience: "applicant" | "admin", vars: Rec
   if (kind === "order") {
     return {
       preheader: "Your trading requirement has been received. The desk is reviewing it and will come back to you.",
-      tagline: "The governed fertilizer trading platform",
+      tagline: "Transparent Global Fertiliser Access",
       eyebrow: "Trading desk · Requirement received",
       heading: "Your requirement is with the desk",
       detailsTitle: "Your requirement",

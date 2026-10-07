@@ -378,7 +378,7 @@ export const SITE_SCHEMA = {
           menu: navLinks("Menu links", { min: 1, max: 8, hint: "Six or fewer fit on one line." }),
           utility: navLinks("Small links", { min: 0, max: 4, hint: "Beside the search button on wide screens." }),
           loginLabel: text("Log in link text", { max: 40, required: true }),
-          accessLabel: text("Request access button text", { max: 40, required: true, hint: "Opens the request-access form." }),
+          accessLabel: text("Request access button text", { max: 40, required: true, hint: "Opens the sign-up page." }),
         },
         { hideable: false },
       ),

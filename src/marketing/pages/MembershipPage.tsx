@@ -70,7 +70,7 @@ export function MembershipPage({ content }: { content: Membership }) {
       "@type": "Service",
       name: "Aquifert fertilizer trading membership",
       provider: { "@id": "https://aquifert.com/#organization" },
-      serviceType: "B2B fertilizer trading platform membership",
+      serviceType: "B2B fertilizer sourcing platform membership",
       areaServed: "GB",
       hasOfferCatalog: {
         "@type": "OfferCatalog",

@@ -11,7 +11,6 @@ import { Menu, Search, X } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { SiteLink, SiteNavLink } from "@/marketing/components/shared/SiteLink";
 import { CookieConsent, OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
-import { LeadMagnet, OPEN_LEAD_MAGNET_EVENT } from "@/marketing/components/LeadMagnet";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
 import { COMPANY_DETAILS, LEGAL_LINKS } from "@/lib/legal/documents";
 import { fillYear } from "@/lib/site-content/normalize";
@@ -102,13 +101,12 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           >
             {header.loginLabel}
           </Link>
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event(OPEN_LEAD_MAGNET_EVENT))}
+          <Link
+            to="/register"
             className="hidden h-9 items-center rounded bg-navy-700 px-4 text-[12px] font-semibold uppercase tracking-wide text-white hover:bg-navy-800 sm:inline-flex"
           >
             {header.accessLabel}
-          </button>
+          </Link>
           <button
             type="button"
             aria-label={drawer ? "Close menu" : "Open menu"}
@@ -145,13 +143,12 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             >
               {header.loginLabel}
             </Link>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new Event(OPEN_LEAD_MAGNET_EVENT))}
+            <Link
+              to="/register"
               className="mt-2 inline-flex h-11 items-center justify-center rounded bg-navy-700 px-4 text-sm font-semibold uppercase tracking-wide text-white"
             >
               {header.accessLabel}
-            </button>
+            </Link>
           </nav>
         </div>
       )}
@@ -160,9 +157,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
 
       <SiteSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {/* Consent banner; the lead form opens only from "Request access" (auto-popup hidden for exploratory phase) */}
       <CookieConsent />
-      <LeadMagnet auto={false} />
 
       {/* 12, Footer */}
       <footer className="bg-navy-900 text-slate-300">

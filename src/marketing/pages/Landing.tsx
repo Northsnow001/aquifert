@@ -212,7 +212,7 @@ function OnePlatform({ c }: { c: Home["platform"] }) {
             <Reveal key={i} delay={(i % 3) * 60} className="h-full">
               <SiteLink
                 href={to}
-                aria-label={`Learn more about ${f.title} on the Aquifert ONE fertilizer trading platform`}
+                aria-label={`Learn more about ${f.title} on the Aquifert ONE fertilizer sourcing platform`}
                 className="group flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-navy-700 hover:shadow-lg"
               >
                 <SiteIcon name={f.icon} className="h-5 w-5 text-teal-700" />
@@ -449,7 +449,7 @@ export default function Landing({ content }: { content: Home }) {
       <Seo
         title={content.seo.title}
         description={content.seo.description}
-        keywords="fertilizer trading platform, B2B fertilizer marketplace, buy fertilizer UK, water-soluble fertilizer suppliers, fertilizer landed cost, urea DAP MOP MAP NPK prices, fertilizer container tracking, fertilizer invoice financing"
+        keywords="fertilizer sourcing platform, B2B fertilizer marketplace, buy fertilizer UK, water-soluble fertilizer suppliers, fertilizer landed cost, urea DAP MOP MAP NPK prices, fertilizer container tracking, fertilizer invoice financing"
         path="/"
         image={hero.image || undefined}
         jsonLd={jsonLd}

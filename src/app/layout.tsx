@@ -30,11 +30,11 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "Aquifert, Fertilizer Trading Platform | True Landed Cost, Tracked to Your Gate",
+  title: "Aquifert, Fertilizer Sourcing Platform | True Landed Cost, Tracked to Your Gate",
   description:
-    "Aquifert is the B2B fertilizer trading platform where membership replaces margin. Source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK, at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
+    "Aquifert is the B2B fertilizer sourcing platform where membership replaces margin. Source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK, at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
   keywords:
-    "fertilizer trading platform, B2B fertilizer marketplace, buy fertilizer UK, water-soluble fertilizer suppliers, fertilizer landed cost, urea DAP MOP MAP NPK prices, fertilizer container tracking, fertilizer invoice financing, agricultural supply chain platform",
+    "fertilizer sourcing platform, B2B fertilizer marketplace, buy fertilizer UK, water-soluble fertilizer suppliers, fertilizer landed cost, urea DAP MOP MAP NPK prices, fertilizer container tracking, fertilizer invoice financing, agricultural supply chain platform",
   robots: "index, follow, max-image-preview:large, max-snippet:-1",
   icons: {
     icon: [{ url: "/brand/favicon-32.png", type: "image/png" }],

@@ -6,9 +6,9 @@ const DESK_MAIL = "mailto:enquiry@aquifert.com";
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   home: {
     seo: {
-      title: "Aquifert, B2B Fertilizer Trading Platform | True Landed Cost, Tracked to Your Gate",
+      title: "Aquifert, B2B Fertilizer Sourcing Platform | True Landed Cost, Tracked to Your Gate",
       description:
-        "Aquifert is the UK-based B2B fertilizer trading platform where membership replaces margin. Source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK from vetted global producers, with AI-drafted quotes, live container tracking and invoice financing.",
+        "Aquifert is the UK-based B2B fertilizer sourcing platform where membership replaces margin. Source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK from vetted global producers, with AI-drafted quotes, live container tracking and invoice financing.",
     },
     hero: {
       title: "Connecting Clients in the Global Fertiliser Market",
@@ -108,7 +108,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       title: "Fertilizer trading on Aquifert, FAQ",
       sub: "What the platform is, how pricing works, what you can source and how both sides are protected.",
       items: [
-        { q: "What is Aquifert?", a: "Aquifert is a UK-based B2B fertilizer trading platform that connects vetted fertilizer buyers and producers through one governed workspace. It covers water-soluble and specialty fertilizers as well as Urea, DAP, MOP, MAP and NPK, with AI-drafted quotes, live container tracking and market intelligence built in." },
+        { q: "What is Aquifert?", a: "Aquifert is a UK-based B2B fertilizer sourcing platform that connects vetted fertilizer buyers and producers through one governed workspace. It covers water-soluble and specialty fertilizers as well as Urea, DAP, MOP, MAP and NPK, with AI-drafted quotes, live container tracking and market intelligence built in." },
         { q: "How does Aquifert fertilizer pricing work?", a: "Aquifert replaces the traditional trader's per-tonne margin with a flat membership fee. Members see the full landed-cost breakdown on every quote, product, ocean freight, clearing and duties, so they buy at true cost. AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale tiers scale with monthly tonnage." },
         { q: "Which fertilizers can I source through Aquifert?", a: "Members source water-soluble fertilizers, micronutrients such as Zinc and Iron, and bulk commodity grades including Urea, DAP, MAP, MOP and NPK, shipped containerised or in bulk from vetted producers in the Middle East, North Africa, Europe and Asia." },
         { q: "How does Aquifert protect buyers and suppliers?", a: "Every party passes KYC/KYB due diligence before trading. Buyers and suppliers never see each other's identity, every document is scanned for supplier-identifying information and cleared by a human before release, and AI-drafted messages are approved by staff before anything is sent." },
@@ -124,9 +124,9 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   platform: {
     seo: {
-      title: "Fertilizer Trading Platform Features, AI Quotes, Live Tracking & Market Intelligence | Aquifert",
+      title: "Fertilizer Sourcing Platform Features, AI Quotes, Live Tracking & Market Intelligence | Aquifert",
       description:
-        "Explore the Aquifert fertilizer trading platform: an AI communication hub that turns WhatsApp and email inquiries into deal cards, a quoting engine with transparent landed-cost breakdowns, live container tracking across ten milestones, fertilizer market intelligence and invoice financing.",
+        "Explore the Aquifert fertilizer sourcing platform: an AI communication hub that turns WhatsApp and email inquiries into deal cards, a quoting engine with transparent landed-cost breakdowns, live container tracking across ten milestones, fertilizer market intelligence and invoice financing.",
     },
     hero: {
       title: "AQ ZERO + AQ Analytics for the entire fertilizer stream",
@@ -166,10 +166,10 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     faq: {
       kicker: "Platform questions",
-      title: "How the fertilizer trading platform works, FAQ",
+      title: "How the fertilizer sourcing platform works, FAQ",
       sub: "What Aquifert ONE does, how quotes are approved, and how both sides stay protected.",
       items: [
-        { q: "What does the Aquifert fertilizer trading platform do?", a: "Aquifert ONE is the workspace for the fertilizer trade. It turns WhatsApp and email inquiries into structured deal cards, generates quotes with transparent landed-cost breakdowns, tracks every container across ten live milestones, and adds market intelligence, freight analytics and invoice financing in the same flow." },
+        { q: "What does the Aquifert fertilizer sourcing platform do?", a: "Aquifert ONE is the workspace for the fertilizer trade. It turns WhatsApp and email inquiries into structured deal cards, generates quotes with transparent landed-cost breakdowns, tracks every container across ten live milestones, and adds market intelligence, freight analytics and invoice financing in the same flow." },
         { q: "How are fertilizer quotes produced on Aquifert?", a: "The desk's AI drafts each quote from live market data and freight rates, but nothing sends automatically. A human approver reviews every message, checks the margin maths, and only then does the quote reach the buyer. The engine flags; a human clears." },
         { q: "Can buyers and suppliers see each other on Aquifert?", a: "No. Buyers and suppliers never see each other's identity. Every document is scanned for supplier-identifying information against a protected registry and must be cleared by a human before a buyer can receive it." },
         { q: "Does Aquifert track fertilizer shipments live?", a: "Yes. Every consignment moves through a 14-stage tracker from factory gate to farm gate, with freight forwarders sending booking and shipping updates that buyers see in real time." },

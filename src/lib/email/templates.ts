@@ -53,7 +53,7 @@ export function supabaseAuthTemplates() {
   const verification = compose("Your Aquifert verification code", {
     title: "Your Aquifert verification code",
     preheader: "Your Aquifert verification code is inside. It expires in about an hour.",
-    tagline: "The governed fertilizer trading platform",
+    tagline: "Transparent Global Fertiliser Access",
     eyebrow: "Security check",
     heading: "Confirm your email address",
     blocks: [
@@ -76,7 +76,7 @@ export function supabaseAuthTemplates() {
   const reset = compose("Reset your Aquifert password", {
     title: "Reset your Aquifert password",
     preheader: "A link to reset your Aquifert password is inside. It expires in about an hour.",
-    tagline: "The governed fertilizer trading platform",
+    tagline: "Transparent Global Fertiliser Access",
     eyebrow: "Account recovery",
     heading: "Reset your password",
     blocks: [
@@ -114,7 +114,7 @@ export function contactReceiptEmail(input: { name: string; reference: string; to
   return compose(`We have received your message — ${input.reference}`, {
     title: "We have received your message",
     preheader: "Thank you for contacting Aquifert. Your message is with the team and we will reply shortly.",
-    tagline: "The governed fertilizer trading platform",
+    tagline: "Transparent Global Fertiliser Access",
     eyebrow: "Message received",
     heading: first ? `Thank you, ${first}` : "Thank you",
     blocks: [

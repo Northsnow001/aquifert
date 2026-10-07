@@ -21,7 +21,7 @@ export type EmailFrame = {
 
 const DEFAULT_FRAME: EmailFrame = {
   preheader: "",
-  tagline: "The governed fertilizer trading platform",
+  tagline: "Transparent Global Fertiliser Access",
   eyebrow: "Aquifert",
   heading: "",
   footerNote: "This is an automated message from Aquifert.",

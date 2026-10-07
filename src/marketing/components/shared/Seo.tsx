@@ -86,7 +86,7 @@ export const ORGANIZATION_JSONLD: Record<string, unknown> = {
       url: SITE,
       logo: `${SITE}/brand/logo-v2.png`,
       description:
-        "Aquifert is a UK-based B2B fertilizer trading platform. Members source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK, directly from vetted global producers at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
+        "Aquifert is a UK-based B2B fertilizer sourcing platform. Members source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK, directly from vetted global producers at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
       foundingLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: "London", addressCountry: "GB" } },
       knowsAbout: [
         "fertilizer trading",
