@@ -7,33 +7,25 @@
  * MarketingLayout (used by every other page) is untouched.
  */
 import { useEffect, useState, type ReactNode } from "react";
-import { Link, NavLink, useLocation } from "@/marketing/router";
+import { Link, useLocation } from "@/marketing/router";
 import { Menu, Search, X } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
+import { SiteLink, SiteNavLink } from "@/marketing/components/shared/SiteLink";
 import { OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
 import { LEGAL_LINKS } from "@/lib/legal/documents";
 import { fillYear } from "@/lib/site-content/normalize";
 import { useSiteGlobal } from "@/marketing/lib/site-global";
 
-const PRIMARY_NAV = [
-  { to: "/", label: "Home" },
-  { to: "/platform", label: "Platform" },
-  { to: "/why-aquifert", label: "Why Aquifert" },
-  { to: "/membership", label: "Fertiliser Now" },
-  { to: "/contact", label: "Contact" },
-];
-
-const UTILITY_NAV = [
-  { to: "/help", label: "Help" },
-  { to: "/contact", label: "Contact" },
-];
-
 /** Event the LeadMagnet modal listens for, Request access opens the lead form. */
 export const OPEN_LEAD_MAGNET_EVENT = "aq:open-lead-magnet";
 
 export function LandingLayout({ children }: { children: ReactNode }) {
   const { header, footer } = useSiteGlobal();
+  const footerColumns = [
+    { title: footer.firstTitle, links: footer.firstLinks },
+    { title: footer.secondTitle, links: footer.secondLinks },
+  ].filter((column) => column.title && column.links.length);
   const [scrolled, setScrolled] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -74,42 +66,30 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           <Logo size={36} />
         </Link>
         <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
-          {PRIMARY_NAV.map((n) => (
-            <NavLink
-              key={n.label}
-              to={n.to}
-              className={({ isActive }) =>
+          {header.menu.map((n, i) => (
+            <SiteNavLink
+              key={i}
+              href={n.link}
+              className={(isActive) =>
                 `relative py-2 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-navy-700 after:transition-opacity hover:text-navy-700 ${
                   isActive ? "text-navy-800 after:opacity-100" : "text-slate-600 after:opacity-0 hover:after:opacity-100"
                 }`
               }
             >
               {n.label}
-            </NavLink>
+            </SiteNavLink>
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <nav className="hidden items-center gap-4 xl:flex" aria-label="Utility">
-            {UTILITY_NAV.map((u) =>
-              u.to.startsWith("mailto:") ? (
-                <a
-                  key={u.label}
-                  href={u.to}
-                  className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:text-navy-800"
-                >
+          {header.utility.length ? (
+            <nav className="hidden items-center gap-4 xl:flex" aria-label="Utility">
+              {header.utility.map((u, i) => (
+                <SiteLink key={i} href={u.link} className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:text-navy-800">
                   {u.label}
-                </a>
-              ) : (
-                <Link
-                  key={u.label}
-                  to={u.to}
-                  className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:text-navy-800"
-                >
-                  {u.label}
-                </Link>
-              ),
-            )}
-          </nav>
+                </SiteLink>
+              ))}
+            </nav>
+          ) : null}
           <button
             type="button"
             aria-label="Search the website"
@@ -148,28 +128,20 @@ export function LandingLayout({ children }: { children: ReactNode }) {
       {drawer && (
         <div className="fixed inset-0 top-[72px] z-40 bg-white lg:hidden" role="dialog" aria-label="Menu">
           <nav className="flex flex-col gap-1 px-6 py-6" aria-label="Mobile">
-            {PRIMARY_NAV.map((n) => (
-              <NavLink
-                key={n.label}
-                to={n.to}
-                className="border-b border-slate-100 py-4 text-sm font-semibold uppercase tracking-[0.1em] text-navy-800"
-              >
+            {header.menu.map((n, i) => (
+              <SiteNavLink key={i} href={n.link} className={() => "border-b border-slate-100 py-4 text-sm font-semibold uppercase tracking-[0.1em] text-navy-800"}>
                 {n.label}
-              </NavLink>
+              </SiteNavLink>
             ))}
-            <div className="mt-4 flex flex-col gap-2">
-              {UTILITY_NAV.map((u) =>
-                u.to.startsWith("mailto:") ? (
-                  <a key={u.label} href={u.to} className="py-1 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
+            {header.utility.length ? (
+              <div className="mt-4 flex flex-col gap-2">
+                {header.utility.map((u, i) => (
+                  <SiteLink key={i} href={u.link} className="py-1 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
                     {u.label}
-                  </a>
-                ) : (
-                  <Link key={u.label} to={u.to} className="py-1 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
-                    {u.label}
-                  </Link>
-                ),
-              )}
-            </div>
+                  </SiteLink>
+                ))}
+              </div>
+            ) : null}
             <Link
               to="/login"
               className="mt-6 inline-flex h-11 items-center justify-center rounded border border-navy-700 px-4 text-sm font-semibold uppercase tracking-wide text-navy-800"
@@ -194,7 +166,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
       {/* 12, Footer */}
       <footer className="bg-navy-900 text-slate-300">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+          <div className={`grid gap-10 md:grid-cols-2 ${["lg:grid-cols-2", "lg:grid-cols-3", "lg:grid-cols-4"][footerColumns.length]}`}>
             <div>
               <Logo size={34} light />
               {footer.about ? <p className="mt-4 max-w-xs whitespace-pre-line text-[13px] leading-relaxed text-slate-400">{footer.about}</p> : null}
@@ -214,26 +186,20 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                   .flatMap((part, i) => (i ? [<span key={`dot-${i}`}> · </span>, part] : [part]))}
               </p>
             </div>
-            <nav aria-label="Platform">
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Platform</h3>
-              <ul className="mt-4 space-y-2 text-[13px]">
-                {["Aquifert ONE", "Freight Calculator", "Netback", "Library", "Tools", "Order Desk"].map((l) => (
-                  <li key={l}>
-                    <Link to="/platform" className="text-slate-300 hover:text-white">{l}</Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <nav aria-label="Company">
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Company</h3>
-              <ul className="mt-4 space-y-2 text-[13px]">
-                <li><Link to="/why-aquifert" className="text-slate-300 hover:text-white">Why Aquifert</Link></li>
-                <li><Link to="/membership" className="text-slate-300 hover:text-white">Membership</Link></li>
-                <li><Link to="/contact" className="text-slate-300 hover:text-white">Contact</Link></li>
-                <li><Link to="/platform" className="text-slate-300 hover:text-white">Help</Link></li>
-                <li><Link to="/why-aquifert" className="text-slate-300 hover:text-white">Careers</Link></li>
-              </ul>
-            </nav>
+            {footerColumns.map((column, c) => (
+              <nav key={c} aria-label={column.title}>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{column.title}</h3>
+                <ul className="mt-4 space-y-2 text-[13px]">
+                  {column.links.map((l, i) => (
+                    <li key={i}>
+                      <SiteLink href={l.link} className="text-slate-300 hover:text-white">
+                        {l.label}
+                      </SiteLink>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))}
             <nav aria-label="Legal">
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Legal</h3>
               <ul className="mt-4 space-y-2 text-[13px]">

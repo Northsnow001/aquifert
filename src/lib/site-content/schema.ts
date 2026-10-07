@@ -17,7 +17,8 @@ export type LeafField = TextField | LongTextField | LinesField | LinkField | Ima
 export type ListField = Base & { kind: "list"; item: Record<string, LeafField>; itemTitle: string; min: number; max: number };
 export type Field = LeafField | ListField;
 
-export type SectionSchema = { label: string; description?: string; fields: Record<string, Field> };
+/** `hideable` sections can be switched off on the public page without losing their content. */
+export type SectionSchema = { label: string; description?: string; hideable: boolean; fields: Record<string, Field> };
 export type PageSchema = { label: string; path: string | null; description: string; sections: Record<string, SectionSchema> };
 
 type Opts = { hint?: string; required?: boolean };
@@ -32,13 +33,27 @@ const icon = (label = "Icon"): IconField => ({ kind: "icon", label });
 function list<I extends Record<string, LeafField>>(label: string, itemTitle: keyof I & string, item: I, opts: Opts & { min?: number; max?: number } = {}) {
   return { kind: "list" as const, label, item, itemTitle, min: opts.min ?? 1, max: opts.max ?? 12, hint: opts.hint };
 }
-const section = <F extends Record<string, Field>>(label: string, description: string, fields: F) => ({ label, description, fields });
+const section = <F extends Record<string, Field>>(label: string, description: string, fields: F, opts: { hideable?: boolean } = {}) => ({
+  label,
+  description,
+  hideable: opts.hideable ?? true,
+  fields,
+});
 
 const seo = () =>
-  section("Search & sharing", "What Google, LinkedIn and WhatsApp show for this page.", {
-    title: text("Page title", { max: 160, required: true, hint: "Shown in the browser tab and as the Google headline. Aim for under 65 characters." }),
-    description: long("Description", { max: 400, rows: 3, required: true, hint: "Shown under the Google headline. Aim for under 160 characters." }),
-  });
+  section(
+    "Search & sharing",
+    "What Google, LinkedIn and WhatsApp show for this page.",
+    {
+      title: text("Page title", { max: 160, required: true, hint: "Shown in the browser tab and as the Google headline. Aim for under 65 characters." }),
+      description: long("Description", { max: 400, rows: 3, required: true, hint: "Shown under the Google headline. Aim for under 160 characters." }),
+    },
+    { hideable: false },
+  );
+
+/** Menu and footer links: a name and where it goes. */
+const navLinks = (label: string, opts: { min: number; max: number; hint?: string }) =>
+  list(label, "label", { label: text("Name", { max: 40, required: true }), link: link("Goes to", { required: true, hint: "A page such as /platform, or a full web address." }) }, opts);
 
 const ORDINAL = { primary: "Main", secondary: "Second", tertiary: "Third" } as const;
 
@@ -356,19 +371,45 @@ export const SITE_SCHEMA = {
     path: null,
     description: "Shown on every public page.",
     sections: {
-      header: section("Header", "Buttons at the top right of the home page.", {
-        loginLabel: text("Log in link text", { max: 40, required: true }),
-        accessLabel: text("Request access button text", { max: 40, required: true, hint: "Opens the request-access form." }),
-      }),
-      footer: section("Footer", "Company details at the bottom of every public page.", {
-        about: long("About Aquifert", { max: 500, rows: 3 }),
-        handle: text("Social handle", { max: 60 }),
-        linkedin: link("LinkedIn page"),
-        email: text("Contact email", { max: 120, required: true }),
-        tagline: text("Line under the legal links", { max: 160, hint: "Used on pages other than the home page." }),
-        copyright: text("Copyright line", { max: 160, hint: "{year} becomes the current year." }),
-        disclaimer: long("Market data disclaimer", { max: 800, rows: 4 }),
-      }),
+      header: section(
+        "Home page header",
+        "The menu and buttons at the top of the home page.",
+        {
+          menu: navLinks("Menu links", { min: 1, max: 8, hint: "Six or fewer fit on one line." }),
+          utility: navLinks("Small links", { min: 0, max: 4, hint: "Beside the search button on wide screens." }),
+          loginLabel: text("Log in link text", { max: 40, required: true }),
+          accessLabel: text("Request access button text", { max: 40, required: true, hint: "Opens the request-access form." }),
+        },
+        { hideable: false },
+      ),
+      pageHeader: section(
+        "Other pages header",
+        "The menu and buttons at the top of Platform, Why Aquifert, Membership, Contact, Help and the legal pages.",
+        {
+          menu: navLinks("Menu links", { min: 1, max: 8, hint: "Six or fewer fit on one line." }),
+          signInLabel: text("Sign in button text", { max: 40, required: true, hint: "Opens sign in, or the hub when signed in." }),
+          startLabel: text("Get started button text", { max: 40, required: true, hint: "Opens sign in, or the hub when signed in." }),
+        },
+        { hideable: false },
+      ),
+      footer: section(
+        "Footer",
+        "Company details and links at the bottom of every public page.",
+        {
+          about: long("About Aquifert", { max: 500, rows: 3 }),
+          handle: text("Social handle", { max: 60 }),
+          linkedin: link("LinkedIn page"),
+          email: text("Contact email", { max: 120, required: true }),
+          firstTitle: text("First link column heading", { max: 40, hint: "Home page footer. Leave empty to hide the column." }),
+          firstLinks: navLinks("First column links", { min: 0, max: 10 }),
+          secondTitle: text("Second link column heading", { max: 40, hint: "Home page footer. Leave empty to hide the column." }),
+          secondLinks: navLinks("Second column links", { min: 0, max: 10 }),
+          tagline: text("Line under the legal links", { max: 160, hint: "Used on pages other than the home page." }),
+          copyright: text("Copyright line", { max: 160, hint: "{year} becomes the current year." }),
+          disclaimer: long("Market data disclaimer", { max: 800, rows: 4 }),
+        },
+        { hideable: false },
+      ),
     },
   },
 } satisfies Record<string, PageSchema>;
@@ -378,10 +419,14 @@ export const SITE_PAGE_KEYS = Object.keys(SITE_SCHEMA) as SitePageKey[];
 
 type LeafValue = string;
 type FieldValue<F> = F extends { kind: "list"; item: infer I } ? { [K in keyof I]: LeafValue }[] : LeafValue;
-type SectionValue<S> = S extends { fields: infer F } ? { [K in keyof F]: FieldValue<F[K]> } : never;
+/** `hidden` is only ever stored as `true`; a visible section has no flag. */
+type SectionValue<S> = S extends { fields: infer F } ? { [K in keyof F]: FieldValue<F[K]> } & { hidden?: true } : never;
 type PageValue<P> = P extends { sections: infer S } ? { [K in keyof S]: SectionValue<S[K]> } : never;
 
 export type SiteContent = { [K in SitePageKey]: PageValue<(typeof SITE_SCHEMA)[K]> };
 export type SitePage<K extends SitePageKey> = SiteContent[K];
+
+/** False when the editor has switched the section off. */
+export const isShown = (section: { hidden?: true }) => section.hidden !== true;
 
 export type SiteContentMeta = Partial<Record<SitePageKey, { at: string; by: string }>>;

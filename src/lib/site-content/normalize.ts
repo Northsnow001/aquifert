@@ -69,9 +69,12 @@ export function normalizePage<K extends SitePageKey>(key: K, raw: unknown): Site
     const rawSection = isRecord(stored[sectionKey]) ? (stored[sectionKey] as Record<string, unknown>) : {};
     const fields = section.fields as Record<string, Field>;
     out[sectionKey] = Object.fromEntries(Object.entries(fields).map(([fieldKey, field]) => [fieldKey, fieldValue(field, rawSection[fieldKey], defaults[sectionKey][fieldKey])]));
+    if (isHidden(section, rawSection)) out[sectionKey].hidden = true;
   }
   return out as SiteContent[K];
 }
+
+const isHidden = (section: { hideable: boolean }, raw: Record<string, unknown>) => section.hideable && raw.hidden === true;
 
 export function normalizeSiteContent(raw: unknown): SiteContent {
   const stored = isRecord(raw) ? raw : {};
@@ -89,12 +92,13 @@ const describe = (leaf: LeafField, value: string): string | null => {
   return null;
 };
 
-/** Problems that would stop an edited page saving, in page order. */
+/** Problems that would stop an edited page saving, in page order. Hidden sections are checked when shown again. */
 export function validatePage(key: SitePageKey, value: unknown): ContentIssue[] {
   const issues: ContentIssue[] = [];
   const stored = isRecord(value) ? value : {};
   for (const [sectionKey, section] of Object.entries(SITE_SCHEMA[key].sections)) {
     const rawSection = isRecord(stored[sectionKey]) ? (stored[sectionKey] as Record<string, unknown>) : {};
+    if (isHidden(section, rawSection)) continue;
     for (const [fieldKey, field] of Object.entries(section.fields as Record<string, Field>)) {
       const raw = rawSection[fieldKey];
       if (field.kind !== "list") {

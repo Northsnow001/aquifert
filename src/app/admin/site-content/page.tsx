@@ -28,7 +28,7 @@ export default async function SiteContentPage({ searchParams }: { searchParams: 
     <div className="mx-auto max-w-[1440px]">
       <PageHeader
         title="Website content"
-        description="Edit the wording, pictures, videos and links on the public website. Each save shows on the live site straight away."
+        description="Edit the wording, pictures, videos, links and menus on the public website, and hide or show any section. Each save shows on the live site straight away."
       />
 
       <nav className="mb-5 flex gap-1 overflow-x-auto border-b border-border" aria-label="Website pages">

@@ -9,7 +9,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Pause, Play } from "lucide-react";
-import type { SiteContent } from "@/lib/site-content/schema";
+import { isShown, type SiteContent } from "@/lib/site-content/schema";
 import { LandingLayout } from "@/marketing/components/LandingLayout";
 import { MediaCard } from "@/marketing/components/shared/MediaCard";
 import { SiteLink } from "@/marketing/components/shared/SiteLink";
@@ -443,7 +443,8 @@ function ClosingCta({ c }: { c: Home["closing"] }) {
 
 /* ---------------------------------------------------------------- */
 export default function Landing({ content }: { content: Home }) {
-  const jsonLd = useMemo(() => [ORGANIZATION_JSONLD, faqJsonLd(content.faq.items)], [content.faq.items]);
+  const { hero, motion, platform, products, why, audiences, zero, faq, closing } = content;
+  const jsonLd = useMemo(() => (isShown(faq) ? [ORGANIZATION_JSONLD, faqJsonLd(faq.items)] : [ORGANIZATION_JSONLD]), [faq]);
   return (
     <LandingLayout>
       <Seo
@@ -451,19 +452,19 @@ export default function Landing({ content }: { content: Home }) {
         description={content.seo.description}
         keywords="fertilizer trading platform, B2B fertilizer marketplace, buy fertilizer UK, water-soluble fertilizer suppliers, fertilizer landed cost, urea DAP MOP MAP NPK prices, fertilizer container tracking, fertilizer invoice financing"
         path="/"
-        image={content.hero.image || undefined}
+        image={hero.image || undefined}
         jsonLd={jsonLd}
       />
 
-      <Hero c={content.hero} />
-      <TradeInMotion c={content.motion} />
-      <OnePlatform c={content.platform} />
-      <ProductsServices c={content.products} />
-      <WhyAquifert c={content.why} />
-      <SellersBuyers c={content.audiences} />
-      <MembershipBand c={content.zero} />
-      <HomeFaq c={content.faq} />
-      <ClosingCta c={content.closing} />
+      {isShown(hero) ? <Hero c={hero} /> : null}
+      {isShown(motion) ? <TradeInMotion c={motion} /> : null}
+      {isShown(platform) ? <OnePlatform c={platform} /> : null}
+      {isShown(products) ? <ProductsServices c={products} /> : null}
+      {isShown(why) ? <WhyAquifert c={why} /> : null}
+      {isShown(audiences) ? <SellersBuyers c={audiences} /> : null}
+      {isShown(zero) ? <MembershipBand c={zero} /> : null}
+      {isShown(faq) ? <HomeFaq c={faq} /> : null}
+      {isShown(closing) ? <ClosingCta c={closing} /> : null}
 
       {/* Inline updates card, only for visitors who declined marketing cookies */}
       <MarketUpdatesCard />

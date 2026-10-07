@@ -12,7 +12,7 @@ import { validatePage, type ContentIssue } from "@/lib/site-content/normalize";
 import { SITE_SCHEMA, type Field, type SiteContent, type SitePageKey } from "@/lib/site-content/schema";
 
 type Row = Record<string, string>;
-type Section = Record<string, string | Row[]>;
+type Section = Record<string, string | Row[] | true>;
 type PageValue = Record<string, Section>;
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
@@ -36,7 +36,7 @@ export function SiteContentEditor<K extends SitePageKey>({
 }) {
   const router = useRouter();
   const page = SITE_SCHEMA[pageKey];
-  const sections = Object.entries(page.sections) as [string, { label: string; description?: string; fields: Record<string, Field> }][];
+  const sections = Object.entries(page.sections) as [string, { label: string; description?: string; hideable: boolean; fields: Record<string, Field> }][];
   const [value, setValue] = useState<PageValue>(initial as unknown as PageValue);
   const [saved, setSaved] = useState<PageValue>(initial as unknown as PageValue);
   const [savedAt, setSavedAt] = useState(initialSavedAt);
@@ -58,6 +58,15 @@ export function SiteContentEditor<K extends SitePageKey>({
     visibleIssues.find((issue) => issue.section === section && issue.field === field && issue.row === row && issue.leaf === leaf)?.message.replace(/^[^:]+:\s*/, "");
 
   const setField = (section: string, field: string, next: string | Row[]) => setValue((current) => ({ ...current, [section]: { ...current[section], [field]: next } }));
+  const isHidden = (section: string) => value[section]?.hidden === true;
+  const setHidden = (section: string, hidden: boolean) =>
+    setValue((current) => {
+      const next = { ...current[section] };
+      delete next.hidden;
+      if (hidden) next.hidden = true;
+      return { ...current, [section]: next };
+    });
+  const hiddenCount = sections.filter(([key]) => isHidden(key)).length;
 
   const jumpTo = (section: string) => {
     setOpen((current) => new Set(current).add(section));
@@ -113,7 +122,11 @@ export function SiteContentEditor<K extends SitePageKey>({
         </button>
       </SaveBar>
 
-      {savedAt && by ? <p className="px-1 text-[12px] text-dim">Last saved by {by}.</p> : !savedAt ? <p className="px-1 text-[12px] text-dim">Showing the launch wording. Nothing has been saved for this page yet.</p> : null}
+      <p className="px-1 text-[12px] text-dim">
+        {savedAt && by ? `Last saved by ${by}.` : !savedAt ? "Showing the launch wording. Nothing has been saved for this page yet." : null}
+        {hiddenCount ? " " : null}
+        {hiddenCount ? <span className="font-medium text-mid">{hiddenCount === 1 ? "1 section is hidden on the public page." : `${hiddenCount} sections are hidden on the public page.`}</span> : null}
+      </p>
 
       {visibleIssues.length ? (
         <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-danger">
@@ -139,16 +152,23 @@ export function SiteContentEditor<K extends SitePageKey>({
             {sections.map(([key, section]) => {
               const changed = !same(value[key], saved[key]);
               const bad = sectionIssues(key).length > 0;
+              const hidden = isHidden(key);
               return (
                 <button
                   key={key}
                   type="button"
                   onClick={() => jumpTo(key)}
+                  title={hidden ? `${section.label} is hidden on the public page` : undefined}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition ${
-                    bad ? "border-red-200 bg-red-50 text-danger" : "border-border bg-white text-mid hover:border-blue/40 hover:text-blue"
+                    bad
+                      ? "border-red-200 bg-red-50 text-danger"
+                      : hidden
+                        ? "border-dashed border-border bg-s2 text-dim hover:text-mid"
+                        : "border-border bg-white text-mid hover:border-blue/40 hover:text-blue"
                   }`}
                 >
                   {changed ? <span className="h-1.5 w-1.5 rounded-full bg-[#d97706]" /> : null}
+                  {hidden ? <EyeOff className="h-3 w-3" aria-label="Hidden" /> : null}
                   {section.label}
                 </button>
               );
@@ -163,13 +183,14 @@ export function SiteContentEditor<K extends SitePageKey>({
             const changed = !same(value[sectionKey], saved[sectionKey]);
             const custom = !same(value[sectionKey], defaultValue[sectionKey]);
             const problems = sectionIssues(sectionKey);
+            const hidden = isHidden(sectionKey);
             return (
               <section
                 key={sectionKey}
                 ref={(node) => {
                   sectionRefs.current[sectionKey] = node;
                 }}
-                className={`aq-card scroll-mt-20 ${problems.length ? "ring-1 ring-red-200" : ""}`}
+                className={`aq-card scroll-mt-20 ${problems.length ? "ring-1 ring-red-200" : ""} ${hidden ? "bg-s2/60" : ""}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5">
                   <button
@@ -188,13 +209,34 @@ export function SiteContentEditor<K extends SitePageKey>({
                     <ChevronDown className={`mt-0.5 h-4 w-4 shrink-0 text-dim transition ${expanded ? "" : "-rotate-90"}`} />
                     <span className="min-w-0">
                       <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-[14px] font-bold text-ink">{section.label}</span>
+                        <span className={`text-[14px] font-bold ${hidden ? "text-mid" : "text-ink"}`}>{section.label}</span>
+                        {hidden ? <span className="rounded-full bg-s3 px-1.5 py-px text-[10.5px] font-semibold text-mid">Hidden</span> : null}
                         {changed ? <span className="rounded-full bg-[#fff6e5] px-1.5 py-px text-[10.5px] font-semibold text-[#9a5b00]">Unsaved</span> : null}
                         {problems.length ? <span className="rounded-full bg-red-50 px-1.5 py-px text-[10.5px] font-semibold text-danger">{problems.length} to fix</span> : null}
                       </span>
-                      {section.description ? <span className="mt-0.5 block text-[12px] leading-relaxed text-dim">{section.description}</span> : null}
+                      {hidden ? (
+                        <span className="mt-0.5 block text-[12px] leading-relaxed text-dim">Not shown on the public page. The content is kept, so you can show it again at any time.</span>
+                      ) : section.description ? (
+                        <span className="mt-0.5 block text-[12px] leading-relaxed text-dim">{section.description}</span>
+                      ) : null}
                     </span>
                   </button>
+                  {section.hideable ? (
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={!hidden}
+                      aria-label={`Show ${section.label} on the public page`}
+                      onClick={() => setHidden(sectionKey, !hidden)}
+                      title={hidden ? "Show this section on the public page. Nothing changes on the site until you save." : "Hide this section from the public page. Nothing changes on the site until you save."}
+                      className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-[12px] font-medium text-mid transition hover:bg-s2"
+                    >
+                      <span className={`relative h-[18px] w-8 rounded-full transition ${hidden ? "bg-[#cfd6de]" : "bg-[#2f9e6e]"}`}>
+                        <span className={`absolute top-[2px] h-[14px] w-[14px] rounded-full bg-white shadow transition-all ${hidden ? "left-[2px]" : "left-[16px]"}`} />
+                      </span>
+                      {hidden ? "Hidden" : "Shown"}
+                    </button>
+                  ) : null}
                   {custom ? (
                     <button
                       type="button"

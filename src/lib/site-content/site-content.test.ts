@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_SITE_CONTENT } from "./defaults";
 import { fillYear, isValidLink, isValidMedia, normalizePage, normalizeSiteContent, pickAnswer, splitLines, validatePage } from "./normalize";
-import { SITE_PAGE_KEYS, SITE_SCHEMA, type Field } from "./schema";
+import { SITE_PAGE_KEYS, SITE_SCHEMA, isShown, type Field } from "./schema";
 
 test("the launch wording passes validation on every page", () => {
   for (const key of SITE_PAGE_KEYS) assert.deepEqual(validatePage(key, DEFAULT_SITE_CONTENT[key]), [], key);
@@ -75,6 +75,51 @@ test("validation names missing required fields, list limits and bad links", () =
     ],
   );
   assert.match(issues[0].message, /Headline is required/);
+});
+
+test("sections can be hidden without losing their content", () => {
+  const home = normalizePage("home", {
+    faq: { ...DEFAULT_SITE_CONTENT.home.faq, title: "Kept while hidden", hidden: true },
+    why: { ...DEFAULT_SITE_CONTENT.home.why, hidden: "yes" },
+    seo: { ...DEFAULT_SITE_CONTENT.home.seo, hidden: true },
+  });
+  assert.equal(home.faq.hidden, true);
+  assert.equal(home.faq.title, "Kept while hidden");
+  assert.ok(!isShown(home.faq));
+  assert.ok(isShown(home.why), "only a real true hides a section");
+  assert.ok(!("hidden" in home.seo), "search settings cannot be hidden");
+  const global = normalizePage("global", { header: { ...DEFAULT_SITE_CONTENT.global.header, hidden: true } });
+  assert.ok(isShown(global.header), "the header cannot be hidden");
+  assert.ok(!("hidden" in normalizePage("home", DEFAULT_SITE_CONTENT.home).hero), "visible sections carry no flag");
+});
+
+test("hidden sections are not checked until shown again", () => {
+  const emptied = { ...DEFAULT_SITE_CONTENT.home.platform, title: "", features: [] };
+  assert.equal(validatePage("home", { ...DEFAULT_SITE_CONTENT.home, platform: { ...emptied, hidden: true } }).length, 0);
+  assert.deepEqual(
+    validatePage("home", { ...DEFAULT_SITE_CONTENT.home, platform: emptied }).map((issue) => issue.field),
+    ["title", "features"],
+  );
+});
+
+test("menus need at least one link, and every link a name and a destination", () => {
+  const header = DEFAULT_SITE_CONTENT.global.header;
+  const issues = validatePage("global", {
+    ...DEFAULT_SITE_CONTENT.global,
+    header: { ...header, menu: [{ label: "", link: "/platform" }, { label: "News", link: "news" }] },
+    pageHeader: { ...DEFAULT_SITE_CONTENT.global.pageHeader, menu: [] },
+  });
+  assert.deepEqual(
+    issues.map((issue) => [issue.section, issue.field, issue.row, issue.leaf]),
+    [
+      ["header", "menu", 0, "label"],
+      ["header", "menu", 1, "link"],
+      ["pageHeader", "menu", undefined, undefined],
+    ],
+  );
+  const saved = normalizePage("global", { header: { ...header, menu: [{ label: "Prices", link: "https://example.com/prices" }] } });
+  assert.deepEqual(saved.header.menu, [{ label: "Prices", link: "https://example.com/prices" }]);
+  assert.deepEqual(saved.pageHeader, DEFAULT_SITE_CONTENT.global.pageHeader, "older saves without the new menus get the launch menus");
 });
 
 test("link and media rules", () => {

@@ -290,7 +290,9 @@ export function ListInput({
                 <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={() => setOpen(expanded ? null : index)} aria-expanded={expanded}>
                   <span className="font-mono text-[11px] font-semibold text-dim">{String(index + 1).padStart(2, "0")}</span>
                   {"icon" in field.item && row.icon ? <SiteIcon name={row.icon} className="h-3.5 w-3.5 shrink-0 text-[#2f6f57]" /> : null}
-                  <span className={`min-w-0 flex-1 truncate text-[13px] font-semibold ${row[field.itemTitle]?.trim() ? "text-ink" : "text-dim"}`}>{title}</span>
+                  <span className={`min-w-0 truncate text-[13px] font-semibold ${row[field.itemTitle]?.trim() ? "text-ink" : "text-dim"}`}>{title}</span>
+                  {field.itemTitle !== "link" && row.link?.trim() ? <span className="min-w-0 truncate font-mono text-[11px] text-dim">{row.link}</span> : null}
+                  <span className="flex-1" />
                   <ChevronDown className={`h-4 w-4 shrink-0 text-dim transition ${expanded ? "rotate-180" : ""}`} />
                 </button>
                 <div className="flex shrink-0 items-center">

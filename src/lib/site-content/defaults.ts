@@ -400,12 +400,47 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
   },
   global: {
-    header: { loginLabel: "Log in", accessLabel: "Request access" },
+    header: {
+      menu: [
+        { label: "Home", link: "/" },
+        { label: "Platform", link: "/platform" },
+        { label: "Why Aquifert", link: "/why-aquifert" },
+        { label: "Fertiliser Now", link: "/membership" },
+        { label: "Contact", link: "/contact" },
+      ],
+      utility: [
+        { label: "Help", link: "/help" },
+        { label: "Contact", link: "/contact" },
+      ],
+      loginLabel: "Log in",
+      accessLabel: "Request access",
+    },
+    pageHeader: {
+      menu: [
+        { label: "Home", link: "/" },
+        { label: "Platform", link: "/platform" },
+        { label: "Why Aquifert", link: "/why-aquifert" },
+        { label: "Membership", link: "/membership" },
+        { label: "Contact", link: "/contact" },
+      ],
+      signInLabel: "Sign in",
+      startLabel: "Get started",
+    },
     footer: {
       about: "Aquifert aims to provide its select clients an absolute advantage in their fertiliser timing and sourcing. We offer a unique combination of analytic and transparent sourcing options.",
       handle: "@Aquiferts",
       linkedin: "https://www.linkedin.com/company/aquifert/",
       email: "enquiry@aquifert.com",
+      firstTitle: "Platform",
+      firstLinks: ["Aquifert ONE", "Freight Calculator", "Netback", "Library", "Tools", "Order Desk"].map((label) => ({ label, link: "/platform" })),
+      secondTitle: "Company",
+      secondLinks: [
+        { label: "Why Aquifert", link: "/why-aquifert" },
+        { label: "Membership", link: "/membership" },
+        { label: "Contact", link: "/contact" },
+        { label: "Help", link: "/help" },
+        { label: "Careers", link: "/why-aquifert" },
+      ],
       tagline: "Aquifert Ltd · London · Water-soluble fertilizer trading, reimagined",
       copyright: "© {year} Aquifert. All rights reserved.",
       disclaimer:

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { ArrowRight, Check } from "lucide-react";
-import type { SiteContent } from "@/lib/site-content/schema";
+import { isShown, type SiteContent } from "@/lib/site-content/schema";
 import { splitLines } from "@/lib/site-content/normalize";
 import { MarketingLayout, CtaBand } from "@/marketing/components/MarketingLayout";
 import { Reveal } from "@/marketing/components/shared/Reveal";
@@ -20,7 +20,7 @@ const PLATFORM_BREADCRUMB = breadcrumbJsonLd([
 
 export default function Platform({ content }: { content: SiteContent["platform"] }) {
   const { seo, hero, blocks, more, faq, cta } = content;
-  const jsonLd = useMemo(() => [ORGANIZATION_JSONLD, faqJsonLd(faq.items), PLATFORM_BREADCRUMB], [faq.items]);
+  const jsonLd = useMemo(() => (isShown(faq) ? [ORGANIZATION_JSONLD, faqJsonLd(faq.items), PLATFORM_BREADCRUMB] : [ORGANIZATION_JSONLD, PLATFORM_BREADCRUMB]), [faq]);
   return (
     <MarketingLayout>
       <Seo
@@ -33,33 +33,35 @@ export default function Platform({ content }: { content: SiteContent["platform"]
       />
 
       {/* Video hero */}
-      <VideoHero src={hero.video} poster={hero.image} videoLabel={hero.label} center>
-        <Reveal>
-          <h1 className="aqf-hero-title mx-auto max-w-3xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">{hero.title}</h1>
-          {hero.body ? <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed sm:text-xl">{hero.body}</p> : null}
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-            {hero.primaryLabel ? (
-              <SiteLink
-                href={hero.primaryLink || "/login"}
-                className="inline-flex items-center rounded-full bg-teal-500 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
-              >
-                {hero.primaryLabel} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </SiteLink>
-            ) : null}
-            {hero.secondaryLabel ? (
-              <SiteLink
-                href={hero.secondaryLink || "/membership"}
-                className="inline-flex items-center rounded-full border border-white/50 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-xs transition-colors hover:bg-white/10"
-              >
-                {hero.secondaryLabel}
-              </SiteLink>
-            ) : null}
-          </div>
-        </Reveal>
-      </VideoHero>
+      {isShown(hero) ? (
+        <VideoHero src={hero.video} poster={hero.image} videoLabel={hero.label} center>
+          <Reveal>
+            <h1 className="aqf-hero-title mx-auto max-w-3xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">{hero.title}</h1>
+            {hero.body ? <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed sm:text-xl">{hero.body}</p> : null}
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+              {hero.primaryLabel ? (
+                <SiteLink
+                  href={hero.primaryLink || "/login"}
+                  className="inline-flex items-center rounded-full bg-teal-500 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-teal-400"
+                >
+                  {hero.primaryLabel} <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </SiteLink>
+              ) : null}
+              {hero.secondaryLabel ? (
+                <SiteLink
+                  href={hero.secondaryLink || "/membership"}
+                  className="inline-flex items-center rounded-full border border-white/50 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-xs transition-colors hover:bg-white/10"
+                >
+                  {hero.secondaryLabel}
+                </SiteLink>
+              ) : null}
+            </div>
+          </Reveal>
+        </VideoHero>
+      ) : null}
 
       {/* Feature blocks, text and visuals alternate */}
-      {blocks.items.map((b, i) => (
+      {(isShown(blocks) ? blocks.items : []).map((b, i) => (
         <section key={i} className={i % 2 ? "border-y border-border bg-white dark:bg-transparent" : ""}>
           <div className="mx-auto grid max-w-6xl items-center gap-16 px-4 py-16 lg:grid-cols-2 lg:gap-20">
             <Reveal className={i % 2 ? "lg:order-2" : ""}>
@@ -93,7 +95,7 @@ export default function Platform({ content }: { content: SiteContent["platform"]
       ))}
 
       {/* More capabilities */}
-      {more.items.length ? (
+      {isShown(more) && more.items.length ? (
         <section className="mx-auto max-w-6xl px-4 py-20">
           <SectionHeader kicker={more.kicker} title={more.title} sub={more.sub} />
           <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -114,16 +116,18 @@ export default function Platform({ content }: { content: SiteContent["platform"]
       ) : null}
 
       {/* Platform FAQ, answer-first for search and AI answer engines */}
-      <section className="border-t border-border bg-white dark:bg-transparent">
-        <div className="mx-auto max-w-4xl px-4 py-20">
-          <SectionHeader kicker={faq.kicker} title={faq.title} sub={faq.sub} center />
-          <Reveal delay={120} className="mt-10">
-            <Faq items={faq.items} />
-          </Reveal>
-        </div>
-      </section>
+      {isShown(faq) ? (
+        <section className="border-t border-border bg-white dark:bg-transparent">
+          <div className="mx-auto max-w-4xl px-4 py-20">
+            <SectionHeader kicker={faq.kicker} title={faq.title} sub={faq.sub} center />
+            <Reveal delay={120} className="mt-10">
+              <Faq items={faq.items} />
+            </Reveal>
+          </div>
+        </section>
+      ) : null}
 
-      <CtaBand title={cta.title} subtitle={cta.subtitle} ctaLabel={cta.buttonLabel} />
+      {isShown(cta) ? <CtaBand title={cta.title} subtitle={cta.subtitle} ctaLabel={cta.buttonLabel} /> : null}
     </MarketingLayout>
   );
 }

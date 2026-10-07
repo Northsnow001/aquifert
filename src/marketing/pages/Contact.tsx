@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MessageCircle, PhoneCall, Mail, PhoneForwarded, ArrowRight } from "lucide-react";
-import type { SiteContent } from "@/lib/site-content/schema";
+import { isShown, type SiteContent } from "@/lib/site-content/schema";
 import { MarketingLayout } from "@/marketing/components/MarketingLayout";
 import { Reveal } from "@/marketing/components/shared/Reveal";
 import { VideoHero } from "@/marketing/components/shared/VideoHero";
@@ -60,7 +60,7 @@ export default function ContactPage({ content }: { content: SiteContent["contact
   const jsonLd = useMemo(
     () => [
       ORGANIZATION_JSONLD,
-      faqJsonLd(faq.items),
+      ...(isShown(faq) ? [faqJsonLd(faq.items)] : []),
       CONTACT_BREADCRUMB,
       {
         "@context": "https://schema.org",
@@ -80,7 +80,7 @@ export default function ContactPage({ content }: { content: SiteContent["contact
         },
       },
     ],
-    [faq.items, footer.email],
+    [faq, footer.email],
   );
 
   return (
@@ -94,41 +94,45 @@ export default function ContactPage({ content }: { content: SiteContent["contact
         jsonLd={jsonLd}
       />
 
-      <VideoHero src={hero.video} poster={hero.image} videoLabel={hero.label} center>
-        <Reveal>
-          <h1 className="aqf-hero-title mx-auto max-w-3xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">{hero.title}</h1>
-          {hero.body ? <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed sm:text-xl">{hero.body}</p> : null}
-        </Reveal>
-      </VideoHero>
+      {isShown(hero) ? (
+        <VideoHero src={hero.video} poster={hero.image} videoLabel={hero.label} center>
+          <Reveal>
+            <h1 className="aqf-hero-title mx-auto max-w-3xl text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-6xl">{hero.title}</h1>
+            {hero.body ? <p className="aqf-hero-sub mx-auto mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed sm:text-xl">{hero.body}</p> : null}
+          </Reveal>
+        </VideoHero>
+      ) : null}
 
       <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2" role="radiogroup" aria-label="Contact channel">
-          {channels.map((c, i) => (
-            <Reveal key={c.key} delay={i * 60} className="h-full">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={channel === c.key}
-                onClick={() => {
-                  setChannel(c.key);
-                  setSent(false);
-                }}
-                className={`h-full min-h-11 w-full rounded-3xl border bg-white p-6 text-left transition-colors dark:bg-transparent ${
-                  channel === c.key
-                    ? "border-teal-600 ring-1 ring-teal-600 dark:border-teal-500 dark:ring-teal-500"
-                    : "border-slate-200 hover:border-navy-700 dark:border-slate-700 dark:hover:border-slate-500"
-                }`}
-              >
-                <c.icon className="h-5 w-5 text-teal-700 dark:text-teal-400" aria-hidden="true" />
-                <p className="mt-4 text-[15px] font-semibold text-navy-900 dark:text-white">{c.title}</p>
-                {c.desc ? <p className="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">{c.desc}</p> : null}
-              </button>
-            </Reveal>
-          ))}
-        </div>
+        {isShown(copy) ? (
+          <div className="grid gap-4 sm:grid-cols-2" role="radiogroup" aria-label="Contact channel">
+            {channels.map((c, i) => (
+              <Reveal key={c.key} delay={i * 60} className="h-full">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={channel === c.key}
+                  onClick={() => {
+                    setChannel(c.key);
+                    setSent(false);
+                  }}
+                  className={`h-full min-h-11 w-full rounded-3xl border bg-white p-6 text-left transition-colors dark:bg-transparent ${
+                    channel === c.key
+                      ? "border-teal-600 ring-1 ring-teal-600 dark:border-teal-500 dark:ring-teal-500"
+                      : "border-slate-200 hover:border-navy-700 dark:border-slate-700 dark:hover:border-slate-500"
+                  }`}
+                >
+                  <c.icon className="h-5 w-5 text-teal-700 dark:text-teal-400" aria-hidden="true" />
+                  <p className="mt-4 text-[15px] font-semibold text-navy-900 dark:text-white">{c.title}</p>
+                  {c.desc ? <p className="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">{c.desc}</p> : null}
+                </button>
+              </Reveal>
+            ))}
+          </div>
+        ) : null}
 
         <Reveal delay={120}>
-          <Card className="mt-8">
+          <Card className={isShown(copy) ? "mt-8" : ""}>
             <CardContent className="grid gap-4 p-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -171,41 +175,45 @@ export default function ContactPage({ content }: { content: SiteContent["contact
         </Reveal>
       </section>
 
-      <section className="border-t border-border bg-white dark:bg-transparent">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-          <SectionHeader kicker={faq.kicker} title={faq.title} sub={faq.sub} center />
-          <Reveal delay={100} className="mt-10">
-            <Faq items={faq.items} />
-          </Reveal>
-        </div>
-      </section>
+      {isShown(faq) ? (
+        <section className="border-t border-border bg-white dark:bg-transparent">
+          <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+            <SectionHeader kicker={faq.kicker} title={faq.title} sub={faq.sub} center />
+            <Reveal delay={100} className="mt-10">
+              <Faq items={faq.items} />
+            </Reveal>
+          </div>
+        </section>
+      ) : null}
 
-      <section className="border-t border-border bg-white dark:bg-transparent">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
-          <Reveal>
-            <h2 className="text-2xl font-bold tracking-tight text-navy-900 dark:text-white sm:text-3xl">{closing.title}</h2>
-            {closing.body ? <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">{closing.body}</p> : null}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              {closing.primaryLabel ? (
-                <SiteLink
-                  href={closing.primaryLink || "/platform"}
-                  className="inline-flex h-11 items-center rounded-lg bg-navy-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-navy-500 aqf-btn-press"
-                >
-                  {closing.primaryLabel} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
-                </SiteLink>
-              ) : null}
-              {closing.secondaryLabel ? (
-                <SiteLink
-                  href={closing.secondaryLink || "/membership"}
-                  className="inline-flex h-11 items-center rounded-lg border border-border px-6 text-sm font-semibold text-navy-800 transition-colors hover:border-teal-500/60 dark:text-slate-200"
-                >
-                  {closing.secondaryLabel}
-                </SiteLink>
-              ) : null}
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {isShown(closing) ? (
+        <section className="border-t border-border bg-white dark:bg-transparent">
+          <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
+            <Reveal>
+              <h2 className="text-2xl font-bold tracking-tight text-navy-900 dark:text-white sm:text-3xl">{closing.title}</h2>
+              {closing.body ? <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">{closing.body}</p> : null}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                {closing.primaryLabel ? (
+                  <SiteLink
+                    href={closing.primaryLink || "/platform"}
+                    className="inline-flex h-11 items-center rounded-lg bg-navy-600 px-6 text-sm font-semibold text-white transition-colors hover:bg-navy-500 aqf-btn-press"
+                  >
+                    {closing.primaryLabel} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
+                  </SiteLink>
+                ) : null}
+                {closing.secondaryLabel ? (
+                  <SiteLink
+                    href={closing.secondaryLink || "/membership"}
+                    className="inline-flex h-11 items-center rounded-lg border border-border px-6 text-sm font-semibold text-navy-800 transition-colors hover:border-teal-500/60 dark:text-slate-200"
+                  >
+                    {closing.secondaryLabel}
+                  </SiteLink>
+                ) : null}
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      ) : null}
     </MarketingLayout>
   );
 }

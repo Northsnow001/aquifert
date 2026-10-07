@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Bot, Send, User } from "lucide-react";
-import type { SiteContent } from "@/lib/site-content/schema";
+import { isShown, type SiteContent } from "@/lib/site-content/schema";
 import { pickAnswer, splitLines } from "@/lib/site-content/normalize";
 import { MarketingLayout } from "@/marketing/components/MarketingLayout";
 import { Seo } from "@/marketing/components/shared/Seo";
@@ -111,6 +111,8 @@ function Aquibot({ c }: { c: Help["assistant"] }) {
 
 export default function Help({ content }: { content: Help }) {
   const { seo, hero, assistant, topics, desk } = content;
+  const showBot = isShown(assistant);
+  const showSide = isShown(topics) || isShown(desk);
   return (
     <MarketingLayout>
       <Seo
@@ -120,56 +122,70 @@ export default function Help({ content }: { content: Help }) {
         path="/help"
       />
 
-      <section className="bg-navy-900" aria-labelledby="help-heading">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <Reveal>
-            {hero.kicker ? <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-teal-300">{hero.kicker}</p> : null}
-            <h1 id="help-heading" className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl">
-              {hero.title}
-              {hero.highlight ? <> <span className="text-teal-300">{hero.highlight}</span></> : null}
-            </h1>
-            {hero.body ? <p className="mt-5 max-w-xl whitespace-pre-line text-lg leading-relaxed text-slate-300">{hero.body}</p> : null}
-          </Reveal>
-        </div>
-      </section>
+      {isShown(hero) ? (
+        <section className="bg-navy-900" aria-labelledby="help-heading">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+            <Reveal>
+              {hero.kicker ? <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-teal-300">{hero.kicker}</p> : null}
+              <h1 id="help-heading" className="mt-4 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl">
+                {hero.title}
+                {hero.highlight ? <> <span className="text-teal-300">{hero.highlight}</span></> : null}
+              </h1>
+              {hero.body ? <p className="mt-5 max-w-xl whitespace-pre-line text-lg leading-relaxed text-slate-300">{hero.body}</p> : null}
+            </Reveal>
+          </div>
+        </section>
+      ) : null}
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6" aria-label="Aquibot assistant">
-        <div className="grid items-start gap-10 lg:grid-cols-[1fr_380px]">
-          <Reveal>
-            <Aquibot c={assistant} />
-          </Reveal>
-          <Reveal delay={100}>
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold text-navy-900 dark:text-white">{topics.title}</h2>
-              {topics.items.map((t, i) => (
-                <SiteLink
-                  key={i}
-                  href={t.link || "/"}
-                  className="group block rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <p className="flex items-center justify-between text-sm font-semibold text-navy-900 dark:text-white">
-                    {t.title}
-                    <ArrowRight className="h-4 w-4 text-teal-600 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                  </p>
-                  {t.body ? <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">{t.body}</p> : null}
-                </SiteLink>
-              ))}
-              <div className="rounded-2xl bg-navy-900 p-5">
-                <p className="text-sm font-semibold text-white">{desk.title}</p>
-                {desk.body ? <p className="mt-1.5 text-[13px] leading-relaxed text-slate-300">{desk.body}</p> : null}
-                {desk.primaryLabel ? (
-                  <SiteLink
-                    href={desk.primaryLink || "/contact"}
-                    className="mt-4 inline-flex items-center rounded-full bg-teal-500 px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-teal-400"
-                  >
-                    {desk.primaryLabel} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
-                  </SiteLink>
-                ) : null}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {showBot || showSide ? (
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6" aria-label={showBot ? "Aquibot assistant" : "Help topics"}>
+          <div className={`grid items-start gap-10 ${showBot && showSide ? "lg:grid-cols-[1fr_380px]" : showSide ? "max-w-2xl" : ""}`}>
+            {showBot ? (
+              <Reveal>
+                <Aquibot c={assistant} />
+              </Reveal>
+            ) : null}
+            {showSide ? (
+              <Reveal delay={100}>
+                <div className="space-y-4">
+                  {isShown(topics) ? (
+                    <>
+                      <h2 className="text-lg font-bold text-navy-900 dark:text-white">{topics.title}</h2>
+                      {topics.items.map((t, i) => (
+                        <SiteLink
+                          key={i}
+                          href={t.link || "/"}
+                          className="group block rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <p className="flex items-center justify-between text-sm font-semibold text-navy-900 dark:text-white">
+                            {t.title}
+                            <ArrowRight className="h-4 w-4 text-teal-600 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                          </p>
+                          {t.body ? <p className="mt-1.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">{t.body}</p> : null}
+                        </SiteLink>
+                      ))}
+                    </>
+                  ) : null}
+                  {isShown(desk) ? (
+                    <div className="rounded-2xl bg-navy-900 p-5">
+                      <p className="text-sm font-semibold text-white">{desk.title}</p>
+                      {desk.body ? <p className="mt-1.5 text-[13px] leading-relaxed text-slate-300">{desk.body}</p> : null}
+                      {desk.primaryLabel ? (
+                        <SiteLink
+                          href={desk.primaryLink || "/contact"}
+                          className="mt-4 inline-flex items-center rounded-full bg-teal-500 px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-teal-400"
+                        >
+                          {desk.primaryLabel} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                        </SiteLink>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </Reveal>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
     </MarketingLayout>
   );
 }

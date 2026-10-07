@@ -99,7 +99,7 @@ export const GUIDE: GuideSection[] = [
     icon: "website",
     href: "/admin/site-content",
     summary:
-      "The wording, pictures, videos and links on the public website: Home, Platform, Why Aquifert, Membership, Contact, Help, and the header and footer. A save shows on the live site straight away.",
+      "The wording, pictures, videos, links and menus on the public website: Home, Platform, Why Aquifert, Membership, Contact, Help, and the header and footer. Any section can be hidden and shown again. A save shows on the live site straight away.",
     tasks: [
       {
         title: "Change a page",
@@ -108,6 +108,23 @@ export const GUIDE: GuideSection[] = [
           "Edit the text, then press Save changes or Ctrl+S. Fields marked with a star must have something in them.",
           "Leave a button's text empty to hide the button. Most optional headings and notes hide themselves when empty too.",
           "Open the page with View live page to check it. The preview beside the editor refreshes after each save.",
+        ],
+      },
+      {
+        title: "Hide or show a section",
+        steps: [
+          "Use the Shown / Hidden switch at the top right of a section, then save. A hidden section disappears from the public page but keeps its wording, so switching it back on restores it as it was.",
+          "Hidden sections are greyed out with a Hidden label, and the page summary counts them.",
+          "A hidden section's fields are not checked, so you can hide one that is half finished. They are checked again when you show it.",
+          "Hiding a Questions (FAQ) section also removes its questions from what search engines read.",
+        ],
+      },
+      {
+        title: "Change the menus",
+        steps: [
+          "Open the Header & footer tab. The home page has its own header; Other pages header covers Platform, Why Aquifert, Membership, Contact, Help and the legal pages.",
+          "Under Menu links, change a link's name or where it goes, use Move up and Move down to reorder, Remove to delete, and Add menu link for a new one. Each menu keeps at least one link.",
+          "The footer's two link columns work the same way. Empty a column's heading to hide the whole column.",
         ],
       },
       {

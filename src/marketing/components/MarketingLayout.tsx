@@ -7,20 +7,13 @@ import { ArrowRight } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { Reveal } from "@/marketing/components/shared/Reveal";
 import { Button } from "@/marketing/components/ui/button";
+import { SiteNavLink } from "@/marketing/components/shared/SiteLink";
 import { useAuth } from "@/marketing/hooks/useAuth";
 import { useSiteGlobal } from "@/marketing/lib/site-global";
 
-const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/platform", label: "Platform" },
-  { to: "/why-aquifert", label: "Why Aquifert" },
-  { to: "/membership", label: "Membership" },
-  { to: "/contact", label: "Contact" },
-];
-
 /** Shared shell for the public marketing pages, consistent nav + footer. */
 export function MarketingLayout({ children }: { children: ReactNode }) {
-  const { footer } = useSiteGlobal();
+  const { pageHeader, footer } = useSiteGlobal();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const cta = isAuthenticated ? "/hub" : "/login";
@@ -33,12 +26,11 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             <Logo size={34} />
           </NavLink>
           <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
-            {NAV.map((n) => (
-              <NavLink
-                key={n.to}
-                to={n.to}
-                end={n.to === "/"}
-                className={({ isActive }) =>
+            {pageHeader.menu.map((n, i) => (
+              <SiteNavLink
+                key={i}
+                href={n.link}
+                className={(isActive) =>
                   `rounded-lg px-3.5 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors ${
                     isActive
                       ? "bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300"
@@ -47,13 +39,13 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 }
               >
                 {n.label}
-              </NavLink>
+              </SiteNavLink>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => navigate(cta)}>Sign in</Button>
+            <Button variant="ghost" onClick={() => navigate(cta)}>{pageHeader.signInLabel}</Button>
             <Button className="bg-teal-500 text-white hover:bg-teal-600 aqf-btn-press" onClick={() => navigate(cta)}>
-              Get started <ArrowRight className="ml-1 h-4 w-4" />
+              {pageHeader.startLabel} <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
         </div>
