@@ -1,24 +1,21 @@
 "use client";
 
 /**
- * LandingLayout, landing-page-only chrome in an institutional grammar:
+ * LandingLayout, the chrome of every public page in an institutional grammar:
  * 72px sticky main header with utility links folded in (border + shadow past
- * 100px scroll), deep multi-column footer.
- * MarketingLayout (used by every other page) is untouched.
+ * 100px scroll), deep multi-column footer, cookie banner and the request-access form.
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@/marketing/router";
 import { Menu, Search, X } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { SiteLink, SiteNavLink } from "@/marketing/components/shared/SiteLink";
-import { OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
+import { CookieConsent, OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
+import { LeadMagnet, OPEN_LEAD_MAGNET_EVENT } from "@/marketing/components/LeadMagnet";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
 import { LEGAL_LINKS } from "@/lib/legal/documents";
 import { fillYear } from "@/lib/site-content/normalize";
 import { useSiteGlobal } from "@/marketing/lib/site-global";
-
-/** Event the LeadMagnet modal listens for, Request access opens the lead form. */
-export const OPEN_LEAD_MAGNET_EVENT = "aq:open-lead-magnet";
 
 export function LandingLayout({ children }: { children: ReactNode }) {
   const { header, footer } = useSiteGlobal();
@@ -162,6 +159,10 @@ export function LandingLayout({ children }: { children: ReactNode }) {
       <main id="main-content">{children}</main>
 
       <SiteSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+      {/* Consent banner; the lead form opens only from "Request access" (auto-popup hidden for exploratory phase) */}
+      <CookieConsent />
+      <LeadMagnet auto={false} />
 
       {/* 12, Footer */}
       <footer className="bg-navy-900 text-slate-300">

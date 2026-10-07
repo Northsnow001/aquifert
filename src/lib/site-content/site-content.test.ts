@@ -107,19 +107,35 @@ test("menus need at least one link, and every link a name and a destination", ()
   const issues = validatePage("global", {
     ...DEFAULT_SITE_CONTENT.global,
     header: { ...header, menu: [{ label: "", link: "/platform" }, { label: "News", link: "news" }] },
-    pageHeader: { ...DEFAULT_SITE_CONTENT.global.pageHeader, menu: [] },
+    footer: { ...DEFAULT_SITE_CONTENT.global.footer, firstLinks: [] },
   });
   assert.deepEqual(
     issues.map((issue) => [issue.section, issue.field, issue.row, issue.leaf]),
     [
       ["header", "menu", 0, "label"],
       ["header", "menu", 1, "link"],
-      ["pageHeader", "menu", undefined, undefined],
     ],
+  );
+  assert.deepEqual(
+    validatePage("global", { ...DEFAULT_SITE_CONTENT.global, header: { ...header, menu: [] } }).map((issue) => [issue.section, issue.field]),
+    [["header", "menu"]],
   );
   const saved = normalizePage("global", { header: { ...header, menu: [{ label: "Prices", link: "https://example.com/prices" }] } });
   assert.deepEqual(saved.header.menu, [{ label: "Prices", link: "https://example.com/prices" }]);
-  assert.deepEqual(saved.pageHeader, DEFAULT_SITE_CONTENT.global.pageHeader, "older saves without the new menus get the launch menus");
+  assert.deepEqual(saved.footer, DEFAULT_SITE_CONTENT.global.footer, "older saves without the menus get the launch menus");
+});
+
+test("saves from when inner pages had their own header keep only the shared header", () => {
+  const older = {
+    header: { ...DEFAULT_SITE_CONTENT.global.header, menu: [{ label: "AQ Suite", link: "/platform" }] },
+    pageHeader: { menu: [{ label: "Membership", link: "/membership" }], signInLabel: "Sign in", startLabel: "Get started" },
+    footer: { ...DEFAULT_SITE_CONTENT.global.footer, tagline: "Aquifert Ltd · London" },
+  };
+  const saved = normalizePage("global", older);
+  assert.deepEqual(Object.keys(saved), ["header", "footer"]);
+  assert.deepEqual(saved.header.menu, [{ label: "AQ Suite", link: "/platform" }]);
+  assert.ok(!("tagline" in saved.footer));
+  assert.equal(validatePage("global", older).length, 0);
 });
 
 test("link and media rules", () => {

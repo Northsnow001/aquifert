@@ -21,8 +21,10 @@ import { jsPDF } from "jspdf";
 import { priceSlider } from "@/marketing/lib/prices";
 import { useAuth } from "@/marketing/hooks/useAuth";
 import { COOKIE_POLICY_VERSION, getConsent, marketingAllowed } from "@/marketing/lib/consent";
-import { OPEN_LEAD_MAGNET_EVENT } from "@/marketing/components/LandingLayout";
 import { Logo } from "@/marketing/components/shared/Logo";
+
+/** Event the modal listens for; the header's Request access button sends it. */
+export const OPEN_LEAD_MAGNET_EVENT = "aq:open-lead-magnet";
 
 const DISMISS_KEY = "aq.lead.dismissed";
 const PREFILL_KEY = "aq.lead.prefill";

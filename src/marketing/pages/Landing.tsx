@@ -15,8 +15,7 @@ import { MediaCard } from "@/marketing/components/shared/MediaCard";
 import { SiteLink } from "@/marketing/components/shared/SiteLink";
 import { Seo, ORGANIZATION_JSONLD } from "@/marketing/components/shared/Seo";
 import { Faq, SectionHeader, faqJsonLd } from "@/marketing/components/shared/Faq";
-import { CookieConsent } from "@/marketing/components/CookieConsent";
-import { LeadMagnet, MarketUpdatesCard } from "@/marketing/components/LeadMagnet";
+import { MarketUpdatesCard } from "@/marketing/components/LeadMagnet";
 import { SiteIcon } from "@/marketing/lib/site-icons";
 
 type Home = SiteContent["home"];
@@ -468,10 +467,6 @@ export default function Landing({ content }: { content: Home }) {
 
       {/* Inline updates card, only for visitors who declined marketing cookies */}
       <MarketUpdatesCard />
-
-      {/* Consent banner; the lead form opens only from "Request access" (auto-popup hidden for exploratory phase) */}
-      <CookieConsent />
-      <LeadMagnet auto={false} />
     </LandingLayout>
   );
 }

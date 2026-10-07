@@ -415,17 +415,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       loginLabel: "Log in",
       accessLabel: "Request access",
     },
-    pageHeader: {
-      menu: [
-        { label: "Home", link: "/" },
-        { label: "Platform", link: "/platform" },
-        { label: "Why Aquifert", link: "/why-aquifert" },
-        { label: "Membership", link: "/membership" },
-        { label: "Contact", link: "/contact" },
-      ],
-      signInLabel: "Sign in",
-      startLabel: "Get started",
-    },
     footer: {
       about: "Aquifert aims to provide its select clients an absolute advantage in their fertiliser timing and sourcing. We offer a unique combination of analytic and transparent sourcing options.",
       handle: "@Aquiferts",
@@ -441,7 +430,6 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         { label: "Help", link: "/help" },
         { label: "Careers", link: "/why-aquifert" },
       ],
-      tagline: "Aquifert Ltd · London · Water-soluble fertilizer trading, reimagined",
       copyright: "© {year} Aquifert. All rights reserved.",
       disclaimer:
         "Fertilizer price indications are compiled from public sources and Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.",

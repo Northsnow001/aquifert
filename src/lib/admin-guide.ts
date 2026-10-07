@@ -122,7 +122,7 @@ export const GUIDE: GuideSection[] = [
       {
         title: "Change the menus",
         steps: [
-          "Open the Header & footer tab. The home page has its own header; Other pages header covers Platform, Why Aquifert, Membership, Contact, Help and the legal pages.",
+          "Open the Header & footer tab. One header is shared by every public page, so a change shows everywhere.",
           "Under Menu links, change a link's name or where it goes, use Move up and Move down to reorder, Remove to delete, and Add menu link for a new one. Each menu keeps at least one link.",
           "The footer's two link columns work the same way. Empty a column's heading to hide the whole column.",
         ],
