@@ -1,8 +1,9 @@
 "use client";
 
 /**
- * Password reset after clicking the Supabase ConfirmationURL in email.
- * Expects a recovery session (hash tokens or PKCE ?code=), then updateUser.
+ * Password reset from the Supabase email. The current template links here with
+ * ?token_hash=…&type=recovery, which is only redeemed on submit so mail scanners that
+ * pre-open links cannot use it up. Older links (hash tokens or PKCE ?code=) still work.
  */
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@/marketing/router";
@@ -26,16 +27,16 @@ export default function ResetPassword() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [ready, setReady] = useState(false);
-  const [bootError, setBootError] = useState<string | null>(null);
+  const [bootError, setBootError] = useState<string | null>(() =>
+    isSupabaseBrowserConfigured() ? null : "Password reset is not configured yet.",
+  );
   const [email, setEmail] = useState<string | null>(null);
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
 
   const s = passwordStrength(password);
 
   useEffect(() => {
-    if (!isSupabaseBrowserConfigured()) {
-      setBootError("Password reset is not configured yet.");
-      return;
-    }
+    if (!isSupabaseBrowserConfigured()) return;
 
     let cancelled = false;
     const supabase = getSupabaseBrowser();
@@ -92,11 +93,16 @@ export default function ResetPassword() {
           return;
         }
 
-        if (tokenHash && (type === "recovery" || type === "email")) {
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: type === "recovery" ? "recovery" : "email",
-          });
+        if (tokenHash && type === "recovery") {
+          if (cancelled) return;
+          setRecoveryToken(tokenHash);
+          window.history.replaceState({}, "", url.pathname);
+          markReady(null);
+          return;
+        }
+
+        if (tokenHash && type === "email") {
+          const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "email" });
           if (error) throw error;
           markReady(data.session?.user?.email ?? null);
           return;
@@ -149,6 +155,17 @@ export default function ResetPassword() {
     setErrors({});
     try {
       const supabase = getSupabaseBrowser();
+      let account = email;
+      if (recoveryToken) {
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({ token_hash: recoveryToken, type: "recovery" });
+        if (verifyError || !data.session) {
+          setBootError("This reset link is invalid or has expired. Request a new one.");
+          return;
+        }
+        setRecoveryToken(null);
+        account = data.session.user.email ?? null;
+        setEmail(account);
+      }
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
         const msg = updateError.message || "Could not save your password.";
@@ -172,7 +189,7 @@ export default function ResetPassword() {
       }
 
       const q = new URLSearchParams({ reset: "1" });
-      if (email) q.set("email", email);
+      if (account) q.set("email", account);
       navigate(`/login?${q.toString()}`, { replace: true });
     } catch (err) {
       setErrors({

@@ -1,4 +1,4 @@
-import { brandedHtml, brandedText, DESK_EMAIL, firstName, inline, SITE_URL, type BrandedEmail } from "@/lib/email/brand";
+import { brandedHtml, brandedText, DESK_EMAIL, escapeHtml, firstName, inline, SITE_URL, type BrandedEmail } from "@/lib/email/brand";
 
 export type ComposedEmail = { subject: string; html: string; text: string };
 
@@ -41,9 +41,13 @@ export function analyticsWaitlistEmail(input: { name: string; deskEmail?: string
 
 const SUPABASE_GREETING = "Hello{{ if .Data.name }} {{ .Data.name }}{{ end }}";
 
+/** Goes straight to our reset page; the token is only redeemed when the new password is saved. */
+const RESET_LINK = "{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery";
+
 /**
  * Supabase Auth sends sign-in codes and password resets itself, so these are pasted into Supabase
- * (Authentication → Email Templates). Placeholders use Supabase's {{ .Token }} / {{ .ConfirmationURL }} syntax.
+ * (Authentication → Email Templates). Placeholders use Supabase's {{ .Token }} / {{ .TokenHash }} syntax;
+ * {{ .SiteURL }} is the Site URL under Authentication → URL Configuration.
  */
 export function supabaseAuthTemplates() {
   const verification = compose("Your Aquifert verification code", {
@@ -82,10 +86,10 @@ export function supabaseAuthTemplates() {
           `${SUPABASE_GREETING}, we received a request to reset the password on your Aquifert ONE account. Choose a new password using the button below. The link is valid for **about an hour**.`,
         ),
       },
-      { kind: "button", label: "Reset my password", href: "{{ .ConfirmationURL }}", tone: "teal" },
+      { kind: "button", label: "Reset my password", href: RESET_LINK, tone: "teal" },
       {
         kind: "note",
-        html: `Button not working? Paste this link into your browser:<br><a href="{{ .ConfirmationURL }}" style="color:#31648F; word-break:break-all;">{{ .ConfirmationURL }}</a>`,
+        html: `Button not working? Paste this link into your browser:<br><a href="${escapeHtml(RESET_LINK)}" style="color:#31648F; word-break:break-all;">${escapeHtml(RESET_LINK)}</a>`,
       },
       {
         kind: "callout",
