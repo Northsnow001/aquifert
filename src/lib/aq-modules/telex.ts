@@ -1,4 +1,4 @@
-import { canReadTelex, excerpt, telexHeadline, telexThumbSrc, type TelexItem } from "@/lib/content-types";
+import { canReadTelex, excerpt, telexHeadline, telexThumbSrc, type TelexDocument, type TelexItem } from "@/lib/content-types";
 import { productOf, toneOf, type TelexProduct, type Tone } from "@/lib/aq-modules/types";
 import type { Plan } from "@/lib/session-shared";
 
@@ -20,6 +20,7 @@ export type TelexView = {
   pick: number;
   /** False when the member's plan does not include this flash. */
   readable: boolean;
+  documents: TelexDocument[];
 };
 
 /** Tags and headline decide the product; the body only breaks a tie. */
@@ -46,6 +47,7 @@ export function telexView(item: TelexItem, plan: Plan | "all", pick = 0): TelexV
     thumb: telexThumbSrc(item),
     pick,
     readable: plan === "all" || canReadTelex(item.access, plan),
+    documents: item.documents ?? [],
   };
 }
 

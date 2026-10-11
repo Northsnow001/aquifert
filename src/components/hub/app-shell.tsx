@@ -15,6 +15,7 @@ import { InfoTip } from "@/components/app/info-tip";
 import { LanguageMenu } from "@/components/app/language-menu";
 import { NavHoverCard } from "@/components/app/nav-hover-card";
 import { startTour, Tour } from "@/components/app/tour";
+import { TelexGuide } from "@/components/hub/telex-guide";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { HubTabs } from "@/components/hub/hub-tabs";
 import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
@@ -450,6 +451,7 @@ export function AppShell({
       ) : null}
 
       <Tour userId={user.id} />
+      <TelexGuide userId={user.id} />
       <CommandPalette items={palette} />
       <AutoTranslate />
       <IdleTimeout email={user.email} />

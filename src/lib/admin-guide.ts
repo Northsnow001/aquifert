@@ -176,6 +176,7 @@ export const GUIDE: GuideSection[] = [
           "Choose who can read it: AQ ONE, AQ Analytics and AQ ZERO members; AQ Analytics and AQ ZERO; or AQ ZERO only.",
           "Add tags. Suggestions come from tags you have used before, which keeps them consistent.",
           "Add a thumbnail: upload or drop an image (large photos are resized for you), or paste an https image link. Without one, members see the product picture. The newest flashes show beside AQ View on the hub, the Telex Feed shows the opening lines of each with Read more, and every flash opens on its own page with the picture and full message.",
+          "Attach documents under the message: drop or pick up to 6 files (PDF, Word, Excel, PowerPoint, CSV, text or images, 50 MB each) and rename each one as members should see it. Members on the flash's access level read PDFs and images inside the app under the write-up and can download any file; the feed marks flashes that carry documents. Save once uploads finish; removed documents are deleted when you save.",
           "Set the status to Published and save. Leave it as Draft to finish later, or Private to keep it from members.",
         ],
       },
@@ -191,7 +192,7 @@ export const GUIDE: GuideSection[] = [
         title: "See who read a message",
         steps: [
           "The Reads column shows how many members read each message, out of how many opened it, and the average reading time. Press it, or Reads on the edit page, to see each member.",
-          "A visit counts as read once the member has spent 10 seconds on the full message. Shorter visits show as Opened.",
+          "A visit counts as read once the member has spent 5 seconds on the full message. Shorter visits show as Opened.",
           "Time on page counts only while the tab is in view and the member is active; it pauses after a minute without scrolling, typing or moving the pointer. Scrolled shows how far down the message they got.",
           "Read report ranks every message by reads and lists the most engaged members, over 7, 30 or 90 days or all time. Desk team visits are left out unless you include them.",
           "Members see a Read mark on the flashes they have read in the Telex Feed.",

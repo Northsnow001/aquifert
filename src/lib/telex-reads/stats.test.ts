@@ -22,20 +22,26 @@ const visit = (patch: Partial<TelexVisit> = {}): TelexVisit => ({
   ...patch,
 });
 
-test("a visit is marked read the moment it reaches 10 active seconds, and keeps that moment", () => {
+test("a visit is marked read the moment it reaches 5 active seconds, and keeps that moment", () => {
   const opened = mergeVisit(visit(), { seconds: 0, depth: 40 }, at(1));
   assert.equal(opened.readAt, null);
-  const read = mergeVisit(opened, { seconds: 10, depth: 80 }, at(11));
-  assert.equal(read.readAt, at(11));
+  assert.equal(mergeVisit(opened, { seconds: 4, depth: 60 }, at(5)).readAt, null);
+  const read = mergeVisit(opened, { seconds: 5, depth: 80 }, at(6));
+  assert.equal(read.readAt, at(6));
   const later = mergeVisit(read, { seconds: 45, depth: 100 }, at(50));
-  assert.equal(later.readAt, at(11));
+  assert.equal(later.readAt, at(6));
   assert.equal(later.seconds, 45);
+});
+
+test("a slow first report still lets the 5-second mark count", () => {
+  const opened = mergeVisit(visit(), { seconds: 0, depth: 0 }, at(0));
+  assert.equal(mergeVisit(opened, { seconds: 5, depth: 30 }, at(2.5)).readAt, at(2.5));
 });
 
 test("reported time can never exceed the time since the visit started", () => {
   const merged = mergeVisit(visit(), { seconds: 600, depth: 10 }, at(20));
-  assert.equal(merged.seconds, 25);
-  assert.equal(mergeVisit(visit(), { seconds: 10, depth: 0 }, at(2)).readAt, null);
+  assert.equal(merged.seconds, 23);
+  assert.equal(mergeVisit(visit(), { seconds: 10, depth: 0 }, at(1)).readAt, null);
 });
 
 test("time and depth never go backwards and stay within bounds", () => {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Copy, Eye, PenLine, Search, Trash2 } from "lucide-react";
 import { bulkTelex, deleteTelex, duplicateTelex } from "@/app/admin/actions";
+import { MissingTableNotice } from "@/components/admin/aq-data/table-notice";
 import { BulkApply, BulkBar, ConfirmSubmit, FilterSelect, SelectAll } from "@/components/admin/form-controls";
 import { Card, EmptyState, Flash, PageHeader, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
 import { TELEX_ACCESS, excerpt, formatStamp, telexHeadline, type PublishStatus } from "@/lib/content-types";
@@ -10,8 +11,14 @@ import { listVisits } from "@/lib/telex-reads/store";
 
 export const dynamic = "force-dynamic";
 
-function ReadsCell({ id, stats }: { id: string; stats?: TelexReadStats }) {
-  if (!stats) return <span className="text-[12px] text-dim">No visits yet</span>;
+function ReadsCell({ id, stats, team }: { id: string; stats?: TelexReadStats; team: number }) {
+  if (!stats) {
+    return (
+      <span className="text-[12px] text-dim" title={team ? "Admin visits are left out of the member numbers" : undefined}>
+        No member visits yet{team ? <span className="block text-[11.5px]">{team === 1 ? "1 team view" : `${team} team views`}</span> : null}
+      </span>
+    );
+  }
   return (
     <Link href={`/admin/telex/${id}/reads`} className="block no-underline" title="See who read it">
       <span className="text-[13px] font-semibold text-ink">{stats.read} read</span>
@@ -38,6 +45,8 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
   const [content, visits] = await Promise.all([getHubContent(), listVisits().catch(() => [])]);
   const all = sortTelex(content.telex);
   const reads = statsByTelex(visits.filter((visit) => !visit.admin));
+  const teamViews = new Map<string, number>();
+  for (const visit of visits) if (visit.admin) teamViews.set(visit.telexId, (teamViews.get(visit.telexId) ?? 0) + 1);
   const status = (["published", "draft", "private"].includes(params.status ?? "") ? params.status : "all") as PublishStatus | "all";
   const q = (params.q ?? "").trim().toLowerCase();
   const tags = Array.from(new Set(all.flatMap((item) => item.tags))).sort((a, b) => a.localeCompare(b));
@@ -107,6 +116,7 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
         }
       />
       <Flash saved={doneMessage} message={doneMessage} />
+      <MissingTableNotice table="telex_reads" what="member reads are not recorded, the Reads column and the read report" migration="007_telex_reads.sql" />
 
       <Card>
         <div className="border-b border-border px-4 pt-3">
@@ -240,7 +250,7 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
                         </div>
                       </td>
                       <td className="py-3.5 pr-4">
-                        <ReadsCell id={item.id} stats={reads.get(item.id)} />
+                        <ReadsCell id={item.id} stats={reads.get(item.id)} team={teamViews.get(item.id) ?? 0} />
                       </td>
                       <td className="py-3.5 pr-4">
                         <StatusBadge status={item.status} />

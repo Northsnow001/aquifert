@@ -60,7 +60,13 @@ export default async function EditTelexPage({
       <Flash saved={query.saved ? SAVED[query.saved] ?? SAVED.published : undefined} message={query.saved ? SAVED[query.saved] : undefined} />
       <Flash
         error={query.error}
-        message={query.error === "thumb" ? "The message saved, but the thumbnail did not. Use a JPG, PNG, WebP or GIF under 3 MB, or an image link that starts with https://." : "Write the message body before saving."}
+        message={
+          query.error === "thumb"
+            ? "The message saved, but the thumbnail did not. Use a JPG, PNG, WebP or GIF under 3 MB, or an image link that starts with https://."
+            : query.error === "doc"
+              ? "The message saved, but a document did not reach storage, so it is not attached. Upload it again."
+              : "Write the message body before saving."
+        }
       />
       <TelexEditor key={`${item.id}-${item.updatedAt}`} item={item} knownTags={knownTags} defaultAuthor={user?.name ?? "Aquifert Desk"} />
     </div>

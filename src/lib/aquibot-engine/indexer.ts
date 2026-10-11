@@ -72,6 +72,7 @@ function telexDate(item: TelexItem) {
 export function telexText(item: TelexItem) {
   const lines = [telexHeadline(item), `Published: ${formatTelexDay(item.publishedAt)}`];
   if (item.tags.length) lines.push(`Tags: ${item.tags.join(", ")}`);
+  if (item.documents?.length) lines.push(`Attached documents: ${item.documents.map((doc) => doc.title).join("; ")}`);
   return `${lines.join("\n")}\n\n${item.paragraphs.join("\n\n")}`;
 }
 

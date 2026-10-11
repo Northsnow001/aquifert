@@ -40,6 +40,15 @@ export function startTour() {
   window.dispatchEvent(new Event("aq:tour"));
 }
 
+/** Fired when the menu tour is finished or skipped, so follow-on guides can start. */
+export const TOUR_END_EVENT = "aq:tour-end";
+
+/** True once this member has finished or skipped the menu tour. */
+export function tourSettled(userId: string) {
+  const saved = read(`aq.tour.${VERSION}.${userId}`);
+  return saved?.status === "done" || saved?.status === "skipped";
+}
+
 /**
  * Coach marks on the real menu items, shown once to each member on their first visit after signing in, and again
  * whenever VERSION changes. Skippable, keyboard operable, resumable once, restartable from the Account menu and the guide.
@@ -110,6 +119,7 @@ export function Tour({ userId, stops = TOUR_STOPS }: { userId: string; stops?: t
     (status: "done" | "skipped") => {
       save({ status, step: step ?? 0, offered: true });
       setStep(null);
+      window.dispatchEvent(new Event(TOUR_END_EVENT));
     },
     [step, save],
   );

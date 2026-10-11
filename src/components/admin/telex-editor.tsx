@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, ImagePlus, Info, Loader2, Trash2, X } from "lucide-react";
+import { Eye, ImagePlus, Info, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { saveTelex } from "@/app/admin/actions";
 import { PendingButton } from "@/components/admin/form-controls";
+import { TelexDocumentsField, docRows, type DocRow } from "@/components/admin/telex-documents-field";
 import { Markdown } from "@/components/hub/markdown";
 import { btnPrimary, btnSecondary, field, input, label, textarea } from "@/components/admin/ui";
 import { telexProduct } from "@/lib/aq-modules/telex";
@@ -15,6 +16,7 @@ import {
   formatTelexDay,
   isThumbLink,
   splitParagraphs,
+  telexDocView,
   telexHeadline,
   telexThumbSrc,
   type PublishStatus,
@@ -75,10 +77,14 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
   const [thumbBusy, setThumbBusy] = useState(false);
   const [thumbError, setThumbError] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [docs, setDocs] = useState<DocRow[]>(() => docRows(item?.documents));
+  const [saveBlocked, setSaveBlocked] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const objectUrl = useRef<string | null>(null);
 
   const paragraphs = useMemo(() => splitParagraphs(body), [body]);
+  const docsUploading = docs.some((row) => row.state === "sending");
+  const readyDocs = docs.flatMap((row) => (row.state === "ready" && row.doc ? [row.doc] : []));
   const words = body.split(/\s+/).filter(Boolean).length;
   const product = telexProduct({ headline, paragraphs, tags });
 
@@ -168,7 +174,16 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
   const primaryLabel = status === "published" ? (item?.status === "published" ? "Update" : "Publish") : status === "private" ? "Save private" : "Save draft";
 
   return (
-    <form ref={formRef} action={saveTelex} className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <form
+      ref={formRef}
+      action={saveTelex}
+      onSubmit={(event) => {
+        if (!docsUploading) return;
+        event.preventDefault();
+        setSaveBlocked(true);
+      }}
+      className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"
+    >
       <input type="hidden" name="id" value={item?.id ?? ""} />
       <input type="hidden" name="status" value={status} />
       <input type="hidden" name="access" value={access} />
@@ -211,6 +226,8 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
           </p>
         </section>
 
+        <TelexDocumentsField telexId={item?.id} rows={docs} setRows={setDocs} />
+
         <section className="overflow-hidden aq-card">
           <div className="flex items-center gap-2 border-b border-border bg-s2/50 px-5 py-2.5">
             <Eye className="h-4 w-4 text-blue" />
@@ -242,6 +259,19 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
                     </span>
                   ))}
                 </div>
+              ) : null}
+              {readyDocs.length ? (
+                <ul className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3">
+                  {readyDocs.map((doc) => (
+                    <li key={doc.id} className="flex items-center gap-2 text-[12.5px]">
+                      <Paperclip className="h-3.5 w-3.5 shrink-0 text-blue" />
+                      <span className="min-w-0 truncate font-semibold text-ink">{doc.title || doc.name}</span>
+                      <span className="shrink-0 text-dim">
+                        {doc.name.split(".").pop()?.toUpperCase()} · {telexDocView(doc.name) === "download" ? "download" : "opens in the app"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               ) : null}
             </div>
           </article>
@@ -310,6 +340,7 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
               </PendingButton>
             ) : null}
           </div>
+          {saveBlocked && docsUploading ? <p className="mt-2 text-[12px] font-medium text-danger">A document is still uploading. Save once it finishes.</p> : null}
         </section>
 
         <section className="rounded-2xl border border-border bg-surface p-5 shadow-[0_1px_2px_rgba(26,58,92,0.05)]">

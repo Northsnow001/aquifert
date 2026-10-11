@@ -7,6 +7,7 @@ import {
   deskNow,
   isThumbLink,
   newId,
+  parseTelexDocList,
   slugify,
   splitParagraphs,
   type Collection,
@@ -15,6 +16,7 @@ import {
   type Indicator,
   type PublishStatus,
   type TelexAccess,
+  type TelexDocument,
   type TelexItem,
 } from "@/lib/content-types";
 import {
@@ -31,6 +33,7 @@ import { removeLibraryFiles } from "@/lib/data/files";
 import { getHubContent, updateHubContent } from "@/lib/hub-content";
 import { sanitizeRichText } from "@/lib/sanitize";
 import { getSession } from "@/lib/session";
+import { checkStoredTelexDoc, copyTelexDoc, removeTelexDoc } from "@/lib/telex-docs";
 import { readTelexThumb, removeTelexThumb, saveTelexThumb, THUMB_MAX_BYTES, THUMB_TYPES, thumbContentType } from "@/lib/telex-thumbs";
 
 async function requireAdmin() {
@@ -74,6 +77,7 @@ export async function saveTelex(formData: FormData) {
 
   const id = existingId || newId("tx");
   const thumb = await telexThumbFrom(formData, id);
+  const docs = await telexDocsFrom(formData, id);
   const item: TelexItem = {
     id,
     headline: text(formData, "headline"),
@@ -88,13 +92,47 @@ export async function saveTelex(formData: FormData) {
 
   await updateHubContent((content) => {
     const index = content.telex.findIndex((entry) => entry.id === id);
-    const next = { ...item, thumbnail: thumb.value === undefined ? (content.telex[index]?.thumbnail ?? null) : thumb.value };
+    const next: TelexItem = {
+      ...item,
+      thumbnail: thumb.value === undefined ? (content.telex[index]?.thumbnail ?? null) : thumb.value,
+      documents: docs.value ?? content.telex[index]?.documents ?? [],
+    };
     if (index >= 0) content.telex[index] = next;
     else content.telex.unshift(next);
   });
+  await Promise.all(docs.dropped.map((docId) => removeTelexDoc(docId).catch(() => undefined)));
   syncKnowledgeLater([`telex:${id}`]);
   refresh();
-  redirect(`/admin/telex/${id}?saved=${status}${thumb.failed ? "&error=thumb" : ""}`);
+  const error = thumb.failed ? "&error=thumb" : docs.failed ? "&error=doc" : "";
+  redirect(`/admin/telex/${id}?saved=${status}${error}`);
+}
+
+/**
+ * The documents the editor listed. Kept ones keep their stored size; new ones must be in storage.
+ * `value: undefined` keeps the list as it is; `dropped` are files no flash lists any more.
+ */
+async function telexDocsFrom(formData: FormData, id: string): Promise<{ value?: TelexDocument[]; dropped: string[]; failed?: true }> {
+  const raw = formData.get("documents");
+  if (typeof raw !== "string") return { dropped: [] };
+  const telex = (await getHubContent()).telex;
+  const previous = telex.find((entry) => entry.id === id)?.documents ?? [];
+  const elsewhere = new Set(telex.filter((entry) => entry.id !== id).flatMap((entry) => (entry.documents ?? []).map((doc) => doc.id)));
+  let failed = false;
+  const value: TelexDocument[] = [];
+  for (const entry of parseTelexDocList(raw)) {
+    const kept = previous.find((doc) => doc.id === entry.id && doc.name === entry.name);
+    if (kept) {
+      value.push({ ...kept, title: entry.title });
+      continue;
+    }
+    if (elsewhere.has(entry.id)) continue;
+    const stored = await checkStoredTelexDoc(entry).catch(() => ({ error: "unreadable" }));
+    if ("error" in stored) failed = true;
+    else value.push({ ...entry, size: stored.size });
+  }
+  const listed = new Set(value.map((doc) => doc.id));
+  const dropped = previous.filter((doc) => !listed.has(doc.id) && !elsewhere.has(doc.id)).map((doc) => doc.id);
+  return failed ? { value, dropped, failed: true } : { value, dropped };
 }
 
 /** `value: undefined` keeps whatever thumbnail the flash already has. */
@@ -126,10 +164,13 @@ async function telexThumbFrom(formData: FormData, id: string): Promise<{ value?:
 export async function deleteTelex(formData: FormData) {
   await requireAdmin();
   const id = text(formData, "id");
+  let docs: TelexDocument[] = [];
   await updateHubContent((content) => {
+    docs = content.telex.find((item) => item.id === id)?.documents ?? [];
     content.telex = content.telex.filter((item) => item.id !== id);
   });
   await removeTelexThumb(id).catch(() => undefined);
+  await Promise.all(docs.map((doc) => removeTelexDoc(doc.id).catch(() => undefined)));
   syncKnowledgeLater([`telex:${id}`]);
   refresh();
   redirect("/admin/telex?done=deleted");
@@ -145,9 +186,11 @@ export async function duplicateTelex(formData: FormData) {
     const bytes = await readTelexThumb(id, thumbnail).catch(() => null);
     thumbnail = bytes ? await saveTelexThumb(copyId, bytes, thumbContentType(thumbnail)).catch(() => null) : null;
   }
+  const copied = await Promise.all((source?.documents ?? []).map((doc) => copyTelexDoc(doc, newId("txd")).catch(() => null)));
+  const documents = copied.filter((doc): doc is TelexDocument => doc !== null);
   await updateHubContent((content) => {
     const original = content.telex.find((item) => item.id === id);
-    if (original) content.telex.unshift({ ...original, id: copyId, thumbnail, status: "draft", publishedAt: deskNow(), updatedAt: deskNow() });
+    if (original) content.telex.unshift({ ...original, id: copyId, thumbnail, documents, status: "draft", publishedAt: deskNow(), updatedAt: deskNow() });
   });
   refresh();
   redirect(`/admin/telex/${copyId}?saved=draft`);
@@ -159,8 +202,10 @@ export async function bulkTelex(formData: FormData) {
   const action = text(formData, "bulk");
   const back = text(formData, "back") || "/admin/telex";
   if (ids.size === 0 || !action) redirect(back);
+  let docIds: string[] = [];
   await updateHubContent((content) => {
     if (action === "delete") {
+      docIds = content.telex.filter((item) => ids.has(item.id)).flatMap((item) => (item.documents ?? []).map((doc) => doc.id));
       content.telex = content.telex.filter((item) => !ids.has(item.id));
       return;
     }
@@ -168,7 +213,12 @@ export async function bulkTelex(formData: FormData) {
     if (!STATUSES.includes(status)) return;
     content.telex = content.telex.map((item) => (ids.has(item.id) ? { ...item, status, updatedAt: deskNow() } : item));
   });
-  if (action === "delete") await Promise.all(Array.from(ids, (id) => removeTelexThumb(id).catch(() => undefined)));
+  if (action === "delete") {
+    await Promise.all([
+      ...Array.from(ids, (id) => removeTelexThumb(id).catch(() => undefined)),
+      ...docIds.map((docId) => removeTelexDoc(docId).catch(() => undefined)),
+    ]);
+  }
   syncKnowledgeLater(Array.from(ids, (id) => `telex:${id}`));
   refresh();
   const join = back.includes("?") ? "&" : "?";

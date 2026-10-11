@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 import { btnPrimary } from "@/components/app/form";
 import { Disclaimer, FeedThumb, ProductChip, StoryImage, Tag, ToneBadge } from "@/components/hub/kit";
 import { Markdown } from "@/components/hub/markdown";
+import { TelexDocuments } from "@/components/hub/telex-documents";
 import { TelexReadTracker } from "@/components/hub/telex-read-tracker";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { publishedTelex, telexView } from "@/lib/aq-modules/telex";
@@ -76,12 +77,18 @@ export default async function TelexStoryPage({ params }: PageProps<"/hub/telex/[
               <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
                 <Lock className="h-4 w-4 text-blue" /> This is an {FILE_ACCESS_LABEL[item.access]} flash
               </p>
-              <p className="text-[14.5px] leading-relaxed text-mid">Your plan shows the headline. Upgrade to read the full story and everything else the desk files for this tier.</p>
+              <p className="text-[14.5px] leading-relaxed text-mid">
+                Your plan shows the headline. Upgrade to read the full story
+                {item.documents.length ? `, open the ${item.documents.length === 1 ? "attached document" : `${item.documents.length} attached documents`}` : ""} and everything else the desk files for
+                this tier.
+              </p>
               <Link href="/hub/account/membership" className={btnPrimary}>
                 Compare plans
               </Link>
             </div>
           )}
+
+          {item.readable && item.documents.length ? <TelexDocuments telexId={item.id} documents={item.documents} /> : null}
 
           <div className="mt-6 border-t border-border pt-4">
             <Disclaimer />

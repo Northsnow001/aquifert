@@ -370,7 +370,7 @@ export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: fa
   { key: "nitrogen", title: "Nitrogen Report", body: "Answer six questions on one page and get an AQ View nitrogen brief tailored to your market, yours to keep." },
   { key: "library", title: "Library", body: "Reports, guides and desk files, organised in collections you can search." },
   { key: "aquibot", title: "Aquibot", body: "Your trader AI. Ask about prices, freight, market news or how a product is made." },
-  { key: "telex", title: "Telex Feed", body: "Desk flashes, newest first. Read the opening lines, press Read more for the full story, and save a product filter as your default." },
+  { key: "telex", title: "Telex Feed", body: "Desk flashes, newest first. Read the opening lines, press a headline or Read more for the full story (it is marked Read after a few seconds), and save a product filter as your default." },
   { key: "analysis", title: "AQ View", body: "The desk's market analysis notes: where prices are heading and why." },
   { key: "freight", title: "Calculators", body: "Price a freight route or work out your netback: real landed cost, or what a farm-gate price implies at FOB." },
   { key: "order", title: "Order Fertilizer Now", body: "Send the trading desk an enquiry for the products, quantity and months you need." },

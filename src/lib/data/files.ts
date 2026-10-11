@@ -1,6 +1,6 @@
 import "server-only";
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
 import path from "path";
 import { assertLocalAllowed, databaseError, dataClient } from "@/lib/data/db";
 import { LIBRARY_BUCKET } from "@/lib/data/tables";
@@ -86,6 +86,23 @@ export async function readLibraryFile(file: StoredFile): Promise<Buffer | null> 
     throw databaseError("read the file", error);
   }
   return Buffer.from(await data.arrayBuffer());
+}
+
+/** Copies one stored file into another record's folder, inside storage so large files never pass through here. */
+export async function copyLibraryFile(from: StoredFile, toId: string) {
+  if (!from.storedName) return;
+  const db = dataClient();
+  if (db) {
+    const { error } = await db.storage.from(LIBRARY_BUCKET).copy(objectPath(from.id, from.storedName), objectPath(toId, from.storedName));
+    if (error) throw databaseError("copy the file", error);
+    return;
+  }
+  assertLocalAllowed();
+  const source = path.join(localDir(from.id), path.basename(from.storedName));
+  if (!existsSync(source)) return;
+  const dir = localDir(toId);
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(source, path.join(dir, path.basename(from.storedName)));
 }
 
 /** A link the browser can fetch directly for one minute, or null when files are kept on this machine. */

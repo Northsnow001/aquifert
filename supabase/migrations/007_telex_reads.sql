@@ -1,6 +1,6 @@
 -- TELEX read tracking: one row per member visit to a flash's full view. The browser reports
 -- active seconds (tab visible, reader not idle) and how far down the story they scrolled; a
--- visit counts as read once it reaches 10 active seconds, and read_at records that moment.
+-- visit counts as read once it reaches 5 active seconds, and read_at records that moment.
 --
 -- Same rules as 003: the full record in `data`, reached only through the service-role key on
 -- the server. telex_id and read_at mirror the record so the desk can query reads directly in

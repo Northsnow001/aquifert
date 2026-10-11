@@ -1,7 +1,9 @@
 import type { Plan } from "@/lib/session-shared";
 
 /** Active seconds on a flash's full view before the visit counts as read. */
-export const READ_SECONDS = 10;
+export const READ_SECONDS = 5;
+/** Allowance for network delay between the browser's clock and the first report reaching the server. */
+const CLOCK_SLACK_SECONDS = 3;
 /** One visit never counts for more than this, however long the tab stays open. */
 export const MAX_VISIT_SECONDS = 4 * 60 * 60;
 
@@ -154,11 +156,11 @@ export function membersOf(visits: TelexVisit[]): MemberActivity[] {
 
 /**
  * Folds a browser report into the stored visit. Time and depth never go backwards, time can never
- * exceed the wall-clock time since the visit started (plus a little slack for clock jitter), and
+ * exceed the wall-clock time since the visit started (plus a little slack for network delay), and
  * the read moment is fixed the first time the threshold is crossed.
  */
 export function mergeVisit(current: TelexVisit, report: { seconds: number; depth: number }, now: string): TelexVisit {
-  const elapsed = Math.max(0, (Date.parse(now) - Date.parse(current.startedAt)) / 1000) + 5;
+  const elapsed = Math.max(0, (Date.parse(now) - Date.parse(current.startedAt)) / 1000) + CLOCK_SLACK_SECONDS;
   const seconds = Math.round(Math.min(MAX_VISIT_SECONDS, elapsed, Math.max(current.seconds, report.seconds)));
   const depth = Math.round(Math.min(100, Math.max(current.depth, report.depth)));
   return { ...current, at: now, seconds, depth, readAt: current.readAt ?? (seconds >= READ_SECONDS ? now : null) };

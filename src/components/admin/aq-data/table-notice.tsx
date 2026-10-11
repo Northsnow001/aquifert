@@ -3,8 +3,8 @@ import "server-only";
 import { CircleAlert } from "lucide-react";
 import { dataClient, isMissingTable } from "@/lib/data/db";
 
-/** Warns when a member table from `005_aq_modules.sql` is not in Supabase yet: reads come back empty and saves fail. */
-export async function MissingTableNotice({ table, what }: { table: string; what: string }) {
+/** Warns when a table is not in Supabase yet: reads come back empty and saves fail. */
+export async function MissingTableNotice({ table, what, migration = "005_aq_modules.sql" }: { table: string; what: string; migration?: string }) {
   const db = dataClient();
   if (!db) return null;
   const { error } = await db.from(table).select("id", { count: "exact", head: true });
@@ -14,7 +14,7 @@ export async function MissingTableNotice({ table, what }: { table: string; what:
       <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
       <span>
         The <code className="font-mono text-[12px]">{table}</code> table is not in Supabase yet, so {what} stay empty and changes cannot be saved. Run{" "}
-        <code className="font-mono text-[12px]">supabase/migrations/005_aq_modules.sql</code> in the Supabase SQL editor.
+        <code className="font-mono text-[12px]">supabase/migrations/{migration}</code> in the Supabase SQL editor.
       </span>
     </p>
   );

@@ -4,6 +4,7 @@ import { ArrowRight, Info, Lock, RadioTower } from "lucide-react";
 import { btnSecondary } from "@/components/app/form";
 import { TelexFilters } from "@/components/hub/aq1/telex-filters";
 import { Disclaimer, EmptyPanel, HubPageHeader } from "@/components/hub/kit";
+import { TelexGuideButton } from "@/components/hub/telex-guide";
 import { TelexList } from "@/components/hub/telex-list";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getPrefs } from "@/lib/aq-modules/members";
@@ -60,9 +61,12 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
         tip="Short, time-stamped flashes from the Aquifert desk: tenders, price moves, plant news and freight. Green chips lean firmer, red lean softer. Flashes above your plan show as locked rows."
         guide="telex"
         actions={
-          <Link href="/hub/analytics/telex" className={btnSecondary}>
-            {can("aq-telex") ? <RadioTower className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Full AQ TELEX wire
-          </Link>
+          <>
+            <TelexGuideButton />
+            <Link href="/hub/analytics/telex" className={btnSecondary}>
+              {can("aq-telex") ? <RadioTower className="h-4 w-4" /> : <Lock className="h-4 w-4" />} Full AQ TELEX wire
+            </Link>
+          </>
         }
       />
 
@@ -87,7 +91,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
         </div>
 
         {matches.length ? (
-          <TelexList items={shown} mode="preview" readIds={readIds} />
+          <TelexList items={shown} mode="preview" readIds={readIds} tourAnchor />
         ) : telex.length ? (
           <div className="p-5">
             <EmptyPanel

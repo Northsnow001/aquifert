@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MissingTableNotice } from "@/components/admin/aq-data/table-notice";
 import { ReadFilters, ReadRateBar, StatTiles, parsePeriod, readRate, sinceFor, stampUtc } from "@/components/admin/telex-reads";
 import { Card, CardHeader, EmptyState, PageHeader, Pill } from "@/components/admin/ui";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
@@ -39,6 +40,8 @@ export default async function TelexReadReportPage({ searchParams }: { searchPara
         description={`Which flashes members read and how long they stay. A visit counts as read after ${READ_SECONDS} seconds on the full story.`}
         crumbs={[{ href: "/admin/telex", label: "Telex" }]}
       />
+
+      <MissingTableNotice table="telex_reads" what="member reads are not recorded, and these numbers" migration="007_telex_reads.sql" />
 
       <div className="mb-4">
         <ReadFilters base="/admin/telex/reads" period={period} team={team} />

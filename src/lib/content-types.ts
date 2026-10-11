@@ -28,7 +28,83 @@ export type TelexItem = {
   updatedAt: string;
   /** An https image link, or the name of an uploaded file. Empty falls back to the product picture. */
   thumbnail?: string | null;
+  /** Files members open alongside the write-up, in the order the desk listed them. */
+  documents?: TelexDocument[];
 };
+
+export type TelexDocument = {
+  id: string;
+  /** Stored file name, with its extension. */
+  name: string;
+  /** What members see; the file name until the desk renames it. */
+  title: string;
+  /** Bytes. */
+  size: number;
+};
+
+export const TELEX_DOC_MAX_BYTES = 50 * 1024 * 1024;
+export const TELEX_DOC_LIMIT = 6;
+export const TELEX_DOC_EXTENSIONS = ["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "csv", "txt", "png", "jpg", "jpeg", "webp"] as const;
+
+export const telexDocExt = (name: string) => name.split(".").pop()?.toLowerCase() ?? "";
+
+/** How the hub shows a document in the app: PDFs in a viewer, pictures inline, the rest as a download. */
+export function telexDocView(name: string): "pdf" | "image" | "download" {
+  const ext = telexDocExt(name);
+  if (ext === "pdf") return "pdf";
+  return ["png", "jpg", "jpeg", "webp"].includes(ext) ? "image" : "download";
+}
+
+const DOC_ID = /^txd-[a-z0-9]{4,40}$/;
+
+export const isTelexDocId = (value: string) => DOC_ID.test(value);
+
+/** A readable title from a file name: no extension, no underscores. */
+export function telexDocTitle(fileName: string) {
+  const base = fileName.split(/[\\/]/).pop() ?? "";
+  const title = base.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+  return (title || "Document").slice(0, 160);
+}
+
+/** The stored name for an upload, or why it is refused. */
+export function checkTelexDocFile(fileName: string, size: number): { name: string } | { error: string } {
+  const base = (fileName.split(/[\\/]/).pop() ?? "").replace(/[^\w.\- ()&]+/g, "_").slice(-160);
+  const ext = telexDocExt(base);
+  if (!base || !base.includes(".") || !(TELEX_DOC_EXTENSIONS as readonly string[]).includes(ext)) {
+    return { error: `.${base.includes(".") ? ext : "?"} files are not accepted. Upload a PDF, Word, Excel, PowerPoint, CSV, text or image file.` };
+  }
+  if (size > TELEX_DOC_MAX_BYTES) return { error: `Documents are limited to ${TELEX_DOC_MAX_BYTES / (1024 * 1024)} MB.` };
+  return { name: base };
+}
+
+/** The editor's document list, cleaned: known ids, accepted names, short titles, no repeats, at most the limit. */
+export function parseTelexDocList(raw: string): Pick<TelexDocument, "id" | "name" | "title">[] {
+  let list: unknown;
+  try {
+    list = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(list)) return [];
+  const seen = new Set<string>();
+  const out: Pick<TelexDocument, "id" | "name" | "title">[] = [];
+  for (const entry of list) {
+    if (!entry || typeof entry !== "object") continue;
+    const { id, name, title } = entry as Record<string, unknown>;
+    if (typeof id !== "string" || !isTelexDocId(id) || seen.has(id) || typeof name !== "string") continue;
+    const checked = checkTelexDocFile(name, 0);
+    if ("error" in checked || checked.name !== name) continue;
+    const clean = typeof title === "string" ? title.replace(/\s+/g, " ").trim().slice(0, 160) : "";
+    seen.add(id);
+    out.push({ id, name, title: clean || telexDocTitle(name) });
+    if (out.length === TELEX_DOC_LIMIT) break;
+  }
+  return out;
+}
+
+export function telexDocHref(telexId: string, doc: Pick<TelexDocument, "id">, inline = false) {
+  return `/hub/telex/${encodeURIComponent(telexId)}/documents/${encodeURIComponent(doc.id)}${inline ? "?inline=1" : ""}`;
+}
 
 export const isThumbLink = (value: string) => /^https:\/\//i.test(value);
 

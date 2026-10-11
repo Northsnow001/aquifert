@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCheck, Lock } from "lucide-react";
+import { ArrowRight, CheckCheck, Lock, Paperclip } from "lucide-react";
 import { FeedThumb, Tag, ToneBadge } from "@/components/hub/kit";
 import { groupByDay, type TelexView } from "@/lib/aq-modules/telex";
 import { FILE_ACCESS_LABEL, formatTelexDay, plainText } from "@/lib/content-types";
@@ -13,6 +13,7 @@ export function TelexList({
   mode = "excerpt",
   thumb = 56,
   readIds,
+  tourAnchor = false,
   empty = "No Telex flashes match yet. The desk publishes through the trading day.",
 }: {
   items: TelexView[];
@@ -20,9 +21,12 @@ export function TelexList({
   thumb?: number;
   /** Flashes this member has already read, marked with a Read chip. */
   readIds?: Set<string>;
+  /** Marks the first readable headline for the TELEX guide, preferring one the member has not read. */
+  tourAnchor?: boolean;
   empty?: string;
 }) {
   if (!items.length) return <p className="px-5 py-12 text-center text-[15px] text-mid">{empty}</p>;
+  const guided = tourAnchor ? (items.find((item) => item.readable && !readIds?.has(item.id)) ?? items.find((item) => item.readable))?.id : undefined;
   return (
     <div>
       {groupByDay(items).map(([day, rows]) => (
@@ -48,6 +52,15 @@ export function TelexList({
                           {tag}
                         </span>
                       ))}
+                      {item.documents.length ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-blue-light px-2 py-0.5 text-[11px] font-semibold text-blue"
+                          title={item.documents.map((doc) => doc.title).join("\n")}
+                        >
+                          <Paperclip className="h-3 w-3" aria-hidden />
+                          {item.documents.length === 1 ? "Document" : `${item.documents.length} documents`}
+                        </span>
+                      ) : null}
                       {read ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-s2 px-2 py-0.5 text-[11px] font-semibold text-dim" title="You have read this flash">
                           <CheckCheck className="h-3 w-3" aria-hidden /> Read
@@ -56,7 +69,7 @@ export function TelexList({
                     </div>
                     <div className="col-span-2 min-w-0 max-sm:mt-1 sm:col-span-1 sm:col-start-2">
                       <h3 className={`mt-1.5 text-[16.5px] font-semibold leading-snug tracking-[-0.01em] ${read ? "text-mid" : "text-ink"}`}>
-                        <Link href={href} className="text-inherit no-underline hover:text-blue hover:underline">
+                        <Link href={href} data-tour={item.id === guided ? "telex-read" : undefined} className="text-inherit no-underline hover:text-blue hover:underline">
                           {item.headline}
                         </Link>
                       </h3>
