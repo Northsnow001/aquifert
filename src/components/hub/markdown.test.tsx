@@ -8,7 +8,7 @@ const html = (text: string, images = false) => renderToStaticMarkup(<Markdown te
 
 test("telex markdown renders rules, headings, quotes, code and lists", () => {
   const out = html("## Urea\n\nFirst **bold** and *soft*.\n\n---\n\n> Desk view\n\n- one\n- two\n\n```\nline 1\n\nline 2\n```");
-  assert.match(out, /<p class="pt-1 font-bold[^"]*">Urea<\/p>/);
+  assert.match(out, /<h3 class="pt-1 font-bold[^"]*">Urea<\/h3>/);
   assert.match(out, /<strong[^>]*>bold<\/strong>/);
   assert.match(out, /<em>soft<\/em>/);
   assert.match(out, /<hr/);

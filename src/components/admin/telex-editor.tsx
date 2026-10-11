@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, ImagePlus, Info, Loader2, Paperclip, Trash2, X } from "lucide-react";
+import { Eye, ImagePlus, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { saveTelex } from "@/app/admin/actions";
+import { DocEditor } from "@/components/admin/doc-editor";
 import { PendingButton } from "@/components/admin/form-controls";
 import { TelexDocumentsField, docRows, type DocRow } from "@/components/admin/telex-documents-field";
 import { Markdown } from "@/components/hub/markdown";
-import { btnPrimary, btnSecondary, field, input, label, textarea } from "@/components/admin/ui";
+import { btnPrimary, btnSecondary, field, input, label } from "@/components/admin/ui";
 import { telexProduct } from "@/lib/aq-modules/telex";
 import { THUMBS } from "@/lib/aq-modules/types";
 import {
@@ -79,13 +80,13 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
   const [dragging, setDragging] = useState(false);
   const [docs, setDocs] = useState<DocRow[]>(() => docRows(item?.documents));
   const [saveBlocked, setSaveBlocked] = useState(false);
+  const [bodyError, setBodyError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const objectUrl = useRef<string | null>(null);
 
   const paragraphs = useMemo(() => splitParagraphs(body), [body]);
   const docsUploading = docs.some((row) => row.state === "sending");
   const readyDocs = docs.flatMap((row) => (row.state === "ready" && row.doc ? [row.doc] : []));
-  const words = body.split(/\s+/).filter(Boolean).length;
   const product = telexProduct({ headline, paragraphs, tags });
 
   useEffect(
@@ -178,6 +179,12 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
       ref={formRef}
       action={saveTelex}
       onSubmit={(event) => {
+        if (!body.trim()) {
+          event.preventDefault();
+          setBodyError(true);
+          document.getElementById("body")?.focus();
+          return;
+        }
         if (!docsUploading) return;
         event.preventDefault();
         setSaveBlocked(true);
@@ -202,28 +209,22 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
             placeholder="Leave empty to use the first words of the message"
             className={`${field} mt-1.5 h-11 w-full text-[15px] font-semibold uppercase tracking-wide placeholder:normal-case placeholder:font-normal placeholder:tracking-normal`}
           />
-          <div className="mt-5 flex items-end justify-between">
-            <label className={label} htmlFor="body">
-              Message
-            </label>
-            <span className="font-mono text-[11px] text-dim">
-              {words} words · {paragraphs.length} {paragraphs.length === 1 ? "paragraph" : "paragraphs"} · {Math.max(1, Math.round(words / 200))} min read
-            </span>
+          <div className="mt-5">
+            <DocEditor
+              id="body"
+              name="body"
+              title="Message"
+              value={body}
+              onChange={(next) => {
+                setBody(next);
+                if (bodyError && next.trim()) setBodyError(false);
+              }}
+              placeholder={"Paste or write the intel.\nPaste from Word, WPS or Google Docs keeps the formatting. Ctrl+S saves."}
+              meta={`${paragraphs.length} ${paragraphs.length === 1 ? "paragraph" : "paragraphs"}`}
+              minHeight={340}
+              error={bodyError ? "Write the message before saving." : undefined}
+            />
           </div>
-          <textarea
-            id="body"
-            name="body"
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            rows={16}
-            required
-            placeholder="Paste or write the intel. Leave a blank line between paragraphs."
-            className={`${textarea} mt-1.5 min-h-[22rem] font-[450]`}
-          />
-          <p className="mt-2 flex items-start gap-1.5 text-[12px] leading-relaxed text-dim">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            A blank line starts a new paragraph. Markdown works: **bold**, *italic*, # headings, lists, &gt; quotes, [links](https://…), ![images](https://…), --- rules and | pipe | tables |. Ctrl+S saves.
-          </p>
         </section>
 
         <TelexDocumentsField telexId={item?.id} rows={docs} setRows={setDocs} />

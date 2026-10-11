@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Info, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteAnalysisNote, deleteBriefingIssue } from "@/app/admin/aq-content/actions";
-import { btnDanger, btnGhost, label, textarea } from "@/components/admin/ui";
-import { Markdown } from "@/components/hub/markdown";
+import { DocEditor } from "@/components/admin/doc-editor";
+import { btnDanger, btnGhost } from "@/components/admin/ui";
 import type { PublishState } from "@/lib/aq-modules/types";
 
+/** An article body in the word-processor editor. The value stays Markdown. */
 export function MarkdownField({
   id,
   title,
@@ -26,52 +27,7 @@ export function MarkdownField({
   placeholder?: string;
   meta?: React.ReactNode;
 }) {
-  const [tab, setTab] = useState<"write" | "preview">("write");
-  const words = value.split(/\s+/).filter(Boolean).length;
-  return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <label className={label} htmlFor={id}>
-          {title}
-        </label>
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-[11px] text-dim">{meta ?? `${words} words`}</span>
-          <div className="grid grid-cols-2 rounded-lg border border-border bg-s2/60 p-0.5" role="tablist" aria-label={`${title} view`}>
-            {(["write", "preview"] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                role="tab"
-                aria-selected={tab === key}
-                onClick={() => setTab(key)}
-                className={`rounded-md px-3 py-1 text-[12px] font-semibold capitalize transition ${tab === key ? "bg-white text-ink shadow-sm" : "text-mid hover:text-ink"}`}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      {tab === "write" ? (
-        <textarea
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          rows={rows}
-          placeholder={placeholder}
-          className={`${textarea} mt-1.5 font-[450]`}
-        />
-      ) : (
-        <div className="mt-1.5 min-h-[12rem] rounded-xl border border-border bg-white px-4 py-3">
-          {value.trim() ? <Markdown text={value} className="text-[13.5px] text-ink" /> : <p className="text-[13px] text-dim">Nothing to preview yet.</p>}
-        </div>
-      )}
-      <p className="mt-2 flex items-start gap-1.5 text-[12px] leading-relaxed text-dim">
-        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        Markdown works: **bold**, *italic*, ## headings, - lists, &gt; quotes, [links](https://…) and | pipe | tables |.
-      </p>
-    </div>
-  );
+  return <DocEditor id={id} title={title} value={value} onChange={onChange} placeholder={placeholder} meta={meta} minHeight={Math.max(180, rows * 24)} />;
 }
 
 export function StatusToggle({ value, onChange }: { value: PublishState; onChange: (value: PublishState) => void }) {

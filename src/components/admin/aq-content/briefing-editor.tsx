@@ -81,7 +81,7 @@ export function BriefingEditor({ issue, defaultDate }: { issue?: BriefingIssue; 
             value={body}
             onChange={setBody}
             rows={22}
-            placeholder={"## Nitrogen\n…\n\n## Phosphate\n…\n\n## What to do this week\n- …"}
+            placeholder={"A Heading 2 for each market: Nitrogen, Phosphate, Potash.\nClose with what to do this week as a bulleted list."}
           />
         </div>
       </section>

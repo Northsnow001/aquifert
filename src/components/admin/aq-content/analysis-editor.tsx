@@ -152,7 +152,7 @@ export function AnalysisEditor({
               onChange={setBody}
               rows={20}
               meta={`${words} words · ${Math.max(1, Math.round(words / 200))} min read`}
-              placeholder={"Lead with what happened.\n\n**What it means:** …\n\n**What to watch:** …"}
+              placeholder={"Lead with what happened.\nThen what it means for buyers, and what to watch next.\nUse Heading 2 for sections and the list buttons for points."}
             />
           </div>
         </section>

@@ -1,3 +1,4 @@
+import { markdownText } from "@/lib/rich-text/markdown";
 import type { Plan } from "@/lib/session-shared";
 
 export type PublishStatus = "published" | "draft" | "private";
@@ -237,17 +238,7 @@ export function splitParagraphs(value: string) {
 
 /** Markdown reduced to its words, for headlines, excerpts and search. */
 export function plainText(markdown: string) {
-  return markdown
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/^\s*\|?\s*:?-{2,}:?(\s*\|\s*:?-{2,}:?)*\s*\|?\s*$/gm, " ")
-    .replace(/^\s*([-*_])(\s*\1){2,}\s*$/gm, " ")
-    .replace(/^\s{0,3}(#{1,6}|>|[-*•]|\d+[.)])\s+/gm, "")
-    .replace(/(\*\*|__|`|\|)/g, " ")
-    .replace(/(^|\s)[*_]([^*_\s][^*_]*)[*_](?=\s|$|[.,;:!?])/g, "$1$2")
-    .replace(/\s+/g, " ")
-    .trim();
+  return markdownText(markdown);
 }
 
 export function telexHeadline(item: Pick<TelexItem, "headline" | "paragraphs">) {

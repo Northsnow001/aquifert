@@ -172,7 +172,7 @@ export const GUIDE: GuideSection[] = [
         steps: [
           "Press New Telex, from the Telex page or the dashboard.",
           "Write the headline and the message. Leave the headline empty to use the first words of the message.",
-          "Format with Markdown: **bold**, *italic*, headings, lists, quotes, links, code, --- rules, images from an https address, and pipe tables with :--- alignment. The Hub preview shows exactly how members read it.",
+          "Format it like a Word document with the ribbon above the page: headings, bold, italic, underline, colour, highlight, bullet, numbered and a) b) c) lists, alignment, quotes, links, images from an https address, tables and dividers. Pasting from Word, WPS or Google Docs keeps the formatting; Ctrl+Shift+V pastes plain text. Typing # , - , 1. or a) at the start of a line formats it too. Preview shows exactly how members read it; the Markdown tab shows the source.",
           "Choose who can read it: AQ ONE, AQ Analytics and AQ ZERO members; AQ Analytics and AQ ZERO; or AQ ZERO only.",
           "Add tags. Suggestions come from tags you have used before, which keeps them consistent.",
           "Add a thumbnail: upload or drop an image (large photos are resized for you), or paste an https image link. Without one, members see the product picture. The newest flashes show beside AQ View on the hub, the Telex Feed shows the opening lines of each with Read more, and every flash opens on its own page with the picture and full message.",
