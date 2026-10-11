@@ -209,7 +209,7 @@ export default async function SupplyDemandPage() {
 
       {commentary.trim() ? (
         <Panel title="Desk commentary" sub="What would change the balance" icon={MessageSquareText} bodyClassName="px-5 py-4">
-          <Markdown text={commentary} className="text-[15.5px] text-ink" />
+          <Markdown text={commentary} polish className="text-[15.5px] text-ink" />
         </Panel>
       ) : null}
 

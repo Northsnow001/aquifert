@@ -61,7 +61,7 @@ export default async function BriefingIssuePage({ params }: Props) {
         </p>
         {issue.summary ? <p className="mt-5 border-l-2 border-teal-400 pl-4 text-[17px] leading-relaxed text-ink">{issue.summary}</p> : null}
         <div className="mt-6 border-t border-border pt-6">
-          {issue.body.trim() ? <Markdown text={issue.body} className="text-[16.5px] text-ink" images /> : <p className="text-[15.5px] text-mid">This issue is a summary only.</p>}
+          {issue.body.trim() ? <Markdown text={issue.body} className="text-[16.5px] text-ink" images polish /> : <p className="text-[15.5px] text-mid">This issue is a summary only.</p>}
         </div>
         <div className="mt-8 border-t border-border pt-4">
           <Disclaimer />

@@ -72,7 +72,7 @@ export default async function AnalysisNotePage({ params }: Props) {
       </header>
 
       <div className="aq-card mt-6 p-5 sm:p-7">
-        <Markdown text={note.body} images className="text-[16.5px] text-ink" />
+        <Markdown text={note.body} images polish className="text-[16.5px] text-ink" />
       </div>
 
       {related.length ? (

@@ -68,10 +68,10 @@ export default async function TelexStoryPage({ params }: PageProps<"/hub/telex/[
 
           {item.readable && source.status === "published" ? (
             <TelexReadTracker telexId={item.id}>
-              <Markdown text={item.paragraphs.join("\n\n")} images className="mt-5 text-[16px] leading-relaxed text-ink" />
+              <Markdown text={item.paragraphs.join("\n\n")} images polish className="mt-5 text-[16px] leading-relaxed text-ink" />
             </TelexReadTracker>
           ) : item.readable ? (
-            <Markdown text={item.paragraphs.join("\n\n")} images className="mt-5 text-[16px] leading-relaxed text-ink" />
+            <Markdown text={item.paragraphs.join("\n\n")} images polish className="mt-5 text-[16px] leading-relaxed text-ink" />
           ) : (
             <div className="mt-5 flex flex-col items-start gap-3 rounded-xl border border-blue/20 bg-blue-light/50 p-5">
               <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">

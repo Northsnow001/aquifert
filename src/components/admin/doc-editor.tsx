@@ -1019,7 +1019,7 @@ export function DocEditor({
                 style={{ minHeight: focusMode ? "calc(100vh - 16rem)" : minHeight }}
               />
             ) : value.trim() ? (
-              <Markdown text={value} images={images} className="text-[16px] text-ink" />
+              <Markdown text={value} images={images} polish className="text-[16px] text-ink" />
             ) : (
               <p className="text-[14px] text-dim">Nothing to preview yet.</p>
             )}

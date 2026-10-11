@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { HIGHLIGHT_HEX, TEXT_COLORS, listTrees, parseMarkdown, type Align, type Inline, type ListKind, type ListTree } from "@/lib/rich-text/markdown";
+import { polishBlocks } from "@/lib/rich-text/polish";
 
 type Options = { images: boolean };
 
@@ -8,14 +9,16 @@ type Options = { images: boolean };
  * code, quotes, nested and lettered lists, links, rules, aligned paragraphs and pipe tables. Images
  * render only when `images` is set, so model output can never load third-party URLs.
  */
-export function Markdown({ text, className = "text-[15.5px]", images = false }: { text: string; className?: string; images?: boolean }) {
+export function Markdown({ text, className = "text-[15.5px]", images = false, polish = false }: { text: string; className?: string; images?: boolean; polish?: boolean }) {
   const options = { images };
+  const blocks = polish ? polishBlocks(parseMarkdown(text)) : parseMarkdown(text);
   return (
     <div className={`space-y-2.5 leading-relaxed ${className}`}>
-      {parseMarkdown(text).map((block, key) => {
+      {blocks.map((block, key) => {
         if (block.t === "p") {
+          const classes = [block.role ? ROLE_CLASS[block.role] : "", block.align ? ALIGN_CLASS[block.align] : ""].filter(Boolean).join(" ");
           return (
-            <p key={key} className={block.align ? ALIGN_CLASS[block.align] : undefined}>
+            <p key={key} className={classes || undefined}>
               {inline(block.c, `p${key}`, options)}
             </p>
           );
@@ -77,6 +80,10 @@ export function Markdown({ text, className = "text-[15.5px]", images = false }: 
 
 const ALIGN_CLASS: Record<Align, string> = { left: "text-left", center: "text-center", right: "text-right", justify: "text-justify" };
 const HEADING_SIZE = { 1: "text-[19px]", 2: "text-[17px]", 3: "text-[16px]" } as const;
+const ROLE_CLASS = {
+  lede: "text-[1.07em] font-medium leading-relaxed text-ink",
+  callout: "rounded-r-lg border-l-[3px] border-blue bg-blue-light/60 px-4 py-2.5 font-semibold text-ink",
+} as const;
 const LIST_STYLE: Record<ListKind, string> = { ul: "list-disc", ol: "list-decimal", a: "list-[aq-lower-paren]", A: "list-[aq-upper-paren]" };
 
 function list(tree: ListTree, key: string, options: Options, depth: number): ReactNode {

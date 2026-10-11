@@ -248,7 +248,7 @@ export function TelexEditor({ item, knownTags, defaultAuthor }: { item?: TelexIt
               <p className="font-mono text-[11px] uppercase tracking-wide text-dim">{formatTelexDay(publishedAt)}</p>
               <h3 className="mt-2 text-[15px] font-bold uppercase leading-snug tracking-wide text-ink">{telexHeadline({ headline, paragraphs })}</h3>
               {paragraphs.length ? (
-                <Markdown text={paragraphs.join("\n\n")} images className="mt-3 text-[13.5px] text-ink" />
+                <Markdown text={paragraphs.join("\n\n")} images polish className="mt-3 text-[13.5px] text-ink" />
               ) : (
                 <p className="mt-3 text-[13.5px] text-dim">The message body shows here.</p>
               )}

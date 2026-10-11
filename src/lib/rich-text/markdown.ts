@@ -39,7 +39,7 @@ export type ListKind = "ul" | "ol" | "a" | "A";
 export type ListItem = { kind: ListKind; depth: number; n: number; c: Inline[] };
 
 export type Block =
-  | { t: "p"; align?: Align; c: Inline[] }
+  | { t: "p"; align?: Align; role?: "lede" | "callout"; c: Inline[] }
   | { t: "h"; level: 1 | 2 | 3; align?: Align; c: Inline[] }
   | { t: "list"; items: ListItem[] }
   | { t: "quote"; c: Inline[] }
