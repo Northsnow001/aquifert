@@ -15,6 +15,8 @@ import {
   type SignupPending,
 } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
+import { checkSignupAddress } from "@/app/(auth)/signup-check";
+import { checkSignupEmail, DEFAULT_SIGNUP_RULES, signupCheck } from "@/lib/desk-settings/email-rules";
 
 const CODE_LEN = 6;
 
@@ -120,6 +122,8 @@ export default function VerifyEmail() {
     setResending(true);
     setError(null);
     try {
+      const allowed = await checkSignupAddress(email).catch(() => signupCheck(checkSignupEmail(email, DEFAULT_SIGNUP_RULES)));
+      if (!allowed.ok) throw new Error(allowed.message);
       const supabase = getSupabaseBrowser();
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,

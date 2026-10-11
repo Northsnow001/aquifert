@@ -593,7 +593,9 @@ export const GUIDE: GuideSection[] = [
         title: "Sign-up rules",
         steps: [
           "Require a work email to refuse free mail providers such as Gmail and Outlook. Disposable addresses are always refused.",
-          "Always refuse blocks named domains or addresses. Always accept lets a named address through the work email rule.",
+          "A personal address gets a Work email required pop-up as soon as the person leaves the email field on the sign-up form.",
+          "Accounts created on a personal address after 11 October 2026 cannot open the hub, even if the form was bypassed. Accounts from before then keep their access.",
+          "Always refuse blocks named domains or addresses. Always accept lets a named address through the work email rule, and also lets that account into the hub.",
           "Check an address shows the verdict and the exact message the person would see, using your unsaved rules.",
         ],
       },

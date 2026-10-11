@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { saveMemberRules } from "@/app/admin/settings/actions";
 import { Panel, SaveBar, Switch, useEditorGuards } from "@/components/admin/aquibot/shared";
 import { input, label, textarea } from "@/components/admin/ui";
-import { DISPOSABLE_DOMAINS, FREEMAIL_DOMAINS, checkSignupEmail, cleanEntries, type EmailVerdict } from "@/lib/desk-settings/email-rules";
+import { DISPOSABLE_DOMAINS, FREEMAIL_BRANDS, FREEMAIL_DOMAINS, checkSignupEmail, cleanEntries, type EmailVerdict } from "@/lib/desk-settings/email-rules";
 import type { MemberRules } from "@/lib/desk-settings/types";
 
 type Draft = { requireWorkEmail: boolean; blocked: string; allowed: string };
@@ -85,12 +85,12 @@ export function MembersPanel({ initial, savedAt: initialSavedAt, banned }: { ini
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
-          <Panel icon={<ShieldCheck className="h-4 w-4" />} title="Who can register" description="Checked on the sign-up form before the verification code is sent.">
+          <Panel icon={<ShieldCheck className="h-4 w-4" />} title="Who can register" description="Checked as the email is typed on the sign-up form, before the verification code is sent, and again when a new account opens the hub.">
             <Switch
               checked={draft.requireWorkEmail}
               onChange={(value) => setDraft((current) => ({ ...current, requireWorkEmail: value }))}
               label="Require a work email"
-              description="Refuses Gmail, Outlook, Yahoo and other personal providers. Throwaway inboxes are refused either way."
+              description="Refuses Gmail, Outlook, Yahoo and other personal providers with a pop-up asking for a work email. Accounts that already existed keep their access. Throwaway inboxes are refused either way."
             />
           </Panel>
 
@@ -128,7 +128,7 @@ export function MembersPanel({ initial, savedAt: initialSavedAt, banned }: { ini
           </Panel>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <DomainList title="Personal providers" domains={FREEMAIL_DOMAINS} note="Refused while the work-email rule is on." />
+            <DomainList title="Personal providers" domains={FREEMAIL_DOMAINS} note={`Refused while the work-email rule is on, as are ${FREEMAIL_BRANDS.join(", ")} under any country ending.`} />
             <DomainList title="Throwaway inboxes" domains={DISPOSABLE_DOMAINS} note="Always refused, including their subdomains." />
           </div>
         </div>

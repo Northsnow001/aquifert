@@ -5,7 +5,16 @@ export const FREEMAIL_DOMAINS = [
   "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de", "outlook.com", "live.com", "live.co.uk", "msn.com", "aol.com", "icloud.com",
   "me.com", "mac.com", "proton.me", "protonmail.com", "pm.me", "gmx.com", "gmx.net", "gmx.de", "mail.com", "zoho.com", "fastmail.com",
   "ymail.com", "yandex.com", "yandex.ru", "163.com", "126.com", "qq.com", "naver.com", "hanmail.net", "daum.net",
+  "rocketmail.com", "aim.com", "zohomail.com", "tutanota.com", "tuta.io", "mail.ru", "inbox.ru", "list.ru", "bk.ru", "rediffmail.com",
+  "web.de", "t-online.de", "freenet.de", "orange.fr", "wanadoo.fr", "laposte.net", "free.fr", "sfr.fr", "libero.it", "virgilio.it",
+  "seznam.cz", "wp.pl", "onet.pl", "o2.pl", "interia.pl", "sina.com", "sohu.com", "yeah.net", "foxmail.com", "aliyun.com", "hushmail.com",
+  "lycos.com", "inbox.com", "btinternet.com", "sky.com", "virginmedia.com", "comcast.net", "verizon.net", "att.net", "sbcglobal.net",
+  "bellsouth.net", "cox.net", "charter.net", "shaw.ca", "rogers.com", "sympatico.ca", "bigpond.com", "optusnet.com.au", "xtra.co.nz",
+  "uol.com.br", "bol.com.br", "terra.com.br", "skynet.be", "telenet.be", "ziggo.nl", "kpnmail.nl", "home.nl", "bluewin.ch",
 ];
+
+/** Providers refused under any country ending, so yahoo.com.ng or hotmail.co.za count as personal too. */
+export const FREEMAIL_BRANDS = ["gmail", "googlemail", "yahoo", "ymail", "hotmail", "outlook", "aol", "icloud", "protonmail", "gmx", "yandex", "rediffmail"];
 
 export const DISPOSABLE_DOMAINS = [
   "mailinator.com", "guerrillamail.com", "guerrillamail.net", "guerrillamail.org", "yopmail.com", "10minutemail.com", "10minutemail.net",
@@ -60,8 +69,34 @@ export function checkSignupEmail(raw: string, rules: MemberRules, isBanned: (ema
   if (matches(email, domain, rules.allowed)) return { ok: true, rule: "allowed" };
   if (onList(domain, DISPOSABLE_DOMAINS)) return { ok: false, reason: "disposable", message: DISPOSABLE_MESSAGE };
   if (matches(email, domain, rules.blocked)) return { ok: false, reason: "blocked", message: rules.requireWorkEmail ? WORK_EMAIL_MESSAGE : DISPOSABLE_MESSAGE };
-  if (onList(domain, FREEMAIL_DOMAINS)) {
+  if (onList(domain, FREEMAIL_DOMAINS) || FREEMAIL_BRANDS.includes(domain.split(".")[0])) {
     return rules.requireWorkEmail ? { ok: false, reason: "freemail", message: WORK_EMAIL_MESSAGE } : { ok: true, rule: "freemail-permitted" };
   }
   return { ok: true, rule: "work" };
+}
+
+/** What the sign-up form is told. workEmail asks for the work email pop-up; other refusals show under the field. */
+export type SignupCheck = { ok: true } | { ok: false; message: string; workEmail: boolean };
+
+export function signupCheck(verdict: EmailVerdict): SignupCheck {
+  if (verdict.ok) return { ok: true };
+  return { ok: false, message: verdict.message, workEmail: verdict.reason === "freemail" || (verdict.reason === "blocked" && verdict.message === WORK_EMAIL_MESSAGE) };
+}
+
+/** The launch rules, for when the saved ones cannot be read: work email required, no named exceptions. */
+export const DEFAULT_SIGNUP_RULES: MemberRules = { requireWorkEmail: true, blocked: [], allowed: [] };
+
+/** Accounts created from this moment must pass the sign-up rules to open the hub; older accounts keep their access. */
+export const WORK_EMAIL_FROM = "2026-10-11T17:00:00.000Z";
+
+export const underWorkEmailRule = (createdAt: string | undefined) => {
+  const created = Date.parse(createdAt ?? "");
+  return Number.isFinite(created) && created >= Date.parse(WORK_EMAIL_FROM);
+};
+
+/** True for an account created under the rule whose address the sign-up form would now refuse. */
+export function personalAccountBlocked(email: string, createdAt: string | undefined, rules: MemberRules) {
+  if (!underWorkEmailRule(createdAt)) return false;
+  const verdict = checkSignupEmail(email, rules);
+  return !verdict.ok && verdict.reason !== "invalid";
 }

@@ -13,6 +13,8 @@ export type SessionUser = {
   country?: string;
   /** Set from Supabase app_metadata.role, which only the service role or SQL can change. */
   admin?: boolean;
+  /** When the account was created, ISO 8601. */
+  createdAt?: string;
 };
 
 export function initials(name: string): string {

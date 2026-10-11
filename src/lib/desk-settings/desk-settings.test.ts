@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DISPOSABLE_MESSAGE, WORK_EMAIL_MESSAGE, checkSignupEmail, cleanEntries } from "./email-rules";
+import {
+  DISPOSABLE_MESSAGE,
+  WORK_EMAIL_FROM,
+  WORK_EMAIL_MESSAGE,
+  checkSignupEmail,
+  cleanEntries,
+  personalAccountBlocked,
+  signupCheck,
+  underWorkEmailRule,
+} from "./email-rules";
 import { ZERO, toRow } from "../data/tables";
 import { ZERO_INTENT_LABEL, ZERO_NEXT_STEP } from "../zero-types";
 import { ORDER_SAMPLE, ZERO_SAMPLE, formEmail, orderEmailData, zeroEmailData } from "./forms";
@@ -35,6 +44,28 @@ test("the allow list overrides freemail and the block list, but never a ban", ()
   assert.deepEqual(checkSignupEmail("one@partner.com", custom), { ok: true, rule: "allowed" });
   assert.equal(checkSignupEmail("vip@gmail.com", custom, () => true).ok, false);
   assert.equal(checkSignupEmail("not-an-email", custom).ok, false);
+});
+
+test("personal providers under any country ending are refused and raise the work email pop-up", () => {
+  assert.equal(checkSignupEmail("buyer@yahoo.com.ng", rules).ok, false);
+  assert.equal(checkSignupEmail("buyer@hotmail.co.za", rules).ok, false);
+  assert.equal(checkSignupEmail("buyer@btinternet.com", rules).ok, false);
+  assert.equal(checkSignupEmail("buyer@gmailfarms.com", rules).ok, true);
+  assert.deepEqual(signupCheck(checkSignupEmail("buyer@gmail.com", rules)), { ok: false, message: WORK_EMAIL_MESSAGE, workEmail: true });
+  assert.deepEqual(signupCheck(checkSignupEmail("x@mailinator.com", rules)), { ok: false, message: DISPOSABLE_MESSAGE, workEmail: false });
+  assert.deepEqual(signupCheck(checkSignupEmail("gone@gmail.com", rules, () => true)), { ok: false, message: DISPOSABLE_MESSAGE, workEmail: false });
+  assert.deepEqual(signupCheck(checkSignupEmail("buyer@harvestco.com", rules)), { ok: true });
+});
+
+test("only accounts created under the work email rule are held, and the allow list still lets them in", () => {
+  const after = "2026-10-12T09:00:00.000Z";
+  assert.equal(personalAccountBlocked("buyer@gmail.com", after, rules), true);
+  assert.equal(personalAccountBlocked("buyer@gmail.com", "2026-03-01T09:00:00.000Z", rules), false);
+  assert.equal(personalAccountBlocked("buyer@gmail.com", undefined, rules), false);
+  assert.equal(personalAccountBlocked("buyer@harvestco.com", after, rules), false);
+  assert.equal(personalAccountBlocked("buyer@gmail.com", after, { ...rules, allowed: ["buyer@gmail.com"] }), false);
+  assert.equal(personalAccountBlocked("buyer@gmail.com", after, { ...rules, requireWorkEmail: false }), false);
+  assert.equal(underWorkEmailRule(WORK_EMAIL_FROM), true);
 });
 
 test("list entries are cleaned to lower-case domains and addresses", () => {
