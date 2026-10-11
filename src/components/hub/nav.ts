@@ -157,7 +157,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Call",
     icon: PhoneCall,
     section: "AQ ONE",
-    tip: "A free 45-minute market and freight call with the Aquifert desk. Register on Calendly and it emails you the invite and joining link.",
+    tip: "A free 45-minute market and freight call with the Aquifert desk. Register once and we email you the joining link.",
   },
 
   {

@@ -9,6 +9,7 @@ import { CALL_ZONES, DEFAULT_ZONE, utcLabel, utcToWall, wallToUtc } from "@/comp
 import { EmptyState, Pill, btnGhost, btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import type { CallRegistration } from "@/lib/aq-modules/member-types";
 import type { CommunityCall } from "@/lib/aq-modules/types";
+import { WEEKLY_CALL_REGISTER_URL } from "@/lib/aq-modules/weekly-call";
 import { formatStamp } from "@/lib/content-types";
 
 function CallForm({ call, onDone }: { call: CommunityCall | null; onDone: () => void }) {
@@ -25,6 +26,7 @@ function CallForm({ call, onDone }: { call: CommunityCall | null; onDone: () => 
       zone: DEFAULT_ZONE,
       durationMinutes: call?.durationMinutes ?? 45,
       joinUrl: call?.joinUrl ?? "",
+      registerUrl: call?.registerUrl ?? "",
       recordingUrl: call?.recordingUrl ?? "",
       status: call?.status ?? "scheduled",
     };
@@ -111,7 +113,20 @@ function CallForm({ call, onDone }: { call: CommunityCall | null; onDone: () => 
           `Enter a date and start time. They are read as ${zoneLabel} time and saved in UTC.`
         )}
       </p>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-3">
+        <div>
+          <label htmlFor="call-register" className={label}>
+            Registration link <span className="font-normal text-dim">(optional)</span>
+          </label>
+          <input id="call-register" type="url" className={`${input} mt-1.5`} value={form.registerUrl} onChange={(event) => set("registerUrl", event.target.value)} placeholder="Standing weekly link" aria-describedby="call-register-hint" />
+          <p id="call-register-hint" className="mt-1 text-[11.5px] text-dim">
+            Where members register. Leave empty to use the{" "}
+            <a href={WEEKLY_CALL_REGISTER_URL} target="_blank" rel="noreferrer" className="text-blue">
+              standing weekly link
+            </a>
+            .
+          </p>
+        </div>
         <div>
           <label htmlFor="call-join" className={label}>
             Join link

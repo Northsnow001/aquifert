@@ -7,13 +7,14 @@ import { CallWhen, Countdown } from "@/components/hub/aq1/call-time";
 import { Disclaimer, EmptyPanel, HubPageHeader, Panel, Tag } from "@/components/hub/kit";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { upcomingCalls } from "@/lib/aq-modules/store";
+import { callRegisterUrl } from "@/lib/aq-modules/weekly-call";
 import { formatDay } from "@/lib/content-types";
 
 export const metadata: Metadata = { title: "Weekly Market Call" };
 export const dynamic = "force-dynamic";
 
 export default async function CommunityCallPage() {
-  const { user, modules } = await getHubAccess();
+  const { modules } = await getHubAccess();
   const { next, later, past } = upcomingCalls(modules);
   const recordings = past.filter((call) => call.recordingUrl);
   const deskLink = `/hub/contact?topic=${encodeURIComponent("Weekly Market Call")}`;
@@ -23,8 +24,8 @@ export default async function CommunityCallPage() {
       <HubPageHeader
         eyebrow="AQ ONE Free plan"
         title="Weekly Market Call"
-        description="A free live call with the Aquifert desk on fertilizer prices and freight. Register on Calendly and it emails you the invite and joining link."
-        tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan and runs through Calendly, which sends the invite and joining link."
+        description="A free live call with the Aquifert desk on fertilizer prices and freight. Register once and we email you the joining link."
+        tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan, and your confirmation email has the joining link."
         guide="call"
       />
 
@@ -59,19 +60,22 @@ export default async function CommunityCallPage() {
               <div className="p-5 sm:p-6">
                 <div className="mb-4">
                   <h3 className="text-[16.5px] font-semibold text-ink">Register for the call</h3>
-                  <p className="mt-0.5 text-[14.5px] text-mid">Pick your place in Calendly. Your name and email are filled in from your account.</p>
+                  <p className="mt-0.5 text-[14.5px] text-mid">Save your place in a few seconds. The registration page opens in a new tab.</p>
                 </div>
-                <CallRegistration name={user.name} email={user.email} topic={next.topic} />
+                <CallRegistration href={callRegisterUrl(next)} />
               </div>
             </section>
           ) : (
             <EmptyPanel
-              title="The next call is being scheduled"
-              body="The desk runs the Weekly Market Call regularly and posts the date here as soon as it is set. Tell the desk what you would like covered and they will let you know when registration opens."
+              title="Join the Weekly Market Call"
+              body="The desk walks through the fertilizer markets and freight every week, then takes your questions. Register and we email you the date and joining link."
               action={
-                <Link href={deskLink} className={btnSecondary}>
-                  <Mail className="h-4 w-4" /> Contact the desk
-                </Link>
+                <div className="flex flex-col items-center gap-3">
+                  <CallRegistration href={callRegisterUrl()} />
+                  <Link href={deskLink} className={btnSecondary}>
+                    <Mail className="h-4 w-4" /> Suggest a topic to the desk
+                  </Link>
+                </div>
               }
             />
           )}
@@ -97,7 +101,7 @@ export default async function CommunityCallPage() {
           </Panel>
 
           {later.length ? (
-            <Panel title="Later calls" sub="Register ahead on Calendly" icon={CalendarDays} tone="blue">
+            <Panel title="Later calls" sub="Register ahead" icon={CalendarDays} tone="blue">
               <ul className="divide-y divide-border">
                 {later.map((call) => (
                   <li key={call.id} className="flex items-start gap-3 px-5 py-3.5">
@@ -110,7 +114,7 @@ export default async function CommunityCallPage() {
                         {call.host || "Aquifert desk"} · {call.durationMinutes} min
                       </p>
                     </div>
-                    <QuickRegister name={user.name} email={user.email} topic={call.topic} />
+                    <QuickRegister href={callRegisterUrl(call)} topic={call.topic} />
                   </li>
                 ))}
               </ul>

@@ -132,6 +132,7 @@ export type CallInput = {
   zone: string;
   durationMinutes: number;
   joinUrl: string;
+  registerUrl: string;
   recordingUrl: string;
   status: CommunityCall["status"];
 };
@@ -151,8 +152,10 @@ export async function saveCall(input: CallInput): Promise<Result> {
   const durationMinutes = Math.round(Number(input?.durationMinutes));
   if (!Number.isFinite(durationMinutes) || durationMinutes < 5 || durationMinutes > 480) return { ok: false, message: "Duration must be between 5 and 480 minutes." };
   const joinUrl = url(input?.joinUrl);
+  const registerUrl = url(input?.registerUrl);
   const recordingUrl = url(input?.recordingUrl);
   if (joinUrl === null) return { ok: false, message: "The join link must start with https://." };
+  if (registerUrl === null) return { ok: false, message: "The registration link must start with https://." };
   if (recordingUrl === null) return { ok: false, message: "The recording link must start with https://." };
   const call: CommunityCall = {
     id: input.id || newId("call"),
@@ -162,6 +165,7 @@ export async function saveCall(input: CallInput): Promise<Result> {
     startsAt,
     durationMinutes,
     joinUrl,
+    registerUrl,
     recordingUrl,
     status: input?.status === "cancelled" ? "cancelled" : "scheduled",
   };

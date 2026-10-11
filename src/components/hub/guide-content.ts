@@ -200,8 +200,8 @@ const ALL_SECTIONS: GuideSection[] = [
     summary: "A free live call with the desk on fertilizer prices and freight.",
     href: "/hub/community-call",
     body: [
-      "The desk walks through the market and freight, then answers members' questions. Registration is free on every plan. Register on Calendly and it emails you the invite and joining link.",
-      "The joining link appears on the page 15 minutes before the start. Times are shown in your own time zone.",
+      "The desk walks through the market and freight, then answers members' questions. Registration is free on every plan. Press Register for the weekly call, add your details on the registration page, and your confirmation email has the joining link.",
+      "Call times on the page are shown in your own time zone.",
     ],
   },
   {

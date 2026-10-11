@@ -136,6 +136,8 @@ export type CommunityCall = {
   startsAt: string;
   durationMinutes: number;
   joinUrl: string;
+  /** Empty means the standing weekly registration link. Calls saved before this field existed lack it. */
+  registerUrl?: string;
   recordingUrl: string;
   status: "scheduled" | "cancelled";
 };
