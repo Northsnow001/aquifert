@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { MissingTableNotice } from "@/components/admin/aq-data/table-notice";
 import { Card, EmptyState, PageHeader, btnSecondary } from "@/components/admin/ui";
 import { listAllNitrogenReports } from "@/lib/aq-modules/members";
@@ -24,6 +24,11 @@ export default async function NitrogenReportsAdminPage({ searchParams }: { searc
       <PageHeader
         title="Nitrogen reports"
         description={`Every nitrogen report members have generated, newest first. ${rows.length.toLocaleString()} ${rows.length === 1 ? "report" : "reports"} from ${members.toLocaleString()} ${members === 1 ? "member" : "members"}${rows.length >= LIMIT ? ` (latest ${LIMIT} shown)` : ""}.`}
+        actions={
+          <Link href="/admin/nitrogen-reports/template" className={btnSecondary}>
+            <SlidersHorizontal className="h-4 w-4" /> Report template
+          </Link>
+        }
       />
 
       <MissingTableNotice table="nitrogen_reports" what="reports" />

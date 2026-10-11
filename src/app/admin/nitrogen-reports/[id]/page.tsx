@@ -5,12 +5,21 @@ import { Markdown } from "@/components/hub/markdown";
 import { formatStamp } from "@/lib/content-types";
 import { getRecord } from "@/lib/data/records";
 import { NITROGEN_REPORTS } from "@/lib/data/tables";
-import { briefMarkdown, buildBrief, isBriefAnswers, monthLabel } from "@/lib/nitrogen/engine";
+import { buildBrief, isBriefAnswers, monthLabel, storedBrief } from "@/lib/nitrogen/engine";
 import { deliveryText, EMPTY_LEGACY_ANSWERS, generateLegacyReport, PRIORITIES, type LegacyNitrogenAnswers } from "@/lib/nitrogen/legacy";
+import { briefMarkdown } from "@/lib/nitrogen/render";
+import { getNitrogenTemplate } from "@/lib/nitrogen/template-store";
+import { AQUIBOT_MODELS } from "@/lib/aquibot";
 
 export const dynamic = "force-dynamic";
 
 const list = (values: string[] | undefined) => (values?.length ? values.join(", ") : "");
+
+function writtenBy(writer: "ai" | "desk" | undefined, model: string | undefined) {
+  if (writer === "ai") return `AI (${AQUIBOT_MODELS.find((item) => item.value === model)?.label ?? model ?? "Gemini"}) following the report prompt`;
+  if (writer === "desk") return "Desk rules";
+  return "Desk rules (before AI writing)";
+}
 
 export default async function NitrogenReportAdminPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,13 +37,16 @@ export default async function NitrogenReportAdminPage({ params }: { params: Prom
       ["Destination", [answers.destinationPort, answers.destinationCountry].filter(Boolean).join(", ")],
       ["Preferred origin", answers.preferredOrigin],
       ["Products", list(answers.products)],
-      ["Annual tonnage (t)", answers.annualTonnage],
+      ["Annual tonnage (MT)", answers.annualTonnage],
       ["Preferred arrival months", answers.arrivalMonths.map((month) => monthLabel(month)).join(", ")],
       ["Shipment type", answers.shipmentType],
       ["Packing", answers.packing],
-      ["Warehouse capacity (t)", answers.warehouseCapacity],
+      ["Preferred cargo size (MT)", answers.cargoSize ?? ""],
+      ...(answers.warehouseCapacity ? [["Warehouse capacity (MT)", answers.warehouseCapacity] as [string, string]] : []),
+      ["Written by", writtenBy(report.writer, report.model)],
     ];
-    text = briefMarkdown(buildBrief(answers, { refNo: report.refNo, partner: report.preparedFor, date }));
+    const { design } = await getNitrogenTemplate();
+    text = briefMarkdown(storedBrief(report.brief) ?? buildBrief(answers, { refNo: report.refNo, partner: report.preparedFor, date }), design);
   } else {
     const answers = (report.answers ?? {}) as Partial<LegacyNitrogenAnswers>;
     facts = [
@@ -87,7 +99,7 @@ export default async function NitrogenReportAdminPage({ params }: { params: Prom
           </dl>
         </Card>
         <Card className="overflow-hidden">
-          <CardHeader title="Report" meta={isBriefAnswers(report.answers) ? "The brief's text. Members see it in the AQ View layout and PDF." : "Exactly as the member sees it."} />
+          <CardHeader title="Report" meta={isBriefAnswers(report.answers) ? "The brief's text. Members see it in the AQ View layout and PDF, styled by the report template." : "Exactly as the member sees it."} />
           <div className="px-6 py-5">{text ? <Markdown text={text} /> : <p className="text-[13px] text-dim">This report has no text.</p>}</div>
         </Card>
       </div>

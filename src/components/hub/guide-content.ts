@@ -139,7 +139,7 @@ const ALL_SECTIONS: GuideSection[] = [
     summary: "Six questions on one page, one branded AQ View nitrogen brief.",
     href: "/hub/nitrogen-report",
     body: [
-      "Answer six questions on one page: destination and products, annual tonnage and arrival months, and shipment type and packing. The brief sets out your supply requirement, a market pulse for each product and freight, the desk's position, a shipment plan sized to your storage, and what to do now, watch and avoid.",
+      "Answer six questions on one page: destination and products, annual tonnage and arrival months, and shipment type and packing. The brief sets out your supply requirement, a market pulse for each product and freight, the desk's position, a shipment plan sized to your preferred cargo size, and what to do now, watch and avoid.",
       "Every report is saved with a reference number under your reports, where you can reopen it, download the branded PDF or print it. Each plan includes a number of reports per calendar month, shown on the page and on Plan & Usage.",
     ],
     tip: "Ready to buy? Each report links straight to Buy Fertilizer with the product filled in.",

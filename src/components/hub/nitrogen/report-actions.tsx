@@ -8,8 +8,21 @@ import { toast } from "sonner";
 import { deleteReport } from "@/app/hub/nitrogen-report/actions";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import type { NitrogenBrief } from "@/lib/nitrogen/engine";
+import type { BriefDesign } from "@/lib/nitrogen/template";
 
-export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk", brief }: { id: string; refNo: string; quoteHref?: string; brief?: NitrogenBrief }) {
+export function ReportActions({
+  id,
+  refNo,
+  quoteHref = "/hub/order-desk",
+  brief,
+  design,
+}: {
+  id: string;
+  refNo: string;
+  quoteHref?: string;
+  brief?: NitrogenBrief;
+  design?: BriefDesign;
+}) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -32,7 +45,7 @@ export function ReportActions({ id, refNo, quoteHref = "/hub/order-desk", brief 
     setSaving(true);
     try {
       const { downloadBriefPdf } = await import("@/components/hub/nitrogen/brief-pdf");
-      await downloadBriefPdf(brief);
+      await downloadBriefPdf(brief, design);
     } catch {
       toast.error("The PDF could not be made just now. Use Print and choose Save as PDF instead.");
     } finally {

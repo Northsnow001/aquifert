@@ -234,11 +234,11 @@ export function NitrogenBriefForm({ ports, onClose, onReset, blocked }: { ports:
 
       <SectionCard icon={CalendarDays} step="Section 2" title="Programme & Arrival" sub="How much you buy a year, and when it should arrive.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="n-tonnage" label="Annual tonnage (t)" required>
+          <Field id="n-tonnage" label="Annual tonnage (MT)" required>
             <input id="n-tonnage" inputMode="decimal" value={answers.annualTonnage} onChange={(event) => set("annualTonnage", event.target.value)} placeholder="e.g. 1,200" maxLength={20} className={fieldClass} />
           </Field>
-          <Field id="n-capacity" label="Warehouse capacity (t)" hint="Optional. Used to size parcels.">
-            <input id="n-capacity" inputMode="decimal" value={answers.warehouseCapacity} onChange={(event) => set("warehouseCapacity", event.target.value)} placeholder="e.g. 400" maxLength={20} className={fieldClass} />
+          <Field id="n-cargo" label="Preferred cargo size (MT)" hint="Optional. One figure or a range. Used to size parcels.">
+            <input id="n-cargo" value={answers.cargoSize} onChange={(event) => set("cargoSize", event.target.value)} placeholder="e.g. 5,000 or 5,000-10,000" maxLength={40} className={fieldClass} />
           </Field>
           <fieldset className="sm:col-span-2">
             <Legend required>Preferred arrival months</Legend>

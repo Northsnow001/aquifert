@@ -9,8 +9,9 @@ import { ReportActions } from "@/components/hub/nitrogen/report-actions";
 import { longDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getNitrogenReport } from "@/lib/aq-modules/members";
-import { buildBrief, firstName, isBriefAnswers, orderDeskHref, reportTopic } from "@/lib/nitrogen/engine";
+import { buildBrief, firstName, isBriefAnswers, orderDeskHref, reportTopic, storedBrief } from "@/lib/nitrogen/engine";
 import { EMPTY_LEGACY_ANSWERS, generateLegacyReport, type LegacyNitrogenAnswers } from "@/lib/nitrogen/legacy";
+import { getNitrogenTemplate } from "@/lib/nitrogen/template-store";
 
 export const metadata: Metadata = { title: "Nitrogen Report" };
 export const dynamic = "force-dynamic";
@@ -30,7 +31,10 @@ export default async function NitrogenReportView({ params }: { params: Promise<{
   if (!report) notFound();
 
   const answers = report.answers;
-  const brief = isBriefAnswers(answers) ? buildBrief(answers, { refNo: report.refNo, partner: report.preparedFor || user.name, date: new Date(report.at) }) : null;
+  const { design } = await getNitrogenTemplate();
+  const brief = isBriefAnswers(answers)
+    ? (storedBrief(report.brief) ?? buildBrief(answers, { refNo: report.refNo, partner: report.preparedFor || user.name, date: new Date(report.at) }))
+    : null;
   const legacy = brief
     ? ""
     : answers
@@ -48,12 +52,12 @@ export default async function NitrogenReportView({ params }: { params: Promise<{
           eyebrow="Nitrogen Report"
           title={<span className="font-mono text-[24px] md:text-[28px]">{report.refNo}</span>}
           description={`${where ? `${where} · ` : ""}Prepared ${longDay(report.at)}`}
-          actions={<ReportActions id={report.id} refNo={report.refNo} quoteHref={orderDeskHref(answers ?? {})} brief={brief ?? undefined} />}
+          actions={<ReportActions id={report.id} refNo={report.refNo} quoteHref={orderDeskHref(answers ?? {})} brief={brief ?? undefined} design={design} />}
         />
       </div>
 
       {brief ? (
-        <BriefView brief={brief} />
+        <BriefView brief={brief} design={design} />
       ) : (
         <article className="aq-card mx-auto w-full max-w-3xl overflow-hidden print:max-w-none print:rounded-none print:border-0 print:shadow-none">
           <header className="flex items-center justify-between gap-4 bg-gradient-to-r from-navy-700 to-navy-500 px-6 py-4 text-white [print-color-adjust:exact] sm:px-10">

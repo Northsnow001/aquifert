@@ -7,7 +7,10 @@ import { deleteNitrogenReport, nitrogenReportsThisMonth, saveNitrogenReport } fr
 import type { NitrogenReport } from "@/lib/aq-modules/member-types";
 import { limitFor } from "@/lib/aq-modules/types";
 import { activePorts, getFreightDesk, nextReset } from "@/lib/freight-desk/store";
-import { briefMarkdown, briefProblem, buildBrief, PACKING, PRODUCTS, SHIPMENT_TYPES, upcomingMonths, type NitrogenAnswers } from "@/lib/nitrogen/engine";
+import { briefProblem, PACKING, PRODUCTS, SHIPMENT_TYPES, upcomingMonths, type NitrogenAnswers } from "@/lib/nitrogen/engine";
+import { briefMarkdown } from "@/lib/nitrogen/render";
+import { getNitrogenTemplate } from "@/lib/nitrogen/template-store";
+import { writeBrief } from "@/lib/nitrogen/writer";
 import { resolvePort } from "@/lib/ports";
 import { findZeroRegistration } from "@/lib/zero-interest";
 
@@ -27,7 +30,7 @@ function clean(input: Partial<NitrogenAnswers>): NitrogenAnswers {
     arrivalMonths: options(input.arrivalMonths, upcomingMonths()),
     shipmentType: option(input.shipmentType, SHIPMENT_TYPES),
     packing: option(input.packing, PACKING),
-    warehouseCapacity: text(input.warehouseCapacity, 20),
+    cargoSize: text(input.cargoSize, 40),
   };
 }
 
@@ -67,6 +70,8 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
     const company = (await findZeroRegistration(user).catch(() => null))?.company?.trim();
     const preparedFor = company || user.name.trim();
     const refNo = refNumber(now);
+    const template = await getNitrogenTemplate();
+    const written = await writeBrief(answers, { refNo, partner: preparedFor, date: now }, template.content);
     const row: NitrogenReport = {
       id: `nr-${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
       refNo,
@@ -75,7 +80,10 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
       email: user.email.trim().toLowerCase(),
       preparedFor,
       answers,
-      reportMd: briefMarkdown(buildBrief(answers, { refNo, partner: preparedFor, date: now })),
+      reportMd: briefMarkdown(written.brief, template.design),
+      brief: written.brief,
+      writer: written.writer,
+      ...(written.model ? { model: written.model } : {}),
     };
     await saveNitrogenReport(row, admin ? 0 : limitFor(modules.limits.savedReports, user.plan));
     revalidatePath("/hub/nitrogen-report");

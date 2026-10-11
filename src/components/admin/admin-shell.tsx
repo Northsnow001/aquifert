@@ -77,6 +77,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
         { href: "/admin/briefing", label: "The Briefing", icon: "briefing", badge: aq.briefings.length },
         { href: "/admin/membership-requests", label: "Membership requests", icon: "requests", badge: requestsNew ? `${requestsNew} new` : requests.length },
         { href: "/admin/nitrogen-reports", label: "Nitrogen reports", icon: "nitrogen", badge: nitrogenReports },
+        { href: "/admin/nitrogen-reports/template", label: "Nitrogen report template", icon: "nitrogen" },
       ],
     },
     {

@@ -124,6 +124,8 @@ type GenerateOptions = {
   signal?: AbortSignal;
   /** Keeps thinking to the minimum the model allows, for short utility calls such as query rewriting. */
   fast?: boolean;
+  /** Asks for a JSON reply instead of prose. */
+  json?: boolean;
 };
 
 type Candidate = { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string };
@@ -133,7 +135,7 @@ type GenerateResponse = { candidates?: Candidate[]; promptFeedback?: { blockReas
 const legacyModel = (model: string) => /^gemini-2\./i.test(model);
 const MINIMAL_THINKING = /flash-lite|^gemini-3(\.5|\.6)?-flash/i;
 
-function generationConfig(model: string, options: { temperature?: number; maxOutputTokens?: number; fast?: boolean }) {
+function generationConfig(model: string, options: { temperature?: number; maxOutputTokens?: number; fast?: boolean; json?: boolean }) {
   const legacy = legacyModel(model);
   const thinkingConfig = !options.fast
     ? null
@@ -146,6 +148,7 @@ function generationConfig(model: string, options: { temperature?: number; maxOut
     ...(legacy ? { temperature: options.temperature ?? 0.7 } : {}),
     ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
     ...(thinkingConfig ? { thinkingConfig } : {}),
+    ...(options.json ? { responseMimeType: "application/json" } : {}),
   };
 }
 

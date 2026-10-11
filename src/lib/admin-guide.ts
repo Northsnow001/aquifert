@@ -501,6 +501,49 @@ export const GUIDE: GuideSection[] = [
     ],
   },
   {
+    id: "nitrogen-template",
+    group: "Assistant",
+    title: "Nitrogen report template",
+    icon: "aquibot",
+    href: "/admin/nitrogen-reports/template",
+    summary:
+      "What the Nitrogen report says and how it looks. Content & prompt sets whether AI writes each brief, the prompt it follows and the desk market views it writes from. Design sets colours, wording, section order and which sections show.",
+    tasks: [
+      {
+        title: "Change the prompt",
+        steps: [
+          "Open Content & prompt. Edit the report prompt: the voice, house style and what each part of the brief must cover.",
+          "You do not need to describe the output format. The system adds a fixed note so the AI's reply always fits the report layout.",
+          "Use Try it before saving to write a brief for a made-up buyer with the unsaved prompt. Nothing is stored and members see no change.",
+          "Save. New reports use the prompt straight away. Reports already generated keep the wording they were written with.",
+          "Built-in prompt loads the launch prompt into the editor. Previous prompt loads the one before your last saved change.",
+        ],
+      },
+      {
+        title: "Update the desk market views",
+        steps: [
+          "Under Desk market views, set each product's signal (Firm, Balanced, Soft or Watch), market view and product note.",
+          "Freight and shipment holds the freight view and guidance for Bulk, Break Bulk and Container. Packing holds the guidance for each bag size.",
+          "The AI writes from these views and does not add outside market news. With AI off, they appear in the brief as written.",
+        ],
+      },
+      {
+        title: "Change the look",
+        steps: [
+          "Open Design. The preview on the right updates as you edit, and Sample PDF downloads the same sample as a PDF.",
+          "Sections: move them up or down, rename the headings, or switch a section off. At least one must stay on.",
+          "Colours and text: the header, accent, tint, disclaimer strip and text colours, and the text size.",
+          "Header and Closing: the title, the lines under it, the disclaimer, the commentary box label, the closing quote and the footer. {partner} becomes the buyer's company.",
+          "Save. Every Nitrogen report, old and new, shows the new design on screen and in its PDF.",
+        ],
+      },
+    ],
+    tips: [
+      "If the AI is off, the Gemini key is missing, or the AI fails, members still get a full brief in the desk wording.",
+      "Each report's page in Nitrogen reports shows whether AI or the desk rules wrote it.",
+    ],
+  },
+  {
     id: "banned",
     group: "Members",
     title: "Banned users",

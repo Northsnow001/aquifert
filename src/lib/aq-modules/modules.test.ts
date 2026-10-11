@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { answeredCount, briefMarkdown, briefProblem, buildBrief, EMPTY_ANSWERS, isBriefAnswers, monthLabel, orderDeskHref, reportTopic, upcomingMonths } from "../nitrogen/engine";
+import { answeredCount, briefProblem, buildBrief, cargoSizeLabel, cargoSizeTonnes, EMPTY_ANSWERS, isBriefAnswers, monthLabel, orderDeskHref, reportTopic, upcomingMonths } from "../nitrogen/engine";
+import { briefMarkdown } from "../nitrogen/render";
 import { deliveryText, EMPTY_LEGACY_ANSWERS, generateLegacyReport, rateBand } from "../nitrogen/legacy";
 import { evaluateAlerts } from "./alerts";
 import type { MemberAlert } from "./member-types";
@@ -74,7 +75,7 @@ test("modules unlock by plan rank, and admins see everything", () => {
   assert.equal(unlockedModules(DEFAULT_ACCESS, { plan: "enterprise" }).length, 7);
 });
 
-test("the nitrogen brief follows the AQ View format and sizes parcels to storage", () => {
+test("the nitrogen brief follows the AQ View format and sizes parcels to the preferred cargo size", () => {
   const answers = {
     ...EMPTY_ANSWERS,
     destinationCountry: "Kenya",
@@ -84,7 +85,7 @@ test("the nitrogen brief follows the AQ View format and sizes parcels to storage
     arrivalMonths: ["2027-01", "2026-11"],
     shipmentType: "Break Bulk",
     packing: "Big Bags",
-    warehouseCapacity: "400",
+    cargoSize: "400",
   };
   assert.equal(briefProblem(answers), null);
   assert.equal(briefProblem({ ...answers, packing: "" }), "Choose the packing.");
@@ -100,7 +101,9 @@ test("the nitrogen brief follows the AQ View format and sizes parcels to storage
       ["Freight / Break Bulk", "Balanced"],
     ],
   );
-  assert.match(brief.position[2], /3 parcels of roughly 400 t across November 2026 to January 2027/);
+  assert.match(brief.position[2], /3 parcels of roughly 400 MT across November 2026 to January 2027/);
+  assert.deepEqual(brief.requirement.at(-1), ["Preferred cargo size", "400 MT"]);
+  assert.ok(!brief.requirement.some(([name]) => /warehouse/i.test(name)));
   assert.deepEqual(
     brief.recommendations.map((item) => item.label),
     ["What to do now", "What to watch", "What to avoid"],
@@ -108,10 +111,25 @@ test("the nitrogen brief follows the AQ View format and sizes parcels to storage
   const md = briefMarkdown(brief);
   assert.match(md, /^# AQ VIEW SPECIAL EDITION \| Nitrogen Brief$/m);
   assert.match(md, /^\*\*Harvest Co Partnership Intelligence\*\*/m);
-  assert.match(md, /\| Annual tonnage \| 1,200 t \|/);
+  assert.match(md, /\| Annual tonnage \| 1,200 MT \|/);
   assert.doesNotMatch(md, /—|!|…/);
-  assert.equal(buildBrief({ ...answers, warehouseCapacity: "", shipmentType: "Container" }, { refNo: "NR-1" }).partner, "Partner");
-  assert.match(buildBrief({ ...answers, warehouseCapacity: "", shipmentType: "Container" }, { refNo: "NR-1" }).position[2], /approximately 4 container consignments/);
+  assert.doesNotMatch(md, /\d t\b/);
+  assert.equal(buildBrief({ ...answers, cargoSize: "", shipmentType: "Container" }, { refNo: "NR-1" }).partner, "Partner");
+  assert.match(buildBrief({ ...answers, cargoSize: "", shipmentType: "Container" }, { refNo: "NR-1" }).position[2], /approximately 4 container consignments/);
+  assert.deepEqual(buildBrief({ ...answers, cargoSize: "" }, { refNo: "NR-1" }).requirement.at(-1), ["Preferred cargo size", "Flexible"]);
+  assert.match(buildBrief({ ...answers, cargoSize: "300-600" }, { refNo: "NR-1" }).position[2], /2 parcels of roughly 600 MT/);
+  assert.match(buildBrief({ ...answers, cargoSize: "", warehouseCapacity: "400" }, { refNo: "NR-1" }).position[2], /3 parcels of roughly 400 MT/);
+  assert.match(buildBrief({ ...answers, packing: "In bulk" }, { refNo: "NR-1" }).logistics[1], /Unpacked cargo/);
+});
+
+test("a preferred cargo size reads as written, in MT", () => {
+  assert.equal(cargoSizeTonnes("5,000-10,000"), 10000);
+  assert.equal(cargoSizeTonnes("about 6000"), 6000);
+  assert.equal(cargoSizeTonnes(""), 0);
+  assert.equal(cargoSizeLabel("5000"), "5,000 MT");
+  assert.equal(cargoSizeLabel("5,000-10,000"), "5,000-10,000 MT");
+  assert.equal(cargoSizeLabel("8,000 mt"), "8,000 mt");
+  assert.equal(cargoSizeLabel("  "), "");
 });
 
 test("saved answers from the old survey still read as the old report", () => {

@@ -1,5 +1,5 @@
 import type { BillingCycle, MembershipTier } from "@/lib/aq-modules/membership";
-import type { StoredNitrogenAnswers } from "@/lib/nitrogen/engine";
+import type { NitrogenBrief, StoredNitrogenAnswers } from "@/lib/nitrogen/engine";
 import type { Plan } from "@/lib/session-shared";
 import type { Persona, TelexProduct } from "@/lib/aq-modules/types";
 
@@ -13,6 +13,11 @@ export type NitrogenReport = {
   preparedFor?: string;
   answers: StoredNitrogenAnswers;
   reportMd: string;
+  /** The brief as written when the report was generated. Older reports rebuild it from their answers. */
+  brief?: NitrogenBrief;
+  /** Who wrote the brief's wording: Gemini following the admin prompt, or the desk rules. */
+  writer?: "ai" | "desk";
+  model?: string;
 };
 
 export type CallRegistration = {
