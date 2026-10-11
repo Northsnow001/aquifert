@@ -14,6 +14,7 @@ import { productOf, TELEX_PRODUCTS, type AnalysisNote } from "@/lib/aq-modules/t
 import { deskNow, formatDay } from "@/lib/content-types";
 import { feedViewCookie, parseFeedView, type FeedView } from "@/lib/feed-view";
 import { getHubContent, sortHedge } from "@/lib/hub-content";
+import { readTelexIds } from "@/lib/telex-reads/store";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ function AqViewCard({ notes, view }: { notes: AnalysisNote[]; view: FeedView }) 
 
 export default async function HomePage() {
   const { user, admin, modules } = await getHubAccess();
-  const [content, prefs, jar] = await Promise.all([getHubContent(), getPrefs(user), cookies()]);
+  const [content, prefs, jar, readIds] = await Promise.all([getHubContent(), getPrefs(user), cookies(), readTelexIds(user)]);
 
   const readable = publishedTelex(content.telex, admin ? "all" : user.plan).filter((item) => item.readable);
   const saved = TELEX_PRODUCTS.filter((item) => prefs.telexProducts.includes(item));
@@ -77,7 +78,7 @@ export default async function HomePage() {
       <DeskConnect name={user.name} email={user.email} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} />
+        <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} readIds={readIds} />
         <AqViewCard notes={notes} view={parseFeedView(jar.get(feedViewCookie("analysis"))?.value)} />
       </div>
 

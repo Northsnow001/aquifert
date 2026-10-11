@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, CheckCheck, Lock, Paperclip } from "lucide-react";
+import { ArrowRight, Lock, Paperclip } from "lucide-react";
 import { FeedThumb, Tag, ToneBadge } from "@/components/hub/kit";
+import { TelexReadMark } from "@/components/hub/telex-read-mark";
 import { groupByDay, type TelexView } from "@/lib/aq-modules/telex";
 import { FILE_ACCESS_LABEL, formatTelexDay, plainText } from "@/lib/content-types";
 
@@ -37,9 +38,8 @@ export function TelexList({
           <ul className="divide-y divide-border">
             {rows.map((item) => {
               const href = `/hub/telex/${item.id}`;
-              const read = readIds?.has(item.id);
               return (
-                <li key={item.id} className="px-5 py-4 transition-colors hover:bg-s2/60">
+                <li key={item.id} className="group/row px-5 py-4 transition-colors hover:bg-s2/60">
                   <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 sm:items-start sm:gap-x-3.5">
                     <FeedThumb product={item.product} src={item.thumb} pick={item.pick} size={thumb} className="max-sm:size-11! max-sm:rounded-lg sm:row-span-2" />
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -61,14 +61,10 @@ export function TelexList({
                           {item.documents.length === 1 ? "Document" : `${item.documents.length} documents`}
                         </span>
                       ) : null}
-                      {read ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-s2 px-2 py-0.5 text-[11px] font-semibold text-dim" title="You have read this flash">
-                          <CheckCheck className="h-3 w-3" aria-hidden /> Read
-                        </span>
-                      ) : null}
+                      {item.readable ? <TelexReadMark telexId={item.id} read={readIds?.has(item.id)} /> : null}
                     </div>
                     <div className="col-span-2 min-w-0 max-sm:mt-1 sm:col-span-1 sm:col-start-2">
-                      <h3 className={`mt-1.5 text-[16.5px] font-semibold leading-snug tracking-[-0.01em] ${read ? "text-mid" : "text-ink"}`}>
+                      <h3 className="mt-1.5 text-[16.5px] font-semibold leading-snug tracking-[-0.01em] text-ink group-has-[[data-read-mark]]/row:text-mid">
                         <Link href={href} data-tour={item.id === guided ? "telex-read" : undefined} className="text-inherit no-underline hover:text-blue hover:underline">
                           {item.headline}
                         </Link>

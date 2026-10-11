@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FeedCardHeader, FeedGrid, FeedItem, tileSizes } from "@/components/hub/feed-card";
 import { FeedViewFrame } from "@/components/hub/feed-view";
 import { FeedThumb, FreshnessBadge, ProductChip, StoryImage } from "@/components/hub/kit";
+import { TelexReadMark } from "@/components/hub/telex-read-mark";
 import type { TelexView } from "@/lib/aq-modules/telex";
 import type { TelexProduct } from "@/lib/aq-modules/types";
 import { formatDay } from "@/lib/content-types";
@@ -10,7 +11,22 @@ import type { FeedView } from "@/lib/feed-view";
 const clock = (stamp: string) => stamp.slice(11, 16) || "--:--";
 
 /** The hub's TELEX column: the newest few flashes, sized to sit beside the AQ View card. The full wire lives on the TELEX page. */
-export function HomeTelex({ items, latest, now, filter, view }: { items: TelexView[]; latest?: string; now: string; filter: TelexProduct[]; view: FeedView }) {
+export function HomeTelex({
+  items,
+  latest,
+  now,
+  filter,
+  view,
+  readIds,
+}: {
+  items: TelexView[];
+  latest?: string;
+  now: string;
+  filter: TelexProduct[];
+  view: FeedView;
+  /** Flashes this member has already read. */
+  readIds?: Set<string>;
+}) {
   const odd = items.length % 2 === 1;
   return (
     <FeedViewFrame feed="telex" initial={view} labelledBy="home-telex-title" className="aq-card flex min-w-0 flex-col overflow-hidden">
@@ -35,6 +51,7 @@ export function HomeTelex({ items, latest, now, filter, view }: { items: TelexVi
                 <>
                   <ProductChip product={item.product} small />
                   {place ? <span className="rounded-md bg-navy-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-navy-700">{place}</span> : null}
+                  <TelexReadMark telexId={item.id} read={readIds?.has(item.id)} size="tile" />
                 </>
               }
               title={item.headline}

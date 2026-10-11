@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCheck } from "lucide-react";
+import { markTelexRead } from "@/components/hub/telex-read-mark";
 import { READ_SECONDS } from "@/lib/telex-reads/stats";
 
 /** No scroll, pointer or key input for this long and the clock stops until the reader is back. */
@@ -74,6 +75,7 @@ export function TelexReadTracker({ telexId, children }: { telexId: string; child
           if (result.read && !saved) {
             saved = true;
             setRead(true);
+            markTelexRead(telexId);
             announce(true);
           }
         })

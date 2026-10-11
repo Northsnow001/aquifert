@@ -11,9 +11,25 @@ import { READ_SECONDS } from "@/lib/telex-reads/stats";
 
 const START_EVENT = "aq:telex-guide";
 const CARD = 320;
+/** How often the guide looks at the page while it runs. Pages stream in, filters change the list. */
+const CHECK_MS = 300;
 
 type Status = "running" | "done" | "skipped";
 type Stage = "open" | "pick" | "stay";
+
+/**
+ * What the guide found on the rendered page. Null until the page itself has arrived: the hub shows a
+ * loading skeleton first, and a feed still streaming in is not an empty feed.
+ */
+type Snapshot = {
+  path: string;
+  /** The flash to point at on the feed. */
+  href: string | null;
+  /** Why there is no flash to point at: the view lists only locked flashes, or none at all. */
+  empty: "locked" | "none" | null;
+  /** The story page can be read on this plan, so the read is being timed. */
+  tracked: boolean;
+};
 
 export function startTelexGuide() {
   window.dispatchEvent(new Event(START_EVENT));
@@ -57,22 +73,37 @@ function stageFor(pathname: string): Stage {
   return /^\/hub\/telex\/[^/]+$/.test(pathname) ? "stay" : "open";
 }
 
+/** Reads the page for this stage, or null while the page has not rendered yet. */
+function inspect(stage: Stage, path: string): Snapshot | null {
+  if (stage === "open") return document.querySelector("#main-content") ? { path, href: null, empty: null, tracked: false } : null;
+  if (stage === "pick") {
+    const feed = document.querySelector('[data-telex-page="feed"]');
+    if (!feed) return null;
+    const href = anchorFor("telex-read")?.getAttribute("href") ?? null;
+    return { path, href, empty: href ? null : feed.querySelector("li") ? "locked" : "none", tracked: false };
+  }
+  if (!document.querySelector('[data-telex-page="story"]')) return null;
+  return { path, href: null, empty: null, tracked: Boolean(document.querySelector("[data-telex-tracker]")) };
+}
+
+const same = (a: Snapshot | null, b: Snapshot | null) => a?.path === b?.path && a?.href === b?.href && a?.empty === b?.empty && a?.tracked === b?.tracked;
+
 const ANCHOR: Record<Stage, string | null> = { open: "telex", pick: "telex-read", stay: null };
 
 /**
  * A three-step guide to reading TELEX, shown once to each member after the menu tour: open TELEX, open a
  * flash, stay for READ_SECONDS while the read is counted. It follows the member across pages and never
- * blocks the page, so they press the real menu item and headline themselves.
+ * blocks the page, so they press the real menu item and headline themselves. Each step waits for its
+ * page to finish rendering before it says anything about it.
  */
 export function TelexGuide({ userId }: { userId: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const key = `aq.telex-guide.v1.${userId}`;
   const [running, setRunning] = useState(false);
+  const [snap, setSnap] = useState<Snapshot | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const [ready, setReady] = useState(false);
-  const [reading, setReading] = useState<{ seconds: number; read: boolean }>({ seconds: 0, read: false });
-  const [tracked, setTracked] = useState(false);
+  const [reading, setReading] = useState<ReadingDetail | null>(null);
   const stage = stageFor(pathname);
 
   const begin = useCallback(() => {
@@ -106,31 +137,34 @@ export function TelexGuide({ userId }: { userId: string }) {
   }, [key, userId, begin]);
 
   useEffect(() => {
-    const onReading = (event: Event) => {
-      const detail = (event as CustomEvent<ReadingDetail>).detail;
-      setReading({ seconds: detail.seconds, read: detail.read });
-    };
+    const onReading = (event: Event) => setReading((event as CustomEvent<ReadingDetail>).detail);
     window.addEventListener(READING_EVENT, onReading);
     return () => window.removeEventListener(READING_EVENT, onReading);
   }, []);
 
   useEffect(() => {
     if (!running) return;
-    const timer = window.setTimeout(() => {
-      setReading({ seconds: 0, read: false });
-      setTracked(Boolean(document.querySelector("[data-telex-tracker]")));
-      const anchor = ANCHOR[stage];
-      if (anchor) anchorFor(anchor)?.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-      setReady(true);
-    }, 500);
+    let scrolledTo: string | null = null;
+    const check = () => {
+      const found = inspect(stage, pathname);
+      setSnap((current) => (same(current, found) ? current : found));
+      if (found?.href && found.href !== scrolledTo) {
+        scrolledTo = found.href;
+        anchorFor("telex-read")?.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      }
+    };
+    const first = window.setTimeout(check, 150);
+    const timer = window.setInterval(check, CHECK_MS);
     return () => {
-      window.clearTimeout(timer);
-      setReady(false);
+      window.clearTimeout(first);
+      window.clearInterval(timer);
     };
   }, [running, stage, pathname]);
 
+  const ready = running && snap !== null && snap.path === pathname;
+
   useEffect(() => {
-    if (!running || !ready) return;
+    if (!ready) return;
     const anchor = ANCHOR[stage];
     const measure = () => {
       const node = anchor ? anchorFor(anchor) : undefined;
@@ -147,9 +181,12 @@ export function TelexGuide({ userId }: { userId: string }) {
       window.removeEventListener("scroll", measure, true);
       document.removeEventListener("keydown", onKey);
     };
-  }, [running, ready, stage, end]);
+  }, [ready, stage, snap?.href, end]);
 
-  if (!running || !ready || typeof document === "undefined") return null;
+  if (!ready || !snap || typeof document === "undefined") return null;
+
+  const storyId = stage === "stay" ? decodeURIComponent(pathname.split("/").pop() ?? "") : null;
+  const progress = reading && reading.telexId === storyId ? reading : { seconds: 0, read: false };
 
   const step = stage === "open" ? 1 : stage === "pick" ? 2 : 3;
   let title: string;
@@ -161,18 +198,25 @@ export function TelexGuide({ userId }: { userId: string }) {
     body = "The desk's latest market flashes live in TELEX: tenders, price moves, plant news and freight. Open it to see what is moving.";
     action = { label: "Open TELEX", run: () => router.push("/hub/telex") };
   } else if (stage === "pick") {
-    const target = anchorFor("telex-read");
-    title = target ? "Open a flash" : "Nothing to open yet";
-    body = target
-      ? "Press a headline, or Read more under it, to open the full story."
-      : "There are no flashes on your plan in this view. Clear the filters, or come back when the desk files the next one.";
-    const href = target?.getAttribute("href");
-    action = href ? { label: "Open this one", run: () => router.push(href) } : { label: "Done", run: () => end("done") };
-  } else if (!tracked) {
+    const href = snap.href;
+    if (href) {
+      title = "Open a flash";
+      body = "Press a headline, or Read more under it, to open the full story.";
+      action = { label: "Open this one", run: () => router.push(href) };
+    } else if (snap.empty === "locked") {
+      title = "These flashes are on a higher plan";
+      body = "Everything in this view needs a higher plan. Clear the product filters or the search to find a flash you can open.";
+      action = { label: "Show every flash", run: () => router.push("/hub/telex?p=all") };
+    } else {
+      title = "No flashes in this view";
+      body = "Nothing matches the current filters. Clear them to see the whole feed.";
+      action = { label: "Show every flash", run: () => router.push("/hub/telex?p=all") };
+    }
+  } else if (!snap.tracked) {
     title = "This flash is on a higher plan";
     body = "Go back to the feed and open a flash without a lock to read it in full.";
     action = { label: "Back to TELEX", run: () => router.push("/hub/telex") };
-  } else if (reading.read) {
+  } else if (progress.read) {
     title = "Marked as read";
     body = "That is all it takes. Flashes you have read show a Read tick in the feed, so you can see what is new at a glance.";
     action = { label: "Done", run: () => end("done") };
@@ -190,7 +234,6 @@ export function TelexGuide({ userId }: { userId: string }) {
   } else {
     style = { right: 16, bottom: vw < 1024 ? 96 : 24 };
   }
-  const progress = Math.min(1, reading.seconds / READ_SECONDS);
 
   return createPortal(
     <div className="aq-app pointer-events-none fixed inset-0 z-[85]">
@@ -201,7 +244,7 @@ export function TelexGuide({ userId }: { userId: string }) {
         />
       ) : null}
       <div
-        key={`${stage}-${reading.read}`}
+        key={`${stage}-${snap.href ?? snap.empty}-${progress.read}`}
         role="dialog"
         aria-label={`TELEX guide, step ${step} of 3: ${title}`}
         className="aq-drop aq-float pointer-events-auto absolute rounded-2xl bg-white p-4"
@@ -214,17 +257,17 @@ export function TelexGuide({ userId }: { userId: string }) {
           </div>
         </div>
         <h3 className="mt-1.5 flex items-center gap-1.5 text-[17px] font-semibold text-ink">
-          {stage === "stay" && reading.read ? <CheckCheck className="h-4 w-4 text-teal-700" aria-hidden /> : null}
+          {stage === "stay" && progress.read ? <CheckCheck className="h-4 w-4 text-teal-700" aria-hidden /> : null}
           {title}
         </h3>
         <p className="mt-1 text-[15px] leading-relaxed text-mid">{body}</p>
-        {stage === "stay" && tracked && !reading.read ? (
+        {stage === "stay" && snap.tracked && !progress.read ? (
           <div className="mt-3" aria-live="polite">
             <div className="h-2 overflow-hidden rounded-full bg-s2">
-              <div className="h-full rounded-full bg-teal-600 transition-[width] duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
+              <div className="h-full rounded-full bg-teal-600 transition-[width] duration-1000 ease-linear" style={{ width: `${Math.min(1, progress.seconds / READ_SECONDS) * 100}%` }} />
             </div>
             <p className="mt-1 font-mono text-[12px] text-dim">
-              {reading.seconds >= READ_SECONDS ? "Saving your read…" : `${Math.max(0, READ_SECONDS - reading.seconds)}s to go`}
+              {progress.seconds >= READ_SECONDS ? "Saving your read…" : `${Math.max(0, READ_SECONDS - progress.seconds)}s to go`}
             </p>
           </div>
         ) : null}
@@ -235,7 +278,7 @@ export function TelexGuide({ userId }: { userId: string }) {
             </button>
           ) : null}
           <button type="button" onClick={() => end("skipped")} className="ml-auto h-9 rounded-full px-3 text-[14.5px] font-semibold text-mid hover:bg-s3">
-            {stage === "stay" && reading.read ? "Close" : "Skip"}
+            {stage === "stay" && progress.read ? "Close" : "Skip"}
           </button>
         </div>
       </div>

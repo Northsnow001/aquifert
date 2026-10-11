@@ -42,7 +42,7 @@ export default async function TelexStoryPage({ params }: PageProps<"/hub/telex/[
         <ArrowLeft className="h-4 w-4" /> Back to the hub
       </Link>
 
-      <article className="aq-card aq-rise mt-3 overflow-hidden">
+      <article className="aq-card aq-rise mt-3 overflow-hidden" data-telex-page="story">
         <div className="relative aspect-[16/9] bg-s2 sm:aspect-[21/9]">
           <StoryImage product={item.product} src={item.thumb} pick={item.pick} sizes="(min-width: 1024px) 900px, 100vw" priority />
         </div>
