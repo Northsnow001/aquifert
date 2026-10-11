@@ -68,7 +68,7 @@ export type NavGroup = { title: string; items: NavItem[] };
 
 const GROUP_TONE: Record<string, string> = {
   Overview: "aq-chip-blue",
-  "Public site": "aq-chip-blue",
+  Content: "aq-chip-blue",
   "AQ Modules": "aq-chip-blue",
   Calculators: "aq-chip-blue",
   Desk: "aq-chip-amber",

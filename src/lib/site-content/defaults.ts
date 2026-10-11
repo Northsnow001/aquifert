@@ -1,6 +1,31 @@
+import { MEMBERSHIP_OFFERS, type MembershipOffer } from "@/lib/aq-modules/membership";
+import { moduleInfo, type ModuleKey } from "@/lib/aq-modules/types";
 import type { SiteContent } from "@/lib/site-content/schema";
 
 const DESK_MAIL = "mailto:enquiry@aquifert.com";
+
+const offer = (id: MembershipOffer["id"]) => MEMBERSHIP_OFFERS.find((item) => item.id === id)!;
+
+function tierDefaults<T extends "sprout" | "harvest" | "scale">(tier: T, blurb: string) {
+  const plan = offer(tier);
+  return {
+    [`${tier}Name`]: plan.name,
+    [`${tier}Tagline`]: plan.tagline,
+    [`${tier}Blurb`]: blurb,
+    [`${tier}Features`]: plan.features.join("\n"),
+    [`${tier}Missing`]: plan.missing.join("\n"),
+  } as Record<`${T}Name` | `${T}Tagline` | `${T}Blurb` | `${T}Features` | `${T}Missing`, string>;
+}
+
+const moduleDefaults = (key: ModuleKey) => ({ name: moduleInfo(key).label, pitch: moduleInfo(key).pitch });
+const TELEX = moduleDefaults("aq-telex");
+const MARKET = moduleDefaults("market-data");
+const SIGNAL = moduleDefaults("aq-signal-pro");
+const FREIGHT = moduleDefaults("freight-analytics");
+const BALANCE = moduleDefaults("supply-demand");
+const BRIEFING = moduleDefaults("briefing");
+const ALERTS = moduleDefaults("alerts");
+const ANALYTICS = offer("analytics");
 
 /** The wording the site launched with. Saved edits replace it section by section; "Reset" brings it back. */
 export const DEFAULT_SITE_CONTENT: SiteContent = {
@@ -434,5 +459,113 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       disclaimer:
         "Fertilizer price indications are compiled from public sources and Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.",
     },
+  },
+  aqZero: {
+    hero: {
+      eyebrow: "AQ Zero",
+      badge: "Pilot",
+      title: "Buy Fertilizer at",
+      highlight: "supplier cost",
+      sub: "Supplier-cost buying with a fixed operations fee. Register now for the pilot.",
+      primaryLabel: "Choose your programme",
+      primaryLink: "#aq-zero-tiers",
+      secondaryLabel: "Talk to the trade desk",
+      secondaryLink: "/hub/contact?topic=AQ%20Zero",
+      video: "/media/port-terminal.mp4",
+      image: "/media/port-terminal.jpg",
+      label: "Containers being loaded at a port terminal, physical fertiliser moving through the supply chain",
+    },
+    notice: {
+      badge: "Coming soon",
+      text: "Choose the programme that fits how you buy and register your interest. The desk confirms pricing and availability with you.",
+    },
+    programmes: {
+      ...tierDefaults("sprout", "For buyers proving the model on their first lanes."),
+      ...tierDefaults("harvest", "For regular programmes that need financing and speed."),
+      ...tierDefaults("scale", "For volume buyers running the full stream through Aquifert."),
+      popularLabel: "Most popular",
+      buttonLabel: "Register for {name}",
+      footnote: "12 pilot slots per quarter. Fast-start: commit within 7 days of being offered a slot.",
+    },
+    compare: {
+      title: "Compare plans",
+      sub: "Modules and allowances come straight from the desk’s current settings.",
+    },
+    steps: {
+      kicker: "How AQ Zero works",
+      title: "Three steps between you and supplier-cost fertiliser",
+      items: [
+        { icon: "clipboard-check", title: "Register your interest", text: "Choose the programme that fits how you buy. Registration takes a minute and places you on the pilot roster." },
+        { icon: "phone-call", title: "The desk confirms", text: "Our traders confirm pricing and availability with you directly, against your quality, quantity, packing and destination." },
+        { icon: "badge-check", title: "Buy at supplier cost", text: "Product at cost, pass-through freight and a stated fee. Full document trail on every tonne." },
+      ],
+    },
+    crossSell: {
+      eyebrow: "AQ Analytics",
+      line: "Don’t need physical fertiliser? Get the trader-level market view on its own.",
+      buttonLabel: "Explore AQ Analytics",
+      buttonLink: "/hub/plans/aq-analytics",
+    },
+    closing: {
+      title: "Trade your first tonne at cost this quarter",
+      body: "Pilot slots are limited to twelve per quarter. Talk to the desk about the programme that fits your tonnage, and we will confirm pricing and availability with you.",
+      primaryLabel: "Talk to the trade desk",
+      primaryLink: "/hub/contact?topic=AQ%20Zero",
+      secondaryLabel: "Compare the tiers",
+      secondaryLink: "#aq-zero-tiers",
+    },
+    _order: ["notice", "programmes", "compare", "steps", "crossSell", "closing"],
+  },
+  aqAnalytics: {
+    hero: {
+      eyebrow: "AQ Analytics",
+      badge: "",
+      title: "Advisory for the",
+      highlight: "Global Market",
+      sub: "Trader-level market analysis for the fertiliser market, designed to let you make an informed decision. Analytics and licensed market data, no physical trading.",
+      registerLabel: "Register for AQ Analytics",
+      openLabel: "Open AQ Analytics",
+      secondaryLabel: "Talk to the trade desk",
+      secondaryLink: "/hub/contact?topic=AQ%20Analytics",
+      video: "/media/fields-sunrise.mp4",
+      image: "/media/fields-sunrise.jpg",
+      label: "Sunrise over cultivated fields, the market view AQ Analytics opens up",
+    },
+    plan: {
+      name: ANALYTICS.name,
+      tagline: ANALYTICS.tagline,
+      features: ANALYTICS.features.join("\n"),
+      missing: ANALYTICS.missing.join("\n"),
+      registerLabel: "Register for AQ Analytics",
+      openLabel: "Open AQ Analytics",
+      telexName: TELEX.name,
+      telexPitch: TELEX.pitch,
+      marketDataName: MARKET.name,
+      marketDataPitch: MARKET.pitch,
+      signalName: SIGNAL.name,
+      signalPitch: SIGNAL.pitch,
+      freightName: FREIGHT.name,
+      freightPitch: FREIGHT.pitch,
+      supplyDemandName: BALANCE.name,
+      supplyDemandPitch: BALANCE.pitch,
+      briefingName: BRIEFING.name,
+      briefingPitch: BRIEFING.pitch,
+      alertsName: ALERTS.name,
+      alertsPitch: ALERTS.pitch,
+    },
+    crossSell: {
+      eyebrow: "AQ Zero",
+      line: "Ready to buy at supplier cost? AQ Zero adds physical trading to everything here.",
+      buttonLabel: "Explore AQ Zero",
+      buttonLink: "/hub/plans/aq-zero",
+    },
+    closing: {
+      title: "Know the market before you move",
+      body: "AQ Analytics is included with every AQ Zero plan, and stands alone for teams that only need the intelligence. The desk can walk you through the modules on a short call.",
+      primaryLabel: "Talk to the trade desk",
+      primaryLink: "/hub/contact?topic=AQ%20Analytics",
+      registerLabel: "Register for AQ Analytics",
+    },
+    _order: ["plan", "crossSell", "closing"],
   },
 };

@@ -2,20 +2,21 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, CircleAlert, ExternalLink, Eye, EyeOff, RefreshCw, RotateCcw, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, CircleAlert, ExternalLink, Eye, EyeOff, RefreshCw, RotateCcw, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { saveSiteContent } from "@/app/admin/site-content/actions";
 import { SaveBar, useEditorGuards } from "@/components/admin/aquibot/shared";
 import { btnGhost, btnSecondary } from "@/components/admin/ui";
 import { LeafInput, ListInput, isWide } from "@/components/admin/site-content/fields";
 import { validatePage, type ContentIssue } from "@/lib/site-content/normalize";
-import { SITE_SCHEMA, type Field, type SiteContent, type SitePageKey } from "@/lib/site-content/schema";
+import { SITE_SCHEMA, sectionOrder, type PageSchema, type SectionSchema, type SiteContent, type SitePageKey } from "@/lib/site-content/schema";
 
 type Row = Record<string, string>;
 type Section = Record<string, string | Row[] | true>;
 type PageValue = Record<string, Section>;
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const orderOf = (value: PageValue) => (value as unknown as { _order?: string[] })._order;
 
 function previewUrl(path: string | null) {
   return path === null || path === "/" ? "/?preview=1" : path;
@@ -35,9 +36,20 @@ export function SiteContentEditor<K extends SitePageKey>({
   savedBy: string | null;
 }) {
   const router = useRouter();
-  const page = SITE_SCHEMA[pageKey];
-  const sections = Object.entries(page.sections) as [string, { label: string; description?: string; hideable: boolean; fields: Record<string, Field> }][];
+  const page: PageSchema = SITE_SCHEMA[pageKey];
+  const where = page.area === "hub" ? "the hub page" : "the public page";
   const [value, setValue] = useState<PageValue>(initial as unknown as PageValue);
+  const order = sectionOrder(pageKey, orderOf(value));
+  const sections = order.map((key) => [key, page.sections[key]] as [string, SectionSchema]);
+  const movable = order.filter((key) => !page.sections[key].pinned);
+  const move = (key: string, by: -1 | 1) => {
+    const index = movable.indexOf(key);
+    const target = index + by;
+    if (index < 0 || target < 0 || target >= movable.length) return;
+    const next = [...movable];
+    [next[index], next[target]] = [next[target], next[index]];
+    setValue((current) => ({ ...current, _order: next }) as unknown as PageValue);
+  };
   const [saved, setSaved] = useState<PageValue>(initial as unknown as PageValue);
   const [savedAt, setSavedAt] = useState(initialSavedAt);
   const [by, setBy] = useState(savedBy);
@@ -95,7 +107,13 @@ export function SiteContentEditor<K extends SitePageKey>({
     setBy(result.by);
     setShowIssues(false);
     setPreviewKey((key) => key + 1);
-    toast.success(page.path === null ? "Saved. Every public page shows the new header and footer." : `Saved. ${page.label} is showing this version now.`);
+    toast.success(
+      page.path === null
+        ? "Saved. Every public page shows the new header and footer."
+        : page.area === "hub"
+          ? `Saved. Members see this version of ${page.label} now.`
+          : `Saved. ${page.label} is showing this version now.`,
+    );
     router.refresh();
   };
 
@@ -125,7 +143,8 @@ export function SiteContentEditor<K extends SitePageKey>({
       <p className="px-1 text-[12px] text-dim">
         {savedAt && by ? `Last saved by ${by}.` : !savedAt ? "Showing the launch wording. Nothing has been saved for this page yet." : null}
         {hiddenCount ? " " : null}
-        {hiddenCount ? <span className="font-medium text-mid">{hiddenCount === 1 ? "1 section is hidden on the public page." : `${hiddenCount} sections are hidden on the public page.`}</span> : null}
+        {hiddenCount ? <span className="font-medium text-mid">{hiddenCount === 1 ? `1 section is hidden on ${where}.` : `${hiddenCount} sections are hidden on ${where}.`}</span> : null}
+        {page.reorderable ? " Use the arrows on a section to move it up or down the page." : null}
       </p>
 
       {visibleIssues.length ? (
@@ -158,7 +177,7 @@ export function SiteContentEditor<K extends SitePageKey>({
                   key={key}
                   type="button"
                   onClick={() => jumpTo(key)}
-                  title={hidden ? `${section.label} is hidden on the public page` : undefined}
+                  title={hidden ? `${section.label} is hidden on ${where}` : undefined}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition ${
                     bad
                       ? "border-red-200 bg-red-50 text-danger"
@@ -215,20 +234,44 @@ export function SiteContentEditor<K extends SitePageKey>({
                         {problems.length ? <span className="rounded-full bg-red-50 px-1.5 py-px text-[10.5px] font-semibold text-danger">{problems.length} to fix</span> : null}
                       </span>
                       {hidden ? (
-                        <span className="mt-0.5 block text-[12px] leading-relaxed text-dim">Not shown on the public page. The content is kept, so you can show it again at any time.</span>
+                        <span className="mt-0.5 block text-[12px] leading-relaxed text-dim">Not shown on {where}. The content is kept, so you can show it again at any time.</span>
                       ) : section.description ? (
                         <span className="mt-0.5 block text-[12px] leading-relaxed text-dim">{section.description}</span>
                       ) : null}
                     </span>
                   </button>
+                  {page.reorderable && !section.pinned ? (
+                    <span className="inline-flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        className={`${btnGhost} px-2`}
+                        disabled={movable.indexOf(sectionKey) === 0}
+                        onClick={() => move(sectionKey, -1)}
+                        aria-label={`Move ${section.label} up`}
+                        title="Move up the page. Nothing changes on the site until you save."
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        className={`${btnGhost} px-2`}
+                        disabled={movable.indexOf(sectionKey) === movable.length - 1}
+                        onClick={() => move(sectionKey, 1)}
+                        aria-label={`Move ${section.label} down`}
+                        title="Move down the page. Nothing changes on the site until you save."
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ) : null}
                   {section.hideable ? (
                     <button
                       type="button"
                       role="switch"
                       aria-checked={!hidden}
-                      aria-label={`Show ${section.label} on the public page`}
+                      aria-label={`Show ${section.label} on ${where}`}
                       onClick={() => setHidden(sectionKey, !hidden)}
-                      title={hidden ? "Show this section on the public page. Nothing changes on the site until you save." : "Hide this section from the public page. Nothing changes on the site until you save."}
+                      title={hidden ? `Show this section on ${where}. Nothing changes on the site until you save.` : `Hide this section from ${where}. Nothing changes on the site until you save.`}
                       className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-[12px] font-medium text-mid transition hover:bg-s2"
                     >
                       <span className={`relative h-[18px] w-8 rounded-full transition ${hidden ? "bg-[#cfd6de]" : "bg-[#2f9e6e]"}`}>

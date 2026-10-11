@@ -94,13 +94,22 @@ export const GUIDE: GuideSection[] = [
   },
   {
     id: "website",
-    group: "Public site",
-    title: "Website content",
+    group: "Content",
+    title: "Website & hub pages",
     icon: "website",
     href: "/admin/site-content",
     summary:
-      "The wording, pictures, videos, links and menus on the public website: Home, Platform, Why Aquifert, Membership, Contact, Help, and the header and footer. Any section can be hidden and shown again. A save shows on the live site straight away.",
+      "The wording, pictures, videos, links and menus on the public website (Home, Platform, Why Aquifert, Membership, Contact, Help, and the header and footer) and on the hub's AQ Zero and AQ Analytics plan pages. Any section can be hidden and shown again, and hub page sections can be reordered. A save shows straight away.",
     tasks: [
+      {
+        title: "Change the AQ Zero or AQ Analytics page",
+        steps: [
+          "Pick AQ Zero or AQ Analytics under Hub plan pages in the tabs at the top. These are the pages members open from Plans in the hub.",
+          "Edit the hero, the notice strip, the programme cards (names, taglines, what is and is not included), the steps, the card pointing to the other plan and the closing banner.",
+          "Use the up and down arrows on a section to move it up or down the page. The hero always stays first.",
+          "Which modules and allowances show, and the plans in the Compare plans table, come from Access & allowances. Registration and current-plan badges are set by each member's account.",
+        ],
+      },
       {
         title: "Change a page",
         steps: [

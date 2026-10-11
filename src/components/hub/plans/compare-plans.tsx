@@ -17,11 +17,15 @@ export function ComparePlans({
   allowances,
   access,
   className = "",
+  title = "Compare plans",
+  sub = "Modules and allowances come straight from the desk’s current settings.",
 }: {
   plan: Plan | null;
   allowances: Record<Plan, Allowances>;
   access: AccessRules;
   className?: string;
+  title?: string;
+  sub?: string;
 }) {
   const includedIn = (tier: Plan, key: ModuleKey) => PLAN_RANK[tier] >= PLAN_RANK[access[key]];
 
@@ -29,9 +33,9 @@ export function ComparePlans({
     <section className={`aq-card overflow-hidden ${className}`} aria-labelledby="compare-title">
       <header className="border-b border-border px-5 py-3.5">
         <h2 id="compare-title" className="text-[16.5px] font-semibold text-ink">
-          Compare plans
+          {title}
         </h2>
-        <p className="text-[13px] text-dim">Modules and allowances come straight from the desk&rsquo;s current settings.</p>
+        {sub ? <p className="text-[13px] text-dim">{sub}</p> : null}
       </header>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[340px] text-left text-[13.5px] sm:min-w-[560px] sm:text-[14.5px]">

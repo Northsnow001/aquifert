@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { SITE_SCHEMA, type SitePageKey } from "@/lib/site-content/schema";
 import { getSiteContent } from "@/lib/site-content/store";
 
-type EditablePage = Exclude<SitePageKey, "global">;
+type EditablePage = Exclude<SitePageKey, "global" | "aqZero" | "aqAnalytics">;
 
 const SHARE_IMAGE = "/media/hero-ship-containers.jpg";
 

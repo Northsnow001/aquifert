@@ -1,7 +1,7 @@
 import {
-  Anchor, Award, BarChart3, BookOpen, Bot, Briefcase, Calculator, ChartLine, Check, Clock, Compass, Droplets, Factory,
+  Anchor, Award, BadgeCheck, BarChart3, Bell, BookOpen, Bot, Briefcase, Calculator, ChartLine, Check, ClipboardCheck, Clock, Compass, Droplets, Factory,
   FileStack, FlaskConical, Globe2, Handshake, Landmark, Layers, Leaf, Lightbulb, Lock, Mail, Map, MessageCircle, Package,
-  Phone, Radio, RefreshCw, Rocket, Route, Search, ShieldCheck, Ship, ShoppingCart, Sparkles, Sprout, Star, Sun, Target,
+  Phone, PhoneCall, Radio, RefreshCw, Rocket, Route, Search, ShieldCheck, Ship, ShoppingCart, Sparkles, Sprout, Star, Sun, Target,
   TrendingUp, Truck, Users, Wallet, Wheat, Zap, type LucideIcon,
 } from "lucide-react";
 import type { SiteIconName } from "@/lib/site-content/normalize";
@@ -53,6 +53,10 @@ export const SITE_ICONS: Record<SiteIconName, LucideIcon> = {
   "trending-up": TrendingUp,
   layers: Layers,
   sparkles: Sparkles,
+  "clipboard-check": ClipboardCheck,
+  "phone-call": PhoneCall,
+  "badge-check": BadgeCheck,
+  bell: Bell,
 };
 
 export function SiteIcon({ name, className }: { name: string; className?: string }) {

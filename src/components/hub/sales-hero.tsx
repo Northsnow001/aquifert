@@ -24,9 +24,13 @@ export function SalesHero({
 }) {
   return (
     <section className="aqf-video-hero relative isolate overflow-hidden rounded-[22px] bg-navy-900 shadow-[0_24px_60px_-30px_rgb(11_30_45/0.7)]">
-      <video className="absolute inset-0 -z-10 h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" poster={poster} aria-label={videoLabel} role="img">
-        <source src={src} type="video/mp4" />
-      </video>
+      {src ? (
+        <video className="absolute inset-0 -z-10 h-full w-full object-cover" autoPlay muted loop playsInline preload="metadata" poster={poster} aria-label={videoLabel} role="img">
+          <source src={src} type="video/mp4" />
+        </video>
+      ) : poster ? (
+        <img src={poster} alt={videoLabel} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+      ) : null}
       <div className="aqf-video-scrim absolute inset-0 -z-10" aria-hidden />
       <div className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-teal-500/25 blur-3xl" aria-hidden />
       <div className={`relative flex flex-col items-center justify-center px-6 py-12 text-center text-white sm:px-12 ${compact ? "min-h-[300px] sm:min-h-[360px]" : "min-h-[340px] sm:min-h-[420px]"}`}>
@@ -35,7 +39,7 @@ export function SalesHero({
           {badge ? <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] text-[#0b1e2d]">{badge}</span> : null}
         </span>
         <h1 className="mt-5 max-w-2xl text-balance text-[32px] font-extrabold leading-[1.06] tracking-[-0.02em] sm:text-[46px]">{title}</h1>
-        <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/80 sm:text-[17.5px]">{sub}</p>
+        {sub ? <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/80 sm:text-[17.5px]">{sub}</p> : null}
         {children ? <div className="mt-8 flex flex-wrap items-center justify-center gap-3">{children}</div> : null}
       </div>
     </section>

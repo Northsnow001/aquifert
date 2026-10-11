@@ -17,9 +17,10 @@ export type LeafField = TextField | LongTextField | LinesField | LinkField | Ima
 export type ListField = Base & { kind: "list"; item: Record<string, LeafField>; itemTitle: string; min: number; max: number };
 export type Field = LeafField | ListField;
 
-/** `hideable` sections can be switched off on the public page without losing their content. */
-export type SectionSchema = { label: string; description?: string; hideable: boolean; fields: Record<string, Field> };
-export type PageSchema = { label: string; path: string | null; description: string; sections: Record<string, SectionSchema> };
+/** `hideable` sections can be switched off on the page without losing their content; `pinned` ones stay put when the rest are reordered. */
+export type SectionSchema = { label: string; description?: string; hideable: boolean; pinned?: boolean; fields: Record<string, Field> };
+/** `reorderable` pages store their section order in `_order`. */
+export type PageSchema = { label: string; path: string | null; description: string; area?: "site" | "hub"; reorderable?: boolean; sections: Record<string, SectionSchema> };
 
 type Opts = { hint?: string; required?: boolean };
 
@@ -33,10 +34,11 @@ const icon = (label = "Icon"): IconField => ({ kind: "icon", label });
 function list<I extends Record<string, LeafField>>(label: string, itemTitle: keyof I & string, item: I, opts: Opts & { min?: number; max?: number } = {}) {
   return { kind: "list" as const, label, item, itemTitle, min: opts.min ?? 1, max: opts.max ?? 12, hint: opts.hint };
 }
-const section = <F extends Record<string, Field>>(label: string, description: string, fields: F, opts: { hideable?: boolean } = {}) => ({
+const section = <F extends Record<string, Field>>(label: string, description: string, fields: F, opts: { hideable?: boolean; pinned?: boolean } = {}) => ({
   label,
   description,
   hideable: opts.hideable ?? true,
+  ...(opts.pinned ? { pinned: true } : {}),
   fields,
 });
 
@@ -94,6 +96,58 @@ const videoCard = () => ({
   image: image("Still image"),
   label: text("Video description", { max: 200, hint: "Read out by screen readers." }),
 });
+
+const headline = () => ({
+  title: text("Headline", { max: 120, required: true }),
+  highlight: text("Highlighted ending", { max: 80, hint: "Shown in teal straight after the headline." }),
+});
+
+function tierCard<T extends string>(tier: T, word: string) {
+  return {
+    [`${tier}Name`]: text(`${word} name`, { max: 60, required: true }),
+    [`${tier}Tagline`]: text(`${word} tagline`, { max: 120 }),
+    [`${tier}Blurb`]: long(`${word} description`, { max: 300, rows: 2 }),
+    [`${tier}Features`]: lines(`${word} included`, { max: 1200, hint: "One per line, shown with a tick." }),
+    [`${tier}Missing`]: lines(`${word} not included`, { max: 800, hint: "One per line, shown greyed out. Leave empty for none." }),
+  } as Record<`${T}Name` | `${T}Tagline`, TextField> & Record<`${T}Blurb`, LongTextField> & Record<`${T}Features` | `${T}Missing`, LinesField>;
+}
+
+/** Field prefixes for the AQ Analytics module cards; the page maps each module onto one. */
+export const MODULE_CARD_FIELDS = {
+  telex: "AQ TELEX",
+  marketData: "Market Data",
+  signal: "AQ Signal",
+  freight: "Freight Analytics",
+  supplyDemand: "Supply & Demand",
+  briefing: "The Briefing",
+  alerts: "Alerts & Brief",
+} as const;
+type ModuleCardKey = keyof typeof MODULE_CARD_FIELDS;
+
+function moduleCards() {
+  const fields: Record<string, LeafField> = {};
+  for (const [key, name] of Object.entries(MODULE_CARD_FIELDS)) {
+    fields[`${key}Name`] = text(`${name} card title`, { max: 60, required: true });
+    fields[`${key}Pitch`] = long(`${name} card text`, { max: 300, rows: 2 });
+  }
+  return fields as Record<`${ModuleCardKey}Name`, TextField> & Record<`${ModuleCardKey}Pitch`, LongTextField>;
+}
+
+const crossSell = () =>
+  section("Other plan", "The card pointing members to the other plan.", {
+    eyebrow: text("Small heading", { max: 40 }),
+    line: text("Statement", { max: 200, required: true }),
+    buttonLabel: text("Button text", { max: 60, required: true }),
+    buttonLink: link("Button link", { required: true }),
+  });
+
+const closingBanner = () =>
+  section("Closing banner", "The navy banner at the bottom of the page.", {
+    title: text("Heading", { max: 160, required: true }),
+    body: long("Text", { max: 400, rows: 3 }),
+    ...button("primary"),
+    ...button("secondary"),
+  });
 
 export const SITE_SCHEMA = {
   home: {
@@ -401,6 +455,92 @@ export const SITE_SCHEMA = {
       ),
     },
   },
+  aqZero: {
+    label: "AQ Zero",
+    path: "/hub/plans/aq-zero",
+    description: "The AQ Zero plan page members open from Plans in the hub.",
+    area: "hub",
+    reorderable: true,
+    sections: {
+      hero: section(
+        "Hero",
+        "The video banner at the top. It always stays first.",
+        {
+          eyebrow: text("Label above the headline", { max: 40, required: true }),
+          badge: text("Badge beside the label", { max: 30, hint: "Leave empty to hide it." }),
+          ...headline(),
+          sub: long("Text under the headline", { max: 400, rows: 2 }),
+          ...button("primary"),
+          ...button("secondary"),
+          ...backdrop(),
+        },
+        { hideable: false, pinned: true },
+      ),
+      notice: section("Notice strip", "The teal strip under the hero.", {
+        badge: text("Badge", { max: 30, hint: "Leave empty to hide it." }),
+        text: long("Text", { max: 300, rows: 2, required: true }),
+      }),
+      programmes: section("Programme cards", "The three AQ Zero tiers. Members register from these cards.", {
+        ...tierCard("sprout", "Sprout"),
+        ...tierCard("harvest", "Harvest"),
+        ...tierCard("scale", "Scale"),
+        popularLabel: text("Badge on the most popular card", { max: 30, required: true }),
+        buttonLabel: text("Register button text", { max: 60, required: true, hint: "{name} becomes the programme name." }),
+        footnote: text("Note under the cards", { max: 200, hint: "Leave empty to hide it." }),
+      }),
+      compare: section("Compare plans", "The table of plans. Its rows come from Access & allowances.", {
+        title: text("Heading", { max: 80, required: true }),
+        sub: text("Text under the heading", { max: 200 }),
+      }),
+      steps: section("How it works", "Numbered steps.", {
+        kicker: text("Small heading", { max: 80 }),
+        title: text("Heading", { max: 160, required: true }),
+        items: list("Steps", "title", { icon: icon(), title: text("Title", { max: 80, required: true }), text: long("Text", { max: 400, rows: 3 }) }, { min: 1, max: 6 }),
+      }),
+      crossSell: crossSell(),
+      closing: closingBanner(),
+    },
+  },
+  aqAnalytics: {
+    label: "AQ Analytics",
+    path: "/hub/plans/aq-analytics",
+    description: "The AQ Analytics plan page members open from Plans in the hub.",
+    area: "hub",
+    reorderable: true,
+    sections: {
+      hero: section(
+        "Hero",
+        "The video banner at the top. It always stays first.",
+        {
+          eyebrow: text("Label above the headline", { max: 40, required: true }),
+          badge: text("Badge beside the label", { max: 30, hint: "Leave empty to hide it." }),
+          ...headline(),
+          sub: long("Text under the headline", { max: 400, rows: 2 }),
+          registerLabel: text("Main button text, before they have the plan", { max: 60, required: true }),
+          openLabel: text("Main button text, once they have the plan", { max: 60, required: true }),
+          ...button("secondary"),
+          ...backdrop(),
+        },
+        { hideable: false, pinned: true },
+      ),
+      plan: section("Plan and modules", "The plan card beside the modules it includes. Which modules show comes from Access & allowances.", {
+        name: text("Plan name", { max: 60, required: true }),
+        tagline: text("Tagline", { max: 120 }),
+        features: lines("Included", { max: 1500, hint: "One per line, shown with a tick." }),
+        missing: lines("Not included", { max: 800, hint: "One per line, shown greyed out. Leave empty for none." }),
+        registerLabel: text("Card button text, before they have the plan", { max: 60, required: true }),
+        openLabel: text("Card button text, once they have the plan", { max: 60, required: true }),
+        ...moduleCards(),
+      }),
+      crossSell: crossSell(),
+      closing: section("Closing banner", "The navy banner at the bottom of the page.", {
+        title: text("Heading", { max: 160, required: true }),
+        body: long("Text", { max: 400, rows: 3 }),
+        ...button("primary"),
+        registerLabel: text("Register button text", { max: 60, hint: "Shown only to members without the plan. Leave empty to hide it." }),
+      }),
+    },
+  },
 } satisfies Record<string, PageSchema>;
 
 export type SitePageKey = keyof typeof SITE_SCHEMA;
@@ -410,12 +550,24 @@ type LeafValue = string;
 type FieldValue<F> = F extends { kind: "list"; item: infer I } ? { [K in keyof I]: LeafValue }[] : LeafValue;
 /** `hidden` is only ever stored as `true`; a visible section has no flag. */
 type SectionValue<S> = S extends { fields: infer F } ? { [K in keyof F]: FieldValue<F[K]> } & { hidden?: true } : never;
-type PageValue<P> = P extends { sections: infer S } ? { [K in keyof S]: SectionValue<S[K]> } : never;
+type PageValue<P> = P extends { sections: infer S } ? { [K in keyof S]: SectionValue<S[K]> } & { _order?: string[] } : never;
 
 export type SiteContent = { [K in SitePageKey]: PageValue<(typeof SITE_SCHEMA)[K]> };
 export type SitePage<K extends SitePageKey> = SiteContent[K];
 
 /** False when the editor has switched the section off. */
 export const isShown = (section: { hidden?: true }) => section.hidden !== true;
+
+/** Pinned sections in schema order, then the rest in the saved order; unknown or repeated keys are dropped and new sections join the end. */
+export function sectionOrder(key: SitePageKey, saved?: unknown): string[] {
+  const sections = Object.entries(SITE_SCHEMA[key].sections as Record<string, SectionSchema>);
+  const pinned = sections.filter(([, section]) => section.pinned).map(([name]) => name);
+  const movable = sections.filter(([, section]) => !section.pinned).map(([name]) => name);
+  const kept = [...new Set(Array.isArray(saved) ? saved.filter((name): name is string => typeof name === "string" && movable.includes(name)) : [])];
+  return [...pinned, ...kept, ...movable.filter((name) => !kept.includes(name))];
+}
+
+/** What `_order` stores: the movable sections only. */
+export const movableOrder = (key: SitePageKey, saved?: unknown) => sectionOrder(key, saved).filter((name) => !(SITE_SCHEMA[key].sections as Record<string, SectionSchema>)[name].pinned);
 
 export type SiteContentMeta = Partial<Record<SitePageKey, { at: string; by: string }>>;

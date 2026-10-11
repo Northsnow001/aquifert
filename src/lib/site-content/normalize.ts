@@ -1,12 +1,12 @@
 import { DEFAULT_SITE_CONTENT } from "@/lib/site-content/defaults";
-import { SITE_PAGE_KEYS, SITE_SCHEMA, type Field, type LeafField, type SiteContent, type SitePageKey } from "@/lib/site-content/schema";
+import { SITE_PAGE_KEYS, SITE_SCHEMA, movableOrder, type Field, type LeafField, type PageSchema, type SiteContent, type SitePageKey } from "@/lib/site-content/schema";
 
 export const SITE_ICON_NAMES = [
   "radio", "ship", "line-chart", "file-stack", "route", "bot", "calculator", "book-open", "compass", "wallet",
   "shield-check", "globe", "handshake", "leaf", "landmark", "refresh", "factory", "shopping-cart", "sprout", "wheat",
   "rocket", "check", "star", "zap", "truck", "package", "anchor", "bar-chart", "users", "lock",
   "clock", "target", "lightbulb", "award", "briefcase", "map", "search", "flask", "droplets", "sun",
-  "mail", "phone", "message", "trending-up", "layers", "sparkles",
+  "mail", "phone", "message", "trending-up", "layers", "sparkles", "clipboard-check", "phone-call", "badge-check", "bell",
 ] as const;
 export type SiteIconName = (typeof SITE_ICON_NAMES)[number];
 
@@ -63,7 +63,7 @@ function fieldValue(field: Field, raw: unknown, fallback: unknown): unknown {
 export function normalizePage<K extends SitePageKey>(key: K, raw: unknown): SiteContent[K] {
   const page = SITE_SCHEMA[key];
   const stored = isRecord(raw) ? raw : {};
-  const defaults = DEFAULT_SITE_CONTENT[key] as Record<string, Record<string, unknown>>;
+  const defaults = DEFAULT_SITE_CONTENT[key] as unknown as Record<string, Record<string, unknown>>;
   const out: Record<string, Record<string, unknown>> = {};
   for (const [sectionKey, section] of Object.entries(page.sections)) {
     const rawSection = isRecord(stored[sectionKey]) ? (stored[sectionKey] as Record<string, unknown>) : {};
@@ -71,7 +71,8 @@ export function normalizePage<K extends SitePageKey>(key: K, raw: unknown): Site
     out[sectionKey] = Object.fromEntries(Object.entries(fields).map(([fieldKey, field]) => [fieldKey, fieldValue(field, rawSection[fieldKey], defaults[sectionKey][fieldKey])]));
     if (isHidden(section, rawSection)) out[sectionKey].hidden = true;
   }
-  return out as SiteContent[K];
+  if ((page as PageSchema).reorderable) (out as Record<string, unknown>)._order = movableOrder(key, stored._order);
+  return out as unknown as SiteContent[K];
 }
 
 const isHidden = (section: { hideable: boolean }, raw: Record<string, unknown>) => section.hideable && raw.hidden === true;

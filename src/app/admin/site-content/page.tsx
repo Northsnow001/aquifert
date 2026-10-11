@@ -3,10 +3,15 @@ import { CircleAlert } from "lucide-react";
 import { SiteContentEditor } from "@/components/admin/site-content/editor";
 import { PageHeader } from "@/components/admin/ui";
 import { DEFAULT_SITE_CONTENT } from "@/lib/site-content/defaults";
-import { SITE_PAGE_KEYS, SITE_SCHEMA, type SiteContentMeta, type SitePageKey } from "@/lib/site-content/schema";
+import { SITE_PAGE_KEYS, SITE_SCHEMA, type PageSchema, type SiteContentMeta, type SitePageKey } from "@/lib/site-content/schema";
 import { getSiteContentForEdit } from "@/lib/site-content/store";
 
 export const dynamic = "force-dynamic";
+
+const AREAS = [
+  { key: "site", label: "Public website" },
+  { key: "hub", label: "Hub plan pages" },
+] as const;
 
 const stamp = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 
@@ -27,29 +32,34 @@ export default async function SiteContentPage({ searchParams }: { searchParams: 
   return (
     <div className="mx-auto max-w-[1440px]">
       <PageHeader
-        title="Website content"
-        description="Edit the wording, pictures, videos, links and menus on the public website, and hide or show any section. Each save shows on the live site straight away."
+        title="Website & hub pages"
+        description="Edit the wording, pictures, videos, links and menus on the public website and the hub's plan pages, hide or show any section, and reorder the sections on hub pages. Each save shows straight away."
       />
 
-      <nav className="mb-5 flex gap-1 overflow-x-auto border-b border-border" aria-label="Website pages">
-        {SITE_PAGE_KEYS.map((key) => {
-          const active = key === pageKey;
-          const saved = meta[key];
-          return (
-            <Link
-              key={key}
-              href={`?page=${key}`}
-              aria-current={active ? "page" : undefined}
-              title={SITE_SCHEMA[key].description}
-              className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-[13.5px] font-semibold no-underline transition ${
-                active ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
-              }`}
-            >
-              {SITE_SCHEMA[key].label}
-              {saved ? <span className="rounded-full bg-[#eaf5f0] px-1.5 py-px font-mono text-[10.5px] text-[#2f6f57]">{stamp(saved.at)}</span> : null}
-            </Link>
-          );
-        })}
+      <nav className="mb-5 flex gap-1 overflow-x-auto border-b border-border" aria-label="Pages">
+        {AREAS.map((area, areaIndex) => (
+          <div key={area.key} className={`flex shrink-0 items-end gap-1 ${areaIndex ? "ml-3 border-l border-border pl-3" : ""}`}>
+            <span className="mb-3 mr-1 shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-dim">{area.label}</span>
+            {SITE_PAGE_KEYS.filter((key) => (SITE_SCHEMA[key] as PageSchema).area === area.key || (area.key === "site" && !(SITE_SCHEMA[key] as PageSchema).area)).map((key) => {
+              const active = key === pageKey;
+              const saved = meta[key];
+              return (
+                <Link
+                  key={key}
+                  href={`?page=${key}`}
+                  aria-current={active ? "page" : undefined}
+                  title={SITE_SCHEMA[key].description}
+                  className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3.5 py-2.5 text-[13.5px] font-semibold no-underline transition ${
+                    active ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
+                  }`}
+                >
+                  {SITE_SCHEMA[key].label}
+                  {saved ? <span className="rounded-full bg-[#eaf5f0] px-1.5 py-px font-mono text-[10.5px] text-[#2f6f57]">{stamp(saved.at)}</span> : null}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <p className="mb-4 text-[13px] text-mid">

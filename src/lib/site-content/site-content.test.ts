@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_SITE_CONTENT } from "./defaults";
 import { fillYear, isValidLink, isValidMedia, normalizePage, normalizeSiteContent, pickAnswer, splitLines, validatePage } from "./normalize";
-import { SITE_PAGE_KEYS, SITE_SCHEMA, isShown, type Field } from "./schema";
+import { SITE_PAGE_KEYS, SITE_SCHEMA, isShown, sectionOrder, type Field } from "./schema";
 
 test("the launch wording passes validation on every page", () => {
   for (const key of SITE_PAGE_KEYS) assert.deepEqual(validatePage(key, DEFAULT_SITE_CONTENT[key]), [], key);
@@ -10,7 +10,7 @@ test("the launch wording passes validation on every page", () => {
 
 test("defaults hold exactly the fields the schema defines", () => {
   for (const key of SITE_PAGE_KEYS) {
-    const page = DEFAULT_SITE_CONTENT[key] as Record<string, Record<string, unknown>>;
+    const page = DEFAULT_SITE_CONTENT[key] as unknown as Record<string, Record<string, unknown>>;
     for (const [sectionKey, section] of Object.entries(SITE_SCHEMA[key].sections)) {
       const fields = section.fields as Record<string, Field>;
       assert.deepEqual(Object.keys(page[sectionKey]).sort(), Object.keys(fields).sort(), `${key}.${sectionKey}`);
@@ -136,6 +136,32 @@ test("saves from when inner pages had their own header keep only the shared head
   assert.deepEqual(saved.header.menu, [{ label: "AQ Suite", link: "/platform" }]);
   assert.ok(!("tagline" in saved.footer));
   assert.equal(validatePage("global", older).length, 0);
+});
+
+test("hub plan pages keep a section order: the hero stays first, junk is dropped and new sections join the end", () => {
+  assert.deepEqual(sectionOrder("aqZero"), ["hero", "notice", "programmes", "compare", "steps", "crossSell", "closing"]);
+  const saved = normalizePage("aqZero", { _order: ["closing", "hero", "nope", "closing", "steps", 7] });
+  assert.deepEqual(saved._order, ["closing", "steps", "notice", "programmes", "compare", "crossSell"]);
+  assert.deepEqual(sectionOrder("aqZero", saved._order), ["hero", "closing", "steps", "notice", "programmes", "compare", "crossSell"]);
+  assert.deepEqual(normalizePage("aqAnalytics", { _order: "plan" })._order, ["plan", "crossSell", "closing"]);
+  assert.ok(!("_order" in normalizePage("home", { _order: ["faq"] })), "public pages keep their fixed layout");
+});
+
+test("the hub hero cannot be hidden, other hub sections can", () => {
+  const page = normalizePage("aqZero", {
+    hero: { ...DEFAULT_SITE_CONTENT.aqZero.hero, hidden: true },
+    notice: { ...DEFAULT_SITE_CONTENT.aqZero.notice, hidden: true },
+  });
+  assert.ok(isShown(page.hero));
+  assert.ok(!isShown(page.notice));
+});
+
+test("plan card defaults match the plans members can register for", () => {
+  const cards = DEFAULT_SITE_CONTENT.aqZero.programmes;
+  assert.equal(cards.sproutName, "AQ Zero Sprout");
+  assert.ok(splitLines(cards.harvestFeatures).includes("Invoice financing up to £50k"));
+  assert.equal(cards.scaleMissing, "");
+  assert.equal(DEFAULT_SITE_CONTENT.aqAnalytics.plan.telexName, "AQ TELEX");
 });
 
 test("link and media rules", () => {
