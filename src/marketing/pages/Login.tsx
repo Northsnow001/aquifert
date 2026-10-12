@@ -78,7 +78,7 @@ export default function Login() {
               name="company_website"
             />
             <label htmlFor="login-email" className="text-[13px] font-semibold text-navy-900">
-              Work email
+              Email
             </label>
             <input
               id="login-email"

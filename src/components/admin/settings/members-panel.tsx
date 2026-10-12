@@ -6,25 +6,35 @@ import Link from "next/link";
 import { CheckCircle2, ListChecks, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { saveMemberRules } from "@/app/admin/settings/actions";
-import { Panel, SaveBar, Switch, useEditorGuards } from "@/components/admin/aquibot/shared";
+import { Panel, SaveBar, useEditorGuards } from "@/components/admin/aquibot/shared";
 import { input, label, textarea } from "@/components/admin/ui";
-import { DISPOSABLE_DOMAINS, FREEMAIL_BRANDS, FREEMAIL_DOMAINS, checkSignupEmail, cleanEntries, type EmailVerdict } from "@/lib/desk-settings/email-rules";
+import {
+  DISPOSABLE_DOMAINS,
+  EMAIL_GROUP_LABEL,
+  EMAIL_TYPE_LABEL,
+  FREEMAIL_BRANDS,
+  ISP_DOMAINS,
+  WEBMAIL_DOMAINS,
+  checkSignupEmail,
+  classifyEmail,
+  cleanEntries,
+  type EmailVerdict,
+} from "@/lib/desk-settings/email-rules";
 import type { MemberRules } from "@/lib/desk-settings/types";
 
-type Draft = { requireWorkEmail: boolean; blocked: string; allowed: string };
+type Draft = { blocked: string; allowed: string };
 
-const toDraft = (rules: MemberRules): Draft => ({ requireWorkEmail: rules.requireWorkEmail, blocked: rules.blocked.join("\n"), allowed: rules.allowed.join("\n") });
+const toDraft = (rules: MemberRules): Draft => ({ blocked: rules.blocked.join("\n"), allowed: rules.allowed.join("\n") });
 const split = (text: string) => cleanEntries(text.split(/[\s,;]+/));
 
 const VERDICT: Record<string, string> = {
   allowed: "Can sign up. It is on your allow list, which overrides the other rules.",
-  work: "Can sign up. It is a company address.",
-  "freemail-permitted": "Can sign up. Personal addresses are allowed while the work-email rule is off.",
+  work: "Can sign up.",
+  personal: "Can sign up.",
   invalid: "That is not a complete email address.",
   banned: "Refused. This address is banned. They see the generic disposable-address message, so the ban is not revealed.",
   disposable: "Refused. Throwaway inbox providers are always blocked.",
   blocked: "Refused. It matches your blocked list.",
-  freemail: "Refused. Personal providers are blocked while the work-email rule is on.",
 };
 
 function DomainList({ title, domains, note }: { title: string; domains: readonly string[]; note: string }) {
@@ -54,10 +64,11 @@ export function MembersPanel({ initial, savedAt: initialSavedAt, banned }: { ini
   const [probe, setProbe] = useState("");
   const [saving, start] = useTransition();
   const dirty = JSON.stringify(draft) !== baseline;
-  const rules: MemberRules = { requireWorkEmail: draft.requireWorkEmail, blocked: split(draft.blocked), allowed: split(draft.allowed) };
+  const rules: MemberRules = { blocked: split(draft.blocked), allowed: split(draft.allowed) };
   const bannedSet = new Set(banned);
   const verdict: EmailVerdict | null = probe.trim() ? checkSignupEmail(probe, rules, (email) => bannedSet.has(email)) : null;
   const key = verdict ? (verdict.ok ? verdict.rule : verdict.reason) : null;
+  const kind = verdict && key !== "invalid" ? classifyEmail(probe) : null;
 
   const save = () =>
     start(async () => {
@@ -86,12 +97,14 @@ export function MembersPanel({ initial, savedAt: initialSavedAt, banned }: { ini
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-5">
           <Panel icon={<ShieldCheck className="h-4 w-4" />} title="Who can register" description="Checked as the email is typed on the sign-up form, before the verification code is sent, and again when a new account opens the hub.">
-            <Switch
-              checked={draft.requireWorkEmail}
-              onChange={(value) => setDraft((current) => ({ ...current, requireWorkEmail: value }))}
-              label="Require a work email"
-              description="Refuses Gmail, Outlook, Yahoo and other personal providers with a pop-up asking for a work email. Accounts that already existed keep their access. Throwaway inboxes are refused either way."
-            />
+            <p className="text-[13px] leading-relaxed text-mid">
+              Anyone with a real inbox can register, with a work address or a personal one such as Gmail or Yahoo. Throwaway inboxes, your blocked list and banned
+              addresses are refused. Each member is labelled Work email or Personal / public email on the{" "}
+              <Link href="/admin/members" className="font-semibold text-blue hover:underline">
+                Members
+              </Link>{" "}
+              page.
+            </p>
           </Panel>
 
           <Panel icon={<ListChecks className="h-4 w-4" />} title="Your lists" description="One domain or full address per line. A domain also covers its subdomains.">
@@ -120,15 +133,16 @@ export function MembersPanel({ initial, savedAt: initialSavedAt, banned }: { ini
                   className={`${textarea} mt-1.5 font-mono text-[12.5px]`}
                   value={draft.allowed}
                   onChange={(event) => setDraft((current) => ({ ...current, allowed: event.target.value }))}
-                  placeholder={"founder.personal@gmail.com\npartner-coop.org"}
+                  placeholder={"partner-coop.org\nsomeone@example.com"}
                 />
-                <p className="mt-1 text-[11.5px] text-dim">Lets a trusted person in with a personal address. Bans still apply.</p>
+                <p className="mt-1 text-[11.5px] text-dim">Overrides the throwaway and blocked lists for a trusted domain or person. Bans still apply.</p>
               </div>
             </div>
           </Panel>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <DomainList title="Personal providers" domains={FREEMAIL_DOMAINS} note={`Refused while the work-email rule is on, as are ${FREEMAIL_BRANDS.join(", ")} under any country ending.`} />
+          <div className="grid gap-3 md:grid-cols-3">
+            <DomainList title="Free webmail" domains={WEBMAIL_DOMAINS} note={`Labelled Personal / public email, as are ${FREEMAIL_BRANDS.join(", ")} under any country ending.`} />
+            <DomainList title="Internet providers" domains={ISP_DOMAINS} note="Home broadband and phone-company mailboxes, labelled Personal / public email." />
             <DomainList title="Throwaway inboxes" domains={DISPOSABLE_DOMAINS} note="Always refused, including their subdomains." />
           </div>
         </div>
@@ -145,6 +159,12 @@ export function MembersPanel({ initial, savedAt: initialSavedAt, banned }: { ini
                 {verdict.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" />}
                 {VERDICT[key]}
               </p>
+              {kind ? (
+                <p className="mt-2 text-[12px]">
+                  {EMAIL_TYPE_LABEL[kind.type]} · {EMAIL_GROUP_LABEL[kind.group]}
+                  {kind.type === "personal" && kind.group === "webmail" ? ` (${kind.source})` : ""}
+                </p>
+              ) : null}
               {!verdict.ok && verdict.reason !== "invalid" ? <p className="mt-2 text-[12px] opacity-90">They see: &ldquo;{verdict.message}&rdquo;</p> : null}
             </div>
           ) : null}

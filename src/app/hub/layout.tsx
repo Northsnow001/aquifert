@@ -5,7 +5,7 @@ import { I18nProvider } from "@/components/app/i18n";
 import { AppShell } from "@/components/hub/app-shell";
 import { MarketTicker, stanceOf, type TickerItem } from "@/components/hub/market-ticker";
 import { SuspendedNotice } from "@/components/hub/suspended-notice";
-import { WorkEmailNotice } from "@/components/hub/work-email-notice";
+import { AddressRefusedNotice } from "@/components/hub/address-refused-notice";
 import { isAdminUser } from "@/lib/admin-access";
 import { getAqModules } from "@/lib/aq-modules/store";
 import { publishedTelex } from "@/lib/aq-modules/telex";
@@ -21,10 +21,10 @@ export const metadata: Metadata = {
 };
 
 export default async function HubLayout({ children }: { children: React.ReactNode }) {
-  const { user, ban, workEmailRequired } = await getSessionAccess();
+  const { user, ban, addressRefused } = await getSessionAccess();
   if (!user) redirect("/login");
   if (ban) return <SuspendedNotice email={user.email} />;
-  if (workEmailRequired) return <WorkEmailNotice email={user.email} />;
+  if (addressRefused) return <AddressRefusedNotice email={user.email} />;
   const admin = isAdminUser(user);
   const [modules, content] = await Promise.all([getAqModules(), getHubContent()]);
   const unlocked = unlockedModules(modules.access, { plan: user.plan, admin });

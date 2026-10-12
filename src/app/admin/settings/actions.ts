@@ -53,10 +53,9 @@ export async function saveFormEmails(kind: TemplateKind, input: FormEmails & { s
   return { ok: true, savedAt: saved.updatedAt! };
 }
 
-export async function saveMemberRules(input: { requireWorkEmail: boolean; blocked: string; allowed: string }): Promise<Result<{ rules: MemberRules; savedAt: string }>> {
+export async function saveMemberRules(input: { blocked: string; allowed: string }): Promise<Result<{ rules: MemberRules; savedAt: string }>> {
   await requireAdmin();
   const rules: MemberRules = {
-    requireWorkEmail: Boolean(input.requireWorkEmail),
     blocked: cleanEntries(clip(input.blocked, 20_000).split(/[\s,;]+/)),
     allowed: cleanEntries(clip(input.allowed, 20_000).split(/[\s,;]+/)),
   };

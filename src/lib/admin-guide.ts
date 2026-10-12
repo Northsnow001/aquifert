@@ -15,6 +15,7 @@ export type GuideIcon =
   | "inbox"
   | "zero"
   | "aquibot"
+  | "members"
   | "banned"
   | "settings"
   | "import";
@@ -545,6 +546,26 @@ export const GUIDE: GuideSection[] = [
     ],
   },
   {
+    id: "members",
+    group: "Members",
+    title: "All members",
+    icon: "members",
+    href: "/admin/members",
+    summary: "Everyone with an account, sorted by email type: work email (company, education, government) or personal / public email (Gmail, Yahoo, internet providers).",
+    tasks: [
+      {
+        title: "See who is on the platform",
+        steps: [
+          "The two cards at the top count work and personal members, their share, and how many joined this month. Click a card to show only that group.",
+          "The chips under each card narrow it further, for example Education or Free webmail.",
+          "Search by name, email, company, country or provider. Companies lists the work domains with the most members; Personal providers lists where personal addresses come from. Click an entry to filter by it.",
+          "A personal-address member whose company already has colleagues on a work domain is marked Colleagues sign in with @domain, so you can follow up.",
+          "CSV downloads the members in the current view, with their email type.",
+        ],
+      },
+    ],
+  },
+  {
     id: "banned",
     group: "Members",
     title: "Banned users",
@@ -593,10 +614,9 @@ export const GUIDE: GuideSection[] = [
       {
         title: "Sign-up rules",
         steps: [
-          "Require a work email to refuse free mail providers such as Gmail and Outlook. Disposable addresses are always refused.",
-          "A personal address gets a Work email required pop-up as soon as the person leaves the email field on the sign-up form.",
-          "Accounts created on a personal address after 11 October 2026 cannot open the hub, even if the form was bypassed. Accounts from before then keep their access.",
-          "Always refuse blocks named domains or addresses. Always accept lets a named address through the work email rule, and also lets that account into the hub.",
+          "Anyone with a real inbox can register, with a work address or a personal one such as Gmail or Yahoo. Throwaway inboxes are always refused.",
+          "Always refuse blocks named domains or addresses. Always accept lets a named domain or address through the throwaway and blocked lists. Bans still apply.",
+          "A new account on a refused address cannot open the hub, even if the sign-up form was bypassed.",
           "Check an address shows the verdict and the exact message the person would see, using your unsaved rules.",
         ],
       },

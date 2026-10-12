@@ -102,6 +102,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
     {
       title: "Members",
       items: [
+        { href: "/admin/members", label: "All members", icon: "members" },
         { href: "/admin/banned", label: "Banned users", icon: "banned", badge: bans },
         { href: "/admin/settings", label: "Settings", icon: "settings" },
       ],

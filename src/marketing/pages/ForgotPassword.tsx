@@ -24,7 +24,7 @@ export default function ForgotPassword() {
       return;
     }
     if (!email.trim()) {
-      setError("Enter your work email.");
+      setError("Enter your email address.");
       return;
     }
     setPending(true);
@@ -67,10 +67,10 @@ export default function ForgotPassword() {
         ) : (
           <form className="mt-1.5" onSubmit={sendReset}>
             <p className="text-sm text-slate-600">
-              Enter your work email. We&rsquo;ll send a secure link to choose a new password.
+              Enter the email you signed up with. We&rsquo;ll send a secure link to choose a new password.
             </p>
             <label htmlFor="fp-email" className="mt-6 block text-[13px] font-semibold text-navy-900">
-              Work email
+              Email
             </label>
             <input
               id="fp-email"

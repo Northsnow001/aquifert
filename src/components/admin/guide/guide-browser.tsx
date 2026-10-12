@@ -24,6 +24,7 @@ import {
   ShieldBan,
   Ship,
   Table2,
+  Users,
   X,
   Zap,
 } from "lucide-react";
@@ -47,6 +48,7 @@ const ICONS: Record<GuideIcon, typeof Radio> = {
   inbox: Inbox,
   zero: Zap,
   aquibot: Bot,
+  members: Users,
   banned: ShieldBan,
   settings: Settings,
   import: Import,

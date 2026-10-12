@@ -83,7 +83,7 @@ export default function SessionExpired() {
             ) : (
               <>
                 <label htmlFor="reauth-email" className="text-[13px] font-semibold text-navy-900">
-                  Work email
+                  Email
                 </label>
                 <input
                   id="reauth-email"

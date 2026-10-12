@@ -70,7 +70,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     },
     {
       label: "Sign-up",
-      value: members.requireWorkEmail ? "Work email only" : "Any address",
+      value: "Any real address",
       meta: `${members.blocked.length} blocked · ${members.allowed.length} allowed · ${bans.length} banned`,
       href: "?tab=members",
       tone: "text-ink",

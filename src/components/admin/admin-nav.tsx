@@ -29,12 +29,14 @@ import {
   Ship,
   Table2,
   UserPlus,
+  Users,
   Zap,
 } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 
 export const ADMIN_ICONS = {
   zero: Zap,
+  members: Users,
   banned: ShieldBan,
   settings: Settings,
   guide: CircleHelp,

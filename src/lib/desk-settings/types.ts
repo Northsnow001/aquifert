@@ -12,10 +12,9 @@ export type FormEmails = {
 export type ZeroEmails = FormEmails & { showOnHub: boolean };
 
 export type MemberRules = {
-  requireWorkEmail: boolean;
   /** Extra domains or full addresses refused at sign-up. */
   blocked: string[];
-  /** Domains or full addresses that pass even when they are on a freemail or blocked list. */
+  /** Domains or full addresses that pass even when they are on the throwaway or blocked list. */
   allowed: string[];
 };
 
@@ -91,7 +90,7 @@ export const DEFAULT_DESK_SETTINGS: DeskSettings = {
       body: "# New Aquifert Zero registration\n\n{request}\n{user_name} ({user_email}) · {user_company}\n\n[form-details]",
     },
   },
-  members: { requireWorkEmail: true, blocked: [], allowed: [] },
+  members: { blocked: [], allowed: [] },
   delivery: { fromName: "Aquifert", replyTo: "noreply@aquifert.com" },
   updatedAt: null,
 };

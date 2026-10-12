@@ -44,7 +44,7 @@ function normalize(raw: unknown): DeskSettings {
   return {
     orderDesk: form(value.orderDesk, base.orderDesk, RETIRED_TEMPLATES.order),
     zero: { ...form(zero, base.zero, RETIRED_TEMPLATES.zero), showOnHub: flag(zero.showOnHub, base.zero.showOnHub) },
-    members: { requireWorkEmail: flag(members.requireWorkEmail, base.members.requireWorkEmail), blocked: list(members.blocked), allowed: list(members.allowed) },
+    members: { blocked: list(members.blocked), allowed: list(members.allowed) },
     delivery: { fromName: text(delivery.fromName, base.delivery.fromName), replyTo: address(delivery.replyTo, base.delivery.replyTo) },
     updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null,
   };
