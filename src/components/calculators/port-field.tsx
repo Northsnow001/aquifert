@@ -8,8 +8,8 @@ import { searchPorts, type PortRecord } from "@/lib/ports";
 
 const LABEL_CLASS = "mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid";
 const COUNTRY_CLASS =
-  "flex w-full items-center gap-2.5 rounded-lg border border-border bg-white px-3 py-2.5 text-start text-sm text-ink outline-none transition hover:border-[#cdd7e1] focus-visible:border-blue";
-const INPUT_CLASS = "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-blue";
+  "flex w-full items-center gap-2.5 rounded-lg border border-border bg-white px-3 py-2.5 text-start text-base text-ink outline-none transition hover:border-[#cdd7e1] focus-visible:border-blue sm:text-sm";
+const INPUT_CLASS = "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-base text-ink outline-none focus:border-blue sm:text-sm";
 
 const portLabel = (port: PortRecord) => `${port.name} (${port.code})`;
 
@@ -117,7 +117,7 @@ export function PortField({
             <button
               key={port.code}
               type="button"
-              className={`flex w-full items-center gap-2 border-b border-s3 px-2.5 py-2 text-left text-xs text-ink last:border-b-0 hover:bg-s2 ${value?.code === port.code ? "bg-blue-light" : ""}`}
+              className={`flex w-full items-center gap-2 border-b border-s3 px-2.5 py-2.5 text-left text-[13px] text-ink last:border-b-0 hover:bg-s2 sm:py-2 sm:text-xs ${value?.code === port.code ? "bg-blue-light" : ""}`}
               onMouseDown={() => {
                 onSelect(port);
                 setCountry(port.country);
@@ -126,8 +126,8 @@ export function PortField({
               }}
             >
               <FlagMark country={port.country} className="h-3.5 w-5 shrink-0" />
-              <span className="font-medium">{port.name}</span>
-              <span className="ml-auto whitespace-nowrap font-mono text-[10px] text-dim">
+              <span className="min-w-0 truncate font-medium">{port.name}</span>
+              <span className="ml-auto shrink-0 whitespace-nowrap font-mono text-[10px] text-dim">
                 {port.code} · {port.country}
               </span>
             </button>

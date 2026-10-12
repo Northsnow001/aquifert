@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink, PenLine } from "lucide-react";
 import { DeleteEntry } from "@/components/admin/aq-content/shared";
+import { CopyShareLink } from "@/components/admin/share-link";
 import { Card, EmptyState, PageHeader, Pill, StatusBadge, btnGhost, btnPrimary } from "@/components/admin/ui";
 import { getAqModules } from "@/lib/aq-modules/store";
 import { formatStamp } from "@/lib/content-types";
@@ -76,9 +77,12 @@ export default async function AnalysisAdminPage() {
                     <td className="py-3 pr-3">
                       <div className="flex justify-end gap-0.5 opacity-70 transition group-hover:opacity-100">
                         {note.status === "published" ? (
-                          <Link href={`/hub/analysis/${note.slug}`} className={btnGhost} title="View on hub">
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Link>
+                          <>
+                            <Link href={`/hub/analysis/${note.slug}`} className={btnGhost} title="View on hub">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                            <CopyShareLink kind="aq-view" shareKey={note.slug} className={btnGhost} />
+                          </>
                         ) : null}
                         <Link href={`/admin/analysis/${note.id}`} className={btnGhost} title="Edit">
                           <PenLine className="h-3.5 w-3.5" />

@@ -11,6 +11,9 @@ import { findPort, type PortRecord } from "@/lib/ports";
 
 type Success = Extract<QuoteResponse, { ok: true }>;
 
+/** 16px on phones so iOS does not zoom the page when a field is focused. */
+const FIELD = "w-full min-w-0 rounded-lg border border-border bg-white px-3 py-2.5 text-base sm:text-sm";
+
 const usd0 = (value: number) =>
   value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usd2 = (value: number) =>
@@ -47,9 +50,9 @@ function usageLine(usage: Usage) {
 
 function Row({ label, value, strong = false, accent = false }: { label: string; value: string; strong?: boolean; accent?: boolean }) {
   return (
-    <div className={`flex items-baseline justify-between gap-4 py-1.5 text-[13px] ${strong ? "mt-1 border-t border-border pt-2 font-semibold" : ""} ${accent ? "text-[#c2410c]" : ""}`}>
-      <span className="text-mid">{label}</span>
-      <span className="font-mono text-ink">{value}</span>
+    <div className={`flex items-baseline justify-between gap-3 py-1.5 text-[13px] ${strong ? "mt-1 border-t border-border pt-2 font-semibold" : ""} ${accent ? "text-[#c2410c]" : ""}`}>
+      <span className="shrink-0 text-mid">{label}</span>
+      <span className="min-w-0 text-right font-mono text-ink">{value}</span>
     </div>
   );
 }
@@ -154,23 +157,23 @@ export function FreightCalculator({
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-[28px] font-semibold tracking-tight text-ink">Freight Calculator — Dry Bulk Voyage Estimate</h1>
-        <p className="text-sm text-mid">Freight Rate · Route & Voyage Days · Cost Breakdown · Benchmark Check</p>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-ink sm:text-[28px]">Freight Calculator — Dry Bulk Voyage Estimate</h1>
+        <p className="mt-1 text-sm text-mid">Freight Rate · Route & Voyage Days · Cost Breakdown · Benchmark Check</p>
       </div>
 
-      <div className={`rounded-xl border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.12em] ${limitReached ? "border-[#f3c9c5] bg-[#fdf2f1] text-[#b42318]" : "border-border bg-surface text-mid"}`}>
+      <div className={`break-words rounded-xl border px-3 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] sm:px-4 sm:text-[11px] sm:tracking-[0.12em] ${limitReached ? "border-[#f3c9c5] bg-[#fdf2f1] text-[#b42318]" : "border-border bg-surface text-mid"}`}>
         {usageLine(usage)}
       </div>
 
       {bunkers.length ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface p-1.5 pl-4" aria-label="VLSFO bunker prices">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">VLSFO bunker</span>
+        <div className="flex items-center gap-2 overflow-x-auto rounded-xl border border-border bg-surface p-1.5 pl-3 sm:flex-wrap sm:pl-4" aria-label="VLSFO bunker prices">
+          <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">VLSFO bunker</span>
           {bunkers.map((hub) => (
             <button
               key={hub.city}
               type="button"
               onClick={() => setBunkerPrice(hub.price)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${bunkerPrice === hub.price ? "border-[#b7e0c8] bg-[#e8f7ee] text-[#178a4c]" : "border-border text-mid"}`}
+              className={`shrink-0 whitespace-nowrap rounded-lg border px-3 py-2 text-xs font-medium sm:py-1.5 ${bunkerPrice === hub.price ? "border-[#b7e0c8] bg-[#e8f7ee] text-[#178a4c]" : "border-border text-mid"}`}
             >
               {hub.city} <span className="font-mono">${num(hub.price)}</span>
             </button>
@@ -178,9 +181,9 @@ export function FreightCalculator({
         </div>
       ) : null}
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
+      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
         <form
-          className="rounded-xl border border-border bg-surface p-4"
+          className="min-w-0 rounded-xl border border-border bg-surface p-3.5 sm:p-4"
           onSubmit={(event) => {
             event.preventDefault();
             calculate();
@@ -196,7 +199,7 @@ export function FreightCalculator({
           <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-mid">— Cargo parameters</p>
           <label className="mb-3 block">
             <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Cargo type</span>
-            <select value={cargoType} onChange={(event) => setCargoType(event.target.value)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm">
+            <select value={cargoType} onChange={(event) => setCargoType(event.target.value)} className={FIELD}>
               {cargoTypes.map((label) => (
                 <option key={label} value={label}>
                   {label} (+${cargoPremiums[label]}/MT)
@@ -207,11 +210,11 @@ export function FreightCalculator({
           <div className="grid grid-cols-2 gap-3">
             <label>
               <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Cargo (MT)</span>
-              <input type="number" value={cargoMt} min={1000} onChange={(event) => setCargoMt(Number(event.target.value))} className="w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
+              <input type="number" value={cargoMt} min={1000} onChange={(event) => setCargoMt(Number(event.target.value))} className={FIELD} />
             </label>
             <label>
               <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Market</span>
-              <select value={market} onChange={(event) => setMarket(event.target.value as Market)} className="w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm">
+              <select value={market} onChange={(event) => setMarket(event.target.value as Market)} className={FIELD}>
                 <option value="normal">Normal</option>
                 <option value="tight">Tight (+10%)</option>
                 <option value="oversupplied">Oversupplied (-10%)</option>
@@ -223,19 +226,19 @@ export function FreightCalculator({
           <div className="grid grid-cols-2 gap-3">
             <label>
               <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Load port ($)</span>
-              <input type="number" value={loadPortCost} onChange={(event) => setLoadPortCost(Number(event.target.value))} className="w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
+              <input type="number" value={loadPortCost} onChange={(event) => setLoadPortCost(Number(event.target.value))} className={FIELD} />
             </label>
             <label>
               <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Discharge port ($)</span>
-              <input type="number" value={dischargePortCost} onChange={(event) => setDischargePortCost(Number(event.target.value))} className="w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
+              <input type="number" value={dischargePortCost} onChange={(event) => setDischargePortCost(Number(event.target.value))} className={FIELD} />
             </label>
             <label>
               <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Agency ($)</span>
-              <input type="number" value={agencyCost} onChange={(event) => setAgencyCost(Number(event.target.value))} className="w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
+              <input type="number" value={agencyCost} onChange={(event) => setAgencyCost(Number(event.target.value))} className={FIELD} />
             </label>
             <label>
               <span className="mb-1.5 block font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-mid">Extra port days</span>
-              <input type="number" step="0.5" value={extraPortDays} onChange={(event) => setExtraPortDays(Number(event.target.value))} className="w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
+              <input type="number" step="0.5" value={extraPortDays} onChange={(event) => setExtraPortDays(Number(event.target.value))} className={FIELD} />
             </label>
           </div>
           <div className="mt-4 flex gap-2">
@@ -259,7 +262,7 @@ export function FreightCalculator({
         </form>
 
         {!result ? (
-          <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-8 py-10 text-center lg:min-h-[520px]">
+          <div className="flex min-h-[180px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/70 px-5 py-8 text-center sm:px-8 sm:py-10 lg:min-h-[520px]">
             <Ship className="mb-3 h-8 w-8 text-dim" />
             <p className="max-w-sm text-sm leading-relaxed text-mid">
               {shared && load && discharge
@@ -268,7 +271,7 @@ export function FreightCalculator({
             </p>
           </div>
         ) : (
-          <div className={`space-y-4 transition-opacity ${pending ? "opacity-60" : ""}`}>
+          <div className={`min-w-0 space-y-4 transition-opacity ${pending ? "opacity-60" : ""}`}>
             {stale ? (
               <button
                 type="button"
@@ -283,11 +286,11 @@ export function FreightCalculator({
               </button>
             ) : null}
 
-            <div className="rounded-xl border border-border bg-surface px-6 py-5">
+            <div className="rounded-xl border border-border bg-surface px-4 py-4 sm:px-6 sm:py-5">
               <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">Estimated freight rate</p>
-              <div className="mt-1 flex items-end gap-3">
-                <p className="font-mono text-5xl font-semibold tracking-tight text-blue">{usd2(result.quotedRate)}</p>
-                <p className="mb-1.5 text-sm font-semibold uppercase tracking-wide text-mid">USD / MT</p>
+              <div className="mt-1 flex flex-wrap items-end gap-x-3">
+                <p className="font-mono text-4xl font-semibold tracking-tight text-blue sm:text-5xl">{usd2(result.quotedRate)}</p>
+                <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-mid sm:mb-1.5">USD / MT</p>
               </div>
               <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-mid">
                 <p>Gross Revenue: <span className="font-mono text-ink">{usd0(result.grossRevenue)}</span></p>
@@ -295,23 +298,23 @@ export function FreightCalculator({
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-surface px-5 py-4">
-              <div className="flex flex-wrap items-center gap-4">
+            <div className="rounded-xl border border-border bg-surface px-4 py-4 sm:px-5">
+              <div className="grid grid-cols-2 items-center gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-4">
                 <div>
-                  <p className="font-mono text-2xl font-semibold text-ink">{num(result.route.nauticalMiles)} nm</p>
+                  <p className="font-mono text-xl font-semibold text-ink sm:text-2xl">{num(result.route.nauticalMiles)} nm</p>
                   <p className="font-mono text-[10px] uppercase tracking-wider text-mid">Nautical miles</p>
                 </div>
-                <div className="h-8 w-px bg-border" />
+                <div className="hidden h-8 w-px bg-border sm:block" />
                 <div>
-                  <p className="font-mono text-2xl font-semibold text-ink">{num(result.totalDays, 1)} days</p>
+                  <p className="font-mono text-xl font-semibold text-ink sm:text-2xl">{num(result.totalDays, 1)} days</p>
                   <p className="font-mono text-[10px] uppercase tracking-wider text-mid">Total days</p>
                 </div>
-                <div className="h-8 w-px bg-border" />
+                <div className="hidden h-8 w-px bg-border sm:block" />
                 <div>
                   <p className="text-lg font-semibold text-ink">{result.vesselLabel}</p>
                   <p className="font-mono text-[10px] uppercase tracking-wider text-mid">BDI {num(quote?.bdi ?? bdi)}</p>
                 </div>
-                <span className="ml-auto rounded-full border border-[#b7e0c8] bg-[#e8f7ee] px-3 py-1 text-xs font-semibold text-[#178a4c]">
+                <span className="justify-self-start rounded-full border border-[#b7e0c8] bg-[#e8f7ee] px-3 py-1 text-xs font-semibold text-[#178a4c] sm:ml-auto">
                   {routeBadge(result.route.canal)}
                 </span>
               </div>
@@ -372,24 +375,24 @@ export function FreightCalculator({
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-surface px-5 py-4">
+            <div className="rounded-xl border border-border bg-surface px-4 py-4 sm:px-5">
               <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">Market benchmark (verified rates)</p>
               {band ? (
                 <dl className="mt-3 divide-y divide-border text-[13px]">
-                  <div className="flex justify-between py-2"><dt className="text-mid">Match tier</dt><dd>{band.label ?? TIER_LABEL[band.matchType] ?? band.matchType}</dd></div>
-                  <div className="flex justify-between py-2"><dt className="text-mid">Window / sample</dt><dd>{band.windowDays} days · {band.sampleSize} matching {band.sampleSize === 1 ? "fixture" : "fixtures"}</dd></div>
-                  <div className="flex justify-between py-2"><dt className="text-mid">Cargo match</dt><dd>{band.cargoMatchMode.replace(/_/g, " ")}</dd></div>
-                  <div className="flex justify-between py-2"><dt className="text-mid">Benchmark band</dt><dd>{usd2(band.rateMin)}–{usd2(band.rateMax)}/MT</dd></div>
-                  <div className="flex justify-between py-2"><dt className="text-mid">Median midpoint</dt><dd>{usd2(band.rateMedian)}/MT</dd></div>
-                  <div className="flex justify-between py-2"><dt className="text-mid">Algorithm rate</dt><dd className="font-mono text-blue">{usd2(result.algorithmRate)}/MT</dd></div>
-                  <div className="flex justify-between py-2"><dt className="text-mid">Displayed final rate</dt><dd className="font-mono font-semibold text-blue">{usd2(result.quotedRate)}/MT</dd></div>
-                  <div className="flex justify-between py-2">
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Match tier</dt><dd className="text-right">{band.label ?? TIER_LABEL[band.matchType] ?? band.matchType}</dd></div>
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Window / sample</dt><dd className="text-right">{band.windowDays} days · {band.sampleSize} matching {band.sampleSize === 1 ? "fixture" : "fixtures"}</dd></div>
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Cargo match</dt><dd className="text-right">{band.cargoMatchMode.replace(/_/g, " ")}</dd></div>
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Benchmark band</dt><dd className="text-right">{usd2(band.rateMin)}–{usd2(band.rateMax)}/MT</dd></div>
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Median midpoint</dt><dd className="text-right">{usd2(band.rateMedian)}/MT</dd></div>
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Algorithm rate</dt><dd className="font-mono text-blue">{usd2(result.algorithmRate)}/MT</dd></div>
+                  <div className="flex justify-between gap-3 py-2"><dt className="text-mid">Displayed final rate</dt><dd className="font-mono font-semibold text-blue">{usd2(result.quotedRate)}/MT</dd></div>
+                  <div className="flex justify-between gap-3 py-2">
                     <dt className="text-mid">Verification</dt>
                     <dd className={result.inRange ? "text-[#178a4c]" : "text-danger"}>{result.inRange ? "In range" : "Outside band"}</dd>
                   </div>
-                  <div className="flex justify-between gap-6 py-2">
-                    <dt className="text-mid">Explanation</dt>
-                    <dd className="max-w-md text-right text-ink">
+                  <div className="flex flex-col gap-1 py-2 sm:flex-row sm:justify-between sm:gap-6">
+                    <dt className="shrink-0 text-mid">Explanation</dt>
+                    <dd className="max-w-md text-ink sm:text-right">
                       {result.inRange
                         ? "The calculated rate sits inside the verified fixture band."
                         : `The calculated rate sits outside the band, so the displayed rate blends in the fixture midpoint at ${Math.round(result.fixtureWeight * 100)}% weight.`}
@@ -403,7 +406,7 @@ export function FreightCalculator({
               )}
             </div>
 
-            <div className="rounded-xl border border-border bg-surface px-5 py-4">
+            <div className="rounded-xl border border-border bg-surface px-4 py-4 sm:px-5">
               <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">AI market assessment</p>
               <p className="mt-3 text-sm leading-relaxed text-ink">
                 This panel is advisory on the live hub and does not replace the headline rate. The Gemini assessment is not connected in this build, so no suggested adjustment is applied.

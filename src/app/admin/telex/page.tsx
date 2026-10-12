@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Copy, Eye, PenLine, Search, Trash2 } from "l
 import { bulkTelex, deleteTelex, duplicateTelex } from "@/app/admin/actions";
 import { MissingTableNotice } from "@/components/admin/aq-data/table-notice";
 import { BulkApply, BulkBar, ConfirmSubmit, FilterSelect, SelectAll } from "@/components/admin/form-controls";
+import { CopyShareLink } from "@/components/admin/share-link";
 import { Card, EmptyState, Flash, PageHeader, Pill, StatusBadge, btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
 import { TELEX_ACCESS, excerpt, formatStamp, telexHeadline, type PublishStatus } from "@/lib/content-types";
 import { getHubContent, sortTelex } from "@/lib/hub-content";
@@ -262,6 +263,7 @@ export default async function TelexAdminPage({ searchParams }: { searchParams: P
                           <Link href={`/admin/telex/${item.id}`} className={btnGhost} title="Edit">
                             <PenLine className="h-3.5 w-3.5" />
                           </Link>
+                          {item.status === "published" ? <CopyShareLink kind="telex" shareKey={item.id} className={btnGhost} /> : null}
                           <button type="submit" form={`dup-${item.id}`} className={btnGhost} title="Duplicate as draft">
                             <Copy className="h-3.5 w-3.5" />
                           </button>

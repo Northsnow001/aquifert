@@ -324,20 +324,20 @@ export function AppShell({
       </a>
       <div className="flex h-full min-w-0 flex-col overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)] xl:flex-1">
         <div className="aq-masthead relative z-30 shrink-0">
-          <header className={`flex h-14 items-center gap-2 border-b border-white/10 px-3 sm:px-5 lg:h-[72px] ${NAVY}`}>
+          <header className={`flex h-14 items-center gap-1 border-b border-white/10 px-2 sm:gap-2 sm:px-5 lg:h-[72px] ${NAVY}`}>
             <button
               type="button"
               onClick={() => setDrawer(true)}
               aria-label={t("top.menu")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-white transition hover:bg-white/10 lg:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/10 lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link href="/hub" aria-label="Aquifert home" className="shrink-0 no-underline transition-opacity hover:opacity-85">
-              <Image src="/brand/logo-v2-light.png" alt="Aquifert" width={814} height={214} className="h-7 w-auto lg:h-10" priority />
+            <Link href="/hub" aria-label="Aquifert home" className="min-w-0 shrink no-underline transition-opacity hover:opacity-85">
+              <Image src="/brand/logo-v2-light.png" alt="Aquifert" width={814} height={214} className="h-6 w-auto max-w-full min-[380px]:h-7 lg:h-10" priority />
             </Link>
 
-            <div className="ms-auto flex items-center gap-1 sm:gap-2">
+            <div className="ms-auto flex shrink-0 items-center gap-0.5 sm:gap-2">
               <button
                 type="button"
                 onClick={openPalette}
@@ -349,7 +349,7 @@ export function AppShell({
                 <span className="flex-1 truncate text-start">{t("top.search")}</span>
                 <kbd className="rounded border border-white/15 px-1 font-mono text-[10.5px] font-semibold text-white/50">Ctrl K</kbd>
               </button>
-              <button type="button" onClick={openPalette} aria-label="Search" data-tour="search" className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden">
+              <button type="button" onClick={openPalette} aria-label="Search" data-tour="search" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white hover:bg-white/10 md:hidden">
                 <Search className="h-[18px] w-[18px]" />
               </button>
               <button

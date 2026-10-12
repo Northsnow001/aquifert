@@ -16,6 +16,7 @@ import {
   readSignupPending,
 } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
+import { safeReturnPath } from "@/lib/idle-timeout";
 
 const errCls = "mt-1 text-[12px] text-red-700";
 
@@ -109,7 +110,7 @@ export default function SetPassword() {
       }
 
       clearSignupPending();
-      window.location.assign("/hub");
+      window.location.assign(safeReturnPath(pending?.next) ?? "/hub");
     } catch (err) {
       setErrors({
         form: err instanceof Error ? err.message : "Could not save your password.",

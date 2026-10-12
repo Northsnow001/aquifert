@@ -9,16 +9,13 @@ import { Markdown } from "@/components/hub/markdown";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getAqModules, publishedAnalysis } from "@/lib/aq-modules/store";
 import { publishedTelex } from "@/lib/aq-modules/telex";
-import { productOf, toneOf } from "@/lib/aq-modules/types";
+import { notePick, productOf, toneOf } from "@/lib/aq-modules/types";
 import { formatDay, formatStamp, formatTelexDay, plainText } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
-
-/** Same picture for a note on every visit, varied across notes. */
-const pickFor = (slug: string) => [...slug].reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -52,7 +49,7 @@ export default async function AnalysisNotePage({ params }: Props) {
 
       <article className="aq-card aq-rise mt-3 overflow-hidden" data-analysis-page="note">
         <div className="relative aspect-[16/9] bg-s2 sm:aspect-[21/9]">
-          <StoryImage product={product} pick={pickFor(note.slug)} sizes="(min-width: 1024px) 900px, 100vw" priority />
+          <StoryImage product={product} pick={notePick(note.slug)} sizes="(min-width: 1024px) 900px, 100vw" priority />
         </div>
         <div className="p-5 sm:p-7">
           <div className="flex flex-wrap items-center gap-1.5">

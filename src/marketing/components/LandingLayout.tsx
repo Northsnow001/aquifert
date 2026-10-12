@@ -34,7 +34,11 @@ export function LandingLayout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => setDrawer(false), [location.pathname]);
+  const [seenPath, setSeenPath] = useState(location.pathname);
+  if (location.pathname !== seenPath) {
+    setSeenPath(location.pathname);
+    setDrawer(false);
+  }
 
   useEffect(() => {
     document.body.style.overflow = drawer ? "hidden" : "";
@@ -58,7 +62,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           scrolled ? "border-b border-slate-200 shadow-[0_2px_12px_-4px_rgb(14_32_49/0.18)]" : ""
         }`}
       >
-        <Link to="/" aria-label="Aquifert home">
+        <Link to="/" aria-label="Aquifert home" className="shrink-0">
           <Logo size={36} />
         </Link>
         <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary">
@@ -76,7 +80,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             </SiteNavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           {header.utility.length ? (
             <nav className="hidden items-center gap-4 xl:flex" aria-label="Utility">
               {header.utility.map((u, i) => (
@@ -91,9 +95,9 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             aria-label="Search the website"
             aria-haspopup="dialog"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-navy-800"
+            className="flex h-11 w-11 items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-navy-800 sm:h-9 sm:w-9"
           >
-            <Search className="h-4 w-4" aria-hidden="true" />
+            <Search className="h-[18px] w-[18px] sm:h-4 sm:w-4" aria-hidden="true" />
           </button>
           <Link
             to="/login"
@@ -112,7 +116,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             aria-label={drawer ? "Close menu" : "Open menu"}
             aria-expanded={drawer}
             onClick={() => setDrawer((d) => !d)}
-            className="flex h-9 w-9 items-center justify-center rounded text-navy-800 hover:bg-slate-100 lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded text-navy-800 hover:bg-slate-100 lg:hidden"
           >
             {drawer ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </button>
@@ -121,17 +125,17 @@ export function LandingLayout({ children }: { children: ReactNode }) {
 
       {/* Mobile drawer */}
       {drawer && (
-        <div className="fixed inset-0 top-[72px] z-40 bg-white lg:hidden" role="dialog" aria-label="Menu">
-          <nav className="flex flex-col gap-1 px-6 py-6" aria-label="Mobile">
+        <div className="fixed inset-x-0 bottom-0 top-[72px] z-[75] overflow-y-auto overscroll-contain bg-white lg:hidden" role="dialog" aria-label="Menu">
+          <nav className="flex flex-col gap-1 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 sm:px-6" aria-label="Mobile">
             {header.menu.map((n, i) => (
-              <SiteNavLink key={i} href={n.link} className={() => "border-b border-slate-100 py-4 text-sm font-semibold uppercase tracking-[0.1em] text-navy-800"}>
+              <SiteNavLink key={i} href={n.link} className={() => "flex min-h-12 items-center border-b border-slate-100 py-3 text-sm font-semibold uppercase tracking-[0.1em] text-navy-800"}>
                 {n.label}
               </SiteNavLink>
             ))}
             {header.utility.length ? (
               <div className="mt-4 flex flex-col gap-2">
                 {header.utility.map((u, i) => (
-                  <SiteLink key={i} href={u.link} className="py-1 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
+                  <SiteLink key={i} href={u.link} className="py-2 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
                     {u.label}
                   </SiteLink>
                 ))}

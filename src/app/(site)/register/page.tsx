@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Register from "@/marketing/pages/Register";
 
 export const metadata: Metadata = {
@@ -6,4 +7,10 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default Register;
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <Register />
+    </Suspense>
+  );
+}

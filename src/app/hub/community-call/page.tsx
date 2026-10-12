@@ -49,12 +49,6 @@ export default async function CommunityCallPage() {
                     <Clock className="h-3.5 w-3.5 text-dim" aria-hidden /> {next.durationMinutes} minutes
                   </span>
                 </div>
-                <div className="mt-4 flex items-start gap-3 rounded-2xl border border-border bg-white/80 p-4">
-                  <span className="aq-chip flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-white">
-                    <CalendarDays className="h-4 w-4" />
-                  </span>
-                  <CallWhen startsAt={next.startsAt} durationMinutes={next.durationMinutes} />
-                </div>
                 {next.description ? <p className="mt-4 text-[15.5px] leading-relaxed text-mid">{next.description}</p> : null}
               </div>
               <div className="p-5 sm:p-6">

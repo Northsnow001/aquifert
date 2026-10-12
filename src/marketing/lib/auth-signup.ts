@@ -5,6 +5,8 @@ export type SignupPending = {
   company: string;
   country: string;
   phone?: string;
+  /** Hub page to open once the password is set, e.g. a shared TELEX flash. */
+  next?: string;
 };
 
 const KEY = "aq.signup.pending";

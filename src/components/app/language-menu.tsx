@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import { Flag } from "@/components/app/flag";
 import { useI18n } from "@/components/app/i18n";
 import { LANGUAGES, languageFor } from "@/lib/i18n/locales";
 
@@ -37,10 +36,12 @@ export function LanguageMenu({ dark = false }: { dark?: boolean }) {
         aria-expanded={open}
         aria-label={`${t("top.language")}: ${current.nativeName}`}
         title={t("top.language")}
-        className={`flex h-9 items-center gap-1.5 rounded-full px-2 transition-colors ${dark ? "text-white hover:bg-white/10" : "text-ink hover:bg-black/[.05]"}`}
+        translate="no"
+        className={`flex h-9 shrink-0 items-center gap-1 rounded-full px-2 transition-colors ${dark ? "text-white hover:bg-white/10" : "text-ink hover:bg-black/[.05]"}`}
       >
-        <Flag country={current.country} className="h-[15px] w-[22px]" />
-        <span className={`hidden font-mono text-[11.5px] font-semibold uppercase tracking-wide xl:inline ${dark ? "text-white/75" : "text-mid"}`}>{current.code}</span>
+        <span className={`rounded-md border px-1.5 py-0.5 font-mono text-[11.5px] font-bold leading-none tracking-wide ${dark ? "border-white/25 text-white" : "border-border text-ink"}`}>
+          {current.short}
+        </span>
         <ChevronDown className={`hidden h-3.5 w-3.5 transition-transform sm:block ${dark ? "text-white/60" : "text-dim"} ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
@@ -62,7 +63,11 @@ export function LanguageMenu({ dark = false }: { dark?: boolean }) {
                   }}
                   className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[15px] transition-colors hover:bg-s2 ${active ? "bg-blue-light/60 font-semibold text-ink" : "font-medium text-ink"}`}
                 >
-                  <Flag country={option.country} />
+                  <span
+                    className={`w-9 shrink-0 rounded-md border py-0.5 text-center font-mono text-[11px] font-bold leading-tight tracking-wide ${active ? "border-blue/30 bg-white text-blue" : "border-border text-mid"}`}
+                  >
+                    {option.short}
+                  </span>
                   <span className="min-w-0 flex-1 truncate">{option.nativeName}</span>
                   {option.nativeName !== option.englishName ? <span className="text-[12.5px] text-dim">{option.englishName}</span> : null}
                   {active ? <Check className="h-3.5 w-3.5 shrink-0 text-blue" /> : null}

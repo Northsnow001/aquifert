@@ -4,7 +4,8 @@
  * Step 1 — Collect profile + email, send a 6-digit OTP (no password yet).
  */
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "@/marketing/router";
+import { Link, useNavigate, useSearchParams } from "@/marketing/router";
+import { safeReturnPath } from "@/lib/idle-timeout";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/marketing/components/ui/button";
 import { Logo } from "@/marketing/components/shared/Logo";
@@ -30,6 +31,8 @@ const SERVER_WAIT_MS = 900;
 
 export default function Register() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeReturnPath(params.get("redirect_to"));
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -132,6 +135,7 @@ export default function Register() {
         company: form.company.trim(),
         country: form.country.trim(),
         phone: form.phone.trim() || undefined,
+        next: next ?? undefined,
       };
 
       const supabase = getSupabaseBrowser();
@@ -286,7 +290,7 @@ export default function Register() {
           </p>
           <p className="text-center text-[13px] text-slate-600">
             Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-navy-700 underline-offset-2 hover:underline">
+            <Link to={next ? `/login?redirect_to=${encodeURIComponent(next)}` : "/login"} className="font-semibold text-navy-700 underline-offset-2 hover:underline">
               Sign in
             </Link>
           </p>

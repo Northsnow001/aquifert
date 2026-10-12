@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { AnalysisEditor } from "@/components/admin/aq-content/analysis-editor";
 import { DeleteEntry } from "@/components/admin/aq-content/shared";
 import { telexOptions } from "@/components/admin/aq-content/telex-options";
+import { ShareLinkPanel } from "@/components/admin/share-link";
 import { PageHeader, StatusBadge, btnSecondary } from "@/components/admin/ui";
 import { getAqModules } from "@/lib/aq-modules/store";
 import { deskNow, formatStamp } from "@/lib/content-types";
@@ -39,6 +40,7 @@ export default async function EditAnalysisPage({ params }: { params: Promise<{ i
           </>
         }
       />
+      <ShareLinkPanel kind="aq-view" shareKey={note.slug} published={note.status === "published"} />
       <AnalysisEditor key={note.id} note={note} defaultPublishedAt={deskNow()} slugs={modules.analysis.map((item) => ({ id: item.id, slug: item.slug }))} telex={telex} />
     </div>
   );

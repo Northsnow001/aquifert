@@ -212,6 +212,9 @@ const THUMB_SETS: Record<TelexProduct | "Market", string[]> = {
 export const THUMBS = Object.fromEntries(Object.entries(THUMB_SETS).map(([key, set]) => [key, set[0]])) as Record<TelexProduct | "Market", string>;
 
 /** One of the product's pictures; neighbouring picks differ, so a run of same-product items does not repeat. */
+/** Product-picture pick for an AQ View note: the same picture on every visit, varied across notes. */
+export const notePick = (slug: string) => [...slug].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
 export function productThumb(product: TelexProduct | "Market", pick = 0) {
   const set = THUMB_SETS[product] ?? THUMB_SETS.General;
   return set[Math.abs(pick) % set.length];

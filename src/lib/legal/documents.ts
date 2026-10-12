@@ -322,5 +322,4 @@ export const LEGAL_LINKS = [
   { to: "/legal/terms-of-use", label: "Terms of Use" },
   { to: "/legal/privacy", label: "Privacy Policy" },
   { to: "/legal/data-protection", label: "Data Protection / GDPR" },
-  { to: "/legal/payments", label: "Payment & Refunds" },
 ];

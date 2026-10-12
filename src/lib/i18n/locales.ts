@@ -6,25 +6,25 @@ export type Language = {
   code: LangCode;
   nativeName: string;
   englishName: string;
-  /** ISO country used for the flag. */
-  country: "GB" | "CN" | "ES" | "FR" | "SA" | "JP" | "DE" | "KR" | "BR" | "IT" | "IN" | "RU" | "TR";
+  /** Text badge shown in the language switcher. */
+  short: string;
   dir: "ltr" | "rtl";
 };
 
 export const LANGUAGES: Language[] = [
-  { code: "en", nativeName: "English", englishName: "English", country: "GB", dir: "ltr" },
-  { code: "zh", nativeName: "中文", englishName: "Chinese", country: "CN", dir: "ltr" },
-  { code: "es", nativeName: "Español", englishName: "Spanish", country: "ES", dir: "ltr" },
-  { code: "fr", nativeName: "Français", englishName: "French", country: "FR", dir: "ltr" },
-  { code: "ar", nativeName: "العربية", englishName: "Arabic", country: "SA", dir: "rtl" },
-  { code: "ja", nativeName: "日本語", englishName: "Japanese", country: "JP", dir: "ltr" },
-  { code: "de", nativeName: "Deutsch", englishName: "German", country: "DE", dir: "ltr" },
-  { code: "ko", nativeName: "한국어", englishName: "Korean", country: "KR", dir: "ltr" },
-  { code: "pt", nativeName: "Português", englishName: "Portuguese", country: "BR", dir: "ltr" },
-  { code: "it", nativeName: "Italiano", englishName: "Italian", country: "IT", dir: "ltr" },
-  { code: "hi", nativeName: "हिन्दी", englishName: "Hindi", country: "IN", dir: "ltr" },
-  { code: "ru", nativeName: "Русский", englishName: "Russian", country: "RU", dir: "ltr" },
-  { code: "tr", nativeName: "Türkçe", englishName: "Turkish", country: "TR", dir: "ltr" },
+  { code: "en", nativeName: "English", englishName: "English", short: "ENG", dir: "ltr" },
+  { code: "zh", nativeName: "中文", englishName: "Chinese", short: "ZH", dir: "ltr" },
+  { code: "es", nativeName: "Español", englishName: "Spanish", short: "ES", dir: "ltr" },
+  { code: "fr", nativeName: "Français", englishName: "French", short: "FR", dir: "ltr" },
+  { code: "ar", nativeName: "العربية", englishName: "Arabic", short: "AR", dir: "rtl" },
+  { code: "ja", nativeName: "日本語", englishName: "Japanese", short: "JA", dir: "ltr" },
+  { code: "de", nativeName: "Deutsch", englishName: "German", short: "DE", dir: "ltr" },
+  { code: "ko", nativeName: "한국어", englishName: "Korean", short: "KO", dir: "ltr" },
+  { code: "pt", nativeName: "Português", englishName: "Portuguese", short: "PT", dir: "ltr" },
+  { code: "it", nativeName: "Italiano", englishName: "Italian", short: "IT", dir: "ltr" },
+  { code: "hi", nativeName: "हिन्दी", englishName: "Hindi", short: "HI", dir: "ltr" },
+  { code: "ru", nativeName: "Русский", englishName: "Russian", short: "RU", dir: "ltr" },
+  { code: "tr", nativeName: "Türkçe", englishName: "Turkish", short: "TR", dir: "ltr" },
 ];
 
 export const LANG_COOKIE = "aq-lang";

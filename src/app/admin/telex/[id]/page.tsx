@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Copy, Eye, Trash2 } from "lucide-react";
 import { deleteTelex, duplicateTelex } from "@/app/admin/actions";
 import { ConfirmSubmit } from "@/components/admin/form-controls";
+import { ShareLinkPanel } from "@/components/admin/share-link";
 import { TelexEditor } from "@/components/admin/telex-editor";
 import { Flash, PageHeader, btnDanger, btnSecondary } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
@@ -68,6 +69,7 @@ export default async function EditTelexPage({
               : "Write the message body before saving."
         }
       />
+      <ShareLinkPanel kind="telex" shareKey={item.id} published={item.status === "published"} />
       <TelexEditor key={`${item.id}-${item.updatedAt}`} item={item} knownTags={knownTags} defaultAuthor={user?.name ?? "Aquifert Desk"} />
     </div>
   );
