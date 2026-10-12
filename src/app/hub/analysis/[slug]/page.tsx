@@ -4,18 +4,21 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, Lock, Radio } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { btnPrimary } from "@/components/app/form";
-import { Disclaimer, FeedThumb, Tag, ToneBadge } from "@/components/hub/kit";
+import { Disclaimer, FeedThumb, ProductChip, StoryImage, Tag, ToneBadge } from "@/components/hub/kit";
 import { Markdown } from "@/components/hub/markdown";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getAqModules, publishedAnalysis } from "@/lib/aq-modules/store";
 import { publishedTelex } from "@/lib/aq-modules/telex";
 import { productOf, toneOf } from "@/lib/aq-modules/types";
-import { formatDay, formatTelexDay, plainText } from "@/lib/content-types";
+import { formatDay, formatStamp, formatTelexDay, plainText } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+/** Same picture for a note on every visit, varied across notes. */
+const pickFor = (slug: string) => [...slug].reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -42,41 +45,47 @@ export default async function AnalysisNotePage({ params }: Props) {
   const question = `What does the desk note "${note.title}" mean for my buying, and what should I watch next?`.slice(0, 500);
 
   return (
-    <article className="mx-auto max-w-3xl pb-2">
-      <Link href="/hub/analysis" className="inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-blue no-underline hover:underline">
-        <ArrowLeft className="h-3.5 w-3.5" /> All analysis
+    <div className="mx-auto max-w-4xl pb-2">
+      <Link href="/hub/analysis" className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-blue no-underline hover:underline">
+        <ArrowLeft className="h-4 w-4" /> All analysis
       </Link>
 
-      <header className="aq-rise mt-4 flex items-start gap-4">
-        <FeedThumb product={product} size={64} className="hidden sm:block" />
-        <div className="min-w-0 flex-1">
+      <article className="aq-card aq-rise mt-3 overflow-hidden" data-analysis-page="note">
+        <div className="relative aspect-[16/9] bg-s2 sm:aspect-[21/9]">
+          <StoryImage product={product} pick={pickFor(note.slug)} sizes="(min-width: 1024px) 900px, 100vw" priority />
+        </div>
+        <div className="p-5 sm:p-7">
           <div className="flex flex-wrap items-center gap-1.5">
+            <ProductChip product={product} />
             <ToneBadge tone={tone} />
-            {note.products.map((item) => (
-              <Tag key={item} tone="teal">
-                {item}
-              </Tag>
-            ))}
+            {note.products
+              .filter((item) => item.toLowerCase() !== product.toLowerCase())
+              .map((item) => (
+                <span key={item} className="rounded-full border border-border px-2 py-0.5 text-[11.5px] font-medium text-mid">
+                  {item}
+                </span>
+              ))}
             {note.regions.map((region) => (
               <span key={region} className="rounded-full border border-border px-2 py-0.5 text-[11.5px] font-medium text-mid">
                 {region}
               </span>
             ))}
           </div>
-          <h1 className="mt-2.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink md:text-[32px]">{note.title}</h1>
-          <p className="mt-2 text-[14.5px] text-dim">
-            {note.author || "Aquifert Desk"} · {formatDay(note.publishedAt)}
-            {note.publishedAt.length >= 16 ? `, ${note.publishedAt.slice(11, 16)} desk time` : ""}
+          <h1 className="mt-3 text-[24px] font-bold leading-tight tracking-[-0.015em] text-ink sm:text-[30px]">{note.title}</h1>
+          <p className="mt-2 text-[13.5px] text-dim">
+            {note.author || "Aquifert Desk"} · {note.publishedAt.length >= 16 ? `${formatStamp(note.publishedAt)} desk time` : formatDay(note.publishedAt)}
           </p>
-        </div>
-      </header>
 
-      <div className="aq-card mt-6 p-5 sm:p-7">
-        <Markdown text={note.body} images polish className="text-[16.5px] text-ink" />
-      </div>
+          <Markdown text={note.body} images polish className="mt-5 text-[16px] leading-relaxed text-ink" />
+
+          <div className="mt-6 border-t border-border pt-4">
+            <Disclaimer />
+          </div>
+        </div>
+      </article>
 
       {related.length ? (
-        <section className="aq-card mt-4 overflow-hidden" aria-labelledby="related-title">
+        <section className="aq-card mt-6 overflow-hidden" aria-labelledby="related-title">
           <header className="flex items-center gap-3 border-b border-border px-5 py-3.5">
             <span className="aq-chip aq-chip-blue flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white">
               <Radio className="h-4 w-4" />
@@ -92,10 +101,10 @@ export default async function AnalysisNotePage({ params }: Props) {
             {related.map((item) => (
               <li key={item.id}>
                 <Link
-                  href={item.readable ? `/hub/telex?p=all&q=${encodeURIComponent(item.headline.slice(0, 80))}` : "/hub/account/membership"}
+                  href={item.readable ? `/hub/telex/${item.id}` : "/hub/account/membership"}
                   className="flex items-start gap-3 px-5 py-3.5 no-underline transition-colors hover:bg-s2/60"
                 >
-                  <FeedThumb product={item.product} size={40} />
+                  <FeedThumb product={item.product} src={item.thumb} pick={item.pick} size={40} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-mono text-[12px] text-dim">{formatTelexDay(item.publishedAt)}</span>
@@ -151,10 +160,6 @@ export default async function AnalysisNotePage({ params }: Props) {
           ) : null}
         </nav>
       ) : null}
-
-      <div className="mt-6">
-        <Disclaimer />
-      </div>
-    </article>
+    </div>
   );
 }
