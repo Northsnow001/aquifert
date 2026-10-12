@@ -246,7 +246,7 @@ function Masthead({ t }: { t: (key: string) => string }) {
   );
 }
 
-const NAVY = "bg-gradient-to-r from-[#0C1C2E] via-[#16324F] to-[#1E4265] text-white";
+const NAVY = "bg-[#0C1C2E] text-white";
 
 export function AppShell({
   user,
@@ -358,7 +358,7 @@ export function AppShell({
                 aria-expanded={dockOpen}
                 aria-controls="aquibot-dock"
                 className={`aq-ai-pill hidden h-9 items-center gap-1.5 rounded-full pl-1 pr-3.5 text-[13.5px] font-semibold shadow-[0_6px_16px_-8px_rgb(0_0_0/0.6)] transition hover:brightness-110 sm:inline-flex ${
-                  dockOpen ? "ring-2 ring-white/40 ring-offset-2 ring-offset-[#16324F]" : ""
+                  dockOpen ? "ring-2 ring-white/40 ring-offset-2 ring-offset-[#0C1C2E]" : ""
                 }`}
               >
                 <AquibotAvatar size={28} active={dockOpen} />
