@@ -14,6 +14,8 @@ export const PULSE_SIGNALS: PulseSignal[] = ["Firm", "Balanced", "Soft", "Watch"
 export type BriefContent = {
   aiEnabled: boolean;
   model: string;
+  /** Ground each brief on passages from the Aquibot knowledge base, limited to the buyer's plan. */
+  useKnowledge: boolean;
   prompt: string;
   /** The prompt before the last save that changed it, for one-step undo. */
   previousPrompt: string;
@@ -104,11 +106,12 @@ You are the Aquifert Trading Desk writing an AQ VIEW SPECIAL EDITION Nitrogen Br
 ## Grounding
 
 - Use the figures in the desk draft (parcels, parcel size, months, tonnage) exactly. Do not recalculate them.
-- Use only the desk's market views for market direction. Do not add outside market news.`;
+- Use only the desk's market views and the desk knowledge passages for market direction. Do not add outside market news.`;
 
 export const DEFAULT_CONTENT: BriefContent = {
   aiEnabled: true,
   model: "gemini-3.8-flash",
+  useKnowledge: true,
   prompt: DEFAULT_BRIEF_PROMPT,
   previousPrompt: "",
   reference: DEFAULT_REFERENCE,
@@ -204,6 +207,7 @@ export function normalizeContent(raw: unknown): BriefContent {
   return {
     aiEnabled: typeof value.aiEnabled === "boolean" ? value.aiEnabled : DEFAULT_CONTENT.aiEnabled,
     model: AQUIBOT_MODELS.some((item) => item.value === value.model) ? String(value.model) : DEFAULT_CONTENT.model,
+    useKnowledge: typeof value.useKnowledge === "boolean" ? value.useKnowledge : DEFAULT_CONTENT.useKnowledge,
     prompt: str(value.prompt, LIMITS.prompt, DEFAULT_CONTENT.prompt),
     previousPrompt: str(value.previousPrompt, LIMITS.prompt, ""),
     reference: normalizeReference(value.reference),

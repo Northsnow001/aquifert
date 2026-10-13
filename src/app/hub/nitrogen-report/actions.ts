@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { shortDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
+import { accessFor } from "@/lib/aquibot-engine/chat";
 import { deleteNitrogenReport, nitrogenReportsThisMonth, saveNitrogenReport } from "@/lib/aq-modules/members";
 import type { NitrogenReport } from "@/lib/aq-modules/member-types";
 import { limitFor } from "@/lib/aq-modules/types";
@@ -71,7 +72,7 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
     const preparedFor = company || user.name.trim();
     const refNo = refNumber(now);
     const template = await getNitrogenTemplate();
-    const written = await writeBrief(answers, { refNo, partner: preparedFor, date: now }, template.content);
+    const written = await writeBrief(answers, { refNo, partner: preparedFor, date: now, access: accessFor(user.plan, admin) }, template.content);
     const row: NitrogenReport = {
       id: `nr-${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
       refNo,
@@ -84,6 +85,7 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
       brief: written.brief,
       writer: written.writer,
       ...(written.model ? { model: written.model } : {}),
+      ...(written.knowledge?.length ? { knowledge: written.knowledge } : {}),
     };
     await saveNitrogenReport(row, admin ? 0 : limitFor(modules.limits.savedReports, user.plan));
     revalidatePath("/hub/nitrogen-report");

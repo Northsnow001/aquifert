@@ -30,7 +30,8 @@ function checkFile(name: string, size: number): { name: string; ext: string } | 
 /**
  * Library uploads. With Supabase the browser sends the file straight to Storage: it asks for a
  * signed link (`intent=prepare`), uploads, then posts the details with `uploadId` and `storedName`.
- * Without Supabase the file comes in the form itself.
+ * Without Supabase the file comes in the form itself. `index=browser` means the page indexes the file
+ * itself and shows progress, so the server skips its own background pass.
  */
 export async function POST(request: Request) {
   const user = await getSession();
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
     if (index >= 0) content.libraryDocuments[index] = next;
     else content.libraryDocuments.unshift(next);
   });
-  syncKnowledgeLater([`file:${id}`]);
+  if (field("index") !== "browser") syncKnowledgeLater([`file:${id}`]);
   revalidatePath("/hub", "layout");
   revalidatePath("/admin", "layout");
   return Response.json({ ok: true, id, created: !existing });

@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { CheckCircle2, CircleAlert, CircleDashed, Database, FileText, Loader2, Newspaper, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { indexKnowledge, knowledgeChunks, removeKnowledge, searchIndexText } from "@/app/admin/aquibot/actions";
+import { knowledgeChunks, removeKnowledge, searchIndexText } from "@/app/admin/aquibot/actions";
+import { eachLimited, indexSourceNow } from "@/components/admin/library-upload";
 import { btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
-import type { KnowledgeRow, KnowledgeState } from "@/lib/aquibot-engine/indexer";
+import type { IndexResult, KnowledgeRow, KnowledgeState } from "@/lib/aquibot-engine/indexer";
 import type { EngineStatus } from "@/lib/aquibot-engine/store";
+import type { Collection } from "@/lib/content-types";
+import { KnowledgeUpload } from "./knowledge-upload";
 import { Panel } from "./shared";
 
 type Filter = "all" | "pending" | "errors" | "telex" | "file";
@@ -33,6 +36,8 @@ function day(iso: string | null) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
+const BATCH_CONCURRENCY = 3;
+
 const needsWork = (row: KnowledgeRow) => row.state === "not_indexed" || row.state === "outdated" || row.state === "error";
 
 export function KnowledgePanel({
@@ -40,15 +45,25 @@ export function KnowledgePanel({
   rows: initialRows,
   orphans: initialOrphans,
   chunkTotal,
+  tree,
+  existing,
 }: {
   status: EngineStatus;
   rows: KnowledgeRow[];
   orphans: { id: string; title: string; chunk_count: number }[];
   chunkTotal: number;
+  tree: { item: Collection; depth: number }[];
+  existing: { name: string; title: string }[];
 }) {
   const router = useRouter();
   const [rows, setRows] = useState(initialRows);
   const [orphans, setOrphans] = useState(initialOrphans);
+  const [seen, setSeen] = useState(initialRows);
+  if (seen !== initialRows) {
+    setSeen(initialRows);
+    setRows(initialRows);
+    setOrphans(initialOrphans);
+  }
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [running, setRunning] = useState<{ done: number; total: number; current: string } | null>(null);
@@ -73,7 +88,7 @@ export function KnowledgePanel({
     return !query.trim() || row.title.toLowerCase().includes(query.trim().toLowerCase());
   });
 
-  function apply(key: string, result: Awaited<ReturnType<typeof indexKnowledge>>) {
+  function apply(key: string, result: IndexResult) {
     setRows((current) =>
       current.map((row) =>
         row.key === key
@@ -93,18 +108,22 @@ export function KnowledgePanel({
     if (keys.length === 0) return;
     cancelRef.current = false;
     let failed = 0;
-    for (let i = 0; i < keys.length; i += 1) {
-      if (cancelRef.current) break;
-      const row = rows.find((item) => item.key === keys[i]);
-      setRunning({ done: i, total: keys.length, current: row?.title ?? keys[i] });
-      try {
-        const result = await indexKnowledge(keys[i], force);
-        apply(keys[i], result);
+    let done = 0;
+    setRunning({ done: 0, total: keys.length, current: "" });
+    await eachLimited(
+      keys,
+      BATCH_CONCURRENCY,
+      async (key) => {
+        const row = rows.find((item) => item.key === key);
+        setRunning({ done, total: keys.length, current: row?.title ?? key });
+        const result = await indexSourceNow(key, force);
+        apply(key, result);
         if (!result.ok) failed += 1;
-      } catch {
-        failed += 1;
-      }
-    }
+        done += 1;
+        setRunning((current) => (current ? { ...current, done } : current));
+      },
+      () => cancelRef.current,
+    );
     const cancelled = cancelRef.current;
     setRunning(null);
     if (cancelled) toast.message("Indexing stopped");
@@ -116,7 +135,7 @@ export function KnowledgePanel({
   async function indexOne(row: KnowledgeRow) {
     setBusyKey(row.key);
     try {
-      const result = await indexKnowledge(row.key, true);
+      const result = await indexSourceNow(row.key, true);
       apply(row.key, result);
       if (result.ok) toast.success(`Indexed “${row.title}” (${result.chunkCount} chunks)`);
       else toast.error(result.message);
@@ -171,9 +190,11 @@ export function KnowledgePanel({
         <Stat label="Chunks stored" value={chunkTotal.toLocaleString()} meta="Searchable passages in pgvector" />
       </div>
 
+      <KnowledgeUpload tree={tree} existing={existing} />
+
       <Panel
         title="Knowledge sources"
-        description="Published telex and uploaded library files. Saving a telex or uploading a file indexes it automatically; use these controls to backfill or retry."
+        description="Published telex, library files and knowledge-only documents, read by Aquibot and the Nitrogen Report. New and changed items are indexed automatically, and background indexing retries failures; use these controls to backfill or retry now."
         icon={<Database className="h-4 w-4" />}
         actions={
           <>
@@ -198,7 +219,7 @@ export function KnowledgePanel({
                 </span>
               </span>
               <button type="button" className={btnGhost} onClick={() => (cancelRef.current = true)}>
-                Stop after this one
+                Stop after the current ones
               </button>
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white">
@@ -266,7 +287,7 @@ export function KnowledgePanel({
                     </td>
                     <td className="px-3 py-2.5 text-[12.5px]">
                       {row.visibility === "private" ? (
-                        <span title="Used silently: Aquibot answers from it but never names it">Private · used silently</span>
+                        <span title="Hidden from members. Aquibot and the Nitrogen Report use it but never name it.">Knowledge only · {ACCESS_LABEL[row.access]}</span>
                       ) : (
                         ACCESS_LABEL[row.access]
                       )}

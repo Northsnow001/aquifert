@@ -42,6 +42,8 @@ export type KnowledgeRow = KnowledgeSource & {
   charCount: number;
   indexedAt: string | null;
   error: string | null;
+  /** When the index row last changed, for retry backoff. */
+  updatedAt: string | null;
 };
 
 const hash = (value: string) => createHash("sha1").update(value).digest("hex");
@@ -146,6 +148,7 @@ export async function knowledgeInventory(given?: HubContent) {
       charCount: doc?.char_count ?? 0,
       indexedAt: doc?.indexed_at ?? null,
       error: source.unsupported ?? (doc?.status === "error" ? doc.error : null),
+      updatedAt: doc?.updated_at ?? null,
     };
   });
   const keys = new Set(sources.map((source) => source.key));
@@ -255,6 +258,53 @@ export async function indexSource(key: string, options: { force?: boolean; conte
 export async function removeSource(key: string) {
   await deleteDocument(key);
   await writeLog("index", "info", `Removed ${key} from the index`, { key });
+}
+
+const RETRY_AFTER_MS = 6 * 60 * 60 * 1000;
+
+export type SweepResult = { indexed: number; failed: number; removed: number; remaining: number; results: IndexResult[]; ms: number };
+
+/**
+ * One pass of background indexing: new and changed sources first (newest first), then failures last tried
+ * more than six hours ago. Stops starting new work once `budgetMs` is spent so the request ends in time.
+ */
+export async function indexPending(options: { limit: number; budgetMs: number; concurrency?: number }): Promise<SweepResult> {
+  const started = Date.now();
+  const content = await getHubContent();
+  const { rows, orphans } = await knowledgeInventory(content);
+
+  let removed = 0;
+  for (const orphan of orphans.slice(0, 50)) {
+    await deleteDocument(orphan.id).then(() => (removed += 1), () => undefined);
+  }
+
+  const newest = (a: KnowledgeRow, b: KnowledgeRow) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
+  const fresh = rows.filter((row) => row.state === "not_indexed" || row.state === "outdated").sort(newest);
+  const retry = rows.filter((row) => row.state === "error" && (!row.updatedAt || started - new Date(row.updatedAt).getTime() > RETRY_AFTER_MS));
+  const queue = [...fresh, ...retry];
+
+  const results: IndexResult[] = [];
+  let next = 0;
+  const worker = async () => {
+    while (next < queue.length && next < options.limit && Date.now() - started < options.budgetMs) {
+      const row = queue[next++];
+      results.push(await indexSource(row.key, { content }));
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, options.concurrency ?? 2) }, worker));
+
+  const indexed = results.filter((result) => result.ok).length;
+  const sweep = { indexed, failed: results.length - indexed, removed, remaining: queue.length - results.length, results, ms: Date.now() - started };
+  if (results.length || removed) {
+    await writeLog("index", sweep.failed ? "warn" : "info", `Background indexing: ${indexed} indexed, ${sweep.failed} failed, ${sweep.remaining} left`, {
+      indexed,
+      failed: sweep.failed,
+      removed,
+      remaining: sweep.remaining,
+      ms: sweep.ms,
+    });
+  }
+  return sweep;
 }
 
 /**

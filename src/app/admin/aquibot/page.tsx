@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/admin/ui";
 import { DEFAULT_EXTRACTION, parseStopWords, parseSynonyms } from "@/lib/aquibot";
 import { knowledgeInventory, knowledgeSources, type KnowledgeRow } from "@/lib/aquibot-engine/indexer";
 import { chunkCount, engineStatus, getSessionRow, listLogs, listSessions, sessionMessages, sessionStats, type LogKind } from "@/lib/aquibot-engine/store";
-import { formatStamp } from "@/lib/content-types";
+import { collectionTree, formatStamp } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
 
 export const dynamic = "force-dynamic";
@@ -143,7 +143,14 @@ export default async function AquibotAdminPage({ searchParams }: { searchParams:
           <ErrorCard message={inventoryError} />
         ) : (
           status.ready ? (
-            <KnowledgePanel status={status} rows={inventory.rows} orphans={inventory.orphans} chunkTotal={await chunkCount()} />
+            <KnowledgePanel
+              status={status}
+              rows={inventory.rows}
+              orphans={inventory.orphans}
+              chunkTotal={await chunkCount()}
+              tree={collectionTree(content.collections)}
+              existing={content.libraryDocuments.filter((file) => file.storedName).map((file) => ({ name: `${file.filename.trim().toLowerCase()}.${file.type.toLowerCase()}`, title: file.title }))}
+            />
           ) : (
             <SetupCard status={status} sources={knowledgeSources(content).length} />
           )

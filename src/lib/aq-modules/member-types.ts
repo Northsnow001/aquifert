@@ -18,6 +18,8 @@ export type NitrogenReport = {
   /** Who wrote the brief's wording: Gemini following the admin prompt, or the desk rules. */
   writer?: "ai" | "desk";
   model?: string;
+  /** Knowledge-base sources the AI was given when writing, by title. For the desk, not shown to members. */
+  knowledge?: string[];
 };
 
 export type CallRegistration = {

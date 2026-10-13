@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cleanText, mergeReply, parseReply } from "./ai-brief";
+import { briefRequest, cleanText, knowledgeQuery, mergeReply, parseReply } from "./ai-brief";
 import { buildBrief, storedBrief, type NitrogenAnswers } from "./engine";
 import { DEFAULT_REFERENCE } from "./reference";
 import { briefMarkdown } from "./render";
@@ -108,6 +108,20 @@ test("the AI reply only replaces wording, and anything missing keeps the desk te
   assert.deepEqual(merged.requirement, brief.requirement);
   assert.equal(mergeReply(brief, {}).parts, 0);
   assert.equal(cleanText("## Heading\n- point  one"), "Heading point one");
+});
+
+test("the knowledge search follows the buyer's answers, and passages are sent only when found", () => {
+  assert.equal(
+    knowledgeQuery({ ...answers, preferredOrigin: "Egypt" }),
+    "Urea, CAN market outlook, prices, supply and demand; imports into Mombasa, Kenya; origin Egypt; arrivals November 2026, January 2027; break bulk freight",
+  );
+  assert.equal(knowledgeQuery({ ...answers, products: [], destinationPort: "", arrivalMonths: [], shipmentType: "" }), "nitrogen fertilizer market outlook, prices, supply and demand; imports into Kenya");
+  const without = JSON.parse(briefRequest(answers, brief, DEFAULT_REFERENCE));
+  assert.equal(without.deskKnowledge, undefined);
+  const passages = [{ source: "Desk research", text: "Kenyan CAN demand peaks before the long rains." }];
+  assert.deepEqual(JSON.parse(briefRequest(answers, brief, DEFAULT_REFERENCE, passages)).deskKnowledge, passages);
+  assert.equal(normalizeContent({ useKnowledge: false }).useKnowledge, false);
+  assert.equal(normalizeContent({}).useKnowledge, true);
 });
 
 test("a stored brief is used only when it is complete", () => {

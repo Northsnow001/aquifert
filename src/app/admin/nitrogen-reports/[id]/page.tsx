@@ -44,6 +44,7 @@ export default async function NitrogenReportAdminPage({ params }: { params: Prom
       ["Preferred cargo size (MT)", answers.cargoSize ?? ""],
       ...(answers.warehouseCapacity ? [["Warehouse capacity (MT)", answers.warehouseCapacity] as [string, string]] : []),
       ["Written by", writtenBy(report.writer, report.model)],
+      ...(report.knowledge?.length ? [["Knowledge used", report.knowledge.join("; ")] as [string, string]] : []),
     ];
     const { design } = await getNitrogenTemplate();
     text = briefMarkdown(storedBrief(report.brief) ?? buildBrief(answers, { refNo: report.refNo, partner: report.preparedFor, date }), design);

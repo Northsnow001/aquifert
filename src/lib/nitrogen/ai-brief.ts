@@ -4,8 +4,27 @@
  * from the desk draft, and anything missing or malformed in the reply keeps the desk's text.
  */
 
-import type { NitrogenAnswers, NitrogenBrief, PulseSignal } from "@/lib/nitrogen/engine";
+import { monthLabel, type NitrogenAnswers, type NitrogenBrief, type PulseSignal } from "@/lib/nitrogen/engine";
 import type { DeskReference } from "@/lib/nitrogen/reference";
+
+/** One passage from the knowledge base. Knowledge-only documents are labelled generically so the model never names them. */
+export type DeskPassage = { source: string; text: string };
+
+/** The knowledge-base search a brief is grounded on: products, destination, origin, timing and freight from the buyer's answers. */
+export function knowledgeQuery(answers: NitrogenAnswers) {
+  const products = answers.products.join(", ") || "nitrogen fertilizer";
+  const destination = [answers.destinationPort, answers.destinationCountry].filter(Boolean).join(", ");
+  const months = [...answers.arrivalMonths].sort().map((month) => monthLabel(month, "long")).join(", ");
+  return [
+    `${products} market outlook, prices, supply and demand`,
+    destination ? `imports into ${destination}` : "",
+    answers.preferredOrigin ? `origin ${answers.preferredOrigin}` : "",
+    months ? `arrivals ${months}` : "",
+    answers.shipmentType ? `${answers.shipmentType.toLowerCase()} freight` : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
 
 const SIGNALS: PulseSignal[] = ["Firm", "Balanced", "Soft", "Watch"];
 const MAX_TEXT = 900;
@@ -20,8 +39,17 @@ Reply with one JSON object and nothing else, in this shape:
 - position and logistics: one string per paragraph.
 - Every string is plain text: no Markdown, no line breaks, no bullet characters.`;
 
-/** The user turn: the buyer's answers, the desk-rules draft and the desk's market views for the products asked about. */
-export function briefRequest(answers: NitrogenAnswers, draft: NitrogenBrief, reference: DeskReference) {
+/** Added to the system prompt when passages from the knowledge base are sent with the request. */
+export const KNOWLEDGE_RULES = `## Desk knowledge (set by the system, always applies)
+
+The request includes deskKnowledge: passages from Aquifert's own knowledge base (telex notes, weekly reports, research and desk files) chosen for this buyer.
+- Treat them as desk material alongside the desk's market views. Use them for current market direction, supply, demand, freight and timing.
+- Prefer the most recent passages when they disagree. Ignore passages that are not about this buyer's products, route or months.
+- Take prices, tonnages and other figures only from deskViews, deskDraft or these passages. Never invent figures.
+- Never name, quote or cite a passage, file or source in the brief.`;
+
+/** The user turn: the buyer's answers, the desk-rules draft, the desk's market views and any knowledge-base passages. */
+export function briefRequest(answers: NitrogenAnswers, draft: NitrogenBrief, reference: DeskReference, knowledge: DeskPassage[] = []) {
   const products = draft.products.map((item) => item.name);
   const type = answers.shipmentType || "Bulk";
   return JSON.stringify(
@@ -37,6 +65,7 @@ export function briefRequest(answers: NitrogenAnswers, draft: NitrogenBrief, ref
         packing: reference.packing[answers.packing] ?? "",
       },
       deskDraft: { pulse: draft.pulse, position: draft.position, products: draft.products, logistics: draft.logistics, recommendations: draft.recommendations },
+      ...(knowledge.length ? { deskKnowledge: knowledge } : {}),
     },
     null,
     2,

@@ -55,7 +55,7 @@ const pick = (value: unknown, options: string[], fallback: string) => (options.i
 export async function trySampleBrief(
   value: BriefContent,
   input: Partial<NitrogenAnswers>,
-): Promise<{ ok: true; brief: NitrogenBrief; writer: BriefWriter; fallback?: string; ms: number } | Failure> {
+): Promise<{ ok: true; brief: NitrogenBrief; writer: BriefWriter; fallback?: string; knowledge?: string[]; knowledgeNote?: string; ms: number } | Failure> {
   await requireAdmin();
   const content = normalizeContent(value);
   const problem = contentProblem(content);
@@ -72,6 +72,6 @@ export async function trySampleBrief(
     shipmentType: pick(input.shipmentType, SHIPMENT_TYPES, base.shipmentType),
     packing: pick(input.packing, PACKING, base.packing),
   };
-  const written = await writeBrief(answers, { refNo: "NR-SAMPLE", partner: SAMPLE_PARTNER }, content);
-  return { ok: true, brief: written.brief, writer: written.writer, fallback: written.fallback, ms: written.ms };
+  const written = await writeBrief(answers, { refNo: "NR-SAMPLE", partner: SAMPLE_PARTNER, access: ["public", "growth", "enterprise"] }, content);
+  return { ok: true, brief: written.brief, writer: written.writer, fallback: written.fallback, knowledge: written.knowledge, knowledgeNote: written.knowledgeNote, ms: written.ms };
 }

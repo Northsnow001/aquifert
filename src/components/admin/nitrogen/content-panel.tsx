@@ -58,7 +58,7 @@ function Group({ title, meta, children, open = false }: { title: string; meta?: 
   );
 }
 
-type Sample = { brief: NitrogenBrief; writer: "ai" | "desk"; fallback?: string; ms: number };
+type Sample = { brief: NitrogenBrief; writer: "ai" | "desk"; fallback?: string; knowledge?: string[]; knowledgeNote?: string; ms: number };
 
 export function ContentPanel({ initial, savedAt: initialSavedAt, aiReady, design }: { initial: BriefContent; savedAt: string | null; aiReady: boolean; design: BriefDesign }) {
   const [saved, setSaved] = useState(initial);
@@ -126,6 +126,12 @@ export function ContentPanel({ initial, savedAt: initialSavedAt, aiReady, design
               onChange={(value) => set("aiEnabled", value)}
               label="Write reports with AI"
               description="Off: every brief uses the fixed desk wording. On: the AI rewrites it for each buyer. If the AI is slow or fails, the member still gets the desk wording."
+            />
+            <Switch
+              checked={draft.useKnowledge}
+              onChange={(value) => set("useKnowledge", value)}
+              label="Read the knowledge base"
+              description="On: before writing, the AI is given the most relevant passages from the Aquibot knowledge base (telex, reports and knowledge-only documents) for the buyer's products, route and months, limited to what their plan may see. Sources are listed on each report in admin, never shown to the member."
             />
             {!aiReady ? (
               <p className="rounded-xl border border-[#f5dfb3] bg-[#fff6e5] px-3.5 py-2.5 text-[12.5px] text-[#9a5b00]">
@@ -322,6 +328,18 @@ export function ContentPanel({ initial, savedAt: initialSavedAt, aiReady, design
             <span className="text-[12.5px] text-dim">AI samples usually take 10 to 30 seconds.</span>
           )}
         </div>
+        {sample?.knowledge?.length ? (
+          <details className="mt-3 rounded-xl border border-border px-3.5 py-2.5 text-[12.5px]">
+            <summary className="cursor-pointer font-semibold text-ink">Knowledge used: {sample.knowledge.length} {sample.knowledge.length === 1 ? "source" : "sources"}</summary>
+            <ul className="mt-2 list-disc space-y-0.5 pl-5 text-mid">
+              {sample.knowledge.map((title) => (
+                <li key={title}>{title}</li>
+              ))}
+            </ul>
+          </details>
+        ) : sample?.knowledgeNote ? (
+          <p className="mt-3 text-[12.5px] text-[#9a5b00]">No knowledge used: {sample.knowledgeNote}</p>
+        ) : null}
         {sample ? (
           <div className="mt-5 rounded-2xl bg-s2/60 p-3 sm:p-5">
             <BriefView brief={sample.brief} design={design} />
