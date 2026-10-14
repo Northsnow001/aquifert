@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, CircleAlert, CircleDashed, FileText, Loader2, RotateCcw, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
-import { eachLimited, indexSourceNow, LIBRARY_ACCEPT, MAX_UPLOAD_BYTES, sendLibraryFile } from "@/components/admin/library-upload";
+import { indexSourceNow, LIBRARY_ACCEPT, MAX_UPLOAD_BYTES, sendLibraryFile } from "@/components/admin/library-upload";
 import { btnGhost, btnPrimary, field, label } from "@/components/admin/ui";
 import { FILE_ACCESS_LABEL, formatBytes, type Collection, type TelexAccess } from "@/lib/content-types";
 import { Panel, Switch } from "./shared";
 
-type Stage = "queued" | "held" | "uploading" | "reading" | "ready" | "upload_failed" | "index_failed" | "unreadable";
+type Stage = "queued" | "held" | "uploading" | "uploaded" | "reading" | "ready" | "upload_failed" | "index_failed" | "unreadable";
 
 type Item = {
   id: string;
@@ -24,7 +24,23 @@ type Item = {
 
 const ACCEPTED = new Set(LIBRARY_ACCEPT.split(",").map((value) => value.slice(1)));
 const LEGACY = new Set(["doc", "xls", "ppt", "zip"]);
-const CONCURRENCY = 2;
+const INDEX_CONCURRENCY = 2;
+
+/** Runs at most `limit` tasks at once; the rest wait their turn. */
+function limiter(limit: number) {
+  let active = 0;
+  const waiting: (() => void)[] = [];
+  return async <T,>(task: () => Promise<T>): Promise<T> => {
+    if (active >= limit) await new Promise<void>((resolve) => waiting.push(resolve));
+    active += 1;
+    try {
+      return await task();
+    } finally {
+      active -= 1;
+      waiting.shift()?.();
+    }
+  };
+}
 const ACCESS_HINT: Record<TelexAccess, string> = {
   public: "Used for every member's answers and reports.",
   growth: "Used only for AQ Analytics and AQ ZERO members.",
@@ -87,8 +103,7 @@ export function KnowledgeUpload({ tree, existing }: { tree: { item: Collection; 
     return result.ok;
   }
 
-  async function pipeline(item: Item) {
-    if (item.stage === "index_failed" && item.key) return index(item, item.key, true);
+  async function upload(item: Item) {
     patch(item.id, { stage: "uploading", progress: 0, note: undefined });
     const body = new FormData();
     body.set("access", access);
@@ -98,12 +113,14 @@ export function KnowledgeUpload({ tree, existing }: { tree: { item: Collection; 
     const uploaded = await sendLibraryFile(body, item.file, (progress) => patch(item.id, { progress }));
     if (!uploaded.ok || !uploaded.id) {
       patch(item.id, { stage: "upload_failed", note: uploaded.message ?? "Upload failed." });
-      return false;
+      return null;
     }
-    patch(item.id, { progress: 100 });
-    return index(item, `file:${uploaded.id}`, false);
+    const key = `file:${uploaded.id}`;
+    patch(item.id, { stage: "uploaded", progress: 100, key });
+    return key;
   }
 
+  /** Uploads go one at a time, since each one saves the shared library list; indexing runs alongside, two at a time. */
   async function run(list: Item[]) {
     if (list.length === 0) return;
     stopRef.current = false;
@@ -111,15 +128,21 @@ export function KnowledgeUpload({ tree, existing }: { tree: { item: Collection; 
     setSummary(null);
     let ready = 0;
     let failed = 0;
-    await eachLimited(
-      list,
-      CONCURRENCY,
-      async (item) => {
-        if (await pipeline(item)) ready += 1;
-        else failed += 1;
-      },
-      () => stopRef.current,
-    );
+    const slot = limiter(INDEX_CONCURRENCY);
+    const indexing: Promise<void>[] = [];
+    const queueIndex = (item: Item, key: string, force: boolean) =>
+      indexing.push(slot(() => index(item, key, force)).then((ok) => void (ok ? (ready += 1) : (failed += 1))));
+    for (const item of list) {
+      if (stopRef.current) break;
+      if (item.stage === "index_failed" && item.key) {
+        queueIndex(item, item.key, true);
+        continue;
+      }
+      const key = await upload(item);
+      if (key) queueIndex(item, key, false);
+      else failed += 1;
+    }
+    await Promise.all(indexing);
     setBusy(false);
     const left = list.length - ready - failed;
     const text = [`${ready} ready`, failed ? `${failed} failed` : "", left ? `${left} not started` : ""].filter(Boolean).join(" · ");
@@ -257,6 +280,7 @@ const STAGE: Record<Stage, string> = {
   queued: "Waiting",
   held: "Skipped",
   uploading: "Uploading",
+  uploaded: "Uploaded · waiting to index",
   reading: "Reading and indexing",
   ready: "Ready",
   upload_failed: "Upload failed",

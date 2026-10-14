@@ -47,6 +47,7 @@ export async function readDocument(key: DocumentKey): Promise<unknown> {
 /**
  * Reads, changes and saves a document. The save only lands when nobody else saved in between;
  * otherwise `change` runs again on the fresh copy, so it must not depend on outside state it mutates.
+ * Retries wait a short, random time so saves from different servers stop colliding.
  */
 export function updateDocument<T extends object>(key: DocumentKey, change: (current: unknown) => T | Promise<T>): Promise<T> {
   return serialize(key, async () => {
@@ -57,6 +58,7 @@ export function updateDocument<T extends object>(key: DocumentKey, change: (curr
       return next;
     }
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 150 * attempt + Math.random() * 350));
       const { data: row, error } = await db.from("app_documents").select("data, updated_at").eq("key", key).maybeSingle();
       if (error) throw databaseError(`read ${key}`, error);
       const next = await change((row?.data as unknown) ?? null);

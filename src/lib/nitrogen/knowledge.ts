@@ -21,9 +21,24 @@ export type DeskKnowledge = {
 const MAX_PASSAGES = 10;
 const MAX_CHARS = 14_000;
 
-/** Searches the Aquibot knowledge base for passages relevant to this buyer, limited to what their plan may use. */
-export async function deskKnowledge(answers: NitrogenAnswers, access: TelexAccess[]): Promise<DeskKnowledge> {
+/**
+ * Searches the Aquibot knowledge base for passages relevant to this buyer, limited to what their plan may use.
+ * Gives up after `timeoutMs` so a slow search never holds the report past the page's time limit.
+ */
+export async function deskKnowledge(answers: NitrogenAnswers, access: TelexAccess[], timeoutMs = 15_000): Promise<DeskKnowledge> {
   const started = Date.now();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<DeskKnowledge>((resolve) => {
+    timer = setTimeout(() => resolve({ passages: [], sources: [], ms: Date.now() - started, problem: "The knowledge search took too long, so the brief was written without it." }), timeoutMs);
+  });
+  try {
+    return await Promise.race([search(answers, access, started), late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function search(answers: NitrogenAnswers, access: TelexAccess[], started: number): Promise<DeskKnowledge> {
   const none = (problem: string): DeskKnowledge => ({ passages: [], sources: [], ms: Date.now() - started, problem });
   try {
     const status = await engineStatus();

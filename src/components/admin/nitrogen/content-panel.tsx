@@ -78,7 +78,7 @@ export function ContentPanel({ initial, savedAt: initialSavedAt, aiReady, design
 
   const save = () =>
     startSave(async () => {
-      const result = await saveReportContent(draft);
+      const result = await saveReportContent(draft).catch(() => ({ ok: false as const, message: "Saving failed. Check your connection and try again." }));
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -93,7 +93,7 @@ export function ContentPanel({ initial, savedAt: initialSavedAt, aiReady, design
 
   const trySample = () =>
     startTry(async () => {
-      const result = await trySampleBrief(draft, answers);
+      const result = await trySampleBrief(draft, answers).catch(() => ({ ok: false as const, message: "The sample took too long or the connection dropped. Try again." }));
       if (!result.ok) {
         toast.error(result.message);
         return;

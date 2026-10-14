@@ -131,7 +131,10 @@ export function NitrogenBriefForm({ ports, onClose, onReset, blocked }: { ports:
     }
     setError(null);
     startTransition(async () => {
-      const result = await generateReport(answers);
+      const result = await generateReport(answers).catch(() => ({
+        ok: false as const,
+        message: "The report took too long or the connection dropped. Your answers are still here, so press Generate again. If it was saved, it will appear in your list.",
+      }));
       if (!result.ok) {
         setError(result.message);
         toast.error(result.message);

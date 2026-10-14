@@ -11,7 +11,7 @@ import { weekRange } from "./dates";
 import { embedDocuments, extractWithGemini, GeminiError } from "./gemini";
 import { docxText, htmlText, pptxText, xlsxText } from "./office";
 import { weekFromTitle } from "./query";
-import { deleteDocument, engineStatus, listDocuments, replaceChunks, saveDocument, writeLog, type DocumentRow, type DocumentStatus } from "./store";
+import { deleteDocument, engineStatus, getDocument, listDocuments, replaceChunks, saveDocument, writeLog, type DocumentRow, type DocumentStatus } from "./store";
 
 const TEXT_EXTENSIONS = new Set(["txt", "md", "markdown", "json", "xml", "yaml", "yml", "log", "ini"]);
 const IMAGE_MIME: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" };
@@ -232,7 +232,7 @@ export async function indexSource(key: string, options: { force?: boolean; conte
     return { key, ok: false, state: "unsupported", chunkCount: 0, message: source.unsupported };
   }
   if (!options.force) {
-    const existing = (await listDocuments()).find((row) => row.id === key);
+    const existing = await getDocument(key);
     if (existing?.status === "indexed" && existing.fingerprint === source.fingerprint) {
       return { key, ok: true, state: "indexed", chunkCount: existing.chunk_count, message: "Already up to date." };
     }

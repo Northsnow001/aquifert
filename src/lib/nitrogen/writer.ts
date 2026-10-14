@@ -24,6 +24,9 @@ export type WrittenBrief = {
 
 export const aiAvailable = () => Boolean(geminiKey());
 
+/** With the 15-second knowledge search, keeps a report well inside the 120-second page limit. */
+const AI_TIMEOUT_MS = 80_000;
+
 /**
  * Writes the brief with Gemini when AI writing is on, following the admin's prompt and grounded on passages
  * from the knowledge base the buyer's plan may use; otherwise, or when the model fails or replies with nothing
@@ -50,7 +53,7 @@ export async function writeBrief(
       system: [content.prompt.trim(), OUTPUT_CONTRACT, knowledge?.passages.length ? KNOWLEDGE_RULES : ""].filter(Boolean).join("\n\n"),
       turns: [{ role: "user", text: briefRequest(answers, draft, content.reference, knowledge?.passages) }],
       maxOutputTokens: 8192,
-      timeoutMs: 90_000,
+      timeoutMs: AI_TIMEOUT_MS,
       json: true,
     });
     const reply = parseReply(text);

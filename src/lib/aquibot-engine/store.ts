@@ -77,6 +77,12 @@ export async function listDocuments(): Promise<DocumentRow[]> {
   }
 }
 
+export async function getDocument(id: string): Promise<DocumentRow | null> {
+  const database = db();
+  if (!database) return null;
+  return check(await database.from("aquibot_documents").select("*").eq("id", id).maybeSingle()) as DocumentRow | null;
+}
+
 export async function saveDocument(row: Omit<DocumentRow, "updated_at">) {
   check(await required().from("aquibot_documents").upsert({ ...row, updated_at: new Date().toISOString() }));
 }

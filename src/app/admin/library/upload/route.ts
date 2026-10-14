@@ -104,7 +104,8 @@ export async function POST(request: Request) {
     else content.libraryDocuments.unshift(next);
   });
   if (field("index") !== "browser") syncKnowledgeLater([`file:${id}`]);
-  revalidatePath("/hub", "layout");
+  const hiddenFromMembers = next.private && (!existing || existing.private);
+  if (!hiddenFromMembers) revalidatePath("/hub", "layout");
   revalidatePath("/admin", "layout");
   return Response.json({ ok: true, id, created: !existing });
 }

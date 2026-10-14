@@ -36,7 +36,7 @@ function day(iso: string | null) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
-const BATCH_CONCURRENCY = 3;
+const BATCH_CONCURRENCY = 2;
 
 const needsWork = (row: KnowledgeRow) => row.state === "not_indexed" || row.state === "outdated" || row.state === "error";
 
