@@ -86,6 +86,8 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
       writer: written.writer,
       ...(written.model ? { model: written.model } : {}),
       ...(written.knowledge?.length ? { knowledge: written.knowledge } : {}),
+      ...(written.knowledgeNote ? { knowledgeNote: written.knowledgeNote } : {}),
+      ...(written.fallback ? { fallback: written.fallback } : {}),
     };
     await saveNitrogenReport(row, admin ? 0 : limitFor(modules.limits.savedReports, user.plan));
     revalidatePath("/hub/nitrogen-report");

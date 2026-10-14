@@ -10,7 +10,7 @@ import { aiAvailable } from "@/lib/nitrogen/writer";
 
 export const dynamic = "force-dynamic";
 /** A sample run waits for the AI writer. */
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const TABS = [
   { key: "content", label: "Content & prompt" },

@@ -28,7 +28,7 @@ import {
   type AquibotSettings,
   type ExtractionRules,
 } from "@/lib/aquibot";
-import { syncKnowledgeLater } from "@/lib/aquibot-engine/indexer";
+import { syncKnowledgeLater, telexDocKey } from "@/lib/aquibot-engine/indexer";
 import { removeLibraryFiles } from "@/lib/data/files";
 import { getHubContent, updateHubContent } from "@/lib/hub-content";
 import { sanitizeRichText } from "@/lib/sanitize";
@@ -101,7 +101,7 @@ export async function saveTelex(formData: FormData) {
     else content.telex.unshift(next);
   });
   await Promise.all(docs.dropped.map((docId) => removeTelexDoc(docId).catch(() => undefined)));
-  syncKnowledgeLater([`telex:${id}`]);
+  syncKnowledgeLater([`telex:${id}`, ...docs.dropped.map(telexDocKey)]);
   refresh();
   const error = thumb.failed ? "&error=thumb" : docs.failed ? "&error=doc" : "";
   redirect(`/admin/telex/${id}?saved=${status}${error}`);
@@ -171,7 +171,7 @@ export async function deleteTelex(formData: FormData) {
   });
   await removeTelexThumb(id).catch(() => undefined);
   await Promise.all(docs.map((doc) => removeTelexDoc(doc.id).catch(() => undefined)));
-  syncKnowledgeLater([`telex:${id}`]);
+  syncKnowledgeLater([`telex:${id}`, ...docs.map((doc) => telexDocKey(doc.id))]);
   refresh();
   redirect("/admin/telex?done=deleted");
 }
@@ -219,7 +219,7 @@ export async function bulkTelex(formData: FormData) {
       ...docIds.map((docId) => removeTelexDoc(docId).catch(() => undefined)),
     ]);
   }
-  syncKnowledgeLater(Array.from(ids, (id) => `telex:${id}`));
+  syncKnowledgeLater([...Array.from(ids, (id) => `telex:${id}`), ...docIds.map(telexDocKey)]);
   refresh();
   const join = back.includes("?") ? "&" : "?";
   redirect(`${back}${join}done=${action}&count=${ids.size}`);

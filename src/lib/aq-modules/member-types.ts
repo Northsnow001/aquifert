@@ -20,6 +20,10 @@ export type NitrogenReport = {
   model?: string;
   /** Knowledge-base sources the AI was given when writing, by title. For the desk, not shown to members. */
   knowledge?: string[];
+  /** Why no knowledge was used, when the knowledge base is on. For the desk. */
+  knowledgeNote?: string;
+  /** Why the desk wording was used when AI writing was on. For the desk. */
+  fallback?: string;
 };
 
 export type CallRegistration = {

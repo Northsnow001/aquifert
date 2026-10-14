@@ -2,9 +2,10 @@ import "server-only";
 import { createHash } from "crypto";
 import { after } from "next/server";
 import type { ExtractionRules } from "@/lib/aquibot";
-import { formatTelexDay, isFileListed, telexHeadline, type LibraryDocument, type TelexAccess, type TelexItem } from "@/lib/content-types";
+import { formatTelexDay, isFileListed, telexDocExt, telexHeadline, type LibraryDocument, type TelexAccess, type TelexItem } from "@/lib/content-types";
 import { readLibraryFile } from "@/lib/data/files";
 import { getHubContent, type HubContent } from "@/lib/hub-content";
+import { readTelexDoc } from "@/lib/telex-docs";
 import { chunkText, WEEKLY_FILE } from "./chunking";
 import { weekRange } from "./dates";
 import { embedDocuments, extractWithGemini, GeminiError } from "./gemini";
@@ -32,6 +33,8 @@ export type KnowledgeSource = {
   fingerprint: string;
   unsupported: string | null;
   editHref: string;
+  /** Set for a file attached to a telex: the telex it belongs to. */
+  telexId?: string;
 };
 
 export type KnowledgeState = "not_indexed" | "indexed" | "outdated" | "error" | "unsupported";
@@ -92,8 +95,8 @@ function ruleFor(ext: string, rules: ExtractionRules) {
 }
 
 export function knowledgeSources(content: HubContent): KnowledgeSource[] {
-  const telex: KnowledgeSource[] = content.telex
-    .filter((item) => item.status === "published")
+  const published = content.telex.filter((item) => item.status === "published");
+  const telex: KnowledgeSource[] = published
     .map((item) => ({
       key: `telex:${item.id}`,
       sourceType: "telex",
@@ -128,7 +131,36 @@ export function knowledgeSources(content: HubContent): KnowledgeSource[] {
       };
     });
 
-  return [...telex, ...files];
+  const attachments: KnowledgeSource[] = published.flatMap((item) =>
+    (item.documents ?? []).map((doc) => {
+      const ext = telexDocExt(doc.name);
+      const title = `${doc.title} (Telex ${formatTelexDay(item.publishedAt)})`;
+      return {
+        key: telexDocKey(doc.id),
+        sourceType: "file" as const,
+        sourceId: doc.id,
+        title,
+        publishedAt: telexDate(item),
+        access: item.access,
+        visibility: "public" as const,
+        fileType: ext.toUpperCase(),
+        fingerprint: hash(`${doc.name}|${doc.size}|${title}|${item.access}|${ruleFor(ext, content.aquibot.extraction)}`),
+        unsupported: unsupportedReason(ext),
+        editHref: `/admin/telex/${item.id}`,
+        telexId: item.id,
+      };
+    }),
+  );
+
+  return [...telex, ...attachments, ...files];
+}
+
+/** Index key for a file attached to a telex. Attachment ids (`txd-…`) never clash with library file ids. */
+export const telexDocKey = (docId: string) => `file:${docId}`;
+
+/** A telex's own key plus the keys of the files attached to it, so saving a telex re-indexes its attachments too. */
+export function telexKeys(item: Pick<TelexItem, "id" | "documents">) {
+  return [`telex:${item.id}`, ...(item.documents ?? []).map((doc) => telexDocKey(doc.id))];
 }
 
 export async function knowledgeInventory(given?: HubContent) {
@@ -156,12 +188,10 @@ export async function knowledgeInventory(given?: HubContent) {
   return { rows, orphans };
 }
 
-async function readFileText(file: LibraryDocument, ext: string, rules: ExtractionRules) {
-  if (!file.storedName) throw new Error("This file has no upload.");
-  const data = await readLibraryFile(file);
+async function readFileText(data: Buffer | null, ext: string, title: string, rules: ExtractionRules) {
   if (!data) throw new Error("The uploaded file is missing from storage. Upload it again.");
-  if (ext === "pdf") return { text: await extractWithGemini({ data, mimeType: "application/pdf", prompt: rules.pdf, displayName: file.title }), maxChunks: MAX_CHUNKS.pdf };
-  if (ext in IMAGE_MIME) return { text: await extractWithGemini({ data, mimeType: IMAGE_MIME[ext], prompt: rules.image, displayName: file.title }), maxChunks: MAX_CHUNKS.image };
+  if (ext === "pdf") return { text: await extractWithGemini({ data, mimeType: "application/pdf", prompt: rules.pdf, displayName: title }), maxChunks: MAX_CHUNKS.pdf };
+  if (ext in IMAGE_MIME) return { text: await extractWithGemini({ data, mimeType: IMAGE_MIME[ext], prompt: rules.image, displayName: title }), maxChunks: MAX_CHUNKS.image };
   if (ext === "xlsx") return { text: xlsxText(data), maxChunks: MAX_CHUNKS.xlsx };
   if (ext === "docx") return { text: docxText(data), maxChunks: MAX_CHUNKS.docx };
   if (ext === "pptx") return { text: pptxText(data), maxChunks: MAX_CHUNKS.pptx };
@@ -219,9 +249,15 @@ export async function indexSource(key: string, options: { force?: boolean; conte
       text = telexText(item);
       maxChunks = MAX_CHUNKS.telex;
       label = `Telex ${formatTelexDay(item.publishedAt)}: ${telexHeadline(item)}`;
+    } else if (source.telexId) {
+      const doc = content.telex.find((entry) => entry.id === source.telexId)!.documents!.find((entry) => entry.id === source.sourceId)!;
+      ({ text, maxChunks } = await readFileText(await readTelexDoc(doc), telexDocExt(doc.name), source.title, content.aquibot.extraction));
+      label = source.title;
+      weekly = WEEKLY_FILE.test(`${doc.title} ${doc.name}`);
     } else {
       const file = content.libraryDocuments.find((entry) => entry.id === source.sourceId)!;
-      ({ text, maxChunks } = await readFileText(file, extension(file), content.aquibot.extraction));
+      if (!file.storedName) throw new Error("This file has no upload.");
+      ({ text, maxChunks } = await readFileText(await readLibraryFile(file), extension(file), file.title, content.aquibot.extraction));
       label = file.title;
       weekly = WEEKLY_FILE.test(`${file.title} ${file.filename} ${file.storedName}`);
     }
@@ -309,7 +345,8 @@ export async function indexPending(options: { limit: number; budgetMs: number; c
 
 /**
  * Keeps the index in step with publishing: runs after the response so saving stays fast.
- * Unpublished or deleted items are removed; new or changed ones are indexed.
+ * Unpublished or deleted items are removed; new or changed ones are indexed. A telex key also covers
+ * the files attached to it; pass the keys of attachments that were removed so they leave the index.
  */
 export function syncKnowledgeLater(keys: string[]) {
   if (keys.length === 0) return;
@@ -318,7 +355,12 @@ export function syncKnowledgeLater(keys: string[]) {
       const status = await engineStatus();
       if (!status.ready) return;
       const content = await getHubContent();
-      for (const key of keys) await indexSource(key, { content });
+      const expanded = new Set(keys);
+      for (const key of keys) {
+        const item = key.startsWith("telex:") ? content.telex.find((entry) => `telex:${entry.id}` === key) : undefined;
+        if (item) telexKeys(item).forEach((value) => expanded.add(value));
+      }
+      for (const key of expanded) await indexSource(key, { content });
     } catch (error) {
       await writeLog("index", "error", `Automatic indexing failed: ${error instanceof Error ? error.message : "unknown error"}`, { keys });
     }

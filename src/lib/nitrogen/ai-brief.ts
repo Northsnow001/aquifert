@@ -8,7 +8,7 @@ import { monthLabel, type NitrogenAnswers, type NitrogenBrief, type PulseSignal 
 import type { DeskReference } from "@/lib/nitrogen/reference";
 
 /** One passage from the knowledge base. Knowledge-only documents are labelled generically so the model never names them. */
-export type DeskPassage = { source: string; text: string };
+export type DeskPassage = { source: string; date?: string; text: string };
 
 /** The knowledge-base search a brief is grounded on: products, destination, origin, timing and freight from the buyer's answers. */
 export function knowledgeQuery(answers: NitrogenAnswers) {
@@ -42,8 +42,9 @@ Reply with one JSON object and nothing else, in this shape:
 /** Added to the system prompt when passages from the knowledge base are sent with the request. */
 export const KNOWLEDGE_RULES = `## Desk knowledge (set by the system, always applies)
 
-The request includes deskKnowledge: passages from Aquifert's own knowledge base (telex notes, weekly reports, research and desk files) chosen for this buyer.
-- Treat them as desk material alongside the desk's market views. Use them for current market direction, supply, demand, freight and timing.
+The request includes deskKnowledge: passages from Aquifert's own knowledge base (telex notes, weekly reports, research and desk files) chosen for this buyer, each with its date where known.
+- These passages are the desk's current intelligence. Write the market pulse views and signals, the position, the product views and the logistics from them wherever they cover the topic. Use deskViews only where the passages are silent. This overrides any instruction above to use only the desk's market views.
+- Be specific: carry over the concrete developments the passages report (price moves, tenders, export policy, plant outages, freight and port conditions) rather than general statements.
 - Prefer the most recent passages when they disagree. Ignore passages that are not about this buyer's products, route or months.
 - Take prices, tonnages and other figures only from deskViews, deskDraft or these passages. Never invent figures.
 - Never name, quote or cite a passage, file or source in the brief.`;

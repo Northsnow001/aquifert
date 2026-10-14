@@ -279,7 +279,7 @@ export function KnowledgePanel({
                             {row.title}
                           </Link>
                           <span className="text-[11.5px] text-dim">
-                            {row.sourceType === "telex" ? "Telex" : row.fileType}
+                            {row.sourceType === "telex" ? "Telex" : row.telexId ? `${row.fileType} · Telex attachment` : row.fileType}
                             {row.publishedAt ? ` · ${day(row.publishedAt)}` : ""}
                           </span>
                         </div>

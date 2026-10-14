@@ -50,7 +50,7 @@ export async function writeBrief(
       system: [content.prompt.trim(), OUTPUT_CONTRACT, knowledge?.passages.length ? KNOWLEDGE_RULES : ""].filter(Boolean).join("\n\n"),
       turns: [{ role: "user", text: briefRequest(answers, draft, content.reference, knowledge?.passages) }],
       maxOutputTokens: 8192,
-      timeoutMs: 45_000,
+      timeoutMs: 90_000,
       json: true,
     });
     const reply = parseReply(text);

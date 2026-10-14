@@ -11,8 +11,8 @@ import { reportTopic } from "@/lib/nitrogen/engine";
 
 export const metadata: Metadata = { title: "Nitrogen Report" };
 export const dynamic = "force-dynamic";
-/** Generating a report waits for the AI writer, which can take up to 45 seconds. */
-export const maxDuration = 60;
+/** Generating a report waits for the knowledge search and the AI writer, which can take up to 90 seconds. */
+export const maxDuration = 120;
 
 export default async function NitrogenReportPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
   const [{ user, admin, modules }, query] = await Promise.all([getHubAccess(), searchParams]);

@@ -49,7 +49,8 @@ export async function deskKnowledge(answers: NitrogenAnswers, access: TelexAcces
       if (!candidate.selected) continue;
       const text = stripChunkLabel(candidate.content).trim();
       if (!text || used + text.length > MAX_CHARS) continue;
-      passages.push({ source: candidate.visibility === "private" ? "Desk research" : citation(candidate), text });
+      const date = candidate.publishedAt?.slice(0, 10);
+      passages.push({ source: candidate.visibility === "private" ? "Desk research" : citation(candidate), ...(date ? { date } : {}), text });
       sources.add(citation(candidate));
       used += text.length;
     }
