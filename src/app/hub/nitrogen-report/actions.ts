@@ -69,7 +69,8 @@ export async function generateReport(input: Partial<NitrogenAnswers>): Promise<{
     }
     const now = new Date();
     const company = (await findZeroRegistration(user).catch(() => null))?.company?.trim();
-    const preparedFor = company || user.name.trim();
+    // A company name only: reports never carry a person's name.
+    const preparedFor = company || "";
     const refNo = refNumber(now);
     const template = await getNitrogenTemplate();
     const written = await writeBrief(answers, { refNo, partner: preparedFor, date: now, access: accessFor(user.plan, admin) }, template.content);

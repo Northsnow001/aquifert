@@ -9,7 +9,7 @@ import { ReportActions } from "@/components/hub/nitrogen/report-actions";
 import { longDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { getNitrogenReport } from "@/lib/aq-modules/members";
-import { buildBrief, firstName, isBriefAnswers, orderDeskHref, reportTopic, storedBrief } from "@/lib/nitrogen/engine";
+import { buildBrief, firstName, isBriefAnswers, orderDeskHref, reportTopic, storedBrief, withoutNames } from "@/lib/nitrogen/engine";
 import { EMPTY_LEGACY_ANSWERS, generateLegacyReport, type LegacyNitrogenAnswers } from "@/lib/nitrogen/legacy";
 import { getNitrogenTemplate } from "@/lib/nitrogen/template-store";
 
@@ -32,13 +32,17 @@ export default async function NitrogenReportView({ params }: { params: Promise<{
 
   const answers = report.answers;
   const { design } = await getNitrogenTemplate();
+  // Older reports were addressed to the member by name when no company was on file; reports never show a person's name.
+  const personal = [user.name, firstName(user.name)].some((name) => name.trim() && name.trim().toLowerCase() === report.preparedFor?.trim().toLowerCase());
+  const company = personal ? "" : (report.preparedFor ?? "");
+  const stored = storedBrief(report.brief);
   const brief = isBriefAnswers(answers)
-    ? (storedBrief(report.brief) ?? buildBrief(answers, { refNo: report.refNo, partner: report.preparedFor || user.name, date: new Date(report.at) }))
+    ? withoutNames(stored ? { ...stored, partner: personal ? "" : stored.partner } : buildBrief(answers, { refNo: report.refNo, partner: company, date: new Date(report.at) }), [user.name, report.preparedFor && personal ? report.preparedFor : ""], "the buyer")
     : null;
   const legacy = brief
     ? ""
     : answers
-      ? generateLegacyReport({ ...EMPTY_LEGACY_ANSWERS, ...(answers as Partial<LegacyNitrogenAnswers>) }, { preparedFor: report.preparedFor || firstName(user.name), date: new Date(report.at) })
+      ? generateLegacyReport({ ...EMPTY_LEGACY_ANSWERS, ...(answers as Partial<LegacyNitrogenAnswers>) }, { preparedFor: company, date: new Date(report.at) })
       : report.reportMd;
   const where = [reportTopic(answers), answers?.destinationCountry].filter(Boolean).join(" · ");
 

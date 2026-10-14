@@ -22,15 +22,17 @@ export type BriefContent = {
   reference: DeskReference;
 };
 
-export const BRIEF_SECTION_KEYS = ["requirement", "pulse", "position", "products", "logistics", "recommendations"] as const;
+export const BRIEF_SECTION_KEYS = ["pulse", "products", "macro", "position", "logistics", "call", "requirement", "recommendations"] as const;
 export type BriefSectionKey = (typeof BRIEF_SECTION_KEYS)[number];
 
 export const BRIEF_SECTION_INFO: Record<BriefSectionKey, { name: string; about: string }> = {
-  requirement: { name: "Supply requirement", about: "The table of what the member asked for." },
-  pulse: { name: "Market pulse", about: "One row per product plus freight, with a signal." },
-  position: { name: "The position", about: "The desk's read of the programme, in AQ View boxes." },
+  pulse: { name: "Market pulse", about: "The week's drivers: prior read, this week and the signal." },
   products: { name: "Product sections", about: "One section per product. {product} becomes the product name." },
-  logistics: { name: "Logistics and shipment plan", about: "Shipment mode, packing and parcel plan." },
+  macro: { name: "Macro context", about: "Rates, currencies and policy behind the market. Left out when the desk notes say nothing on them." },
+  position: { name: "Your programme", about: "What the market means for this buyer's programme." },
+  logistics: { name: "Freight and logistics", about: "Route, shipment mode, packing and parcel plan." },
+  call: { name: "The call", about: "The desk's call in one AQ View box, then the principal risk." },
+  requirement: { name: "Supply requirement", about: "The table of what the member asked for." },
   recommendations: { name: "Recommendations", about: "What to do now, watch and avoid, in AQ View boxes." },
 };
 
@@ -79,34 +81,44 @@ export type NitrogenTemplate = {
 
 export const DEFAULT_BRIEF_PROMPT = `# AQ View Nitrogen Brief: writing guide
 
-You are the Aquifert Trading Desk writing an AQ VIEW SPECIAL EDITION Nitrogen Brief for one buyer. The buyer completed a short survey: products, annual tonnage, destination, preferred origin, arrival months, shipment type, packing and preferred cargo size. You receive their answers, the desk's draft brief built from house rules, and the desk's current market views.
+You are the Aquifert Trading Desk writing an AQ VIEW SPECIAL EDITION Nitrogen Brief for one buyer. It reads like a senior physical fertiliser trader's weekly note to a partner: what moved this week, why it matters for this buyer, and the call.
+
+You receive the buyer's survey (products, annual tonnage, destination, preferred origin, arrival months, shipment type, packing and cargo size), the desk's draft built from house rules, the desk's standing market views, the latest desk notes (recentDeskNotes, newest first) and passages from the knowledge base (deskKnowledge).
 
 ## Voice
 
-- Write as an experienced physical fertiliser trader advising a client. Calm, specific, commercial.
-- Address the buyer by their company name, never as "you guys" or "the client".
-- One point per paragraph. Keep sentences under 20 words where possible.
-- State genuine uncertainty plainly. Never invent prices, deals, vessels, suppliers or transactions.
-- Prices are never quoted. Any pricing is landed cost: supplier cost plus pass-through freight and a stated fee.
+- Lead with the market, not the buyer. Open every section with the fact that matters most this week.
+- Be concrete. Name the origin, producer, tender, price level, tonnage and shipment month whenever the notes give them. Never name a person; use the company or the role. "Helwan sold 7,000 t granular at USD 518/t fob for October shipment" beats "North African prices are firm".
+- Explain the mechanism: why the move matters for this buyer's products, route and arrival months.
+- Commit to a read. Calm and commercial, never hyped. State real uncertainty plainly.
+- Sentences of 12 to 25 words, one idea per paragraph.
+- Never invent prices, deals, vessels, suppliers or tonnages. When the notes are silent, write less rather than fill.
 
 ## House style
 
 - British spelling (fertiliser, programme, sulphur, harbour).
-- Metric tonnes written as "MT", with thousands separated by commas (12,000 MT).
-- No em dashes, no exclamation marks, no ellipses, no bullet points inside paragraphs, no Markdown formatting.
+- Tonnes as "t" with thousands separators (80,000 t; 1.6-2.0 million t). Prices as "USD 518/t fob" or "USD 490/t cfr Brazil".
+- Market prices are indicative levels from the desk's notes, never an Aquifert offer or quotation.
+- No em dashes, exclamation marks, ellipses, bullet points or Markdown.
 
 ## What each part must do
 
-- Market pulse: one short view per product and one for freight, based on the desk's market views. Keep each signal unless the desk view clearly says otherwise.
-- The position: three to five paragraphs on what this programme means. Cover the product mix, volume and arrival window, the shipment mode and parcel structure, and the origin approach.
-- Product sections: for each product, a short product note and the desk's read for a buyer into this destination.
-- Logistics and shipment plan: the shipment mode, the packing and the parcel schedule against the preferred cargo size.
-- Recommendations: exactly three, labelled "What to do now", "What to watch" and "What to avoid". The first always invites the buyer to send the brief to the desk as a sourcing request on Aquifert ONE.
+- Market pulse: four to six drivers for this buyer's products and route, the one that moved most first. A driver can be a supplying region, an export policy, a competing origin, a related product, freight or macro and USD. Prior read is where it stood before this week; This week is what changed or was confirmed; the signal read is the consequence in a few words, such as "October granular priced; buyers behind".
+- Product sections: two to four paragraphs per product. The latest trades and price levels first, then the supply and demand story behind them, then what it means for arrivals in the buyer's months.
+- Macro context: rates, currencies, energy and policy that change the buyer's landed cost. Leave it empty when the notes say nothing on them.
+- Your programme: two or three short paragraphs tying the market to this buyer: products, volume, arrival window and origin approach.
+- Freight and logistics: the route, shipment mode, packing and parcel plan, with any freight or port conditions from the notes.
+- The call: one decisive paragraph giving the direction, the timing window and the action: what to cover now, what to leave, and when the window closes. Then the principal risk to the call in one or two sentences.
+- Recommendations: exactly three, labelled "What to do now", "What to watch" and "What to avoid". The first invites the buyer to send the brief to the desk as a sourcing request on Aquifert ONE.
 
 ## Grounding
 
 - Use the figures in the desk draft (parcels, parcel size, months, tonnage) exactly. Do not recalculate them.
-- Use only the desk's market views and the desk knowledge passages for market direction. Do not add outside market news.`;
+- Market direction, prices and developments come from recentDeskNotes and deskKnowledge first, then the desk's market views. Do not add outside market news.`;
+
+/** A saved prompt still built on the launch guide, which forbade market prices, moves to this guide; the old text stays one undo away. */
+const RETIRED_PROMPT_MARK = "- Prices are never quoted. Any pricing is landed cost: supplier cost plus pass-through freight and a stated fee.";
+const isRetiredPrompt = (prompt: string) => prompt.startsWith("# AQ View Nitrogen Brief: writing guide") && prompt.includes(RETIRED_PROMPT_MARK);
 
 export const DEFAULT_CONTENT: BriefContent = {
   aiEnabled: true,
@@ -128,24 +140,26 @@ export const DEFAULT_DESIGN: BriefDesign = {
     muted: "#6b7280",
   },
   textSize: "standard",
-  showLogo: true,
-  title: "AQ VIEW SPECIAL EDITION | Nitrogen Brief",
+  showLogo: false,
+  title: "AQ VIEW SPECIAL EDITION | NITROGEN BRIEF",
   subtitle: "{partner} Partnership Intelligence",
   preparedBy: "Prepared by the Aquifert Trading Desk",
   confidential: "Confidential. Not for redistribution.",
-  disclaimer: "Prepared exclusively for {partner}. Assessments are indicative and drawn from desk reference data. Prices are not quotations and do not constitute trading recommendations.",
+  disclaimer: "Prepared exclusively for {partner}. Assessments are indicative and drawn from industry sources. Prices are not quotations and do not constitute trading recommendations.",
   viewLabel: "AQ View",
   sections: [
-    { key: "requirement", heading: "Supply Requirement", hidden: false },
     { key: "pulse", heading: "Market Pulse | {week}", hidden: false },
-    { key: "position", heading: "The Position", hidden: false },
     { key: "products", heading: "{product}", hidden: false },
-    { key: "logistics", heading: "Logistics and Shipment Plan", hidden: false },
-    { key: "recommendations", heading: "Recommendations", hidden: false },
+    { key: "macro", heading: "Macro Context", hidden: false },
+    { key: "position", heading: "Your Programme", hidden: false },
+    { key: "logistics", heading: "Freight and Logistics", hidden: false },
+    { key: "call", heading: "The Call", hidden: false },
+    { key: "requirement", heading: "Supply Requirement", hidden: true },
+    { key: "recommendations", heading: "Recommendations", hidden: true },
   ],
   quote: {
     text: "The intelligent investor is a realist who sells to optimists and buys from pessimists.",
-    source: "Benjamin Graham, The Intelligent Investor, 1949",
+    source: "The Intelligent Investor, 1949",
     hidden: false,
   },
   footer: "Aquifert ONE Hub | aquifert.com | 71-75 Shelton Street, London WC2H 9JQ",
@@ -204,19 +218,24 @@ export function normalizeReference(raw: unknown): DeskReference {
 
 export function normalizeContent(raw: unknown): BriefContent {
   const value = isRecord(raw) ? raw : {};
+  const prompt = str(value.prompt, LIMITS.prompt, DEFAULT_CONTENT.prompt);
+  const retired = isRetiredPrompt(prompt);
   return {
     aiEnabled: typeof value.aiEnabled === "boolean" ? value.aiEnabled : DEFAULT_CONTENT.aiEnabled,
     model: AQUIBOT_MODELS.some((item) => item.value === value.model) ? String(value.model) : DEFAULT_CONTENT.model,
     useKnowledge: typeof value.useKnowledge === "boolean" ? value.useKnowledge : DEFAULT_CONTENT.useKnowledge,
-    prompt: str(value.prompt, LIMITS.prompt, DEFAULT_CONTENT.prompt),
-    previousPrompt: str(value.previousPrompt, LIMITS.prompt, ""),
+    prompt: retired ? DEFAULT_BRIEF_PROMPT : prompt,
+    previousPrompt: retired ? prompt : str(value.previousPrompt, LIMITS.prompt, ""),
     reference: normalizeReference(value.reference),
   };
 }
 
-/** Keeps the saved section order, drops unknown or repeated keys, and appends any section the saved list lacks. */
+/**
+ * Keeps the saved section order, drops unknown or repeated keys, and appends any section the saved list lacks.
+ * A list saved before The call existed is the old buyer-first layout, so it moves to the market-first layout.
+ */
 export function normalizeSections(raw: unknown): BriefDesign["sections"] {
-  const list = Array.isArray(raw) ? raw : [];
+  const list = Array.isArray(raw) && raw.some((item) => isRecord(item) && item.key === "call") ? raw : [];
   const seen = new Set<BriefSectionKey>();
   const out: BriefDesign["sections"] = [];
   for (const item of list) {
@@ -229,6 +248,9 @@ export function normalizeSections(raw: unknown): BriefDesign["sections"] {
   for (const base of DEFAULT_DESIGN.sections) if (!seen.has(base.key)) out.push({ ...base });
   return out;
 }
+
+/** The launch attribution named the author; reports name no people, so it moves to the book alone. */
+const quoteSource = (source: string) => (source.trim() === "Benjamin Graham, The Intelligent Investor, 1949" ? DEFAULT_DESIGN.quote.source : source);
 
 export function normalizeDesign(raw: unknown): BriefDesign {
   const value = isRecord(raw) ? raw : {};
@@ -246,7 +268,7 @@ export function normalizeDesign(raw: unknown): BriefDesign {
     disclaimer: str(value.disclaimer, LIMITS.disclaimer, d.disclaimer),
     viewLabel: str(value.viewLabel, LIMITS.label, d.viewLabel),
     sections: normalizeSections(value.sections),
-    quote: { text: str(quote.text, LIMITS.quote, d.quote.text), source: str(quote.source, LIMITS.line, d.quote.source), hidden: quote.hidden === true },
+    quote: { text: str(quote.text, LIMITS.quote, d.quote.text), source: quoteSource(str(quote.source, LIMITS.line, d.quote.source)), hidden: quote.hidden === true },
     footer: str(value.footer, LIMITS.line, d.footer),
   };
 }

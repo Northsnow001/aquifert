@@ -4,7 +4,7 @@
  * the same brief. The brief is structured data; the report page, the PDF and the stored
  * Markdown all render from it.
  *
- * Editorial rules: British spelling, metric tonnes (MT), no em dashes, exclamation marks or
+ * Editorial rules: British spelling, metric tonnes (t), no em dashes, exclamation marks or
  * ellipses, short sentences with one point per paragraph, and no invented transactions.
  */
 
@@ -64,13 +64,13 @@ export function cargoSizeTonnes(value: string | undefined): number {
   return figures.reduce((max, figure) => Math.max(max, Number(figure)), 0);
 }
 
-/** A cargo size as written, with "MT" added when the member left the unit off; a lone figure gets thousands separators. */
+/** A cargo size as written, with "t" added when the member left the unit off; a lone figure gets thousands separators. */
 export function cargoSizeLabel(value: string | undefined): string {
   const text = (value ?? "").trim();
   if (!text) return "";
-  if (/\b(mt|tonnes?|tons?)\b/i.test(text)) return text;
+  if (/\b(mt|t|tonnes?|tons?)\b/i.test(text)) return text;
   const single = /^\d[\d,]*(\.\d+)?$/.test(text) ? Number(text.replace(/,/g, "")) : NaN;
-  return `${Number.isFinite(single) ? single.toLocaleString("en-GB") : text} MT`;
+  return `${Number.isFinite(single) ? single.toLocaleString("en-GB") : text} t`;
 }
 
 /** The current month and the eleven after it, as YYYY-MM in UTC so server and browser agree. */
@@ -147,17 +147,36 @@ export function reportTopic(a: Partial<StoredNitrogenAnswers> | null | undefined
 
 /* ------------------------------------------------------------------ brief */
 
+export type PulseRow = {
+  /** The market or driver, e.g. "Urea" or "China quota". */
+  market: string;
+  /** Where the market stood before this week; only on AI-written briefs. */
+  prior?: string;
+  /** This week's read. */
+  view: string;
+  signal: PulseSignal;
+  /** The signal in a few words, e.g. "October granular priced; buyers behind". */
+  read?: string;
+};
+
 export type NitrogenBrief = {
   refNo: string;
+  /** The buyer's company, or empty. Never a person's name. */
   partner: string;
   week: string;
   date: string;
   disclaimer: string;
   requirement: [string, string][];
-  pulse: { market: string; view: string; signal: PulseSignal }[];
+  pulse: PulseRow[];
   position: string[];
-  products: { name: string; note: string; view: string }[];
+  /** `paragraphs` is the AI's commentary; desk-rules briefs use `note` and `view`. */
+  products: { name: string; note: string; view: string; paragraphs?: string[] }[];
+  /** Rates, currencies and policy behind the market. Older briefs and desk-rules briefs have none. */
+  macro?: string[];
   logistics: string[];
+  /** The desk's single call, shown in the AQ View box, and the principal risk to it. */
+  call?: string;
+  risk?: string;
   recommendations: { label: string; text: string }[];
 };
 
@@ -173,7 +192,9 @@ export function buildBrief(
   const products = a.products.length ? a.products : ["Urea"];
   const type = a.shipmentType || "Bulk";
   const months = [...a.arrivalMonths].sort().map((month) => monthLabel(month, "long"));
-  const partner = partnerName.trim() || "Partner";
+  // Only ever a company name; with none, the brief says "the buyer" rather than naming a person.
+  const partner = partnerName.trim();
+  const buyer = partner || "The buyer";
   const destination = [a.destinationCountry, a.destinationPort].filter(Boolean).join(", ") || "the stated destination";
   const tonnage = annual > 0 ? annual.toLocaleString("en-GB") : "";
 
@@ -185,16 +206,17 @@ export function buildBrief(
   const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? "s" : ""}`;
 
   const monthSpan = months.length === 0 ? "the stated window" : months.length === 1 ? months[0] : `${months[0]} to ${months[months.length - 1]}`;
+  const productList = products.length > 1 ? `${products.slice(0, -1).join(", ")} and ${products[products.length - 1]}` : products[0];
 
   const position = [
-    `${partner} is buying ${products.join(", ")} into ${destination}. The stated programme is ${tonnage ? `${tonnage} MT` : "an undisclosed volume"} per year, arriving ${monthSpan}. That profile shapes every recommendation in this brief.`,
+    `${buyer} is buying ${productList} into ${destination}. The stated programme is ${tonnage ? `${tonnage} t` : "an undisclosed volume"} per year, arriving ${monthSpan}. That profile shapes every recommendation in this brief.`,
     products.length > 1
       ? `The basket spreads risk across ${products.length} nitrogen sources. That is sensible. It lets the desk arbitrage origins and switch grades if one complex tightens.`
       : `${products[0]} is the core of the programme. Concentration keeps execution simple but ties the cost base to one complex.`,
     type === "Bulk"
-      ? `Bulk shipment into ${a.destinationPort || destination} implies port discharge and covered storage are in place. ${parcels ? `Against the stated programme the desk would structure ${plural(parcels, "parcel")} of roughly ${parcelSize} MT.` : "Parcel sizing follows once annual tonnage is confirmed."}`
+      ? `Bulk shipment into ${a.destinationPort || destination} implies port discharge and covered storage are in place. ${parcels ? `Against the stated programme the desk would structure ${plural(parcels, "parcel")} of roughly ${parcelSize} t.` : "Parcel sizing follows once annual tonnage is confirmed."}`
       : type === "Break Bulk"
-        ? `Break bulk suits the packing specification. ${parcels ? `The desk would structure ${plural(parcels, "parcel")} of roughly ${parcelSize} MT across ${monthSpan}.` : "Parcel sizing follows once annual tonnage is confirmed."}`
+        ? `Break bulk suits the packing specification. ${parcels ? `The desk would structure ${plural(parcels, "parcel")} of roughly ${parcelSize} t across ${monthSpan}.` : "Parcel sizing follows once annual tonnage is confirmed."}`
         : `Containerised arrival gives flexibility across ${monthSpan}. ${parcels ? `The programme divides into approximately ${plural(parcels, "container consignment")}.` : "Consignment sizing follows once annual tonnage is confirmed."}`,
     a.preferredOrigin
       ? `The stated origin preference, ${a.preferredOrigin}, is noted. The desk will quote it alongside at least one alternative origin so the freight-adjusted spread is visible before commitment.`
@@ -203,16 +225,17 @@ export function buildBrief(
 
   const read = (signal: PulseSignal) =>
     signal === "Firm" ? "a market to cover in tranches rather than chase" : signal === "Soft" ? "a market where patience is rewarded" : "a balanced market where timing matters more than direction";
+  const reads = products.map((name) => `${name} is ${read(PRODUCT_REF[name]?.signal ?? "Balanced")}`);
 
   return {
     refNo,
     partner,
     week: weekLabel(date),
     date: date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }),
-    disclaimer: `Prepared exclusively for ${partner}. Assessments are indicative and drawn from desk reference data. Prices are not quotations and do not constitute trading recommendations.`,
+    disclaimer: `Prepared exclusively for ${partner || "the member"}. Assessments are indicative and drawn from industry sources. Prices are not quotations and do not constitute trading recommendations.`,
     requirement: [
       ["Products", products.join(", ")],
-      ["Annual tonnage", tonnage ? `${tonnage} MT` : "Not stated"],
+      ["Annual tonnage", tonnage ? `${tonnage} t` : "Not stated"],
       ["Destination", destination],
       ["Preferred origin", a.preferredOrigin || "Open"],
       ["Preferred arrival months", months.length ? months.join(", ") : "Flexible"],
@@ -245,6 +268,7 @@ export function buildBrief(
         ? `Against the stated programme, the desk structures ${plural(parcels, "shipment")} across ${monthSpan}. This spreads arrival risk and smooths working capital.`
         : "Share annual tonnage and a preferred cargo size and the desk will structure a shipment schedule against them.",
     ],
+    call: `${reads.join("; ")}. Cover ${monthSpan} in ${parcels ? plural(parcels, "parcel") : "tranches"} rather than one purchase, and compare origins on a freight-adjusted, landed-cost basis before committing.`,
     recommendations: [
       {
         label: "What to do now",
@@ -261,6 +285,42 @@ export function buildBrief(
         text: "Do not concentrate the full annual programme into a single arrival month. Do not commit to an origin before seeing the freight-adjusted spread. Avoid open exposure past the first stated arrival month without a desk review.",
       },
     ],
+  };
+}
+
+/**
+ * Replaces each name, as a whole phrase and with any possessive, everywhere in the brief's wording, so no person is named
+ * in a report. The stand-in is capitalised at the start of a sentence.
+ */
+export function withoutNames(brief: NitrogenBrief, names: string[], standIn: string): NitrogenBrief {
+  const unique = [...new Set(names.map((name) => name.trim().replace(/\s+/g, " ")).filter((name) => name.length > 2))].sort((a, b) => b.length - a.length);
+  if (!unique.length) return brief;
+  const pattern = new RegExp(`\\b(?:${unique.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /g, "\\s+")).join("|")})\\b(['’]s)?`, "gi");
+  const scrub = (text: string) =>
+    text.replace(pattern, (_match, possessive: string | undefined, offset: number, whole: string) => {
+      const start = offset === 0 || /[.!?]\s*$/.test(whole.slice(0, offset));
+      return `${start ? standIn[0].toUpperCase() + standIn.slice(1) : standIn}${possessive ? "'s" : ""}`;
+    });
+  const partnerNamed = unique.some((name) => name.toLowerCase() === brief.partner.trim().toLowerCase());
+  return {
+    ...brief,
+    partner: partnerNamed ? "" : brief.partner,
+    disclaimer: scrub(brief.disclaimer),
+    requirement: brief.requirement.map(([name, value]) => [name, scrub(value)]),
+    pulse: brief.pulse.map((row) => ({
+      ...row,
+      market: scrub(row.market),
+      view: scrub(row.view),
+      ...(row.prior ? { prior: scrub(row.prior) } : {}),
+      ...(row.read ? { read: scrub(row.read) } : {}),
+    })),
+    position: brief.position.map(scrub),
+    products: brief.products.map((item) => ({ ...item, note: scrub(item.note), view: scrub(item.view), ...(item.paragraphs ? { paragraphs: item.paragraphs.map(scrub) } : {}) })),
+    ...(brief.macro ? { macro: brief.macro.map(scrub) } : {}),
+    logistics: brief.logistics.map(scrub),
+    ...(brief.call ? { call: scrub(brief.call) } : {}),
+    ...(brief.risk ? { risk: scrub(brief.risk) } : {}),
+    recommendations: brief.recommendations.map((item) => ({ label: scrub(item.label), text: scrub(item.text) })),
   };
 }
 

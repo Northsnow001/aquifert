@@ -271,7 +271,7 @@ export function DesignPanel({ initial, savedAt: initialSavedAt, reference }: { i
               <Text id="preparedBy" label="Prepared by" value={draft.preparedBy} onChange={(value) => set("preparedBy", value)} max={LIMITS.line} />
               <Text id="confidential" label="Confidentiality note" value={draft.confidential} onChange={(value) => set("confidential", value)} max={LIMITS.line} hint="Follows the week and date." />
               <Text id="disclaimer" label="Disclaimer strip" value={draft.disclaimer} onChange={(value) => set("disclaimer", value)} max={LIMITS.disclaimer} rows={3} hint="Leave empty to hide the strip." />
-              <Text id="viewLabel" label="Commentary box label *" value={draft.viewLabel} onChange={(value) => set("viewLabel", value)} max={LIMITS.label} hint="The tag on The position and Recommendations boxes." />
+              <Text id="viewLabel" label="Commentary box label *" value={draft.viewLabel} onChange={(value) => set("viewLabel", value)} max={LIMITS.label} hint="The tag on The call box, and on Recommendations when shown." />
             </div>
           </Panel>
 

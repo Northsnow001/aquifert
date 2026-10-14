@@ -51,11 +51,11 @@ export const DEFAULT_REFERENCE: DeskReference = {
     Container: { view: "Container indices remain elevated on main east-west lanes; booking lead times of three to four weeks are prudent.", signal: "Watch" },
   },
   shipping: {
-    Bulk: "Bulk vessel shipment is the lowest-cost mode per tonne and suits single-product parcels of 3,000 MT and up. It requires berth access, grab or conveyor discharge and covered bulk storage at destination. Demurrage risk is managed with clear laytime terms and an agreed discharge rate.",
+    Bulk: "Bulk vessel shipment is the lowest-cost mode per tonne and suits single-product parcels of 3,000 t and up. It requires berth access, grab or conveyor discharge and covered bulk storage at destination. Demurrage risk is managed with clear laytime terms and an agreed discharge rate.",
     "Break Bulk":
       "Break bulk shipment carries bagged or big-bag cargo in a geared vessel's holds. It suits multi-product consignments and ports without bulk handling. It adds stevedoring cost and weather-sensitive discharge, so arrival windows should carry buffer days.",
     Container:
-      "Containerised shipment gives the most flexible routing, the widest port coverage and the simplest onward distribution in smaller lots, at the highest per-tonne freight. It suits parcels under roughly 500 MT and buyers with limited storage.",
+      "Containerised shipment gives the most flexible routing, the widest port coverage and the simplest onward distribution in smaller lots, at the highest per-tonne freight. It suits parcels under roughly 500 t and buyers with limited storage.",
   },
   packing: {
     "Big Bags": "Big bags (500-1,000 kg) suit forklift handling and direct transfer to spreaders or blending lines. They keep port and store handling simple at moderate volumes.",

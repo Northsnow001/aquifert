@@ -3,8 +3,8 @@ import "server-only";
 import { generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
 import type { TelexAccess } from "@/lib/content-types";
 import { briefRequest, KNOWLEDGE_RULES, mergeReply, OUTPUT_CONTRACT, parseReply } from "@/lib/nitrogen/ai-brief";
-import { buildBrief, type NitrogenAnswers, type NitrogenBrief } from "@/lib/nitrogen/engine";
-import { deskKnowledge } from "@/lib/nitrogen/knowledge";
+import { buildBrief, withoutNames, type NitrogenAnswers, type NitrogenBrief } from "@/lib/nitrogen/engine";
+import { deskAuthors, deskKnowledge, recentDeskNotes } from "@/lib/nitrogen/knowledge";
 import type { BriefContent } from "@/lib/nitrogen/template";
 
 export type BriefWriter = "ai" | "desk";
@@ -44,14 +44,24 @@ export async function writeBrief(
   if (!content.aiEnabled) return desk();
   if (!aiAvailable()) return desk("AI writing is on but the Gemini key is not set, so the desk text was used.");
 
-  const knowledge = content.useKnowledge ? await deskKnowledge(answers, access ?? ["public"]) : null;
-  const used = knowledge?.passages.length ? { knowledge: knowledge.sources } : knowledge?.problem ? { knowledgeNote: knowledge.problem } : {};
+  const allowed = access ?? ["public"];
+  const [knowledge, deskNotes] = content.useKnowledge
+    ? await Promise.all([deskKnowledge(answers, allowed), recentDeskNotes(allowed).catch(() => ({ notes: [], sources: [] }))])
+    : [null, null];
+  const notes = deskNotes?.notes ?? [];
+  const passages = knowledge?.passages ?? [];
+  const sources = [...(deskNotes?.sources ?? []), ...(knowledge?.sources ?? [])];
+  const used = sources.length
+    ? { knowledge: sources, ...(knowledge?.problem && !passages.length ? { knowledgeNote: knowledge.problem } : {}) }
+    : knowledge?.problem
+      ? { knowledgeNote: knowledge.problem }
+      : {};
 
   try {
     const { text } = await generateText({
       model: content.model,
-      system: [content.prompt.trim(), OUTPUT_CONTRACT, knowledge?.passages.length ? KNOWLEDGE_RULES : ""].filter(Boolean).join("\n\n"),
-      turns: [{ role: "user", text: briefRequest(answers, draft, content.reference, knowledge?.passages) }],
+      system: [content.prompt.trim(), OUTPUT_CONTRACT, notes.length || passages.length ? KNOWLEDGE_RULES : ""].filter(Boolean).join("\n\n"),
+      turns: [{ role: "user", text: briefRequest(answers, draft, content.reference, passages, notes) }],
       maxOutputTokens: 8192,
       timeoutMs: AI_TIMEOUT_MS,
       json: true,
@@ -60,7 +70,8 @@ export async function writeBrief(
     if (!reply) return { ...desk("The AI reply could not be read, so the desk text was used."), ...used };
     const { brief, parts } = mergeReply(draft, reply);
     if (!parts) return { ...desk("The AI reply had nothing usable, so the desk text was used."), ...used };
-    return { brief, writer: "ai", model: content.model, ...used, ms: Date.now() - started };
+    const authors = await deskAuthors().catch(() => []);
+    return { brief: withoutNames(brief, authors, "the desk"), writer: "ai", model: content.model, ...used, ms: Date.now() - started };
   } catch (error) {
     console.error("[nitrogen-report] AI writing failed, using the desk text.", error);
     return { ...desk(error instanceof Error ? `AI writing failed (${error.message}), so the desk text was used.` : "AI writing failed, so the desk text was used."), ...used };

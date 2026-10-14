@@ -101,33 +101,35 @@ test("the nitrogen brief follows the AQ View format and sizes parcels to the pre
       ["Freight / Break Bulk", "Balanced"],
     ],
   );
-  assert.match(brief.position[2], /3 parcels of roughly 400 MT across November 2026 to January 2027/);
-  assert.deepEqual(brief.requirement.at(-1), ["Preferred cargo size", "400 MT"]);
+  assert.match(brief.position[2], /3 parcels of roughly 400 t across November 2026 to January 2027/);
+  assert.deepEqual(brief.requirement.at(-1), ["Preferred cargo size", "400 t"]);
   assert.ok(!brief.requirement.some(([name]) => /warehouse/i.test(name)));
   assert.deepEqual(
     brief.recommendations.map((item) => item.label),
     ["What to do now", "What to watch", "What to avoid"],
   );
   const md = briefMarkdown(brief);
-  assert.match(md, /^# AQ VIEW SPECIAL EDITION \| Nitrogen Brief$/m);
+  assert.match(md, /^# AQ VIEW SPECIAL EDITION \| NITROGEN BRIEF$/m);
   assert.match(md, /^\*\*Harvest Co Partnership Intelligence\*\*/m);
-  assert.match(md, /\| Annual tonnage \| 1,200 MT \|/);
+  assert.deepEqual(brief.requirement[1], ["Annual tonnage", "1,200 t"]);
   assert.doesNotMatch(md, /—|!|…/);
-  assert.doesNotMatch(md, /\d t\b/);
-  assert.equal(buildBrief({ ...answers, cargoSize: "", shipmentType: "Container" }, { refNo: "NR-1" }).partner, "Partner");
+  assert.doesNotMatch(md, /\d MT\b/);
+  const unnamed = buildBrief({ ...answers, cargoSize: "", shipmentType: "Container" }, { refNo: "NR-1" });
+  assert.equal(unnamed.partner, "");
+  assert.match(unnamed.position[0], /^The buyer is buying Urea and CAN/);
   assert.match(buildBrief({ ...answers, cargoSize: "", shipmentType: "Container" }, { refNo: "NR-1" }).position[2], /approximately 4 container consignments/);
   assert.deepEqual(buildBrief({ ...answers, cargoSize: "" }, { refNo: "NR-1" }).requirement.at(-1), ["Preferred cargo size", "Flexible"]);
-  assert.match(buildBrief({ ...answers, cargoSize: "300-600" }, { refNo: "NR-1" }).position[2], /2 parcels of roughly 600 MT/);
-  assert.match(buildBrief({ ...answers, cargoSize: "", warehouseCapacity: "400" }, { refNo: "NR-1" }).position[2], /3 parcels of roughly 400 MT/);
+  assert.match(buildBrief({ ...answers, cargoSize: "300-600" }, { refNo: "NR-1" }).position[2], /2 parcels of roughly 600 t/);
+  assert.match(buildBrief({ ...answers, cargoSize: "", warehouseCapacity: "400" }, { refNo: "NR-1" }).position[2], /3 parcels of roughly 400 t/);
   assert.match(buildBrief({ ...answers, packing: "In bulk" }, { refNo: "NR-1" }).logistics[1], /Unpacked cargo/);
 });
 
-test("a preferred cargo size reads as written, in MT", () => {
+test("a preferred cargo size reads as written, in tonnes", () => {
   assert.equal(cargoSizeTonnes("5,000-10,000"), 10000);
   assert.equal(cargoSizeTonnes("about 6000"), 6000);
   assert.equal(cargoSizeTonnes(""), 0);
-  assert.equal(cargoSizeLabel("5000"), "5,000 MT");
-  assert.equal(cargoSizeLabel("5,000-10,000"), "5,000-10,000 MT");
+  assert.equal(cargoSizeLabel("5000"), "5,000 t");
+  assert.equal(cargoSizeLabel("5,000-10,000"), "5,000-10,000 t");
   assert.equal(cargoSizeLabel("8,000 mt"), "8,000 mt");
   assert.equal(cargoSizeLabel("  "), "");
 });
