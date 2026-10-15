@@ -38,10 +38,16 @@ test("supplier codes are matched however they are typed", () => {
   assert.equal(normaliseSupplierCode(42), "");
 });
 
+test("the supplier code is optional and a malformed one is dropped", () => {
+  for (const code of [undefined, "", "SUP/002"]) {
+    const result = parseSupplierRegistration({ ...valid, code }, now);
+    assert.ok(result.ok, String(code));
+    assert.equal(result.value.code, "");
+  }
+});
+
 test("missing or invalid answers are refused with a reason", () => {
   const cases: [Record<string, unknown>, RegExp][] = [
-    [{ ...valid, code: "" }, /supplier code/],
-    [{ ...valid, code: "SUP/002" }, /supplier code/],
     [{ ...valid, email: "not-an-email" }, /email/],
     [{ ...valid, company: " " }, /company/],
     [{ ...valid, products: ["Caviar"] }, /product/],

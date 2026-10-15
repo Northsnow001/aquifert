@@ -1,15 +1,15 @@
 export const SUPPLIER_PRODUCTS = [
-  { value: "Urea (granular)", zh: "大颗粒尿素" },
-  { value: "Urea (prilled)", zh: "小颗粒尿素" },
-  { value: "CAN", zh: "硝酸铵钙" },
-  { value: "Ammonium sulphate", zh: "硫酸铵" },
-  { value: "Ammonium nitrate", zh: "硝酸铵" },
-  { value: "UAN", zh: "尿素硝铵溶液" },
-  { value: "Ammonia", zh: "液氨" },
-  { value: "NPK", zh: "复合肥" },
-  { value: "DAP", zh: "磷酸二铵" },
-  { value: "MAP", zh: "磷酸一铵" },
-  { value: "Other", zh: "其他" },
+  "Urea (granular)",
+  "Urea (prilled)",
+  "CAN",
+  "Ammonium sulphate",
+  "Ammonium nitrate",
+  "UAN",
+  "Ammonia",
+  "NPK",
+  "DAP",
+  "MAP",
+  "Other",
 ] as const;
 
 export const SUPPLIER_CHANNELS = ["wechat", "email"] as const;
@@ -31,7 +31,7 @@ export type SupplierRegistration = {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const CODE = /^[A-Z0-9-]{3,20}$/;
-const PRODUCT_VALUES = new Set<string>(SUPPLIER_PRODUCTS.map((p) => p.value));
+const PRODUCT_VALUES = new Set<string>(SUPPLIER_PRODUCTS);
 
 const text = (v: unknown, max = 200) => (typeof v === "string" ? v.trim().replace(/\s+/g, " ").slice(0, max) : "");
 
@@ -42,7 +42,9 @@ export function parseSupplierRegistration(
   body: Record<string, unknown>,
   now = new Date(),
 ): { ok: true; value: SupplierRegistration } | { ok: false; error: string } {
-  const code = normaliseSupplierCode(body.code);
+  // Optional: only present when the supplier opened a personal link from the invite email.
+  const rawCode = normaliseSupplierCode(body.code);
+  const code = CODE.test(rawCode) ? rawCode : "";
   const email = text(body.email, 320).toLowerCase();
   const company = text(body.company);
   const country = text(body.country, 100);
@@ -53,7 +55,6 @@ export function parseSupplierRegistration(
     : [];
   const channel = SUPPLIER_CHANNELS.find((c) => c === body.channel);
 
-  if (!CODE.test(code)) return { ok: false, error: "Enter the supplier code from our email, for example SUP-001." };
   if (!EMAIL.test(email)) return { ok: false, error: "Enter a valid email address." };
   if (!company) return { ok: false, error: "Enter your company name." };
   if (!country) return { ok: false, error: "Enter your country." };
