@@ -203,8 +203,11 @@ export default function VerifyEmail() {
           {pendingVerify ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Verify email"}
         </Button>
 
-        <p className="mt-5 text-center text-[13px] text-slate-600">
-          Didn&apos;t get a code? Check your junk email, or{" "}
+        <p className="mt-5 text-center text-[13px] leading-relaxed text-slate-600">
+          If the code hasn&apos;t arrived, check your junk or spam folder. A security filter on your inbox can place it there to protect you.
+        </p>
+        <p className="mt-3 text-center text-[13px] text-slate-600">
+          Still waiting?{" "}
           <button
             type="button"
             onClick={resend}
