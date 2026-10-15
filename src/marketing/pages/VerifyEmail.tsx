@@ -204,7 +204,7 @@ export default function VerifyEmail() {
         </Button>
 
         <p className="mt-5 text-center text-[13px] text-slate-600">
-          Didn&apos;t get a code?{" "}
+          Didn&apos;t get a code? Check your junk email, or{" "}
           <button
             type="button"
             onClick={resend}
