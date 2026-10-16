@@ -2,13 +2,11 @@
 
 import { useEffect, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
-import { ArrowRight, CalendarClock, Check, CheckCircle2, CircleAlert, ListChecks, PhoneCall, Send, X, Zap } from "lucide-react";
+import { CalendarClock, Check, CheckCircle2, CircleAlert, ListChecks, PhoneCall, Send, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { markZeroCallBooked, registerZeroInterest } from "@/app/hub/order-desk/zero-actions";
 import { areaClass, btnSecondary, btnSubmit, dialogBody, dialogFooter, fieldClass, labelClass, noticeError } from "@/components/app/form";
 import { CalendlyFrame } from "@/components/hub/calendly-frame";
-import { MEMBERSHIP_OFFERS, offerState } from "@/lib/aq-modules/membership";
 import { calendlyLink } from "@/lib/calendly";
 import { ZERO_PRODUCTS } from "@/lib/desk-settings/types";
 import type { Plan } from "@/lib/session-shared";
@@ -28,14 +26,15 @@ const INTENTS: Array<{ id: ZeroIntent; title: string; detail: string; icon: type
 export function ZeroPanel({
   name,
   email,
-  plan,
-  admin,
+  plan: _plan,
+  admin: _admin,
   success,
   registered,
   compare,
 }: {
   name: string;
   email: string;
+  /** Kept for callers; waitlist cards always show register interest. */
   plan: Plan;
   admin: boolean;
   success: string;
@@ -93,26 +92,24 @@ export function ZeroPanel({
 
       <div className="aq-stagger grid gap-5 pt-3 sm:grid-cols-2">
         {ZERO_PROGRAMMES.map((programme) => {
-          const offer = MEMBERSHIP_OFFERS.find((item) => item.id === programme.id);
-          const state = offer ? offerState(offer, { plan, admin }) : "open";
-          const owned = state !== "open";
-          const mine = !owned && done?.programme === programme.id;
+          // Sales / waitlist surface: never deep-link into the live product from these cards,
+          // even for admins or members whose plan already includes the programme.
+          const mine = done?.programme === programme.id;
           const analytics = programme.id === "analytics";
-          const frame =
-            mine || owned
-              ? "ring-2 ring-[#2fa865]"
-              : programme.popular
-                ? "border-2 border-teal-500 shadow-[0_18px_40px_-22px_rgb(79_127_114/0.7)]"
-                : analytics
-                  ? "border-2 border-navy-400"
-                  : "";
-          const badge = state === "current" ? "Current plan" : state === "included" ? "Included in your plan" : mine ? "Registered" : programme.popular ? "Most popular" : null;
+          const frame = mine
+            ? "ring-2 ring-[#2fa865]"
+            : programme.popular
+              ? "border-2 border-teal-500 shadow-[0_18px_40px_-22px_rgb(79_127_114/0.7)]"
+              : analytics
+                ? "border-2 border-navy-400"
+                : "";
+          const badge = mine ? "Registered" : programme.popular ? "Most popular" : null;
           return (
             <section key={programme.id} aria-label={programme.name} className={`aq-card relative flex flex-col p-6 transition-transform duration-200 hover:-translate-y-0.5 ${frame}`}>
               {badge ? (
                 <span
                   className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[11.5px] font-bold uppercase tracking-[0.08em] text-white shadow-sm ${
-                    mine || owned ? "bg-[#2fa865]" : "bg-teal-500"
+                    mine ? "bg-[#2fa865]" : "bg-teal-500"
                   }`}
                 >
                   {badge}
@@ -136,30 +133,20 @@ export function ZeroPanel({
                 ))}
               </ul>
               <div className="mt-auto pt-6">
-                {owned ? (
-                  <Link
-                    href="/hub/analytics"
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#2fa865] bg-[#f1faf4] px-4 py-2 text-center text-[15px] font-semibold leading-snug text-[#1f7a45] no-underline transition hover:bg-[#e3f5ea] active:scale-[0.98]"
-                  >
-                    Open {programme.name}
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setDialog(programme.id)}
-                    className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-center text-[15px] font-semibold leading-snug transition active:scale-[0.98] ${
-                      mine
-                        ? "border border-[#2fa865] bg-white text-[#1f7a45] hover:bg-[#f1faf4]"
-                        : programme.popular
-                          ? "bg-teal-500 text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] hover:bg-teal-600"
-                          : "bg-navy-600 text-white shadow-[0_8px_18px_-10px_rgb(37_79_118/0.9)] hover:bg-navy-700"
-                    }`}
-                  >
-                    {mine ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
-                    {mine ? "Update my details" : `Register for ${programme.name}`}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setDialog(programme.id)}
+                  className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-center text-[15px] font-semibold leading-snug transition active:scale-[0.98] ${
+                    mine
+                      ? "border border-[#2fa865] bg-white text-[#1f7a45] hover:bg-[#f1faf4]"
+                      : programme.popular
+                        ? "bg-teal-500 text-white shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] hover:bg-teal-600"
+                        : "bg-navy-600 text-white shadow-[0_8px_18px_-10px_rgb(37_79_118/0.9)] hover:bg-navy-700"
+                  }`}
+                >
+                  {mine ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
+                  {mine ? "Update my details" : `Register for ${programme.name}`}
+                </button>
               </div>
             </section>
           );

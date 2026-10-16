@@ -61,8 +61,9 @@ export function MembershipBoard({
       <div className="@container">
       <div className="aq-stagger grid gap-5 pt-3 @xl:grid-cols-2 @5xl:grid-cols-4">
         {MEMBERSHIP_OFFERS.map((offer) => {
-          const state = stateOf(offer);
           const analytics = offer.plan === "growth";
+          // AQ Analytics stays on the waitlist sales surface — never show as already unlocked.
+          const state = analytics ? "open" : stateOf(offer);
           const shortName = offer.tier ? offer.name.replace(/^AQ Zero /, "") : offer.name;
           const frame =
             state !== "open"
@@ -105,11 +106,11 @@ export function MembershipBoard({
                 ))}
               </ul>
               <div className="mt-auto pt-6">
-                {state === "open" ? (
+                {state === "open" || analytics ? (
                   <button
                     type="button"
                     onClick={() => setCheckout(offer.id)}
-                    aria-label={t(action, { name: offer.name })}
+                    aria-label={analytics ? t("mem.select", { name: offer.name }) : t(action, { name: offer.name })}
                     className={`${buttonBase} text-white ${
                       offer.popular
                         ? "bg-teal-500 shadow-[0_8px_18px_-10px_rgb(79_127_114/0.9)] hover:bg-teal-600"
@@ -119,11 +120,6 @@ export function MembershipBoard({
                     {t(action, { name: shortName })}
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                   </button>
-                ) : analytics ? (
-                  <Link href="/hub/analytics" className={`${buttonBase} border border-[#2fa865] bg-[#f1faf4] text-[#1f7a45] no-underline hover:bg-[#e3f5ea]`}>
-                    {t("mem.open", { name: offer.name })}
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                  </Link>
                 ) : (
                   <p className={`${buttonBase} border border-[#2fa865] bg-[#f1faf4] text-[#1f7a45]`}>
                     <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
@@ -137,7 +133,7 @@ export function MembershipBoard({
       </div>
       </div>
 
-      {checkout && zero && checkout !== "analytics" ? (
+      {checkout && zero ? (
         <ZeroRegisterDialog
           key={checkout}
           initial={checkout}

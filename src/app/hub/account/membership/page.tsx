@@ -66,7 +66,8 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
 
   let initialOffer: MembershipOffer["id"] | null = null;
   if (isPlan(planParam) && !open) {
-    if (planParam === "growth" && user.plan === "core" && !admin) initialOffer = "analytics";
+    // Always open the register-interest dialog for AQ Analytics deep links (sales surface).
+    if (planParam === "growth") initialOffer = "analytics";
     if (planParam === "enterprise" && user.plan !== "enterprise") initialOffer = isTier(tierParam) ? tierParam : "harvest";
   }
 
