@@ -45,7 +45,7 @@ const ALL_SECTIONS: GuideSection[] = [
     summary: "Where everything lives and the fastest ways to reach it.",
     aliases: ["guide"],
     body: [
-      "AQ ONE in the sidebar holds everything included with every account: Hub, Library - Reports & Analysis, Aquibot Trader AI, AQ View, TELEX, Nitrogen Report, Freight Calculator, Netback, AQ Trader Tools, Buy Fertilizer and Weekly Market Call. On AQ Analytics and AQ ZERO your Dashboard sits above them. Help holds the User Guide and Contact Us, and You holds your account. Hover any item and tap the small ⓘ for a one-line explanation.",
+      "AQ ONE in the sidebar holds everything included with every account: Hub, Library - Reports & Analysis, Aquibot Trader AI, AQ View, TELEX, Nitrogen Report, Freight Calculator, Netback, AQ Trader Tools, Buy Fertiliser and Weekly Market Call. On AQ Analytics and AQ ZERO your Dashboard sits above them. Help holds the User Guide and Contact Us, and You holds your account. Hover any item and tap the small ⓘ for a one-line explanation.",
     ],
     points: [
       { term: "Search", text: "Press Ctrl K (⌘ K on Mac) or tap the search pill to jump to any page or ask Aquibot directly." },
@@ -142,7 +142,7 @@ const ALL_SECTIONS: GuideSection[] = [
       "Answer six questions on one page: destination and products, annual tonnage and arrival months, and shipment type and packing. The brief sets out your supply requirement, a market pulse for each product and freight, the desk's position, a shipment plan sized to your preferred cargo size, and what to do now, watch and avoid.",
       "Every report is saved with a reference number under your reports, where you can reopen it, download the branded PDF or print it. Each plan includes a number of reports per calendar month, shown on the page and on Plan & Usage.",
     ],
-    tip: "Ready to buy? Each report links straight to Buy Fertilizer with the product filled in.",
+    tip: "Ready to buy? Each report links straight to Buy Fertiliser with the product filled in.",
   },
   {
     id: "freight",
@@ -183,7 +183,7 @@ const ALL_SECTIONS: GuideSection[] = [
   },
   {
     id: "order",
-    title: "Buy Fertilizer",
+    title: "Buy Fertiliser",
     icon: ShoppingCart,
     summary: "Register for Aquifert Zero, or send the trading desk an enquiry and get a quote back.",
     href: "/hub/order-desk",
@@ -197,7 +197,7 @@ const ALL_SECTIONS: GuideSection[] = [
     id: "call",
     title: "Weekly Market Call",
     icon: PhoneCall,
-    summary: "A free live call with the desk on fertilizer prices and freight.",
+    summary: "A free live call with the desk on fertiliser prices and freight.",
     href: "/hub/community-call",
     body: [
       "The desk walks through the market and freight, then answers members' questions. Registration is free on every plan. Press Register for the weekly call, add your details on the registration page, and your confirmation email has the joining link.",
@@ -210,7 +210,7 @@ const ALL_SECTIONS: GuideSection[] = [
     icon: Mail,
     summary: "Four ways to reach a person on the desk.",
     href: "/hub/contact",
-    body: ["Start a WhatsApp chat, book a meeting in the calendar, send a message, or open Buy Fertilizer when you are ready to buy. When you arrive from a locked page or Membership, the topic is filled in for you."],
+    body: ["Start a WhatsApp chat, book a meeting in the calendar, send a message, or open Buy Fertiliser when you are ready to buy. When you arrive from a locked page or Membership, the topic is filled in for you."],
   },
   {
     id: "plans",
@@ -251,7 +251,7 @@ const ALL_SECTIONS: GuideSection[] = [
     title: "AQ Signal",
     icon: Activity,
     hidden: true,
-    summary: "Rolling price windows on benchmark fertilizer and freight prices.",
+    summary: "Rolling price windows on benchmark fertiliser and freight prices.",
     href: "/hub/signal",
     body: [
       "Pick a 7, 30, 60 or 90-day window. Each card compares the first and latest price in the window, with the change, the high and the low and a one-line summary. The bar shows where today's price sits between the window's low and high. A move under half a percent counts as flat.",

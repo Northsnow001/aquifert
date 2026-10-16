@@ -38,15 +38,15 @@ When processing user queries, apply these vocabulary interpretation rules to hel
 - Do not reinterpret a direct port question as a freight enquiry just because a freight board mentions that port as an origin or destination.
 
 ### Manufacturing & Production Vocabulary
-- **Plant operations/Process** = Granulation, prilling, synthesis, or reaction steps in fertilizer production
+- **Plant operations/Process** = Granulation, prilling, synthesis, or reaction steps in fertiliser production
 - **Granule/Granulation** = Process of forming larger particles; **Prilled/Prilling** = Cooling molten material into small beads
-- **Synthesis** = Chemical reaction to create the fertilizer compound
-- **Reaction** = Chemical conversion of raw materials into fertilizer
+- **Synthesis** = Chemical reaction to create the fertiliser compound
+- **Reaction** = Chemical conversion of raw materials into fertiliser
 - **Capacity/Production volume** = Tonnes per month or year a plant can manufacture
 
 ### Product & Grade Terminology
 - **AN** = Ammonium Nitrate (34% N); **DN/CAN** = Calcium Ammonium Nitrate (safer alternative)
-- **Urea** = Most traded N fertilizer (46% N)
+- **Urea** = Most traded N fertiliser (46% N)
 - **DAP** = Di-Ammonium Phosphate (18-46-0, most traded P product)
 - **MAP** = Mono-Ammonium Phosphate (11-52-0, higher P)
 - **MOP** = Muriate of Potash (KCl, ~60% K₂O)
@@ -76,15 +76,15 @@ When processing user queries, apply these vocabulary interpretation rules to hel
 ---`;
 
 const ACADEMY_PRODUCTS: [string, string][] = [
-  ["Ammonia (NH3)", "Building block for all N fertilizers. Made from natural gas via steam methane reforming + Haber-Bosch process. Stored at -33°C. 32-38 MMBtu gas per tonne."],
-  ["Urea (46% N)", "0.58t NH3 + 0.76t CO₂ per tonne. NH3 + CO₂ under pressure → ammonium carbamate → dehydrated to urea melt. Most traded N fertilizer. CO₂ is byproduct of reforming."],
+  ["Ammonia (NH3)", "Building block for all N fertilisers. Made from natural gas via steam methane reforming + Haber-Bosch process. Stored at -33°C. 32-38 MMBtu gas per tonne."],
+  ["Urea (46% N)", "0.58t NH3 + 0.76t CO₂ per tonne. NH3 + CO₂ under pressure → ammonium carbamate → dehydrated to urea melt. Most traded N fertiliser. CO₂ is byproduct of reforming."],
   ["Nitric Acid (HNO₃)", "0.29t NH3 per tonne 100% HNO₃. NH3 catalytic oxidation via Ostwald process. Key intermediate for AN production."],
   ["Ammonium Nitrate (AN 34% N)", "0.436t NH3 + 0.78t HNO₃ per tonne. NH3 + HNO₃ neutralisation → evaporation → prilling. High N, fast-acting."],
-  ["UAN (32% N)", "Liquid fertilizer. Urea dissolved in water + ammonium nitrate solution blended to give 32% N liquid. Applied by sprayer or injector."],
+  ["UAN (32% N)", "Liquid fertiliser. Urea dissolved in water + ammonium nitrate solution blended to give 32% N liquid. Applied by sprayer or injector."],
   ["Ammonium Sulphate (21% N + 24% S)", "0.26t NH3 + 0.75t H₂SO₄ per tonne. NH3 reacted with sulphuric acid. Often a byproduct so cheap vs cost-of-production."],
   ["Sulphuric Acid (H₂SO₄)", "0.33t sulphur per tonne H₂SO₄. Sulphur burned → SO₂ → catalytic conversion to SO₃ → absorbed in water. Critical intermediate for all phosphate products."],
   ["Phosphoric Acid (H₃PO₄)", "3.6t rock (63% BPL) + 2.8t H₂SO₄ per tonne 100% P₂O₅. Rock + sulphuric acid wet process, filtration to remove gypsum."],
-  ["SSP (20% P₂O₅ + 11% S)", "0.71t rock + 0.21t sulphur per tonne. Rock + H₂SO₄ → calcium superphosphate. Cheapest P fertilizer."],
+  ["SSP (20% P₂O₅ + 11% S)", "0.71t rock + 0.21t sulphur per tonne. Rock + H₂SO₄ → calcium superphosphate. Cheapest P fertiliser."],
   ["TSP (46% P₂O₅)", "1.44t rock + 0.47t sulphur equivalent per tonne. Rock reacted with phosphoric acid (not H₂SO₄). Contains only P — no sulphur or nitrogen."],
   ["MAP (11-52-0)", "0.145t NH₃ + 1.91t rock + 0.475t sulphur per tonne. Phosphoric acid + ammonia (excess acid). High P, lower N."],
   ["DAP (18-46-0)", "0.219t NH₃ + 1.72t rock + 0.427t sulphur per tonne. Phosphoric acid + excess ammonia. Most traded P product."],
@@ -99,20 +99,20 @@ const GLOSSARY: [string, string][] = [
   ["DAP", "Di-Ammonium Phosphate (18-46-0). Most traded phosphate. Key suppliers: Morocco (OCP), China, Saudi Arabia."],
   ["MAP", "Mono-Ammonium Phosphate (11-52-0). Higher P₂O₅ than DAP. Russia is the leading global exporter."],
   ["TSP", "Triple Superphosphate (0-46-0). High P concentration. Made from rock + phosphoric acid."],
-  ["SSP", "Single Superphosphate (0-20-0 + 11% S). Cheapest phosphate fertilizer. Contains sulphur."],
-  ["Urea", "46% N. Most traded nitrogen fertilizer. Key exporters: Russia, China, Middle East, Egypt, Indonesia."],
+  ["SSP", "Single Superphosphate (0-20-0 + 11% S). Cheapest phosphate fertiliser. Contains sulphur."],
+  ["Urea", "46% N. Most traded nitrogen fertiliser. Key exporters: Russia, China, Middle East, Egypt, Indonesia."],
   ["UAN", "Urea Ammonium Nitrate — 32% or 28% N liquid. Blend of urea and AN solutions."],
   ["AN", "Ammonium Nitrate — 34% N solid, fast-acting. Also used in explosives industry."],
   ["CAN", "Calcium Ammonium Nitrate — 26-28% N. AN blended with calcium carbonate. Safer to handle."],
   ["Amsul", "Ammonium Sulphate — 21% N + 24% S. Often a byproduct. Good sulphur source."],
-  ["NH₃", "Ammonia — building block for all N fertilizers. Made from gas via Haber-Bosch. Traded at -33°C."],
+  ["NH₃", "Ammonia — building block for all N fertilisers. Made from gas via Haber-Bosch. Traded at -33°C."],
   ["BPL", "Bone Phosphate of Lime — measure of phosphate rock quality. 63% BPL = ~29% P₂O₅."],
   ["MMBtu", "Million British Thermal Units — standard unit for natural gas pricing. ~28 cubic metres of gas."],
   ["Phosphoric Acid (H₃PO₄)", "Made from rock + H₂SO₄ (wet process). Intermediate for DAP, MAP, TSP."],
-  ["H₂SO₄", "Sulphuric Acid — made by burning elemental sulphur. Essential for all phosphate fertilizer production."],
-  ["TTF", "Dutch gas trading hub. The benchmark price for European fertilizer producers."],
+  ["H₂SO₄", "Sulphuric Acid — made by burning elemental sulphur. Essential for all phosphate fertiliser production."],
+  ["TTF", "Dutch gas trading hub. The benchmark price for European fertiliser producers."],
   ["Henry Hub", "US natural gas benchmark (Louisiana). Typically cheaper than TTF."],
-  ["Granular vs Prilled", "Two forms of solid fertilizer. Granules are harder and more uniform."],
+  ["Granular vs Prilled", "Two forms of solid fertiliser. Granules are harder and more uniform."],
 ];
 
 const ANSWER_RULES = `## ANSWERING RULES
@@ -129,7 +129,7 @@ function technicalGuidance(retrieval: RetrievalResult) {
     return `COMPOUND-TECHNICAL-MODE GUIDANCE:
 - Answer in two clearly labeled parts: **Specifications** first, then **Production**.
 - Part 1 — Specifications: Prefer the AquiFert Product Specifications document for composition, grades, purity, and chemical specs.
-- Part 2 — Production: Prefer the UNIDO Fertilizer Manual for manufacturing methodology, process steps, and production chemistry.
+- Part 2 — Production: Prefer the UNIDO Fertiliser Manual for manufacturing methodology, process steps, and production chemistry.
 - Give direct product-specific facts first. Do not lead with generic explanations of what a specification typically includes.
 - If a source lacks exact detail for a part, state the gap in one short sentence and give the closest supported fact. Do not pad with generic textbook categories.
 - Do not pivot to price files or market data.
@@ -137,7 +137,7 @@ function technicalGuidance(retrieval: RetrievalResult) {
   }
   return `TECHNICAL-MODE GUIDANCE:
 - For specification questions (composition, grades, purity, chemical specs): prefer the AquiFert Product Specifications document first.
-- For process/manufacturing questions (how something is made, production methods): prefer UNIDO Fertilizer Manual content first.
+- For process/manufacturing questions (how something is made, production methods): prefer UNIDO Fertiliser Manual content first.
 - Give direct product-specific facts first. Do not lead with generic explanations of what a specification typically includes.
 - If a source lacks exact detail, state the gap in one short sentence, then give the closest supported fact. Do not pad with generic textbook categories.
 - Do not pivot to price files or market data unless the user explicitly asked for pricing or market context.

@@ -43,7 +43,7 @@ export default function WhyAquifert({ content }: { content: SiteContent["why"] }
       <Seo
         title={seo.title}
         description={seo.description}
-        keywords="why aquifert, fertilizer trading company UK, fertilizer supplier due diligence, sustainable fertilizer sourcing, agricultural supply chain expertise"
+        keywords="why aquifert, fertiliser trading company UK, fertiliser supplier due diligence, sustainable fertiliser sourcing, agricultural supply chain expertise"
         path="/why-aquifert"
         image={hero.image || undefined}
         jsonLd={jsonLd}

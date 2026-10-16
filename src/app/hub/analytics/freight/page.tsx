@@ -32,8 +32,8 @@ export default async function FreightAnalyticsPage({ searchParams }: { searchPar
       <HubPageHeader
         eyebrow="AQ Analytics"
         title="Freight Analytics"
-        description="Open fertilizer enquiries, lane benchmarks and the desk's read on freight and vessel supply, so your timing stops being guesswork."
-        tip="Fixtures are open freight enquiries the desk is tracking. Lane benchmarks are desk freight rates per tonne on the major fertilizer routes. Use the Freight Calculator to price a specific voyage."
+        description="Open fertiliser enquiries, lane benchmarks and the desk's read on freight and vessel supply, so your timing stops being guesswork."
+        tip="Fixtures are open freight enquiries the desk is tracking. Lane benchmarks are desk freight rates per tonne on the major fertiliser routes. Use the Freight Calculator to price a specific voyage."
         actions={
           <Link href="/hub/freight-calculator" className={`${btnPrimary} h-10 px-4 text-[14.5px]`}>
             <Calculator className="h-4 w-4" aria-hidden /> Freight Calculator

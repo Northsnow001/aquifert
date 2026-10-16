@@ -144,17 +144,17 @@ export default function Login() {
       <div className="relative hidden w-1/2 overflow-hidden bg-navy-900 lg:block">
         <img
           src="/media/hero-ship-containers.jpg"
-          alt="Container ship loaded with fertilizer cargo at port"
+          alt="Container ship loaded with fertiliser cargo at port"
           className="absolute inset-0 h-full w-full object-cover opacity-70"
         />
         <div className="absolute inset-0 bg-navy-950/45" aria-hidden />
         <div className="relative flex h-full flex-col justify-end p-12">
           <h2 className="max-w-md text-3xl font-bold leading-tight text-white">
-            Fertilizer trading, <span className="text-teal-300">reimagined.</span>
+            Fertiliser trading, <span className="text-teal-300">reimagined.</span>
           </h2>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-white/70">
             Cost-to-cost sourcing, AI-drafted quotes, live container tracking and market
-            intelligence, one command center for the global fertilizer trade.
+            intelligence, one command center for the global fertiliser trade.
           </p>
           <p className="mt-8 text-[11px] text-white/40">© {new Date().getFullYear()} Aquifert Ltd · London</p>
         </div>

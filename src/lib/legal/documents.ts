@@ -36,14 +36,14 @@ export const LEGAL_DOCS: LegalDoc[] = [
   {
     slug: "terms",
     title: "Terms & Conditions of Trading",
-    summary: "The contractual terms that govern requests, quotations, orders and deliveries of fertilizer and related products traded through the Aquifert platform.",
+    summary: "The contractual terms that govern requests, quotations, orders and deliveries of fertiliser and related products traded through the Aquifert platform.",
     sections: [
       section("Who we are and what these terms cover", [
-        `These Terms & Conditions of Trading (“Terms”) govern all sourcing requests, quotations, orders, contracts and deliveries of fertilizer and related products (“Products”) made through the Aquifert platform (the “Platform”), operated by ${ENTITY}.`,
+        `These Terms & Conditions of Trading (“Terms”) govern all sourcing requests, quotations, orders, contracts and deliveries of fertiliser and related products (“Products”) made through the Aquifert platform (the “Platform”), operated by ${ENTITY}.`,
         "These Terms apply to business customers only. By submitting a sourcing request, accepting a quotation, or placing an order through the Platform, you confirm that you act in the course of a business and accept these Terms. Separate Platform Terms of Use govern your general use of the website and software.",
       ]),
       section("The Aquifert model", [
-        "Aquifert operates a governed B2B fertilizer sourcing platform. Unless expressly stated otherwise in an order confirmation, Aquifert contracts with the buyer as principal seller of the Products and sources from vetted producers, traders and distributors (“Suppliers”). In certain identified transactions Aquifert may act as disclosed agent; where this is the case it will be stated on the quotation.",
+        "Aquifert operates a governed B2B fertiliser sourcing platform. Unless expressly stated otherwise in an order confirmation, Aquifert contracts with the buyer as principal seller of the Products and sources from vetted producers, traders and distributors (“Suppliers”). In certain identified transactions Aquifert may act as disclosed agent; where this is the case it will be stated on the quotation.",
         "Our operating principle is: the engine flags; a human clears. Automated systems screen counterparties, documents and transactions for compliance risk, but no transaction is released without review and clearance by a member of the Aquifert compliance or operations team.",
         "Supplier anonymity is fundamental to the Platform. Nothing that could reveal the identity of a Supplier is shared with a buyer — ever. Quotations, documents and communications are re-issued or redacted by Aquifert so that pricing, origin and documentation are disclosed without identifying the underlying Supplier.",
       ]),

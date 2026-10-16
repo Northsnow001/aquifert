@@ -30,7 +30,7 @@ export const MODULES: { key: ModuleKey; label: string; href: string; pitch: stri
     label: "Freight Analytics",
     href: "/hub/analytics/freight",
     pitch: "Fixtures, lane benchmarks and freight commentary so timing stops being guesswork.",
-    covers: ["Recent fertilizer fixtures by lane", "Freight benchmarks across the major routes", "Desk commentary on freight and vessel supply"],
+    covers: ["Recent fertiliser fixtures by lane", "Freight benchmarks across the major routes", "Desk commentary on freight and vessel supply"],
   },
   {
     key: "supply-demand",
@@ -242,7 +242,7 @@ export const PERSONAS: { key: Persona; label: string }[] = [
 
 /** Plain-language "what this means for you", per persona. */
 export function interpret(tone: Tone, product: string, persona: Persona): string {
-  const p = product.toLowerCase() === "general" ? "fertilizer" : product.toLowerCase();
+  const p = product.toLowerCase() === "general" ? "fertiliser" : product.toLowerCase();
   if (persona === "farmer") {
     if (tone === "up") return `For your farm: ${p} costs are creeping up. If you need it this season, covering sooner is likely cheaper than waiting.`;
     if (tone === "down") return `For your farm: ${p} prices are easing. There is no rush, and holding off could mean a better price when you are ready.`;

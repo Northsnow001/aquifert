@@ -136,7 +136,7 @@ export function parseFixtureSheet(text: string, source = "CSV import"): ParsedRo
 }
 
 export const AI_FIXTURE_PROMPT = `Extract every freight fixture row from this rate sheet. Return ONLY valid JSON, no markdown, no code fences, no explanation, in exactly this shape:
-{"fixtures":[{"load":"Damietta","discharge":"Constanta","cargo_min_kt":10,"cargo_max_kt":10,"rate_low_usd_mt":28,"rate_high_usd_mt":29,"cargo_type":"Fertilizer / DAP / Urea","source":"Uploaded rate sheet","fixture_date":"2026-07-01","confidence":0.9,"raw_source_excerpt":"Damietta Constanta 10kt 28/29"}]}
+{"fixtures":[{"load":"Damietta","discharge":"Constanta","cargo_min_kt":10,"cargo_max_kt":10,"rate_low_usd_mt":28,"rate_high_usd_mt":29,"cargo_type":"Fertiliser / DAP / Urea","source":"Uploaded rate sheet","fixture_date":"2026-07-01","confidence":0.9,"raw_source_excerpt":"Damietta Constanta 10kt 28/29"}]}
 Rules:
 - One object per route and cargo size. Keep port, country, area or region names exactly as written (for example "US Gulf", "Baltic", "Brazil").
 - Cargo sizes are in thousand tonnes (kT). Rates are USD per metric tonne. Give a single number twice when there is no range.

@@ -24,7 +24,7 @@ export default async function CommunityCallPage() {
       <HubPageHeader
         eyebrow="AQ ONE Free plan"
         title="Weekly Market Call"
-        description="A free live call with the Aquifert desk on fertilizer prices and freight. Register once and we email you the joining link."
+        description="A free live call with the Aquifert desk on fertiliser prices and freight. Register once and we email you the joining link."
         tip="The desk walks through the market and freight, then answers members' questions. Registration is free on every plan, and your confirmation email has the joining link."
         guide="call"
       />
@@ -62,7 +62,7 @@ export default async function CommunityCallPage() {
           ) : (
             <EmptyPanel
               title="Join the Weekly Market Call"
-              body="The desk walks through the fertilizer markets and freight every week, then takes your questions. Register and we email you the date and joining link."
+              body="The desk walks through the fertiliser markets and freight every week, then takes your questions. Register and we email you the date and joining link."
               action={
                 <div className="flex flex-col items-center gap-3">
                   <CallRegistration href={callRegisterUrl()} />

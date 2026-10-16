@@ -87,7 +87,7 @@ export function ToolsBoard({ commentaryHtml, mapLocked = false, plan }: { commen
             </button>
           );
         })}
-        <span className="mb-2.5 ml-auto hidden text-[10px] text-dim md:block">Global fertilizer trade · interactive guide</span>
+        <span className="mb-2.5 ml-auto hidden text-[10px] text-dim md:block">Global fertiliser trade · interactive guide</span>
       </div>
 
       {tab === "map" && mapLocked ? <LockedMap plan={plan} urea={urea} /> : null}
@@ -191,7 +191,7 @@ export function ToolsBoard({ commentaryHtml, mapLocked = false, plan }: { commen
       {tab === "how" ? (
         <section>
           <p className="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-mid">
-            Production chains — from raw material to finished fertilizer
+            Production chains — from raw material to finished fertiliser
           </p>
           <div className="grid gap-3 lg:grid-cols-3">
             {HOW_IT_IS_MADE.map((item) => (
@@ -536,7 +536,7 @@ function WorldMap({
           viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
           className="block h-auto w-full"
           role="img"
-          aria-label="Fertilizer trade map"
+          aria-label="Fertiliser trade map"
         >
           <rect width={MAP_WIDTH} height={MAP_HEIGHT} fill="#dce4ea" onMouseMove={hideTip} />
           {COUNTRY_SHAPES.map((country) => (

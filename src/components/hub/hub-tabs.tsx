@@ -23,7 +23,7 @@ const tabClass = (active: boolean) =>
     active ? "border-teal-400 text-white" : "border-transparent text-slate-300 hover:border-white/40 hover:text-white"
   }`;
 
-/** Plan promos point at the Buy Fertilizer page with a preset tab, so they never light up as the current page. */
+/** Plan promos point at the Buy Fertiliser page with a preset tab, so they never light up as the current page. */
 const linkActive = (pathname: string, link: HubTabLink) => !link.href.includes("?") && isActive(pathname, link.href);
 
 /** The desktop menu line: one tab per area, dropdowns for areas with several pages. */

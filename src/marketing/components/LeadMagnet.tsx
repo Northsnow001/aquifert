@@ -32,8 +32,8 @@ const SUPPRESS_MS = 30 * 864e5;
 
 /* Q1, intent (single, required) */
 const INTENTS = [
-  "I want to buy fertilizer",
-  "I want to sell or market fertilizer",
+  "I want to buy fertiliser",
+  "I want to sell or market fertiliser",
   "I'm checking current market prices",
   "I need freight or shipping costs",
   "I'm looking for a reliable supplier",
@@ -58,7 +58,7 @@ const ORGS = [
 const PRODUCTS = [
   "Urea (granular)", "Urea (prilled)", "DAP", "MAP", "TSP", "SSP",
   "MOP / Potash", "SOP", "Ammonium Sulphate (Amsul)", "AN / CAN", "UAN",
-  "NPK compounds", "Ammonia", "Water-soluble fertilizers",
+  "NPK compounds", "Ammonia", "Water-soluble fertilisers",
   "Micronutrients (Zn, Fe, Mn, B)", "Calcium Nitrate", "Phosphate rock",
   "Sulphur", "Not sure yet, please advise",
 ];
@@ -381,7 +381,7 @@ export function LeadMagnet({ auto = true }: { auto?: boolean }) {
     const doc = new jsPDF();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("AQ VIEW, Weekly Fertilizer Market Report", 14, 18);
+    doc.text("AQ VIEW, Weekly Fertiliser Market Report", 14, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text("17 September 2026 · Aquifert Trading Desk", 14, 26);
@@ -594,7 +594,7 @@ export function LeadMagnet({ auto = true }: { auto?: boolean }) {
               </fieldset>
               <div>
                 <label htmlFor="lm-challenge" className={labelCls}>
-                  9. What's the biggest challenge in your fertilizer trading or sourcing right now?
+                  9. What's the biggest challenge in your fertiliser trading or sourcing right now?
                 </label>
                 <textarea
                   id="lm-challenge"

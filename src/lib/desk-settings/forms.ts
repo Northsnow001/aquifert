@@ -195,7 +195,7 @@ export const zeroEmailData = (zero: ZeroSubmission): FormEmailData => ({ vars: z
 function frameFor(kind: TemplateKind, audience: "applicant" | "admin", vars: Record<string, string>, deskEmail: string): Partial<EmailFrame> {
   if (audience === "admin") {
     return {
-      preheader: kind === "order" ? `${vars.user_name || "A member"} sent an enquiry for ${vars.product || "fertilizer"}.` : `${vars.user_name || "A member"}: ${vars.request || "Aquifert Zero registration"}.`,
+      preheader: kind === "order" ? `${vars.user_name || "A member"} sent an enquiry for ${vars.product || "fertiliser"}.` : `${vars.user_name || "A member"}: ${vars.request || "Aquifert Zero registration"}.`,
       tagline: "Trading desk alert",
       eyebrow: kind === "order" ? "New enquiry" : "Aquifert Zero",
       heading: kind === "order" ? "New enquiry" : "New Aquifert Zero registration",

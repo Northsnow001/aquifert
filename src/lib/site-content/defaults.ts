@@ -31,9 +31,9 @@ const ANALYTICS = offer("analytics");
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   home: {
     seo: {
-      title: "Aquifert, B2B Fertilizer Sourcing Platform | True Landed Cost, Tracked to Your Gate",
+      title: "Aquifert - Knowledge | Fertiliser | Delivered - Informing decisions with transparency on your fertiliser sourcing",
       description:
-        "Aquifert is the UK-based B2B fertilizer sourcing platform where membership replaces margin. Source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK from vetted global producers, with AI-drafted quotes, live container tracking and invoice financing.",
+        "Aquifert is the UK-based B2B fertiliser sourcing platform where membership replaces margin. Source water-soluble fertiliser, Urea, DAP, MOP, MAP and NPK from vetted global producers, with AI-drafted quotes, live container tracking and invoice financing.",
     },
     hero: {
       title: "Connecting Clients in the Global Fertiliser Market",
@@ -46,14 +46,14 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       tertiaryLink: DESK_MAIL,
       video: "/media/hero-ship-containers.mp4",
       image: "/media/hero-ship-containers.jpg",
-      label: "Container ship loaded with fertilizer cargo being unloaded by port cranes",
+      label: "Container ship loaded with fertiliser cargo being unloaded by port cranes",
     },
     motion: {
       kicker: "Analytics for informed decisions, margin-free trading, “at cost” fertiliser",
       title: "AQ ONE offers premier analytics",
       body: "AQ ONE is the HUB where you can see daily market moving news coupled with expert trader commentary",
       cards: [
-        { tagline: "ZERO Guessing - ZERO extra costs", cta: "Check AQ ONE Hub", link: "/platform", video: "/media/port-terminal.mp4", image: "/media/port-terminal.jpg", label: "Gantry cranes loading fertilizer cargo at a bulk port terminal" },
+        { tagline: "ZERO Guessing - ZERO extra costs", cta: "Check AQ ONE Hub", link: "/platform", video: "/media/port-terminal.mp4", image: "/media/port-terminal.jpg", label: "Gantry cranes loading fertiliser cargo at a bulk port terminal" },
         { tagline: "In the Warehouse", cta: "Market analytics", link: "/platform", video: "/media/ship-ocean.mp4", image: "/media/ship-ocean.jpg", label: "Loaded bulk carrier moving through open ocean" },
         { tagline: "Into the glasshouse", cta: "Why Aquifert", link: "/why-aquifert", video: "/media/greenhouse-tomatoes.mp4", image: "/media/greenhouse-tomatoes.jpg", label: "Tomato plants growing under fertigation in a modern greenhouse" },
         { tagline: "To every field", cta: "Join the members", link: "/membership", video: "/media/fields-aerial.mp4", image: "/media/fields-aerial.jpg", label: "Aerial view over cultivated green fields at golden hour" },
@@ -77,7 +77,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         { icon: "route", title: "Voyage Analytics", desc: "Milestone-by-milestone voyage performance, exceptions and revised ETAs." },
         { icon: "bot", title: "Aquibot AI Assistant", desc: "AI-drafted quotes, summaries and answers, always human-approved before anything sends." },
         { icon: "calculator", title: "Freight Calculator", desc: "Instant cost-to-cost estimates: product, ocean freight, clearing and duties." },
-        { icon: "book-open", title: "Tools", desc: "Structured learning on fertilizer trade, Incoterms and risk management." },
+        { icon: "book-open", title: "Tools", desc: "Structured learning on fertiliser trade, Incoterms and risk management." },
         { icon: "compass", title: "Order Desk", desc: "Live order book with margin-gated pricing and full audit trail." },
       ],
       primaryLabel: "Explore Aquifert ONE",
@@ -87,7 +87,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       kicker: "What we trade",
       title: "Products & services",
       items: [
-        { title: "Water soluble fertilizers", desc: "Enrich our growing community, fully soluble Urea, DAP, MOP, MAP and NPK grades for fertigation and foliar programmes.", image: "/media/greenhouse-tomatoes.jpg", alt: "Tomatoes growing in a greenhouse under fertigation" },
+        { title: "Water soluble fertilisers", desc: "Enrich our growing community, fully soluble Urea, DAP, MOP, MAP and NPK grades for fertigation and foliar programmes.", image: "/media/greenhouse-tomatoes.jpg", alt: "Tomatoes growing in a greenhouse under fertigation" },
         { title: "Micronutrients", desc: "Aquifert offers micronutrients, including Zinc and Iron for high value crops.", image: "/media/fields-sunrise.jpg", alt: "Sunrise over cultivated fields" },
         { title: "Market Analysis", desc: "Agricultural supply chain and global network, sourcing, ocean freight, clearing and delivery managed end to end.", image: "/media/port-terminal.jpg", alt: "Bulk cargo terminal at a port" },
       ],
@@ -130,12 +130,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     faq: {
       kicker: "Questions, answered",
-      title: "Fertilizer trading on Aquifert, FAQ",
+      title: "Fertiliser trading on Aquifert, FAQ",
       sub: "What the platform is, how pricing works, what you can source and how both sides are protected.",
       items: [
-        { q: "What is Aquifert?", a: "Aquifert is a UK-based B2B fertilizer sourcing platform that connects vetted fertilizer buyers and producers through one governed workspace. It covers water-soluble and specialty fertilizers as well as Urea, DAP, MOP, MAP and NPK, with AI-drafted quotes, live container tracking and market intelligence built in." },
-        { q: "How does Aquifert fertilizer pricing work?", a: "Aquifert replaces the traditional trader's per-tonne margin with a flat membership fee. Members see the full landed-cost breakdown on every quote, product, ocean freight, clearing and duties, so they buy at true cost. AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale tiers scale with monthly tonnage." },
-        { q: "Which fertilizers can I source through Aquifert?", a: "Members source water-soluble fertilizers, micronutrients such as Zinc and Iron, and bulk commodity grades including Urea, DAP, MAP, MOP and NPK, shipped containerised or in bulk from vetted producers in the Middle East, North Africa, Europe and Asia." },
+        { q: "What is Aquifert?", a: "Aquifert is a UK-based B2B fertiliser sourcing platform that connects vetted fertiliser buyers and producers through one governed workspace. It covers water-soluble and specialty fertilisers as well as Urea, DAP, MOP, MAP and NPK, with AI-drafted quotes, live container tracking and market intelligence built in." },
+        { q: "How does Aquifert fertiliser pricing work?", a: "Aquifert replaces the traditional trader's per-tonne margin with a flat membership fee. Members see the full landed-cost breakdown on every quote, product, ocean freight, clearing and duties, so they buy at true cost. AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale tiers scale with monthly tonnage." },
+        { q: "Which fertilisers can I source through Aquifert?", a: "Members source water-soluble fertilisers, micronutrients such as Zinc and Iron, and bulk commodity grades including Urea, DAP, MAP, MOP and NPK, shipped containerised or in bulk from vetted producers in the Middle East, North Africa, Europe and Asia." },
         { q: "How does Aquifert protect buyers and suppliers?", a: "Every party passes KYC/KYB due diligence before trading. Buyers and suppliers never see each other's identity, every document is scanned for supplier-identifying information and cleared by a human before release, and AI-drafted messages are approved by staff before anything is sent." },
       ],
     },
@@ -149,12 +149,12 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   },
   platform: {
     seo: {
-      title: "Fertilizer Sourcing Platform Features, AI Quotes, Live Tracking & Market Intelligence | Aquifert",
+      title: "Fertiliser Sourcing Platform Features, AI Quotes, Live Tracking & Market Intelligence | Aquifert",
       description:
-        "Explore the Aquifert fertilizer sourcing platform: an AI communication hub that turns WhatsApp and email inquiries into deal cards, a quoting engine with transparent landed-cost breakdowns, live container tracking across ten milestones, fertilizer market intelligence and invoice financing.",
+        "Explore the Aquifert fertiliser sourcing platform: an AI communication hub that turns WhatsApp and email inquiries into deal cards, a quoting engine with transparent landed-cost breakdowns, live container tracking across ten milestones, fertiliser market intelligence and invoice financing.",
     },
     hero: {
-      title: "AQ ZERO + AQ Analytics for the entire fertilizer stream",
+      title: "AQ ZERO + AQ Analytics for the entire fertiliser stream",
       body: "Trader level market analysis for the fertiliser market designed to let you make an informed decision. Physical fertiliser available.",
       primaryLabel: "See the live platform",
       primaryLink: "/login",
@@ -162,15 +162,15 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       secondaryLink: "/membership",
       video: "/media/port-terminal.mp4",
       image: "/media/port-terminal.jpg",
-      label: "Aerial view of a container terminal moving fertilizer cargo through a seaport",
+      label: "Aerial view of a container terminal moving fertiliser cargo through a seaport",
     },
     blocks: {
       items: [
         {
           icon: "ship",
           kicker: "Logistics tracker",
-          title: "Live fertilizer tracking from port of loading to your gate",
-          body: "Every fertilizer order carries a live shipment record: container, vessel, carrier and bill of lading, plotted on a map from Shanghai to Felixstowe. Ten milestones, from gate-in to out-for-delivery, with exception alerts and revised ETAs surfaced before you have to ask.",
+          title: "Live fertiliser tracking from port of loading to your gate",
+          body: "Every fertiliser order carries a live shipment record: container, vessel, carrier and bill of lading, plotted on a map from Shanghai to Felixstowe. Ten milestones, from gate-in to out-for-delivery, with exception alerts and revised ETAs surfaced before you have to ask.",
           points: "Ten milestone checkpoints with live map position\nDelay detection with revised ETA alerts\nDocuments, B/L, invoices, packing lists, on the order record",
           video: "/media/ship-ocean.mp4",
           image: "/media/ship-ocean.jpg",
@@ -181,41 +181,41 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     more: {
       kicker: "And the rest of the desk",
-      title: "Everything around the fertilizer trade, in the same workspace",
+      title: "Everything around the fertiliser trade, in the same workspace",
       sub: "Intelligence, financing and governance ship with the platform, no bolt-ons, no extra vendors.",
       items: [
-        { icon: "line-chart", title: "Fertilizer Market Insights Engine", desc: "26 weeks of fertilizer price history across five commodities and four regions, regional heatmaps, volatility indicators and AI-generated trade recommendations, broadcast to members on a schedule." },
-        { icon: "wallet", title: "Fertilizer invoice financing", desc: "AQ Zero Harvest and AQ Zero Scale members finance up to 85% of a fertilizer invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules." },
+        { icon: "line-chart", title: "Fertiliser Market Insights Engine", desc: "26 weeks of fertiliser price history across five commodities and four regions, regional heatmaps, volatility indicators and AI-generated trade recommendations, broadcast to members on a schedule." },
+        { icon: "wallet", title: "Fertiliser invoice financing", desc: "AQ Zero Harvest and AQ Zero Scale members finance up to 85% of a fertiliser invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules." },
         { icon: "shield-check", title: "Governance built in", desc: "Role-based access for admin, operations, finance, support, buyers and suppliers, with margins visible only to the roles that should see them." },
       ],
     },
     faq: {
       kicker: "Platform questions",
-      title: "How the fertilizer sourcing platform works, FAQ",
+      title: "How the fertiliser sourcing platform works, FAQ",
       sub: "What Aquifert ONE does, how quotes are approved, and how both sides stay protected.",
       items: [
-        { q: "What does the Aquifert fertilizer sourcing platform do?", a: "Aquifert ONE is the workspace for the fertilizer trade. It turns WhatsApp and email inquiries into structured deal cards, generates quotes with transparent landed-cost breakdowns, tracks every container across ten live milestones, and adds market intelligence, freight analytics and invoice financing in the same flow." },
-        { q: "How are fertilizer quotes produced on Aquifert?", a: "The desk's AI drafts each quote from live market data and freight rates, but nothing sends automatically. A human approver reviews every message, checks the margin maths, and only then does the quote reach the buyer. The engine flags; a human clears." },
+        { q: "What does the Aquifert fertiliser sourcing platform do?", a: "Aquifert ONE is the workspace for the fertiliser trade. It turns WhatsApp and email inquiries into structured deal cards, generates quotes with transparent landed-cost breakdowns, tracks every container across ten live milestones, and adds market intelligence, freight analytics and invoice financing in the same flow." },
+        { q: "How are fertiliser quotes produced on Aquifert?", a: "The desk's AI drafts each quote from live market data and freight rates, but nothing sends automatically. A human approver reviews every message, checks the margin maths, and only then does the quote reach the buyer. The engine flags; a human clears." },
         { q: "Can buyers and suppliers see each other on Aquifert?", a: "No. Buyers and suppliers never see each other's identity. Every document is scanned for supplier-identifying information against a protected registry and must be cleared by a human before a buyer can receive it." },
-        { q: "Does Aquifert track fertilizer shipments live?", a: "Yes. Every consignment moves through a 14-stage tracker from factory gate to farm gate, with freight forwarders sending booking and shipping updates that buyers see in real time." },
+        { q: "Does Aquifert track fertiliser shipments live?", a: "Yes. Every consignment moves through a 14-stage tracker from factory gate to farm gate, with freight forwarders sending booking and shipping updates that buyers see in real time." },
       ],
     },
     cta: {
-      title: "See the fertilizer platform working end to end",
+      title: "See the fertiliser platform working end to end",
       subtitle: "Sign in and switch between the admin command center, buyer portal and supplier hub, all on live demo data.",
       buttonLabel: "Explore the live platform demo",
     },
   },
   why: {
     seo: {
-      title: "Why Aquifert, 20+ Years of Fertilizer Trading Expertise, Transparent Supply Chains",
+      title: "Why Aquifert, 20+ Years of Fertiliser Trading Expertise, Transparent Supply Chains",
       description:
-        "Why fertilizer buyers and suppliers choose Aquifert: two decades of global fertilizer trading experience, strict KYC/KYB due diligence, an established shipping network and a sustainability focus on water-soluble grades that raise yield per tonne.",
+        "Why fertiliser buyers and suppliers choose Aquifert: two decades of global fertiliser trading experience, strict KYC/KYB due diligence, an established shipping network and a sustainability focus on water-soluble grades that raise yield per tonne.",
     },
     hero: {
       title: "Sustainability for farming",
       highlight: "and your balance sheet.",
-      body: "Aquifert brings both sides of the fertilizer trade into one transparent Hub. Integrated reviews ensure your requirements move faster, at fairer prices, with less time in a few clicks.",
+      body: "Aquifert brings both sides of the fertiliser trade into one transparent Hub. Integrated reviews ensure your requirements move faster, at fairer prices, with less time in a few clicks.",
       primaryLabel: "Meet the platform",
       primaryLink: "/platform",
       secondaryLabel: "See membership",
@@ -228,31 +228,31 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       kicker: "The network in motion",
       title: "Ports, lanes and fields we move through every week",
       cards: [
-        { tagline: "Established port operations", cta: "Explore the platform", link: "/platform", video: "/media/port-terminal.mp4", image: "/media/port-terminal.jpg", label: "Gantry cranes moving fertilizer cargo at a port terminal" },
-        { tagline: "Carrier lanes built over decades", cta: "Freight analytics", link: "/platform", video: "/media/ship-ocean.mp4", image: "/media/ship-ocean.jpg", label: "Bulk carrier crossing open ocean with fertilizer cargo" },
+        { tagline: "Established port operations", cta: "Explore the platform", link: "/platform", video: "/media/port-terminal.mp4", image: "/media/port-terminal.jpg", label: "Gantry cranes moving fertiliser cargo at a port terminal" },
+        { tagline: "Carrier lanes built over decades", cta: "Freight analytics", link: "/platform", video: "/media/ship-ocean.mp4", image: "/media/ship-ocean.jpg", label: "Bulk carrier crossing open ocean with fertiliser cargo" },
         { tagline: "Nutrition that reaches the crop", cta: "Become a member", link: "/membership", video: "/media/greenhouse-tomatoes.mp4", image: "/media/greenhouse-tomatoes.jpg", label: "Tomatoes ripening in a fertigated greenhouse" },
       ],
     },
     reasons: {
       kicker: "The Aquifert difference",
       title: "Built to provide accurate market levels for simple transactions",
-      sub: "Every feature exists because twenty years of fertilizer trading showed us where the industry leaks time, money and trust.",
+      sub: "Every feature exists because twenty years of fertiliser trading showed us where the industry leaks time, money and trust.",
       items: [
-        { icon: "globe", title: "Global fertilizer market expertise", desc: "Deep coverage of nitrogen, phosphate and potash markets, fertilizer pricing, trade flows and supply signals across four regions." },
-        { icon: "ship", title: "Established Network", desc: "Extensive fertilizer supply chain experience from factories to ports to buyers, with carriers we have worked with for years." },
-        { icon: "shield-check", title: "Strict due diligence", desc: "We only deal with reputable parties. Every fertilizer buyer and supplier passes KYC/KYB checks before their first trade on the platform." },
-        { icon: "handshake", title: "30+ years experience", desc: "More than two decades of global fertilizer trading experience behind every quote, route and recommendation." },
-        { icon: "leaf", title: "Sustainability focus", desc: "Water-soluble and specialty fertilizer grades that raise yield per tonne, efficiency for the supply chain and the field." },
+        { icon: "globe", title: "Global fertiliser market expertise", desc: "Deep coverage of nitrogen, phosphate and potash markets, fertiliser pricing, trade flows and supply signals across four regions." },
+        { icon: "ship", title: "Established Network", desc: "Extensive fertiliser supply chain experience from factories to ports to buyers, with carriers we have worked with for years." },
+        { icon: "shield-check", title: "Strict due diligence", desc: "We only deal with reputable parties. Every fertiliser buyer and supplier passes KYC/KYB checks before their first trade on the platform." },
+        { icon: "handshake", title: "30+ years experience", desc: "More than two decades of global fertiliser trading experience behind every quote, route and recommendation." },
+        { icon: "leaf", title: "Sustainability focus", desc: "Water-soluble and specialty fertiliser grades that raise yield per tonne, efficiency for the supply chain and the field." },
       ],
     },
     audiences: {
       kicker: "How Aquifert helps",
-      title: "Professional services for both sides of the fertilizer trade",
+      title: "Professional services for both sides of the fertiliser trade",
       sub: "Buyers get transparent landed cost. Suppliers get vetted demand and faster payout.",
-      buyersTitle: "For fertilizer buyers",
-      buyers: "A one-stop shop for a full portfolio of specialty fertilizers at true landed cost\nEstablished fertilizer suppliers only, quality control on every consignment\nCompetitive fertilizer pricing enabled by our global supply network",
-      suppliersTitle: "For fertilizer suppliers",
-      suppliers: "Reach vetted global fertilizer buyers and expand into new markets\nBilingual EN/中文 portal with AI-polished quotes and escrowed payouts\nDirect advisory support on fertilizer supply chain execution, factory to port",
+      buyersTitle: "For fertiliser buyers",
+      buyers: "A one-stop shop for a full portfolio of specialty fertilisers at true landed cost\nEstablished fertiliser suppliers only, quality control on every consignment\nCompetitive fertiliser pricing enabled by our global supply network",
+      suppliersTitle: "For fertiliser suppliers",
+      suppliers: "Reach vetted global fertiliser buyers and expand into new markets\nBilingual EN/中文 portal with AI-polished quotes and escrowed payouts\nDirect advisory support on fertiliser supply chain execution, factory to port",
     },
     community: {
       kicker: "Our growing community",
@@ -261,7 +261,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       points: "Growers and distributors buying at verified landed cost\nProducers reaching UK demand without broker layers\nWater-soluble grades that cut waste per hectare",
       video: "/media/fields-aerial.mp4",
       image: "/media/fields-aerial.jpg",
-      label: "Aerial drone view over green agricultural fields growing crops with water-soluble fertilizer",
+      label: "Aerial drone view over green agricultural fields growing crops with water-soluble fertiliser",
       caption: "High-value crops depend on precise, water-soluble nutrition.",
     },
     faq: {
@@ -269,23 +269,23 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       title: "Why traders choose Aquifert, FAQ",
       sub: "The experience behind the platform, what each side gains, and the sustainability focus.",
       items: [
-        { q: "Why choose Aquifert for fertilizer trading?", a: "Aquifert is built by fertilizer traders with more than twenty years of global trading experience. It combines strict KYC/KYB due diligence, an established shipping network from factories to ports to buyers, and a governed platform where AI drafts but humans approve every message." },
-        { q: "How does Aquifert help fertilizer buyers?", a: "Buyers get a one-stop shop for a full portfolio of specialty fertilizers at true landed cost, established suppliers only with quality control on every consignment, and competitive pricing enabled by Aquifert's global supply network." },
-        { q: "How does Aquifert help fertilizer suppliers?", a: "Suppliers reach vetted global fertilizer buyers and expand into new markets through a bilingual EN/中文 portal with AI-polished quotes and escrowed payouts, plus direct advisory support on supply chain execution from factory to port." },
-        { q: "Is Aquifert focused on sustainable fertilizer?", a: "Yes. Aquifert specialises in water-soluble and specialty fertilizer grades that raise yield per tonne, improving efficiency for both the supply chain and the field, and cutting waste per hectare." },
+        { q: "Why choose Aquifert for fertiliser trading?", a: "Aquifert is built by fertiliser traders with more than twenty years of global trading experience. It combines strict KYC/KYB due diligence, an established shipping network from factories to ports to buyers, and a governed platform where AI drafts but humans approve every message." },
+        { q: "How does Aquifert help fertiliser buyers?", a: "Buyers get a one-stop shop for a full portfolio of specialty fertilisers at true landed cost, established suppliers only with quality control on every consignment, and competitive pricing enabled by Aquifert's global supply network." },
+        { q: "How does Aquifert help fertiliser suppliers?", a: "Suppliers reach vetted global fertiliser buyers and expand into new markets through a bilingual EN/中文 portal with AI-polished quotes and escrowed payouts, plus direct advisory support on supply chain execution from factory to port." },
+        { q: "Is Aquifert focused on sustainable fertiliser?", a: "Yes. Aquifert specialises in water-soluble and specialty fertiliser grades that raise yield per tonne, improving efficiency for both the supply chain and the field, and cutting waste per hectare." },
       ],
     },
     cta: {
-      title: "Trade fertilizer with a partner you can verify",
-      subtitle: "Join the platform and see how transparent, well-governed fertilizer trading works in practice.",
+      title: "Trade fertiliser with a partner you can verify",
+      subtitle: "Join the platform and see how transparent, well-governed fertiliser trading works in practice.",
       buttonLabel: "Start trading on Aquifert",
     },
   },
   membership: {
     seo: {
-      title: "Fertilizer Membership Plans: AQ Zero Sprout, AQ Zero Harvest, AQ Zero Scale, AQ Analytics | Aquifert",
+      title: "Fertiliser Membership Plans: AQ Zero Sprout, AQ Zero Harvest, AQ Zero Scale, AQ Analytics | Aquifert",
       description:
-        "Aquifert membership replaces per-tonne fertilizer margin with one flat fee. AQ Zero Sprout (up to 200t a month), AQ Zero Harvest (201–600t) and AQ Zero Scale (unlimited) include cost-to-cost quotes, market intelligence, live tracking and invoice financing. AQ Analytics adds licensed market data and unlimited Aquibot without physical trading.",
+        "Aquifert membership replaces per-tonne fertiliser margin with one flat fee. AQ Zero Sprout (up to 200t a month), AQ Zero Harvest (201–600t) and AQ Zero Scale (unlimited) include cost-to-cost quotes, market intelligence, live tracking and invoice financing. AQ Analytics adds licensed market data and unlimited Aquibot without physical trading.",
     },
     hero: {
       title: "Advisory & Physical fertiliser.",
@@ -297,7 +297,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       secondaryLink: DESK_MAIL,
       video: "/media/greenhouse-tomatoes.mp4",
       image: "/media/greenhouse-tomatoes.jpg",
-      label: "Rows of tomato plants growing inside a modern greenhouse fed by water-soluble fertilizer",
+      label: "Rows of tomato plants growing inside a modern greenhouse fed by water-soluble fertiliser",
     },
     sprout: { name: "AQ ZERO Sprout", tagline: "Up to 200tons/month", features: "" },
     harvest: { name: "AQ ZERO Harvest", tagline: "201 Tons /month", features: "" },
@@ -309,8 +309,8 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     },
     notes: {
       items: [
-        { icon: "landmark", title: "Financing eligibility", text: "Members at AQ Zero Harvest tier and above unlock the Invoice Discounting Facility, up to 85% of a verified fertilizer invoice value, advanced within 48 hours." },
-        { icon: "shield-check", title: "Verified access only", text: "Every membership follows KYC/KYB review and compliance approval. Fertilizer trading limits scale with your verification tier." },
+        { icon: "landmark", title: "Financing eligibility", text: "Members at AQ Zero Harvest tier and above unlock the Invoice Discounting Facility, up to 85% of a verified fertiliser invoice value, advanced within 48 hours." },
+        { icon: "shield-check", title: "Verified access only", text: "Every membership follows KYC/KYB review and compliance approval. Fertiliser trading limits scale with your verification tier." },
         { icon: "refresh", title: "Change anytime", text: "Upgrade, downgrade or cancel from your portal. The desk confirms pricing with you and handles every change." },
       ],
     },
@@ -319,37 +319,37 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       cta: "Start with a plan",
       video: "/media/fields-aerial.mp4",
       image: "/media/fields-aerial.jpg",
-      label: "Aerial view over cultivated fields fed by water-soluble fertilizer",
+      label: "Aerial view over cultivated fields fed by water-soluble fertiliser",
     },
     faq: {
       kicker: "Membership questions",
-      title: "Fertilizer membership, FAQ",
+      title: "Fertiliser membership, FAQ",
       sub: "Which tier fits, what it saves, and how flexible it is.",
       items: [
         { q: "Which Aquifert membership tier fits me?", a: "AQ Zero Sprout is for buyers trading up to 200 tonnes a month, AQ Zero Harvest covers 201–600 tonnes, and AQ Zero Scale has no tonnage limit. The desk confirms pricing for your tier with you directly." },
         { q: "What is the difference between AQ Analytics and AQ ZERO?", a: "AQ Analytics is for analysis and licensed market data: PRA prices, trade flows, port lineups, freight benchmarks and unlimited Aquibot, with no physical trading. AQ Zero Sprout, AQ Zero Harvest and AQ Zero Scale are AQ ZERO memberships: one flat fee replaces the margin on every quote, and every AQ Analytics module is included." },
-        { q: "What do members save compared with a traditional fertilizer trader?", a: "Members pay £0 per-tonne margin and see the full landed-cost breakdown, product, ocean freight, clearing and duties, on every fertilizer quote. On typical volumes, the saving versus a traditional trader's embedded margin exceeds the membership fee many times over." },
-        { q: "Can I switch or cancel my fertilizer membership?", a: "Yes. You can upgrade, downgrade or cancel from your portal at any time, and the desk handles the change for you." },
+        { q: "What do members save compared with a traditional fertiliser trader?", a: "Members pay £0 per-tonne margin and see the full landed-cost breakdown, product, ocean freight, clearing and duties, on every fertiliser quote. On typical volumes, the saving versus a traditional trader's embedded margin exceeds the membership fee many times over." },
+        { q: "Can I switch or cancel my fertiliser membership?", a: "Yes. You can upgrade, downgrade or cancel from your portal at any time, and the desk handles the change for you." },
       ],
     },
     cta: {
-      title: "Trade your first tonne of fertilizer this week",
-      subtitle: "Launch the live demo as a buyer, supplier or admin, membership, financing and the full fertilizer trading workflow included.",
-      buttonLabel: "Choose your fertilizer plan",
+      title: "Trade your first tonne of fertiliser this week",
+      subtitle: "Launch the live demo as a buyer, supplier or admin, membership, financing and the full fertiliser trading workflow included.",
+      buttonLabel: "Choose your fertiliser plan",
     },
   },
   contact: {
     seo: {
-      title: "Contact Aquifert, Fertilizer Trading Desk | WhatsApp, Call, Message",
+      title: "Contact Aquifert, Fertiliser Trading Desk | WhatsApp, Call, Message",
       description:
-        "Contact the Aquifert fertilizer trading desk by WhatsApp, a booked call with a trader, a message or a callback. WhatsApp answered within hours in the trading day; messages and callbacks within one business day.",
+        "Contact the Aquifert fertiliser trading desk by WhatsApp, a booked call with a trader, a message or a callback. WhatsApp answered within hours in the trading day; messages and callbacks within one business day.",
     },
     hero: {
       title: "Talk to the desk",
       body: "Reach a person, not a screen. Four ways in, honest response times, and a trader on the other end.",
       video: "/media/port-terminal.mp4",
       image: "/media/port-terminal.jpg",
-      label: "Aerial view of a container terminal moving fertilizer cargo through a seaport",
+      label: "Aerial view of a container terminal moving fertiliser cargo through a seaport",
     },
     channels: {
       whatsappTitle: "WhatsApp the desk",
@@ -366,7 +366,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       title: "Reaching the desk, FAQ",
       sub: "How to contact Aquifert, how fast we respond and who picks up.",
       items: [
-        { q: "How do I contact Aquifert?", a: "You can reach the Aquifert fertilizer trading desk four ways: WhatsApp for quick questions (answered within a couple of hours in the trading day), a booked 20-minute call with a trader (usually within 1–2 business days), an email-style message (reply within one business day), or a callback request." },
+        { q: "How do I contact Aquifert?", a: "You can reach the Aquifert fertiliser trading desk four ways: WhatsApp for quick questions (answered within a couple of hours in the trading day), a booked 20-minute call with a trader (usually within 1–2 business days), an email-style message (reply within one business day), or a callback request." },
         { q: "How fast does Aquifert respond to enquiries?", a: "WhatsApp messages are typically answered within a couple of hours during the trading day. Messages and callback requests receive a reply within one business day, and booked calls are usually available within 1–2 business days." },
         { q: "Who will I speak to at Aquifert?", a: "Every channel reaches a human trader on the Aquifert desk, not a bot. The desk handles buyer sourcing, supplier onboarding, membership questions and trading support." },
       ],
@@ -402,7 +402,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         { keywords: "supplier, sell, producer, selling", answer: "Suppliers pass KYC/KYB review, then receive vetted buyer demand through the supplier portal, AI-polished quotes, escrowed payouts and advisory support on execution from factory to port. Register and choose the supplier path to start." },
         { keywords: "financ, credit, invoice, payment terms", answer: "AQ Zero Harvest and AQ Zero Scale members can finance up to 85% of a verified invoice over 30, 60 or 90 days, with e-signature and automated repayment schedules." },
         { keywords: "account, register, sign up, signup, log in, login, password", answer: "Use Create an account to register with your email address (work or personal). We send a 6-digit verification code — enter it on the next screen, set a password, then you'll land in the portal. Sign-in after that is email + password. If you're locked out, use Forgot password on the login page." },
-        { keywords: "product, urea, dap, map, mop, npk, micronutrient, water soluble, zinc, iron", answer: "We trade water-soluble and specialty fertilizers, Urea, DAP, MOP, MAP and NPK grades for fertigation and foliar programmes, plus micronutrients including Zinc and Iron for high-value crops." },
+        { keywords: "product, urea, dap, map, mop, npk, micronutrient, water soluble, zinc, iron", answer: "We trade water-soluble and specialty fertilisers, Urea, DAP, MOP, MAP and NPK grades for fertigation and foliar programmes, plus micronutrients including Zinc and Iron for high-value crops." },
         { keywords: "contact, human, person, phone, email, desk, talk", answer: "The desk is at enquiry@aquifert.com. Include your company, product and tonnage and the right trader will reply within one business day." },
         { keywords: "safe, trust, vet, kyc, compliance, anonymous", answer: "Every counterparty passes credit and compliance checks before a quote is exchanged, and nothing that could reveal a supplier ever reaches a buyer. The engine flags, a human clears, that rule runs through the whole platform." },
       ],
@@ -457,14 +457,14 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       ],
       copyright: "© {year} Aquifert. All rights reserved.",
       disclaimer:
-        "Fertilizer price indications are compiled from public sources and Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.",
+        "Fertiliser price indications are compiled from public sources and Aquifert desk assessments. Data may be delayed and is provided for information only. It does not constitute a price assessment, an offer, or advice. Verify independently before trading.",
     },
   },
   aqZero: {
     hero: {
       eyebrow: "AQ Zero",
       badge: "Pilot",
-      title: "Buy Fertilizer at",
+      title: "Buy Fertiliser at",
       highlight: "supplier cost",
       sub: "Supplier-cost buying with a fixed operations fee. Register now for the pilot.",
       primaryLabel: "Choose your programme",

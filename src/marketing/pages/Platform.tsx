@@ -26,7 +26,7 @@ export default function Platform({ content }: { content: SiteContent["platform"]
       <Seo
         title={seo.title}
         description={seo.description}
-        keywords="fertilizer trading software, fertilizer quoting platform, fertilizer container tracking, fertilizer market intelligence, AI procurement agriculture, fertilizer invoice financing"
+        keywords="fertiliser trading software, fertiliser quoting platform, fertiliser container tracking, fertiliser market intelligence, AI procurement agriculture, fertiliser invoice financing"
         path="/platform"
         image={hero.image || undefined}
         jsonLd={jsonLd}

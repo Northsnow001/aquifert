@@ -39,6 +39,7 @@ const BREACHED = new Set([
   "123456789012",
   "abcdefghijkl",
   "fertilizer123",
+  "fertiliser123",
   "aquifert1234",
   "welcome12345",
 ]);

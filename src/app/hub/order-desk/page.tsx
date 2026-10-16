@@ -25,7 +25,7 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Buy Fertilizer</h1>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Buy Fertiliser</h1>
         <p className="mt-1 text-[15.5px] text-mid">
           {zero ? "Supplier-cost buying with a fixed operations fee. Register now for the pilot." : "Your enquiry goes directly to the Aquifert trading desk."}
         </p>

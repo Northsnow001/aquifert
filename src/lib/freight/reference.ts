@@ -37,7 +37,7 @@ export const MARKET_FACTORS = {
 export type Market = keyof typeof MARKET_FACTORS;
 
 export const CARGO_PREMIUMS: Record<string, number> = {
-  "Fertilizer / DAP / Urea": 5,
+  "Fertiliser / DAP / Urea": 5,
   "Phosphate Rock": 4,
   "Grain / Wheat": 3,
   Coal: 2,

@@ -8,7 +8,7 @@ import { signInFor, signUpFor } from "@/lib/share-links";
 const PERKS = [
   { icon: Radio, text: "TELEX flashes the moment they reach the desk" },
   { icon: Newspaper, text: "AQ View analysis on what moves the market" },
-  { icon: Bot, text: "Aquibot, the fertilizer market AI" },
+  { icon: Bot, text: "Aquibot, the fertiliser market AI" },
 ];
 
 export function ShareTeaser({ post }: { post: SharedPost }) {

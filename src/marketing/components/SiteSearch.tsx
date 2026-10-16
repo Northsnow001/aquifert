@@ -12,7 +12,7 @@ import { ArrowRight, Search, X } from "lucide-react";
 type Entry = { title: string; section: string; keywords: string; to: string };
 
 const INDEX: Entry[] = [
-  { title: "Home", section: "Page", keywords: "home landing fertilizer markets sustainable", to: "/" },
+  { title: "Home", section: "Page", keywords: "home landing fertiliser markets sustainable", to: "/" },
   { title: "Platform, Aquifert ONE", section: "Page", keywords: "platform one workspace trade tools", to: "/platform" },
   { title: "Why Aquifert", section: "Page", keywords: "why aquifert expertise due diligence sustainability", to: "/why-aquifert" },
   { title: "Membership plans", section: "Page", keywords: "membership pricing sprout harvest scale plans cost", to: "/membership" },
@@ -27,7 +27,7 @@ const INDEX: Entry[] = [
   { title: "Aquibot AI Assistant", section: "Platform feature", keywords: "aquibot ai assistant quotes drafting chat", to: "/platform" },
   { title: "Order Desk", section: "Platform feature", keywords: "order desk live orders audit trail", to: "/platform" },
   { title: "Academy", section: "Platform feature", keywords: "academy learning incoterms risk management training", to: "/platform" },
-  { title: "Water soluble fertilizers", section: "Products", keywords: "water soluble urea dap mop map npk fertigation foliar", to: "/why-aquifert" },
+  { title: "Water soluble fertilisers", section: "Products", keywords: "water soluble urea dap mop map npk fertigation foliar", to: "/why-aquifert" },
   { title: "Micronutrients", section: "Products", keywords: "micronutrients zinc iron high value crops", to: "/why-aquifert" },
   { title: "Supply chain expertise", section: "Products", keywords: "supply chain sourcing clearing delivery logistics", to: "/why-aquifert" },
   { title: "AQ Zero Sprout", section: "Membership", keywords: "aq zero sprout aq sprout plan 200 tonnes starter membership", to: "/membership" },

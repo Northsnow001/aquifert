@@ -11,7 +11,7 @@ import { resolveLeg, type PortIndex } from "@/lib/freight-desk/benchmark";
 import { parseFixtureSheet } from "@/lib/freight-desk/parse";
 import type { FixtureInput } from "@/lib/freight-desk/types";
 
-const SAMPLE = `Damietta\tConstanta\t10\t28/29\tFertilizer / DAP / Urea\tBroker sheet\t2026-07-01
+const SAMPLE = `Damietta\tConstanta\t10\t28/29\tFertiliser / DAP / Urea\tBroker sheet\t2026-07-01
 Baltic
 Brazil\t30-35\t44.5/46
 US Gulf\t25\t38`;

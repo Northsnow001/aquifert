@@ -90,7 +90,7 @@ export default async function DashboardPage() {
             <FlaskConical className="h-4 w-4" /> Nitrogen Report
           </Link>
           <Link href="/hub/order-desk" className={btnPrimary}>
-            <ShoppingCart className="h-4 w-4" /> Buy Fertilizer
+            <ShoppingCart className="h-4 w-4" /> Buy Fertiliser
           </Link>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default async function DashboardPage() {
               body="Tell the desk the product, quantity and destination, and a trader comes back with a quote."
               action={
                 <Link href="/hub/order-desk?tab=desk" className={btnPrimary}>
-                  Buy Fertilizer
+                  Buy Fertiliser
                 </Link>
               }
             />

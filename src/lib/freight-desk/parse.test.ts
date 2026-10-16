@@ -32,7 +32,7 @@ test("fixtures without a route or a sane rate are rejected", () => {
 test("pasted sheets skip headers, group rows under a region line and report bad lines", () => {
   const sheet = [
     "Load\tDischarge\tCargo\tRate",
-    "Damietta\tConstanta\t10\t28/29\tFertilizer\tBroker A\t2026-07-01",
+    "Damietta\tConstanta\t10\t28/29\tFertiliser\tBroker A\t2026-07-01",
     "Baltic",
     "Brazil\t30-35\t44.5/46",
     "US Gulf\t25",
@@ -42,7 +42,7 @@ test("pasted sheets skip headers, group rows under a region line and report bad 
   assert.equal(rows.length, 2);
   assert.deepEqual(
     { load: rows[0].loadName, rate: [rows[0].rateLow, rows[0].rateHigh], type: rows[0].cargoType, source: rows[0].source, date: rows[0].fixtureDate },
-    { load: "Damietta", rate: [28, 29], type: "Fertilizer", source: "Broker A", date: "2026-07-01" },
+    { load: "Damietta", rate: [28, 29], type: "Fertiliser", source: "Broker A", date: "2026-07-01" },
   );
   assert.deepEqual({ load: rows[1].loadName, region: rows[1].loadRegion, cargo: [rows[1].cargoMinKt, rows[1].cargoMaxKt], source: rows[1].source }, { load: "Baltic", region: "Baltic", cargo: [30, 35], source: "Pasted" });
   assert.deepEqual(errors.map((error) => error.line), [5, 6]);

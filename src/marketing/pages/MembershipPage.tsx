@@ -68,9 +68,9 @@ export function MembershipPage({ content }: { content: Membership }) {
     const service: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "Service",
-      name: "Aquifert fertilizer trading membership",
+      name: "Aquifert fertiliser trading membership",
       provider: { "@id": "https://aquifert.com/#organization" },
-      serviceType: "B2B fertilizer sourcing platform membership",
+      serviceType: "B2B fertiliser sourcing platform membership",
       areaServed: "GB",
       hasOfferCatalog: {
         "@type": "OfferCatalog",
@@ -80,7 +80,7 @@ export function MembershipPage({ content }: { content: Membership }) {
           return {
             "@type": "Offer",
             name: card.tagline ? `${card.name} membership, ${card.tagline}` : `${card.name} membership`,
-            description: `Fertilizer ${offer.tier ? "trading" : "market data"} membership: ${card.name}.${card.tagline ? ` ${card.tagline}.` : ""}`,
+            description: `Fertiliser ${offer.tier ? "trading" : "market data"} membership: ${card.name}.${card.tagline ? ` ${card.tagline}.` : ""}`,
           };
         }),
       },
@@ -93,7 +93,7 @@ export function MembershipPage({ content }: { content: Membership }) {
       <Seo
         title={seo.title}
         description={seo.description}
-        keywords="fertilizer trading membership, fertilizer subscription pricing, buy fertilizer without margin, fertilizer invoice financing UK, aquifert plans"
+        keywords="fertiliser trading membership, fertiliser subscription pricing, buy fertiliser without margin, fertiliser invoice financing UK, aquifert plans"
         path="/membership"
         image={hero.image || undefined}
         jsonLd={jsonLd}

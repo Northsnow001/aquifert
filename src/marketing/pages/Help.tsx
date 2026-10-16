@@ -118,7 +118,7 @@ export default function Help({ content }: { content: Help }) {
       <Seo
         title={seo.title}
         description={seo.description}
-        keywords="aquifert help, aquibot, fertilizer trading support, membership questions, freight tracking help"
+        keywords="aquifert help, aquibot, fertiliser trading support, membership questions, freight tracking help"
         path="/help"
       />
 

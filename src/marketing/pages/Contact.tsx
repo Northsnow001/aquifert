@@ -65,7 +65,7 @@ export default function ContactPage({ content }: { content: SiteContent["contact
       {
         "@context": "https://schema.org",
         "@type": "ContactPage",
-        name: "Contact the Aquifert fertilizer trading desk",
+        name: "Contact the Aquifert fertiliser trading desk",
         url: "https://aquifert.com/contact",
         mainEntity: {
           "@type": "Organization",
@@ -88,7 +88,7 @@ export default function ContactPage({ content }: { content: SiteContent["contact
       <Seo
         title={seo.title}
         description={seo.description}
-        keywords="contact aquifert, fertilizer trading desk, fertilizer buyer support, fertilizer supplier onboarding, aquifert phone, aquifert whatsapp"
+        keywords="contact aquifert, fertiliser trading desk, fertiliser buyer support, fertiliser supplier onboarding, aquifert phone, aquifert whatsapp"
         path="/contact"
         image={hero.image || undefined}
         jsonLd={jsonLd}

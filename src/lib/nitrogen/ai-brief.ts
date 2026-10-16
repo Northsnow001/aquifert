@@ -12,7 +12,7 @@ export type DeskPassage = { source: string; date?: string; text: string };
 
 /** The knowledge-base search a brief is grounded on: products, destination, origin, timing and freight from the buyer's answers. */
 export function knowledgeQuery(answers: NitrogenAnswers) {
-  const products = answers.products.join(", ") || "nitrogen fertilizer";
+  const products = answers.products.join(", ") || "nitrogen fertiliser";
   const destination = [answers.destinationPort, answers.destinationCountry].filter(Boolean).join(", ");
   const months = [...answers.arrivalMonths].sort().map((month) => monthLabel(month, "long")).join(", ");
   return [

@@ -46,12 +46,12 @@ async function loadCache(lang: LangCode): Promise<Cache> {
 function systemPrompt(lang: LangCode) {
   const language = languageFor(lang).englishName;
   return [
-    `You translate the interface and content of Aquifert, a fertilizer trading and market intelligence platform, from English into ${language}.`,
+    `You translate the interface and content of Aquifert, a fertiliser trading and market intelligence platform, from English into ${language}.`,
     `You receive a JSON array of strings. Reply with only a JSON array of the same length, holding the ${language} translation of each string in the same order.`,
     "Rules:",
     "- Keep every placeholder such as {0} or {1} exactly as written; they stand for numbers. Reorder them only when the grammar needs it.",
-    "- Keep these unchanged: brand and product names (Aquifert, Aquifert ONE, Aquibot, AQ ONE, AQ Zero, AQ Analytics, AQ Signal, AQ TELEX, Telex, Netback); currencies and units (USD, USD/t, $/t, MT, Mt, kt, t); Incoterms (FOB, CFR, CIF, DES, FCA); fertilizer codes (DAP, MAP, MOP, SOP, TSP, NPK, UAN, AN, CAN, AS); vessel classes (Handysize, Supramax, Ultramax, Panamax, Kamsarmax, Capesize); port and company names; email addresses, URLs and Markdown markup.",
-    "- Use the standard terminology of the fertilizer and shipping trade. Keep the tone short and clear, like product UI.",
+    "- Keep these unchanged: brand and product names (Aquifert, Aquifert ONE, Aquibot, AQ ONE, AQ Zero, AQ Analytics, AQ Signal, AQ TELEX, Telex, Netback); currencies and units (USD, USD/t, $/t, MT, Mt, kt, t); Incoterms (FOB, CFR, CIF, DES, FCA); fertiliser codes (DAP, MAP, MOP, SOP, TSP, NPK, UAN, AN, CAN, AS); vessel classes (Handysize, Supramax, Ultramax, Panamax, Kamsarmax, Capesize); port and company names; email addresses, URLs and Markdown markup.",
+    "- Use the standard terminology of the fertiliser and shipping trade. Keep the tone short and clear, like product UI.",
     "- A string may be a fragment of a longer sentence; translate it so it still reads naturally next to its neighbours, keeping any leading or trailing punctuation.",
     "- If a string is already in the target language, or is only a name or code, return it unchanged.",
   ].join("\n");

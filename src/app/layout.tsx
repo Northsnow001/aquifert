@@ -30,11 +30,11 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
-  title: "Aquifert, Fertilizer Sourcing Platform | True Landed Cost, Tracked to Your Gate",
+  title: "Aquifert - Knowledge | Fertiliser | Delivered - Informing decisions with transparency on your fertiliser sourcing",
   description:
-    "Aquifert is the B2B fertilizer sourcing platform where membership replaces margin. Source water-soluble fertilizer, Urea, DAP, MOP, MAP and NPK, at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
+    "Aquifert is the B2B fertiliser sourcing platform where membership replaces margin. Source water-soluble fertiliser, Urea, DAP, MOP, MAP and NPK, at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
   keywords:
-    "fertilizer sourcing platform, B2B fertilizer marketplace, buy fertilizer UK, water-soluble fertilizer suppliers, fertilizer landed cost, urea DAP MOP MAP NPK prices, fertilizer container tracking, fertilizer invoice financing, agricultural supply chain platform",
+    "fertiliser sourcing platform, B2B fertiliser marketplace, buy fertiliser UK, water-soluble fertiliser suppliers, fertiliser landed cost, urea DAP MOP MAP NPK prices, fertiliser container tracking, fertiliser invoice financing, agricultural supply chain platform",
   robots: "index, follow, max-image-preview:large, max-snippet:-1",
   icons: {
     icon: [{ url: "/brand/favicon-32.png", type: "image/png" }],
@@ -43,15 +43,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Aquifert",
-    title: "Aquifert, Fertilizer Trading at True Landed Cost",
+    title: "Aquifert, Fertiliser Trading at True Landed Cost",
     description:
-      "The B2B fertilizer marketplace where membership replaces margin. AI-drafted quotes, live container tracking, market intelligence and invoice financing for UK agriculture.",
+      "The B2B fertiliser marketplace where membership replaces margin. AI-drafted quotes, live container tracking, market intelligence and invoice financing for UK agriculture.",
     url: "/",
     images: ["/media/hero-ship-containers.jpg"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Aquifert, Fertilizer Trading at True Landed Cost",
+    title: "Aquifert, Fertiliser Trading at True Landed Cost",
     description:
       "Source Urea, DAP, MOP, MAP and NPK direct from vetted global producers. Transparent landed cost, 24-hour quotes, live tracking from port to farm gate.",
     images: ["/media/hero-ship-containers.jpg"],

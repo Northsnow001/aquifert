@@ -165,7 +165,7 @@ test("the knowledge search follows the buyer's answers, and passages are sent on
     knowledgeQuery({ ...answers, preferredOrigin: "Egypt" }),
     "Urea, CAN market outlook, prices, supply and demand; imports into Mombasa, Kenya; origin Egypt; arrivals November 2026, January 2027; break bulk freight",
   );
-  assert.equal(knowledgeQuery({ ...answers, products: [], destinationPort: "", arrivalMonths: [], shipmentType: "" }), "nitrogen fertilizer market outlook, prices, supply and demand; imports into Kenya");
+  assert.equal(knowledgeQuery({ ...answers, products: [], destinationPort: "", arrivalMonths: [], shipmentType: "" }), "nitrogen fertiliser market outlook, prices, supply and demand; imports into Kenya");
   const without = JSON.parse(briefRequest(answers, brief, DEFAULT_REFERENCE));
   assert.equal(without.deskKnowledge, undefined);
   const passages = [{ source: "Desk research", text: "Kenyan CAN demand peaks before the long rains." }];

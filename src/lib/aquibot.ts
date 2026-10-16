@@ -155,7 +155,7 @@ unloading port = discharge port
 load port = loading port
 latest = most recent
 current = most recent
-fertiliser = fertilizer`;
+fertilizer = fertiliser`;
 
 const SHARED_SYNONYMS_TAIL = `prills = prilled
 gran = granular
