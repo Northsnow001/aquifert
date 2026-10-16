@@ -144,7 +144,7 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
   return (
     <div
       ref={root}
-      className="pointer-events-none fixed z-[45] print:hidden bottom-24 end-4 top-auto start-auto lg:bottom-auto lg:top-28 lg:end-6"
+      className="pointer-events-none fixed z-[45] print:hidden bottom-24 end-4 top-auto start-auto lg:absolute lg:bottom-auto lg:top-11 lg:end-8"
     >
       <div className="pointer-events-auto flex flex-col items-end gap-3 lg:block">
         {/* Phone / tablet card — stacked above the button, right-aligned */}
