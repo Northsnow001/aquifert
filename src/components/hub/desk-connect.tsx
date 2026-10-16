@@ -25,7 +25,7 @@ const CYCLE_MS = 5 * 60_000;
 function RouterGlyph() {
   const branch = "M7.6 12 H9.6 C12.8 12 13 6.5 16.4 6.5 M9.6 12 C12.8 12 13 17.5 16.4 17.5";
   return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px] sm:h-[22px] sm:w-[22px]" fill="none" aria-hidden>
       <path d={branch} stroke="white" strokeOpacity="0.9" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M7.6 12 H9.6 C12.8 12 13 6.5 16.4 6.5" pathLength={1} className="aq-router-spark" stroke="#f3cf7f" strokeWidth="2" strokeLinecap="round" />
       <circle cx="5" cy="12" r="2.6" fill="#e0b45a" />
@@ -35,9 +35,10 @@ function RouterGlyph() {
   );
 }
 
-/** Hub launcher that branches to the Weekly Meetup and a booked Trade Desk call. Lives top-right under the banner and pulses open every few minutes. */
+/** Hub launcher that branches to the Weekly Meetup and a booked Trade Desk call. Desktop: top-right canvas. Phone: compact sheet above the tab bar. */
 export function DeskConnect({ name, email }: { name: string; email: string }) {
   const [open, setOpen] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const { open: dockOpen } = useAquibotDock();
   const root = useRef<HTMLDivElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
@@ -45,6 +46,14 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
   const holdOpen = useRef(false);
   const id = useId();
   const menuId = `${id}-menu`;
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduceMotion(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -72,6 +81,8 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Auto-pulse only on wide screens so phones keep the content clear.
+    if (window.matchMedia("(max-width: 1023px)").matches) return;
 
     let collapseTimer = 0;
     const pulse = () => {
@@ -93,7 +104,7 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
   }, []);
 
   if (dockOpen) return null;
-  const calm = open && typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const calm = open && reduceMotion;
 
   const options = [
     {
@@ -116,15 +127,68 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
     },
   ] as const;
 
+  const toggle = () => {
+    setOpen((value) => {
+      const next = !value;
+      holdOpen.current = next;
+      return next;
+    });
+  };
+
   return (
-    <div ref={root} className="pointer-events-none absolute inset-x-0 top-0 z-[35] flex justify-end print:hidden">
+    <div
+      ref={root}
+      className="pointer-events-none fixed bottom-[5.5rem] right-3 z-[45] flex justify-end lg:absolute lg:inset-x-0 lg:bottom-auto lg:right-auto lg:top-0 print:hidden"
+    >
       <div className="pointer-events-auto relative">
+        {/* Phone: compact sheet above the tab bar */}
+        {open ? (
+          <div
+            id={`${menuId}-mobile`}
+            role="group"
+            aria-label="Talk to the Aquifert desk"
+            className="aq-canvas-in absolute bottom-[3.25rem] right-0 w-[min(18.5rem,calc(100vw-1.5rem))] space-y-2 rounded-2xl border border-black/[.08] bg-white/97 p-3 shadow-[var(--aq-shadow-float)] backdrop-blur-md lg:hidden"
+          >
+            <div className="px-0.5 pb-0.5">
+              <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-navy-700">Talk to the desk</p>
+              <p className="mt-0.5 text-[11px] text-dim">Pick how you want to connect</p>
+            </div>
+            {options.map((option, i) => {
+              const content = (
+                <>
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm ${option.node}`}>
+                    <option.Icon className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1 text-left">
+                    <span className="block text-[13px] font-semibold leading-snug text-ink">{option.title}</span>
+                    <span className="mt-0.5 flex items-center gap-1 text-[11px] text-dim">
+                      {option.body}
+                      {option.external ? <ArrowUpRight className="h-3 w-3" aria-hidden /> : null}
+                    </span>
+                  </span>
+                </>
+              );
+              const className = "flex items-center gap-2.5 rounded-xl border border-black/[.07] bg-white px-2.5 py-2 no-underline shadow-sm transition hover:border-navy-300";
+              return option.external ? (
+                <a key={option.key} ref={i === 0 ? first : undefined} href={option.href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className={className}>
+                  {content}
+                </a>
+              ) : (
+                <Link key={option.key} ref={i === 0 ? first : undefined} href={option.href} onClick={() => setOpen(false)} className={className}>
+                  {content}
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* Desktop: animated node canvas */}
         {open ? (
           <div
             id={menuId}
             role="group"
             aria-label="Talk to the Aquifert desk"
-            className="aq-canvas-in absolute overflow-hidden rounded-[20px] border border-black/[.07] bg-white/95 shadow-[var(--aq-shadow-float)] backdrop-blur-md"
+            className="aq-canvas-in absolute hidden overflow-hidden rounded-[20px] border border-black/[.07] bg-white/95 shadow-[var(--aq-shadow-float)] backdrop-blur-md lg:block"
             style={{ width: W, height: H, right: -INSET, top: -INSET, backgroundImage: "radial-gradient(rgb(130 171 203 / 0.28) 1px, transparent 1.2px)", backgroundSize: "12px 12px" }}
           >
             <div className="absolute left-3.5 top-3">
@@ -173,11 +237,11 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
               );
               const className = "group absolute flex items-center justify-end gap-2 rounded-2xl no-underline outline-none";
               return option.external ? (
-                <a key={option.key} ref={i === 0 ? first : undefined} href={option.href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className={className} style={style}>
+                <a key={option.key} href={option.href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className={className} style={style}>
                   {content}
                 </a>
               ) : (
-                <Link key={option.key} ref={i === 0 ? first : undefined} href={option.href} onClick={() => setOpen(false)} className={className} style={style}>
+                <Link key={option.key} href={option.href} onClick={() => setOpen(false)} className={className} style={style}>
                   {content}
                 </Link>
               );
@@ -191,14 +255,8 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
           aria-label={open ? "Close" : "Talk to the Aquifert desk"}
           aria-expanded={open}
           aria-controls={open ? menuId : undefined}
-          onClick={() => {
-            setOpen((value) => {
-              const next = !value;
-              holdOpen.current = next;
-              return next;
-            });
-          }}
-          className="aq-router group relative flex items-center justify-center rounded-full text-white"
+          onClick={toggle}
+          className="aq-router group relative flex h-11 w-11 items-center justify-center rounded-full text-white sm:h-11 sm:w-11 lg:h-[44px] lg:w-[44px]"
           style={{ width: LAUNCHER, height: LAUNCHER }}
         >
           <span className={`transition duration-300 ${open ? "rotate-90 scale-50 opacity-0" : ""}`}>

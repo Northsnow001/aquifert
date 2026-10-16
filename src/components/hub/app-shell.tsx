@@ -19,7 +19,7 @@ import { TelexGuide } from "@/components/hub/telex-guide";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { DeskConnect } from "@/components/hub/desk-connect";
 import { HubTabs } from "@/components/hub/hub-tabs";
-import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
+import { ADMIN_LINK, DRAWER_GROUPS, hasPaidPages, HUB_NAV, isActive, navFor, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
 import { ThemeToggle } from "@/components/hub/theme-toggle";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
@@ -40,38 +40,42 @@ function Brand() {
   );
 }
 
-const SECTION_KEY: Record<string, string> = { "AQ ONE": "aq1", Plans: "plans", "AQ Analytics": "analytics", Help: "help", You: "you" };
-const SECTION_NOTE: Partial<Record<string, string>> = { "AQ ONE": "note.aq1", "AQ Analytics": "note.analytics" };
-
 function NavList({
   pathname,
-  collapsed,
   items,
   admin,
   unlocked,
   onNavigate,
 }: {
   pathname: string;
-  collapsed: boolean;
   items: HubNavItem[];
   admin: boolean;
   unlocked: string[];
   onNavigate?: () => void;
 }) {
   const { t } = useI18n();
+  const byKey = new Map(items.map((item) => [item.key, item]));
+  const groups = DRAWER_GROUPS.map((group) => ({
+    ...group,
+    rows: group.items.flatMap((key) => {
+      const item = byKey.get(key);
+      return item ? [item] : [];
+    }),
+  })).filter((group) => group.rows.length > 0 || (group.key === "you" && admin));
+
   return (
     <nav aria-label="Hub" className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 pb-4 pt-2">
-      {SECTIONS.filter((section) => items.some((item) => item.section === section) || (section === "You" && admin)).map((section, index) => (
-        <div key={section} className="flex flex-col gap-0.5" aria-label={section}>
-          {collapsed ? (
-            index === 0 ? null : <div className="mx-auto mb-1 h-px w-6 bg-black/[.07]" />
-          ) : section === "Main" ? null : (
+      {groups.map((group, index) => (
+        <div key={group.key} className="flex flex-col gap-0.5" aria-label={group.labelKey ? t(group.labelKey) : undefined}>
+          {group.labelKey ? (
             <div className={`px-2.5 pb-1 ${index === 0 ? "pt-1" : "mt-1 border-t border-black/[.06] pt-3"}`}>
-              <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-teal-700">{t(`section.${SECTION_KEY[section]}`)}</p>
-              {SECTION_NOTE[section] ? <p className="mt-0.5 text-[12px] text-dim">{t(SECTION_NOTE[section])}</p> : null}
+              <p className="text-[11.5px] font-bold uppercase tracking-[0.14em] text-teal-700">{t(group.labelKey)}</p>
+              {group.noteKey ? <p className="mt-0.5 text-[12px] text-dim">{t(group.noteKey)}</p> : null}
             </div>
-          )}
-          {items.filter((item) => item.section === section).map((item) => {
+          ) : index > 0 ? (
+            <div className="mx-2.5 mb-1 mt-1 border-t border-black/[.06]" />
+          ) : null}
+          {group.rows.map((item) => {
             const active = isActive(pathname, item.href);
             const locked = Boolean(item.module && !unlocked.includes(item.module));
             const label = t(`nav.${item.key}`);
@@ -81,21 +85,14 @@ function NavList({
                   <Link
                     href={item.href}
                     onClick={onNavigate}
-                    aria-label={collapsed ? label : undefined}
-                    className={`aq-nav-link group flex items-center gap-3 rounded-xl py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink ${
-                      collapsed ? "justify-center px-0" : "px-3"
-                    }`}
+                    className="aq-nav-link group flex items-center gap-3 rounded-xl px-3 py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink"
                   >
                     <NavIcon item={item} />
-                    {collapsed ? null : (
-                      <span className="min-w-0 flex-1 leading-snug">
-                        <span className="block">{label}</span>
-                        {onNavigate ? <span className="mt-0.5 block text-[12.5px] font-normal text-dim">{item.promo.headline}</span> : null}
-                      </span>
-                    )}
-                    {collapsed ? null : (
-                      <ChevronRight className="h-4 w-4 shrink-0 text-dim opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden />
-                    )}
+                    <span className="min-w-0 flex-1 leading-snug">
+                      <span className="block">{label}</span>
+                      {onNavigate ? <span className="mt-0.5 block text-[12.5px] font-normal text-dim">{item.promo.headline}</span> : null}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-dim opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden />
                   </Link>
                 </NavHoverCard>
               );
@@ -105,35 +102,27 @@ function NavList({
                 <Link
                   href={item.href}
                   onClick={onNavigate}
-                  title={collapsed ? `${label}${locked ? " (locked)" : ""}` : undefined}
                   aria-current={active ? "page" : undefined}
-                  className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl py-[9px] text-[15px] no-underline transition-colors ${
-                    collapsed ? "justify-center px-0" : "px-3 pr-8"
-                  } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08)]" : "font-medium text-ink/85 hover:bg-white/70 hover:text-ink"}`}
+                  className={`aq-nav-link flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-[9px] pr-8 text-[15px] no-underline transition-colors ${
+                    active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08)]" : "font-medium text-ink/85 hover:bg-white/70 hover:text-ink"
+                  }`}
                 >
                   <NavIcon item={item} locked={locked} />
-                  {collapsed ? null : <span className="line-clamp-2 min-w-0 flex-1 leading-snug">{label}</span>}
-                  {!collapsed && locked ? (
-                    <Lock className="h-3.5 w-3.5 shrink-0 text-dim" aria-label="Locked, upgrade available" />
-                  ) : null}
+                  <span className="line-clamp-2 min-w-0 flex-1 leading-snug">{label}</span>
+                  {locked ? <Lock className="h-3.5 w-3.5 shrink-0 text-dim" aria-label="Locked, upgrade available" /> : null}
                 </Link>
-                {collapsed ? null : (
-                  <InfoTip label={label} text={item.tip} href={`/hub/guide#${item.key}`} className="absolute end-1 opacity-100 lg:opacity-0 lg:focus:opacity-100 lg:group-hover:opacity-100" />
-                )}
+                <InfoTip label={label} text={item.tip} href={`/hub/guide#${item.key}`} className="absolute end-1 opacity-100" />
               </div>
             );
           })}
-          {section === "You" && admin ? (
+          {group.key === "you" && admin ? (
             <Link
               href={ADMIN_LINK.href}
               onClick={onNavigate}
-              title={collapsed ? t("top.admin") : undefined}
-              className={`aq-nav-link flex items-center gap-3 rounded-xl py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink ${
-                collapsed ? "justify-center px-0" : "px-3"
-              }`}
+              className="aq-nav-link flex items-center gap-3 rounded-xl px-3 py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink"
             >
               <ADMIN_LINK.icon className="h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
-              {collapsed ? null : <span className="truncate">{t("top.admin")}</span>}
+              <span className="truncate">{t("top.admin")}</span>
             </Link>
           ) : null}
         </div>
@@ -370,22 +359,15 @@ export function AppShell({
               <AccountMenu user={user} admin={admin} paid={hasPaidPages(user.plan, admin)} />
             </div>
           </header>
-          <div className={`hidden lg:block ${NAVY}`}>
+          <div className={NAVY}>
             <Masthead t={t} />
             <HubTabs tabs={hubTabs} pathname={pathname} />
           </div>
-          <div className="hidden lg:block">{ticker}</div>
+          {ticker}
         </div>
 
         <div id="aq-scroll" className="aq-canvas relative flex min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-          <div className="lg:hidden">
-            <div className={NAVY}>
-              <Masthead t={t} />
-            </div>
-            {ticker}
-          </div>
-
-          <main id="main-content" className="relative flex-1 px-4 pb-28 pt-5 transition-opacity duration-300 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
+          <main id="main-content" className="relative flex-1 px-3 pb-28 pt-4 transition-opacity duration-300 sm:px-6 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-7">
             <DeskConnect name={user.name} email={user.email} />
             <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">
               {children}
@@ -400,22 +382,28 @@ export function AppShell({
         {tabs.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
+          const short =
+            item.key === "aquibot"
+              ? "Aquibot"
+              : ["home", "order", "call", "contact", "telex", "library"].includes(item.key)
+                ? t(`short.${item.key}`)
+                : t(`nav.${item.key}`);
           return (
             <Link
               key={item.key}
               href={item.href}
               data-tour={item.key}
               aria-current={active ? "page" : undefined}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11.5px] font-semibold leading-tight no-underline ${active ? "text-blue" : "text-dim"}`}
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11px] font-semibold leading-tight no-underline ${active ? "text-blue" : "text-dim"}`}
             >
               {Icon === "aquibot" ? <AquibotAvatar size={24} active={active} /> : <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />}
               <span className="block max-w-full truncate px-0.5" translate={item.key === "aquibot" ? "no" : undefined}>
-                {item.key === "aquibot" ? "Aquibot" : item.key === "telex" || item.key === "library" ? t(`short.${item.key}`) : t(`nav.${item.key}`)}
+                {short}
               </span>
             </Link>
           );
         })}
-        <button type="button" onClick={() => setDrawer(true)} data-tour="more" className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11.5px] font-semibold leading-tight text-dim">
+        <button type="button" onClick={() => setDrawer(true)} data-tour="more" className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl py-1 text-[11px] font-semibold leading-tight text-dim">
           <MoreHorizontal className="h-6 w-6" strokeWidth={1.8} />
           <span className="block max-w-full truncate px-0.5">{t("top.more")}</span>
         </button>
@@ -424,14 +412,14 @@ export function AppShell({
       {drawer ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label={t("top.menu")}>
           <button type="button" aria-label="Close menu" className="aq-backdrop absolute inset-0 cursor-default bg-[#0b1e2d]/45" onClick={() => setDrawer(false)} />
-          <div className="aq-drawer aq-rail absolute inset-y-0 left-0 flex w-[min(86vw,320px)] flex-col shadow-2xl">
+          <div className="aq-drawer aq-rail absolute inset-y-0 left-0 flex w-[min(88vw,340px)] flex-col shadow-2xl">
             <div className="flex h-14 shrink-0 items-center justify-between px-4">
               <Brand />
               <button type="button" onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-ink">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <NavList pathname={pathname} collapsed={false} items={nav} admin={admin} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
+            <NavList pathname={pathname} items={nav} admin={admin} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
             <div className="aq-safe-bottom shrink-0 border-t border-black/[.06] px-4 pt-3">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[13px] font-bold text-white">

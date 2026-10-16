@@ -26,7 +26,7 @@ const DROPDOWN_LABEL: Record<string, string> = {
 };
 
 const tabClass = (active: boolean) =>
-  `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-[3px] px-3 py-3 text-[12.5px] font-bold uppercase tracking-[0.08em] no-underline transition-colors xl:px-3.5 xl:text-[13px] ${
+  `inline-flex shrink-0 items-center gap-1 whitespace-nowrap border-b-[3px] px-2.5 py-2.5 text-[11px] font-bold uppercase tracking-[0.06em] no-underline transition-colors sm:gap-1.5 sm:px-3 sm:py-3 sm:text-[12.5px] sm:tracking-[0.08em] xl:px-3.5 xl:text-[13px] ${
     active ? "border-teal-400 text-white" : "border-transparent text-slate-300 hover:border-white/35 hover:text-white"
   }`;
 
@@ -93,7 +93,7 @@ export function HubTabs({ tabs, pathname }: { tabs: HubTab[]; pathname: string }
   const openTab = open ? tabs.find((tab) => tab.key === open.key) : null;
 
   return (
-    <nav aria-label="Sections" className="aq-tabs-scroll flex items-stretch gap-0 overflow-x-auto px-3 sm:px-6 xl:px-7">
+    <nav aria-label="Sections" className="aq-tabs-scroll flex items-stretch gap-0 overflow-x-auto overscroll-x-contain px-2 sm:px-6 xl:px-7">
       {tabs.map((tab, index) => {
         const active = tab.links.some((link) => linkActive(pathname, link));
         const divider = index > 0 ? <span key={`${tab.key}-div`} className="mx-0.5 my-auto h-4 w-px shrink-0 bg-white/20" aria-hidden /> : null;

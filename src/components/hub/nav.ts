@@ -350,8 +350,22 @@ export function navFor(plan: Plan, admin: boolean) {
 
 /** Phone tab bar: the four most-used places plus "More", which opens the full menu. */
 export function tabKeysFor(plan: Plan, admin: boolean) {
-  return hasPaidPages(plan, admin) ? ["dashboard", "home", "telex", "aquibot"] : ["home", "library", "telex", "aquibot"];
+  return hasPaidPages(plan, admin) ? ["dashboard", "home", "order", "aquibot"] : ["home", "order", "call", "aquibot"];
 }
+
+/** Keys that live under Client Suite on desktop and in the phone drawer. */
+export const SUITE_KEYS = ["home", "telex", "analysis", "library", "freight", "netback", "tools"] as const;
+
+/** Phone drawer groups, matching the desktop Client Suite arrangement. */
+export const DRAWER_GROUPS: { key: string; labelKey: string | null; noteKey?: string; items: string[] }[] = [
+  { key: "main", labelKey: null, items: ["dashboard"] },
+  { key: "suite", labelKey: "tab.suite", noteKey: "note.aq1", items: [...SUITE_KEYS] },
+  { key: "desk", labelKey: null, items: ["nitrogen", "aquibot", "order", "call", "contact"] },
+  { key: "plans", labelKey: "section.plans", items: ["zero", "aq-analytics"] },
+  { key: "analytics", labelKey: "section.analytics", noteKey: "note.analytics", items: ["a-telex", "a-market", "a-signal", "a-freight", "a-sd", "a-briefing", "a-alerts"] },
+  { key: "help", labelKey: "section.help", items: ["guide"] },
+  { key: "you", labelKey: "section.you", items: ["account"] },
+];
 
 /**
  * Tour stops in menu order. Each one points at the element carrying `data-tour={key}`; stops whose element is not
