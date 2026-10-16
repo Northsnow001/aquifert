@@ -31,10 +31,11 @@ export default async function AqAnalyticsPlanPage() {
   const copy = content.aqAnalytics;
   const { hero, plan, crossSell, closing } = copy;
   const offer = MEMBERSHIP_OFFERS.find((item) => item.id === "analytics")!;
-  const state = offerState(offer, { plan: user.plan, admin });
+  // Sales surface: AQ ONE members see the pitch; admins always see it too so the desk can check the page.
+  const state = admin ? "open" : offerState(offer, { plan: user.plan, admin: false });
   const owned = state !== "open";
   const included = MODULES.filter((item) => PLAN_RANK.growth >= PLAN_RANK[modules.access[item.key]]);
-  const mainHref = owned ? "/hub/analytics" : REGISTER;
+  const mainHref = REGISTER;
 
   const blocks: Record<string, React.ReactNode> = {
     plan: (
@@ -61,18 +62,9 @@ export default async function AqAnalyticsPlanPage() {
               </li>
             ))}
           </ul>
-          {owned ? (
-            <Link
-              href="/hub/analytics"
-              className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#2fa865] bg-[#f1faf4] px-4 text-[15px] font-semibold text-[#1f7a45] no-underline transition hover:bg-[#e3f5ea]"
-            >
-              {plan.openLabel} <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          ) : (
-            <Link href={REGISTER} className="mt-7 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-navy-700 px-4 text-[15px] font-semibold text-white no-underline transition hover:bg-navy-600 active:scale-[0.98]">
-              {plan.registerLabel}
-            </Link>
-          )}
+          <Link href={REGISTER} className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-navy-700 px-4 text-[15px] font-semibold text-white no-underline transition hover:bg-navy-600 active:scale-[0.98]">
+            {owned ? plan.openLabel : plan.registerLabel} <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
         </div>
 
         <ul className="grid content-start gap-4 sm:grid-cols-2 lg:col-span-3">
@@ -103,7 +95,7 @@ export default async function AqAnalyticsPlanPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 pb-2">
       <SalesHero src={hero.video} poster={hero.image} videoLabel={hero.label} eyebrow={hero.eyebrow} badge={hero.badge || undefined} title={<HeroTitle title={hero.title} highlight={hero.highlight} />} sub={hero.sub}>
         <PlanLink href={mainHref} label={owned ? hero.openLabel : hero.registerLabel} className={heroPrimary} arrow />
-        <PlanLink href={hero.secondaryLink} label={hero.secondaryLabel} className={heroGhost} />
+        <PlanLink href={hero.secondaryLink || REGISTER} label={hero.secondaryLabel} className={heroGhost} />
       </SalesHero>
 
       {sectionOrder("aqAnalytics", copy._order)

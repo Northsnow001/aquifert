@@ -53,7 +53,7 @@ function Entry({ item, copy }: { item: TickerItem; copy: boolean }) {
 export function MarketTicker({ items }: { items: TickerItem[] }) {
   if (!items.length) return null;
   return (
-    <div className="aq-ticker relative flex items-stretch overflow-hidden border-y border-white/10 bg-[#0C1C2E] text-white">
+    <div className="aq-ticker relative flex items-stretch overflow-hidden border-t-[3px] border-b border-t-slate-200 border-b-white/10 bg-[#0C1C2E] text-white">
       <div className="relative z-[1] flex shrink-0 items-center gap-1.5 border-r border-white/10 bg-[#0C1C2E] px-3 text-[11px] font-bold uppercase tracking-[0.16em] text-teal-300 sm:px-3.5 sm:text-[12px]">
         <span className="relative flex h-2 w-2" aria-hidden>
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-60 motion-reduce:animate-none" />

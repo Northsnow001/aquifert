@@ -7,7 +7,7 @@ import { sendContactMessage } from "@/app/hub/contact/actions";
 import { areaClass, btnPrimary, fieldClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
 import { CalendlyFrame } from "@/components/hub/calendly-frame";
 
-const WHATSAPP = "https://wa.me/?text=Hello%20Aquifert%20Support";
+const WHATSAPP = "https://wa.me/447401608015?text=" + encodeURIComponent("Hello Aquifert Trade Desk");
 
 type View = "cards" | "meeting" | "message";
 
@@ -31,8 +31,8 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <div>
-        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Contact Us</h1>
-        <p className="mt-1 text-[15.5px] text-mid">Choose how you want to reach the desk.</p>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Trade Desk</h1>
+        <p className="mt-1 text-[15.5px] text-mid">Choose how you want to reach the Aquifert Trade Desk.</p>
       </div>
 
       <div className="aq-stagger grid gap-3 sm:grid-cols-2">
@@ -42,10 +42,10 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
           </span>
           <div>
             <h2 className="text-[17px] font-semibold text-ink">Start a WhatsApp chat</h2>
-            <p className="mt-1 text-[15px] leading-relaxed text-mid">Quick questions? Message the support team and get a fast reply.</p>
+            <p className="mt-1 text-[15px] leading-relaxed text-mid">Quick questions? Message Matt on +44 7401 608015 and get a fast reply.</p>
           </div>
           <span className="mt-auto inline-flex items-center gap-1.5 text-[15px] font-semibold text-[#2f8a66]">
-            <Phone className="h-4 w-4" /> Start WhatsApp
+            <Phone className="h-4 w-4" /> WhatsApp +44 7401 608015
           </span>
         </a>
 

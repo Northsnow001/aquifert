@@ -587,6 +587,10 @@ body::before {
   from { opacity: 0; transform: translateY(-8px) scale(0.985); }
   to { opacity: 1; transform: none; }
 }
+@keyframes aq-suite-drop {
+  from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
 @keyframes aq-sheet-up {
   from { transform: translateY(100%); }
   to { transform: none; }
@@ -618,6 +622,9 @@ body::before {
 .aq-stagger > :nth-child(n + 6) { animation-delay: 250ms; }
 .aq-drop {
   animation: aq-drop 0.18s var(--aq-ease) both;
+}
+.aq-suite-drop {
+  animation: aq-suite-drop 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .aq-sheet {
   animation: aq-sheet-up 0.28s var(--aq-ease) both;

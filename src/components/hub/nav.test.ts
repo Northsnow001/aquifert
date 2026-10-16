@@ -35,25 +35,14 @@ test("the Plans tab holds only AQ Zero and AQ Analytics, account pages stay in A
   assert.deepEqual(plans?.links.map((link) => link.key), ["zero", "aq-analytics"]);
 });
 
-test("Trader Tools, Weekly Market Call and Contact Us are top-level tabs after Plans; User Guide lives in the account menu", () => {
-  const keys = tabsFor(navFor("core", false), []).map((tab) => tab.key);
-  assert.deepEqual(keys.slice(keys.indexOf("plans"), keys.indexOf("plans") + 4), ["plans", "tools", "call", "contact"]);
-  assert.equal(keys.includes("guide"), false);
-});
-
-test("Telex Feed is a plain link and AQ View has its own tab right after it", () => {
+test("Client Suite holds Hub, Telex, AQ View, Library, Calculators and Trader Tools; Trade Desk and Weekly Meetup stay top-level", () => {
   const tabs = tabsFor(navFor("core", false), []);
   const keys = tabs.map((tab) => tab.key);
-  assert.deepEqual(tabs.find((tab) => tab.key === "telex-feed")?.links.map((link) => link.key), ["telex"]);
-  assert.equal(keys[keys.indexOf("telex-feed") + 1], "analysis");
-});
-
-test("Calculators holds the Freight Calculator and Netback", () => {
-  const tabs = tabsFor(navFor("core", false), []);
-  assert.deepEqual(tabs.find((tab) => tab.key === "calculators")?.links.map((link) => link.key), ["freight", "netback"]);
-  assert.equal(tabs.some((tab) => tab.key === "netback"), false);
-  const order = tabsFor(navFor("core", false), []).find((tab) => tab.key === "order-group");
-  assert.deepEqual(order?.links.map((link) => link.key), ["order"]);
+  assert.deepEqual(tabs.find((tab) => tab.key === "suite")?.links.map((link) => link.key), ["home", "telex", "analysis", "library", "freight", "netback", "tools"]);
+  assert.deepEqual(keys, ["suite", "nitrogen", "order-group", "plans", "call", "contact"]);
+  assert.equal(keys.includes("guide"), false);
+  assert.equal(keys.includes("aquibot"), false);
+  assert.equal(keys.includes("telex-feed"), false);
 });
 
 test("the tour stops at every desktop tab, in tab-row order, on every plan", () => {

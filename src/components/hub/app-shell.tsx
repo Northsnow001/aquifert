@@ -17,6 +17,7 @@ import { NavHoverCard } from "@/components/app/nav-hover-card";
 import { startTour, Tour } from "@/components/app/tour";
 import { TelexGuide } from "@/components/hub/telex-guide";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
+import { DeskConnect } from "@/components/hub/desk-connect";
 import { HubTabs } from "@/components/hub/hub-tabs";
 import { ADMIN_LINK, hasPaidPages, HUB_NAV, isActive, navFor, SECTIONS, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
 import { ThemeToggle } from "@/components/hub/theme-toggle";
@@ -371,6 +372,8 @@ export function AppShell({
           </header>
           <div className={`hidden lg:block ${NAVY}`}>
             <Masthead t={t} />
+          </div>
+          <div className="hidden border-b border-slate-200 bg-white lg:block">
             <HubTabs tabs={hubTabs} pathname={pathname} />
           </div>
           <div className="hidden lg:block">{ticker}</div>
@@ -384,7 +387,8 @@ export function AppShell({
             {ticker}
           </div>
 
-          <main id="main-content" className="flex-1 px-4 pb-28 pt-5 transition-opacity duration-300 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
+          <main id="main-content" className="relative flex-1 px-4 pb-28 pt-5 transition-opacity duration-300 sm:px-6 lg:px-8 lg:pb-10 lg:pt-7">
+            <DeskConnect name={user.name} email={user.email} />
             <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">
               {children}
             </div>

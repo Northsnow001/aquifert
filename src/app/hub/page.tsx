@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { DeskConnect } from "@/components/hub/desk-connect";
 import { FeedCardHeader, FeedGrid, FeedItem, tileSizes } from "@/components/hub/feed-card";
 import { FeedViewFrame } from "@/components/hub/feed-view";
 import { HomeHero } from "@/components/hub/home-hero";
@@ -75,7 +74,6 @@ export default async function HomePage() {
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5 pb-2">
       <HomeHero name={user.name} variant="hub" />
-      <DeskConnect name={user.name} email={user.email} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} readIds={readIds} />

@@ -159,6 +159,9 @@ export function FreightCalculator({
       <div>
         <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-ink sm:text-[28px]">Freight Calculator — Dry Bulk Voyage Estimate</h1>
         <p className="mt-1 text-sm text-mid">Freight Rate · Route & Voyage Days · Cost Breakdown · Benchmark Check</p>
+        <p className="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-dim">
+          Designed for handymax, supra and panamax vessels on mainstream bulk fertiliser routes. For coaster, short-sea, or non-standard voyages, outputs will be unreliable and should not be used for commercial decisions.
+        </p>
       </div>
 
       <div className={`break-words rounded-xl border px-3 py-2.5 font-mono text-[10.5px] uppercase tracking-[0.1em] sm:px-4 sm:text-[11px] sm:tracking-[0.12em] ${limitReached ? "border-[#f3c9c5] bg-[#fdf2f1] text-[#b42318]" : "border-border bg-surface text-mid"}`}>
