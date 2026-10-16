@@ -27,7 +27,7 @@ const DROPDOWN_LABEL: Record<string, string> = {
 
 const tabClass = (active: boolean) =>
   `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-[3px] px-3 py-3 text-[12.5px] font-bold uppercase tracking-[0.08em] no-underline transition-colors xl:px-3.5 xl:text-[13px] ${
-    active ? "border-teal-600 text-navy-900" : "border-transparent text-navy-800/75 hover:border-navy-300 hover:text-navy-900"
+    active ? "border-teal-400 text-white" : "border-transparent text-slate-300 hover:border-white/35 hover:text-white"
   }`;
 
 /** Plan promos point at the Buy Fertiliser page with a preset tab, so they never light up as the current page. */
@@ -96,7 +96,7 @@ export function HubTabs({ tabs, pathname }: { tabs: HubTab[]; pathname: string }
     <nav aria-label="Sections" className="aq-tabs-scroll flex items-stretch gap-0 overflow-x-auto px-3 sm:px-6 xl:px-7">
       {tabs.map((tab, index) => {
         const active = tab.links.some((link) => linkActive(pathname, link));
-        const divider = index > 0 ? <span key={`${tab.key}-div`} className="mx-0.5 my-auto h-4 w-px shrink-0 bg-slate-300/90" aria-hidden /> : null;
+        const divider = index > 0 ? <span key={`${tab.key}-div`} className="mx-0.5 my-auto h-4 w-px shrink-0 bg-white/20" aria-hidden /> : null;
 
         if (tab.links.length === 1) {
           const link = tab.links[0];

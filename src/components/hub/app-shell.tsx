@@ -372,8 +372,6 @@ export function AppShell({
           </header>
           <div className={`hidden lg:block ${NAVY}`}>
             <Masthead t={t} />
-          </div>
-          <div className="hidden border-b border-slate-200 bg-white lg:block">
             <HubTabs tabs={hubTabs} pathname={pathname} />
           </div>
           <div className="hidden lg:block">{ticker}</div>
