@@ -64,7 +64,7 @@ export default function Login() {
             <Logo size={36} />
           </Link>
           <h1 className="mt-8 text-2xl font-bold tracking-tight text-navy-900">Sign in</h1>
-          <p className="mt-1.5 text-sm text-slate-600">Access your Aquifert ONE trading portal.</p>
+          <p className="mt-1.5 text-sm text-slate-600">Access your AQ ONE Fertiliser Portal</p>
 
           <form className="mt-7" onSubmit={onSubmit}>
             <input
@@ -150,11 +150,10 @@ export default function Login() {
         <div className="absolute inset-0 bg-navy-950/45" aria-hidden />
         <div className="relative flex h-full flex-col justify-end p-12">
           <h2 className="max-w-md text-3xl font-bold leading-tight text-white">
-            Fertiliser trading, <span className="text-teal-300">reimagined.</span>
+            Knowledge | <span className="text-teal-300">Fertiliser</span> | Delivered
           </h2>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-white/70">
-            Cost-to-cost sourcing, AI-drafted quotes, live container tracking and market
-            intelligence, one command center for the global fertiliser trade.
+            Aquifert connects clients to the global fertiliser market through intelligent market analysis and reliable fertiliser sourcing.
           </p>
           <p className="mt-8 text-[11px] text-white/40">© {new Date().getFullYear()} Aquifert Ltd · London</p>
         </div>
