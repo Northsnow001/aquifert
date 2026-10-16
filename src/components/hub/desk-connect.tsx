@@ -7,17 +7,17 @@ import { useAquibotDock } from "@/components/app/aquibot-dock-store";
 import { calendlyLink } from "@/lib/calendly";
 
 /** Canvas geometry in px. The launcher sits `INSET` in from the canvas's top-right corner and the branches fan down and to the left. */
-const W = 356;
-const H = 276;
-const INSET = 8;
-const LAUNCHER = 56;
-const NODE = 52;
-const NODE_X = 216;
-const PORT = NODE_X + NODE / 2 + 4;
+const W = 280;
+const H = 214;
+const INSET = 6;
+const LAUNCHER = 44;
+const NODE = 40;
+const NODE_X = 168;
+const PORT = NODE_X + NODE / 2 + 3;
 const START = { x: W - INSET - LAUNCHER / 2, y: INSET + LAUNCHER };
 const BRANCHES = [
-  { y: 112, d: `M ${START.x} ${START.y} C ${START.x} 112, ${START.x} 112, ${PORT} 112` },
-  { y: 200, d: `M ${START.x} ${START.y} C ${START.x} 168, ${START.x - 16} 200, ${PORT} 200` },
+  { y: 88, d: `M ${START.x} ${START.y} C ${START.x} 88, ${START.x} 88, ${PORT} 88` },
+  { y: 156, d: `M ${START.x} ${START.y} C ${START.x} 132, ${START.x - 12} 156, ${PORT} 156` },
 ];
 const OPEN_MS = 5_000;
 const CYCLE_MS = 5 * 60_000;
@@ -25,7 +25,7 @@ const CYCLE_MS = 5 * 60_000;
 function RouterGlyph() {
   const branch = "M7.6 12 H9.6 C12.8 12 13 6.5 16.4 6.5 M9.6 12 C12.8 12 13 17.5 16.4 17.5";
   return (
-    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" aria-hidden>
       <path d={branch} stroke="white" strokeOpacity="0.9" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M7.6 12 H9.6 C12.8 12 13 6.5 16.4 6.5" pathLength={1} className="aq-router-spark" stroke="#f3cf7f" strokeWidth="2" strokeLinecap="round" />
       <circle cx="5" cy="12" r="2.6" fill="#e0b45a" />
@@ -124,27 +124,27 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
             id={menuId}
             role="group"
             aria-label="Talk to the Aquifert desk"
-            className="aq-canvas-in absolute overflow-hidden rounded-[24px] border border-black/[.07] bg-white/95 shadow-[var(--aq-shadow-float)] backdrop-blur-md"
-            style={{ width: W, height: H, right: -INSET, top: -INSET, backgroundImage: "radial-gradient(rgb(130 171 203 / 0.28) 1px, transparent 1.2px)", backgroundSize: "14px 14px" }}
+            className="aq-canvas-in absolute overflow-hidden rounded-[20px] border border-black/[.07] bg-white/95 shadow-[var(--aq-shadow-float)] backdrop-blur-md"
+            style={{ width: W, height: H, right: -INSET, top: -INSET, backgroundImage: "radial-gradient(rgb(130 171 203 / 0.28) 1px, transparent 1.2px)", backgroundSize: "12px 12px" }}
           >
-            <div className="absolute left-[18px] top-4">
-              <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-navy-700">Talk to the desk</p>
-              <p className="mt-0.5 text-[12px] text-dim">Pick how you want to connect</p>
+            <div className="absolute left-3.5 top-3">
+              <p className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-navy-700">Talk to the desk</p>
+              <p className="mt-0.5 text-[11px] text-dim">Pick how you want to connect</p>
             </div>
             <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="absolute inset-0 overflow-visible" fill="none" aria-hidden>
               <defs>
                 {BRANCHES.map((branch, i) => (
                   <mask key={i} id={`${id}-reveal-${i}`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
-                    <path d={branch.d} pathLength={1} stroke="white" strokeWidth="8" className="aq-branch-draw" style={{ animationDelay: `${i * 90}ms` }} />
+                    <path d={branch.d} pathLength={1} stroke="white" strokeWidth="7" className="aq-branch-draw" style={{ animationDelay: `${i * 90}ms` }} />
                   </mask>
                 ))}
               </defs>
               {BRANCHES.map((branch, i) => (
                 <g key={i} mask={`url(#${id}-reveal-${i})`}>
-                  <path d={branch.d} stroke="#82abcb" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="0.5 6.5" />
-                  <circle cx={PORT} cy={branch.y} r="3.5" fill="white" stroke="#5789b0" strokeWidth="1.5" />
+                  <path d={branch.d} stroke="#82abcb" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="0.5 5.5" />
+                  <circle cx={PORT} cy={branch.y} r="3" fill="white" stroke="#5789b0" strokeWidth="1.4" />
                   {calm ? null : (
-                    <circle r="2.6" fill="#e0b45a">
+                    <circle r="2.2" fill="#e0b45a">
                       <animateMotion dur="2.8s" begin={`${0.6 + i * 0.5}s`} repeatCount="indefinite" path={branch.d} keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines="0.4 0 0.2 1" />
                     </circle>
                   )}
@@ -153,21 +153,21 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
             </svg>
 
             {options.map((option, i) => {
-              const style = { top: BRANCHES[i].y - 32, left: 10, width: NODE_X + NODE / 2 - 10 };
+              const style = { top: BRANCHES[i].y - 26, left: 8, width: NODE_X + NODE / 2 - 8 };
               const content = (
                 <>
-                  <span className="aq-branch-card min-w-0 rounded-xl border border-black/[.07] bg-white px-3 py-2 text-right shadow-[0_8px_20px_-12px_rgb(11_30_45/0.4)] transition group-hover:border-navy-300 group-focus-visible:border-navy-400 group-focus-visible:ring-2 group-focus-visible:ring-blue/30" style={{ animationDelay: `${220 + i * 90}ms` }}>
-                    <span className="block text-[13px] font-semibold leading-snug text-ink group-hover:text-navy-700">{option.title}</span>
-                    <span className="mt-0.5 flex items-center justify-end gap-1 whitespace-nowrap text-[11.5px] text-dim">
+                  <span className="aq-branch-card min-w-0 rounded-lg border border-black/[.07] bg-white px-2.5 py-1.5 text-right shadow-[0_8px_18px_-12px_rgb(11_30_45/0.4)] transition group-hover:border-navy-300 group-focus-visible:border-navy-400 group-focus-visible:ring-2 group-focus-visible:ring-blue/30" style={{ animationDelay: `${220 + i * 90}ms` }}>
+                    <span className="block text-[12px] font-semibold leading-snug text-ink group-hover:text-navy-700">{option.title}</span>
+                    <span className="mt-0.5 flex items-center justify-end gap-1 whitespace-nowrap text-[10.5px] text-dim">
                       {option.body}
-                      {option.external ? <ArrowUpRight className="h-3 w-3" aria-hidden /> : null}
+                      {option.external ? <ArrowUpRight className="h-2.5 w-2.5" aria-hidden /> : null}
                     </span>
                   </span>
                   <span
-                    className={`aq-node-pop flex shrink-0 items-center justify-center rounded-full text-white ring-[3px] ring-white shadow-[0_10px_22px_-8px_rgb(11_30_45/0.6)] transition-transform group-hover:scale-105 ${option.node}`}
+                    className={`aq-node-pop flex shrink-0 items-center justify-center rounded-full text-white ring-[2.5px] ring-white shadow-[0_8px_18px_-8px_rgb(11_30_45/0.6)] transition-transform group-hover:scale-105 ${option.node}`}
                     style={{ width: NODE, height: NODE, animationDelay: `${120 + i * 90}ms` }}
                   >
-                    <option.Icon className="h-[22px] w-[22px]" strokeWidth={1.9} aria-hidden />
+                    <option.Icon className="h-[18px] w-[18px]" strokeWidth={1.9} aria-hidden />
                   </span>
                 </>
               );
@@ -204,9 +204,9 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
           <span className={`transition duration-300 ${open ? "rotate-90 scale-50 opacity-0" : ""}`}>
             <RouterGlyph />
           </span>
-          <X className={`absolute h-5 w-5 transition duration-300 ${open ? "" : "-rotate-90 scale-50 opacity-0"}`} aria-hidden />
+          <X className={`absolute h-4 w-4 transition duration-300 ${open ? "" : "-rotate-90 scale-50 opacity-0"}`} aria-hidden />
           {open ? null : (
-            <span className="pointer-events-none absolute right-full top-1/2 mr-3 hidden -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-full bg-navy-900 px-3 py-1.5 text-[12px] font-semibold text-white opacity-0 shadow-lg transition group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 lg:block">
+            <span className="pointer-events-none absolute right-full top-1/2 mr-2.5 hidden -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-full bg-navy-900 px-2.5 py-1 text-[11px] font-semibold text-white opacity-0 shadow-lg transition group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 lg:block">
               Talk to the desk
             </span>
           )}
