@@ -18,6 +18,17 @@ import { SiteIcon } from "@/marketing/lib/site-icons";
 export const metadata: Metadata = { title: "AQ Zero" };
 export const dynamic = "force-dynamic";
 
+const REGISTER = "/hub/account/membership?plan=enterprise&from=aq-zero";
+const CONTACT = "/hub/contact?topic=AQ%20Zero";
+
+/** Register CTAs always open the waitlist dialog; other labels keep their managed link when it is a real path. */
+function hrefFor(href: string, label: string, fallback: string) {
+  if (/register/i.test(label)) return REGISTER;
+  if (!href || /\s/.test(href)) return fallback;
+  if (href.startsWith("/") || href.startsWith("#") || /^(https?:|mailto:|tel:)/i.test(href)) return href;
+  return fallback;
+}
+
 const TIER_ICON: Record<MembershipTier, typeof Sprout> = { sprout: Sprout, harvest: Wheat, scale: Rocket };
 
 const tierCopy = (copy: SitePage<"aqZero">["programmes"], tier: MembershipTier) => ({
@@ -150,8 +161,8 @@ export default async function AqZeroPlanPage() {
     crossSell: <CrossSell eyebrow={crossSell.eyebrow} line={crossSell.line} href={crossSell.buttonLink} cta={crossSell.buttonLabel} icon={Search} />,
     closing: (
       <ClosingCta title={closing.title} body={closing.body} gradient="linear-gradient(115deg, #254F76 0%, #16304D 60%, #10253C 100%)" glow="-bottom-24 -left-20 bg-teal-500/20">
-        <PlanLink href={closing.primaryLink} label={closing.primaryLabel} className={heroPrimary} arrow />
-        <PlanLink href={closing.secondaryLink} label={closing.secondaryLabel} className={heroGhost} />
+        <PlanLink href={hrefFor(closing.primaryLink, closing.primaryLabel, CONTACT)} label={closing.primaryLabel} className={heroPrimary} arrow />
+        <PlanLink href={hrefFor(closing.secondaryLink, closing.secondaryLabel, REGISTER)} label={closing.secondaryLabel} className={heroGhost} />
       </ClosingCta>
     ),
   };
@@ -159,8 +170,8 @@ export default async function AqZeroPlanPage() {
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 pb-2">
       <SalesHero src={hero.video} poster={hero.image} videoLabel={hero.label} eyebrow={hero.eyebrow} badge={hero.badge || undefined} title={<HeroTitle title={hero.title} highlight={hero.highlight} />} sub={hero.sub}>
-        <PlanLink href={hero.primaryLink} label={hero.primaryLabel} className={heroPrimary} arrow />
-        <PlanLink href={hero.secondaryLink} label={hero.secondaryLabel} className={heroGhost} />
+        <PlanLink href={hrefFor(hero.primaryLink, hero.primaryLabel, "#aq-zero-tiers")} label={hero.primaryLabel} className={heroPrimary} arrow />
+        <PlanLink href={hrefFor(hero.secondaryLink, hero.secondaryLabel, CONTACT)} label={hero.secondaryLabel} className={heroGhost} />
       </SalesHero>
 
       {sectionOrder("aqZero", copy._order)

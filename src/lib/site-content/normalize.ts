@@ -15,7 +15,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 /** Site paths, in-page anchors, email, phone and web addresses. */
 export function isValidLink(value: string) {
   if (!value) return true;
-  if (value.startsWith("/") && !value.startsWith("//")) return true;
+  if (value.startsWith("/") && !value.startsWith("//")) {
+    // Reject spaces so CMS typos like "/pop up" never become routes.
+    return !/\s/.test(value) && /^\/[\w./\-?=&%#@+~]*$/.test(value);
+  }
   if (/^#[\w-]+$/.test(value)) return true;
   if (/^mailto:[^\s@]+@[^\s@]+\.[^\s@]+(\?.*)?$/i.test(value)) return true;
   if (/^tel:\+?[\d\s()-]{5,}$/i.test(value)) return true;

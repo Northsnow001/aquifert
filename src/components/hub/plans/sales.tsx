@@ -21,13 +21,13 @@ export function HeroTitle({ title, highlight }: { title: string; highlight?: str
 
 /** A content-managed button: hidden without text, and site paths stay in the app while other links open in a new tab. */
 export function PlanLink({ href, label, className, arrow = false }: { href: string; label: string; className: string; arrow?: boolean }) {
-  if (!label.trim() || !href) return null;
+  if (!label.trim() || !href || /\s/.test(href)) return null;
   const inner = (
     <>
       {label} {arrow ? <ArrowRight className="h-4 w-4" aria-hidden /> : null}
     </>
   );
-  if (href.startsWith("/")) {
+  if (href.startsWith("/") || href.startsWith("#")) {
     return (
       <Link href={href} className={className}>
         {inner}

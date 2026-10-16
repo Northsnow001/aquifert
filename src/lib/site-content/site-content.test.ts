@@ -52,6 +52,17 @@ test("unsafe links and media fall back, lists are clipped and rows filled", () =
   assert.equal(home.faq.items.length, 12);
 });
 
+test("paths with spaces are rejected so CMS typos like /pop up cannot 404", () => {
+  assert.equal(isValidLink("/pop up"), false);
+  assert.equal(isValidLink("pop up"), false);
+  assert.equal(isValidLink("/hub/account/membership?plan=enterprise&from=aq-zero"), true);
+  assert.equal(isValidLink("/hub/contact?topic=AQ%20Zero"), true);
+  const zero = normalizePage("aqZero", {
+    closing: { ...DEFAULT_SITE_CONTENT.aqZero.closing, secondaryLink: "/pop up", secondaryLabel: "Register Here" },
+  });
+  assert.equal(zero.closing.secondaryLink, DEFAULT_SITE_CONTENT.aqZero.closing.secondaryLink);
+});
+
 test("text is clipped to its limit and single-line fields lose line breaks", () => {
   const home = normalizePage("home", { hero: { ...DEFAULT_SITE_CONTENT.home.hero, title: `Line one\nline two ${"x".repeat(300)}` } });
   assert.ok(home.hero.title.length <= 160);
