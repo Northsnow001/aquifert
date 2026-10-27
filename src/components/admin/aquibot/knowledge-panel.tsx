@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { CheckCircle2, CircleAlert, CircleDashed, Database, FileText, Loader2, Newspaper, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { knowledgeChunks, removeKnowledge, searchIndexText } from "@/app/admin/aquibot/actions";
+import { deleteFailedKnowledge, knowledgeChunks, removeKnowledge, searchIndexText } from "@/app/admin/aquibot/actions";
 import { eachLimited, indexSourceNow } from "@/components/admin/library-upload";
 import { btnGhost, btnPrimary, btnSecondary, field } from "@/components/admin/ui";
 import type { IndexResult, KnowledgeRow, KnowledgeState } from "@/lib/aquibot-engine/indexer";
@@ -158,6 +158,25 @@ export function KnowledgePanel({
     toast.success("Removed from the knowledge base");
   }
 
+  async function discardFailed(row: KnowledgeRow) {
+    const file = row.sourceType === "file";
+    const message = file
+      ? `Delete “${row.title}” from the knowledge base? The failed record and the file are removed.`
+      : `Clear the failed index for “${row.title}”? The telex stays published and can be indexed again.`;
+    if (!window.confirm(message)) return;
+    setBusyKey(row.key);
+    const result = await deleteFailedKnowledge(row.key);
+    setBusyKey(null);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    if (result.removedSource) setRows((current) => current.filter((item) => item.key !== row.key));
+    else setRows((current) => current.map((item) => (item.key === row.key ? { ...item, state: "not_indexed", chunkCount: 0, indexedAt: null, error: null } : item)));
+    toast.success(result.removedSource ? "Deleted from the knowledge base" : "Failed index record removed");
+    router.refresh();
+  }
+
   async function view(row: { key: string; title: string }) {
     setViewing({ key: row.key, title: row.title, chunks: null });
     const result = await knowledgeChunks(row.key);
@@ -307,6 +326,12 @@ export function KnowledgePanel({
                           <button type="button" className={btnGhost} disabled={busy || Boolean(running)} onClick={() => indexOne(row)}>
                             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                             {row.state === "not_indexed" ? "Index" : "Re-index"}
+                          </button>
+                        ) : null}
+                        {row.state === "error" || row.state === "unsupported" ? (
+                          <button type="button" className={`${btnGhost} hover:text-[#b42318]`} disabled={busy || Boolean(running)} onClick={() => discardFailed(row)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
                           </button>
                         ) : null}
                         {row.chunkCount > 0 ? (

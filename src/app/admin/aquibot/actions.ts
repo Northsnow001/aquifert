@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { traceQuestion, type TraceResult } from "@/lib/aquibot-engine/chat";
-import { indexSource, removeSource, type IndexResult } from "@/lib/aquibot-engine/indexer";
+import { discardFailedSource, indexSource, removeSource, type IndexResult } from "@/lib/aquibot-engine/indexer";
 import { clearLogs, deleteSessionRow, documentChunks, engineStatus, findChunksByText, type LogKind } from "@/lib/aquibot-engine/store";
 import type { Plan } from "@/lib/session-shared";
 import { getSession } from "@/lib/session";
@@ -28,6 +28,15 @@ export async function removeKnowledge(key: string): Promise<{ ok: true } | { ok:
   try {
     await removeSource(String(key));
     return { ok: true };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function deleteFailedKnowledge(key: string): Promise<{ ok: true; removedSource: boolean } | { ok: false; message: string }> {
+  await requireAdmin();
+  try {
+    return { ok: true, ...(await discardFailedSource(String(key))) };
   } catch (error) {
     return failure(error);
   }

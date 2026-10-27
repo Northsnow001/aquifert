@@ -3,9 +3,9 @@ import { createHash } from "crypto";
 import { after } from "next/server";
 import type { ExtractionRules } from "@/lib/aquibot";
 import { formatTelexDay, isFileListed, telexDocExt, telexHeadline, type LibraryDocument, type TelexAccess, type TelexItem } from "@/lib/content-types";
-import { readLibraryFile } from "@/lib/data/files";
-import { getHubContent, type HubContent } from "@/lib/hub-content";
-import { readTelexDoc } from "@/lib/telex-docs";
+import { readLibraryFile, removeLibraryFiles } from "@/lib/data/files";
+import { getHubContent, updateHubContent, type HubContent } from "@/lib/hub-content";
+import { readTelexDoc, removeTelexDoc } from "@/lib/telex-docs";
 import { chunkText, WEEKLY_FILE } from "./chunking";
 import { weekRange } from "./dates";
 import { embedDocuments, extractWithGemini, GeminiError } from "./gemini";
@@ -294,6 +294,38 @@ export async function indexSource(key: string, options: { force?: boolean; conte
 export async function removeSource(key: string) {
   await deleteDocument(key);
   await writeLog("index", "info", `Removed ${key} from the index`, { key });
+}
+
+/**
+ * Deletes a failed or unreadable knowledge row. Library files and telex attachments are removed
+ * with their stored bytes, so background indexing cannot pick the same failure up again. A telex
+ * post stays published; only its failed index row is cleared.
+ */
+export async function discardFailedSource(key: string): Promise<{ removedSource: boolean }> {
+  const source = knowledgeSources(await getHubContent()).find((item) => item.key === key);
+  await deleteDocument(key);
+  if (source?.sourceType === "file" && source.telexId) {
+    const telexId = source.telexId;
+    const docId = source.sourceId;
+    await updateHubContent((content) => {
+      const item = content.telex.find((entry) => entry.id === telexId);
+      if (item?.documents) item.documents = item.documents.filter((doc) => doc.id !== docId);
+    });
+    await removeTelexDoc(docId);
+    await writeLog("index", "info", `Deleted failed telex attachment “${source.title}”`, { key });
+    return { removedSource: true };
+  }
+  if (source?.sourceType === "file") {
+    const fileId = source.sourceId;
+    await updateHubContent((content) => {
+      content.libraryDocuments = content.libraryDocuments.filter((file) => file.id !== fileId);
+    });
+    await removeLibraryFiles(fileId);
+    await writeLog("index", "info", `Deleted failed knowledge file “${source.title}”`, { key });
+    return { removedSource: true };
+  }
+  await writeLog("index", "info", `Cleared failed index record ${key}`, { key });
+  return { removedSource: false };
 }
 
 const RETRY_AFTER_MS = 6 * 60 * 60 * 1000;

@@ -88,7 +88,9 @@ export async function saveDocument(row: Omit<DocumentRow, "updated_at">) {
 }
 
 export async function deleteDocument(id: string) {
-  check(await required().from("aquibot_documents").delete().eq("id", id));
+  const database = required();
+  check(await database.from("aquibot_chunks").delete().eq("document_id", id));
+  check(await database.from("aquibot_documents").delete().eq("id", id));
 }
 
 export type ChunkInsert = {
