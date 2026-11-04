@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
     if (idle === "fresh") response.cookies.set(ACTIVITY_COOKIE, String(Date.now()), ACTIVITY_COOKIE_OPTIONS);
   }
 
-  if (!signedIn && isHub) {
+  if (!signedIn && (isHub || isAdmin)) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = "";
@@ -81,5 +81,18 @@ function redirectWithCookies(to: URL, from: NextResponse) {
 }
 
 export const config = {
-  matcher: ["/", "/login", "/register", "/session-expired", "/hub", "/hub/:path*", "/admin", "/admin/:path*"],
+  matcher: [
+    "/",
+    "/login",
+    "/register",
+    "/verify-email",
+    "/set-password",
+    "/forgot-password",
+    "/reset-password",
+    "/session-expired",
+    "/hub",
+    "/hub/:path*",
+    "/admin",
+    "/admin/:path*",
+  ],
 };

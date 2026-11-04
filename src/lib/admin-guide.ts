@@ -551,8 +551,17 @@ export const GUIDE: GuideSection[] = [
     title: "All members",
     icon: "members",
     href: "/admin/members",
-    summary: "Everyone with an account, sorted by email type: work email (company, education, government) or personal / public email (Gmail, Yahoo, internet providers). Admins can grant or remove admin access from a member's row.",
+    summary: "Create accounts, send invitations, and grant or remove admin access. The directory is sorted by email type: work email (company, education, government) or personal / public email (Gmail, Yahoo, internet providers).",
     tasks: [
+      {
+        title: "Create an account and invite someone",
+        steps: [
+          "Fill in their email, name, company and country. Add a phone and plan if you have them.",
+          "Choose Member or Admin, then Save and send invitation.",
+          "They receive a Supabase invitation, set a password on Aquifert, then sign in with that email and password.",
+          "Paste the Invite user template from supabase/templates/invite.html into Supabase → Authentication → Email Templates, and add /set-password to the allowed redirect URLs.",
+        ],
+      },
       {
         title: "See who is on the platform",
         steps: [

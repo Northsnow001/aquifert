@@ -17,6 +17,7 @@ import {
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { checkSignupAddress } from "@/app/(auth)/signup-check";
 import { checkSignupEmail, DEFAULT_SIGNUP_RULES, signupCheck } from "@/lib/desk-settings/email-rules";
+import { friendlyAuthError } from "@/marketing/lib/auth-errors";
 
 const CODE_LEN = 6;
 
@@ -110,7 +111,7 @@ export default function VerifyEmail() {
 
       navigate("/set-password");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid or expired code.");
+      setError(friendlyAuthError(err instanceof Error ? err.message : "Invalid or expired code.", "signup"));
     } finally {
       setPendingVerify(false);
     }

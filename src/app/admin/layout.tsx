@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession();
-  if (!user) redirect("/login?next=/admin");
+  if (!user) redirect("/login?redirect_to=/admin");
   if (!isAdminUser(user)) redirect("/hub");
   return <AdminShell user={user}>{children}</AdminShell>;
 }

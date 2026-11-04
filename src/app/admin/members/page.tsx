@@ -1,3 +1,4 @@
+import { CreateMemberForm } from "@/components/admin/members/create-member-form";
 import { MembersDirectory } from "@/components/admin/members/members-directory";
 import { PageHeader } from "@/components/admin/ui";
 import { listMembers } from "@/lib/members";
@@ -11,8 +12,9 @@ export default async function MembersPage() {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Members"
-        description="Everyone with an Aquifert ONE account. Make a member an admin from their row. Admins can open the admin console; built-in admins cannot be removed here."
+        description="Create an account and send an invitation, or grant admin from a member's row. Built-in admins cannot be removed here."
       />
+      {list.available ? <CreateMemberForm /> : null}
       {list.available ? (
         <MembersDirectory members={list.members} viewerId={user?.id ?? ""} />
       ) : (

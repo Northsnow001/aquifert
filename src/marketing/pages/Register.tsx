@@ -13,6 +13,7 @@ import { authInputCls, saveSignupPending } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { checkSignupAddress } from "@/app/(auth)/signup-check";
 import { checkSignupEmail, DEFAULT_SIGNUP_RULES, EMAIL_PATTERN, signupCheck, type SignupCheck } from "@/lib/desk-settings/email-rules";
+import { friendlyAuthError } from "@/marketing/lib/auth-errors";
 
 const errCls = "mt-1 text-[12px] text-red-700";
 
@@ -157,7 +158,7 @@ export default function Register() {
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not start sign-up.";
-      setErrors({ form: message });
+      setErrors({ form: friendlyAuthError(message, "signup") });
     } finally {
       setPending(false);
     }

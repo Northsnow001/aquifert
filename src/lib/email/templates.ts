@@ -43,6 +43,7 @@ const SUPABASE_GREETING = "Hello{{ if .Data.name }} {{ .Data.name }}{{ end }}";
 
 /** Goes straight to our reset page; the token is only redeemed when the new password is saved. */
 const RESET_LINK = "{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&type=recovery";
+const INVITE_LINK = "{{ .SiteURL }}/set-password?token_hash={{ .TokenHash }}&type=invite";
 
 /**
  * Supabase Auth sends sign-in codes and password resets itself, so these are pasted into Supabase
@@ -99,7 +100,33 @@ export function supabaseAuthTemplates() {
     ],
     footerNote: "This is an automated security message. Please do not reply.",
   });
-  return { verification, reset };
+  const invite = compose("You are invited to Aquifert ONE", {
+    title: "You are invited to Aquifert ONE",
+    preheader: "Set a password to finish opening your Aquifert account. The link expires in about a day.",
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: "Account invitation",
+    heading: "Finish setting up your account",
+    blocks: [
+      {
+        kind: "text",
+        html: inline(
+          `${SUPABASE_GREETING}, an Aquifert admin created an account for you. Use the button below to choose a password. After that, sign in with this email and the password you set.`,
+        ),
+      },
+      { kind: "button", label: "Set my password", href: INVITE_LINK, tone: "teal" },
+      {
+        kind: "note",
+        html: `Button not working? Paste this link into your browser:<br><a href="${escapeHtml(INVITE_LINK)}" style="color:#31648F; word-break:break-all;">${escapeHtml(INVITE_LINK)}</a>`,
+      },
+      {
+        kind: "callout",
+        html: inline("If you were not expecting this invitation, you can ignore this email. The account stays unused until a password is set."),
+      },
+      { kind: "note", html: "Sent to {{ .Email }}" },
+    ],
+    footerNote: "This is an automated security message. Please do not reply.",
+  });
+  return { verification, reset, invite };
 }
 
 /** Messages arrive as "About: Topic" followed by a blank line when sent from a topic link. */

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 3 — Set password after email OTP verification, then enter the portal.
+ * Set a password after email OTP (self sign-up) or after an admin invitation link.
  */
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@/marketing/router";
@@ -17,8 +17,10 @@ import {
 } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { safeReturnPath } from "@/lib/idle-timeout";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 const errCls = "mt-1 text-[12px] text-red-700";
+const INVITE_OTP: EmailOtpType[] = ["invite", "signup", "magiclink"];
 
 export default function SetPassword() {
   const navigate = useNavigate();
@@ -29,26 +31,105 @@ export default function SetPassword() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [ready, setReady] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [inviteToken, setInviteToken] = useState<{ hash: string; type: EmailOtpType } | null>(null);
+  const [fromInvite, setFromInvite] = useState(false);
 
   const s = passwordStrength(password);
 
   useEffect(() => {
     if (!isSupabaseBrowserConfigured()) {
-      navigate("/register", { replace: true });
+      setBootError("Sign-in is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+      setReady(false);
       return;
     }
+
     let cancelled = false;
-    (async () => {
-      const { data } = await getSupabaseBrowser().auth.getSession();
+    const supabase = getSupabaseBrowser();
+
+    const markReady = (sessionEmail?: string | null, invited = false) => {
       if (cancelled) return;
-      if (!data.session) {
-        navigate(pending?.email ? `/verify-email?email=${encodeURIComponent(pending.email)}` : "/register", {
-          replace: true,
-        });
-        return;
-      }
+      setEmail(sessionEmail ?? pending?.email ?? null);
+      setFromInvite(invited);
       setReady(true);
+      setBootError(null);
+    };
+
+    const fail = (message: string) => {
+      if (cancelled) return;
+      setBootError(message);
+      setReady(false);
+    };
+
+    (async () => {
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+        const tokenHash = url.searchParams.get("token_hash");
+        const type = url.searchParams.get("type") as EmailOtpType | null;
+        const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+        const hashError = hash.get("error_description") ?? url.searchParams.get("error_description");
+        if (hashError) throw new Error(hashError.replace(/\+/g, " "));
+
+        const accessToken = hash.get("access_token");
+        const refreshToken = hash.get("refresh_token");
+        if (accessToken && refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) throw error;
+          window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+          markReady(
+            data.session?.user?.email ?? null,
+            hash.get("type") === "invite" || type === "invite" || Boolean(data.session?.user?.invited_at),
+          );
+          return;
+        }
+
+        if (code) {
+          const existing = await supabase.auth.getSession();
+          const { data, error } = existing.data.session ? existing : await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          url.searchParams.delete("code");
+          window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+          markReady(data.session?.user?.email ?? null, type === "invite" || Boolean(data.session?.user?.invited_at));
+          return;
+        }
+
+        if (tokenHash && type && INVITE_OTP.includes(type)) {
+          setInviteToken({ hash: tokenHash, type });
+          window.history.replaceState({}, "", url.pathname);
+          markReady(null, true);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (data.session) {
+          markReady(data.session.user.email);
+          return;
+        }
+
+        await new Promise((r) => setTimeout(r, 400));
+        if (cancelled) return;
+        const again = await supabase.auth.getSession();
+        if (again.data.session) {
+          markReady(again.data.session.user.email);
+          return;
+        }
+
+        if (pending?.email) {
+          navigate(`/verify-email?email=${encodeURIComponent(pending.email)}`, { replace: true });
+          return;
+        }
+        fail("This invitation link is invalid or has expired. Ask an admin to send a new one, or create an account.");
+      } catch (err) {
+        fail(err instanceof Error ? err.message : "Could not open the invitation.");
+      }
     })();
+
     return () => {
       cancelled = true;
     };
@@ -66,15 +147,30 @@ export default function SetPassword() {
     setErrors({});
     try {
       const supabase = getSupabaseBrowser();
+      let sessionEmail = email;
+
+      if (inviteToken) {
+        const { data, error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: inviteToken.hash,
+          type: inviteToken.type,
+        });
+        if (verifyError || !data.session) {
+          setBootError("This invitation link is invalid or has expired. Ask an admin to send a new one.");
+          return;
+        }
+        setInviteToken(null);
+        sessionEmail = data.session.user.email ?? null;
+        setEmail(sessionEmail);
+      }
+
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
       const session = sessionData.session;
       if (!session?.access_token) {
-        throw new Error("Your verification session expired. Request a new code.");
+        throw new Error("Your verification session expired. Request a new code or invitation.");
       }
 
-      // OTP verify already issued a session. Do not refresh first — a failed
-      // refresh previously aborted the form before the password was saved.
+      // Do not refresh first — a failed refresh previously aborted the form before the password was saved.
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
         const msg = updateError.message || "Could not save your password.";
@@ -91,7 +187,6 @@ export default function SetPassword() {
       }
 
       if (pending) {
-        // Profile details are secondary: the password is saved, so never block entry on them.
         try {
           await supabase.auth.updateUser({
             data: {
@@ -110,6 +205,19 @@ export default function SetPassword() {
       }
 
       clearSignupPending();
+
+      if (fromInvite || inviteToken) {
+        try {
+          await supabase.auth.signOut({ scope: "local" });
+        } catch {
+          /* ignore */
+        }
+        const q = new URLSearchParams({ set: "1" });
+        if (sessionEmail) q.set("email", sessionEmail);
+        navigate(`/login?${q.toString()}`, { replace: true });
+        return;
+      }
+
       window.location.assign(safeReturnPath(pending?.next) ?? "/hub");
     } catch (err) {
       setErrors({
@@ -119,6 +227,31 @@ export default function SetPassword() {
       setSubmitting(false);
     }
   };
+
+  if (bootError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="w-full max-w-sm">
+          <Link to="/" aria-label="Aquifert home" className="inline-block">
+            <Logo size={36} />
+          </Link>
+          <h1 className="mt-8 text-2xl font-bold tracking-tight text-navy-900">Invitation expired</h1>
+          <p className="mt-2 text-sm text-slate-600" role="alert">
+            {bootError}
+          </p>
+          <p className="mt-4 text-center text-[13px] text-slate-600">
+            <Link to="/login" className="font-semibold text-navy-700 underline-offset-2 hover:underline">
+              Back to sign in
+            </Link>
+            {" · "}
+            <Link to="/register" className="font-semibold text-navy-700 underline-offset-2 hover:underline">
+              Create an account
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!ready) {
     return (
@@ -136,18 +269,18 @@ export default function SetPassword() {
         </Link>
 
         <p className="mt-8 text-[12px] font-semibold uppercase tracking-wide text-teal-700">
-          Step 3 of 3
+          {fromInvite ? "Invitation" : "Step 3 of 3"}
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Set your password</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          Email verified
-          {pending?.email ? (
+          {fromInvite ? "You were invited" : "Email verified"}
+          {email || pending?.email ? (
             <>
               {" "}
-              for <span className="font-semibold text-navy-900">{pending.email}</span>
+              for <span className="font-semibold text-navy-900">{email || pending?.email}</span>
             </>
           ) : null}
-          . Choose a password to sign in next time.
+          . Choose a password, then sign in with it.
         </p>
 
         <div className="mt-6 space-y-4">
@@ -211,7 +344,7 @@ export default function SetPassword() {
             {submitting ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              "Continue to Aquifert"
+              fromInvite ? "Save password and sign in" : "Continue to Aquifert"
             )}
           </Button>
         </div>

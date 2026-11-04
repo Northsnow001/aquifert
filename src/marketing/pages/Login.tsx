@@ -5,7 +5,8 @@ import { Link, useSearchParams } from "@/marketing/router";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { Button } from "@/marketing/components/ui/button";
-import { isAllowlistedAdminEmail } from "@/lib/admin-access";
+import { isAdminUser } from "@/lib/admin-access";
+import { friendlyAuthError } from "@/marketing/lib/auth-errors";
 import { safeRedirectPath } from "@/marketing/lib/redirect";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 
@@ -17,7 +18,7 @@ const NOT_CONFIGURED =
 
 export default function Login() {
   const [params] = useSearchParams();
-  const redirectTo = safeRedirectPath(params.get("redirect_to") ?? undefined);
+  const redirectTo = safeRedirectPath(params.get("redirect_to") ?? params.get("next") ?? undefined);
 
   const passwordSaved = params.get("set") === "1";
   const passwordReset = params.get("reset") === "1";
@@ -49,11 +50,15 @@ export default function Login() {
       if (!data.session) throw new Error("No session returned. Confirm your email if required, then try again.");
 
       // Full navigation so the server sees the new session cookie on the first hub render.
-      const home = isAllowlistedAdminEmail(email) ? "/admin" : "/hub";
+      const admin = isAdminUser({
+        email: data.user.email ?? email,
+        admin: data.user.app_metadata?.role === "admin",
+      });
+      const home = admin ? "/admin" : "/hub";
       window.location.assign(redirectTo === "/" ? home : redirectTo);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign-in failed.";
-      setError(message);
+      setError(friendlyAuthError(message, "login"));
       setPending(false);
     }
   };

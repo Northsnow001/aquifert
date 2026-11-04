@@ -9,8 +9,9 @@ import { supabaseAuthTemplates } from "../src/lib/email/templates";
 
 const out = join(process.cwd(), "supabase", "templates");
 mkdirSync(out, { recursive: true });
-const { verification, reset } = supabaseAuthTemplates();
+const { verification, reset, invite } = supabaseAuthTemplates();
 writeFileSync(join(out, "verification-code.html"), verification.html);
 writeFileSync(join(out, "reset-password.html"), reset.html);
-console.log(`Wrote verification-code.html and reset-password.html to ${out}`);
-console.log(`Subjects: "${verification.subject}" and "${reset.subject}"`);
+writeFileSync(join(out, "invite.html"), invite.html);
+console.log(`Wrote verification-code.html, reset-password.html and invite.html to ${out}`);
+console.log(`Subjects: "${verification.subject}", "${reset.subject}" and "${invite.subject}"`);

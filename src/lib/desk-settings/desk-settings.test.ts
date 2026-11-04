@@ -182,11 +182,13 @@ test("the AQ Analytics waitlist and contact receipt use the shared design", () =
 });
 
 test("Supabase auth templates keep Supabase placeholders intact", () => {
-  const { verification, reset } = supabaseAuthTemplates();
+  const { verification, reset, invite } = supabaseAuthTemplates();
   assert.ok(verification.html.includes("{{ .Token }}"));
   assert.ok(verification.html.includes("Hello{{ if .Data.name }} {{ .Data.name }}{{ end }},"));
   assert.ok(reset.html.includes('href="{{ .SiteURL }}/reset-password?token_hash={{ .TokenHash }}&amp;type=recovery"'));
+  assert.ok(invite.html.includes('href="{{ .SiteURL }}/set-password?token_hash={{ .TokenHash }}&amp;type=invite"'));
   assert.ok(!reset.html.includes("ConfirmationURL"));
+  assert.ok(!invite.html.includes("ConfirmationURL"));
   assert.ok(!reset.html.includes("{{FIRST_NAME}}"));
 });
 
