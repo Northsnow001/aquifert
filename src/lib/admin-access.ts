@@ -1,6 +1,6 @@
 import type { SessionUser } from "@/lib/session-shared";
 
-const DEFAULT_ADMINS = ["kayode@aquifert.com", "campbellstark.nz@gmail.com"];
+const DEFAULT_ADMINS = ["kayode@aquifert.com"];
 
 function extraAdminEmails() {
   return process.env.AQUIFERT_ADMIN_EMAILS?.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean) ?? [];

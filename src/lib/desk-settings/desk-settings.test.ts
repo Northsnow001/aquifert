@@ -28,7 +28,7 @@ test("work and personal addresses can both sign up", () => {
 
 test("built-in admin addresses can always sign up", () => {
   const blocked = { blocked: ["gmail.com"], allowed: [] };
-  assert.deepEqual(checkSignupEmail("campbellstark.nz@gmail.com", blocked), { ok: true, rule: "allowed" });
+  assert.deepEqual(checkSignupEmail("kayode@aquifert.com", blocked), { ok: true, rule: "allowed" });
 });
 
 test("disposable domains and their subdomains are always refused", () => {

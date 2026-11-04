@@ -3,9 +3,9 @@ import test from "node:test";
 import { isAdminUser, isAllowlistedAdminEmail } from "./admin-access";
 
 test("allowlisted addresses are admin even without the Supabase flag", () => {
-  assert.equal(isAdminUser({ email: "campbellstark.nz@gmail.com" }), true);
   assert.equal(isAdminUser({ email: "Kayode@Aquifert.com" }), true);
-  assert.equal(isAllowlistedAdminEmail("campbellstark.nz@gmail.com"), true);
+  assert.equal(isAllowlistedAdminEmail("kayode@aquifert.com"), true);
+  assert.equal(isAllowlistedAdminEmail("campbellstark.nz@gmail.com"), false);
 });
 
 test("a member is admin when app_metadata says so", () => {
