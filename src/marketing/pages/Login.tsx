@@ -5,6 +5,7 @@ import { Link, useSearchParams } from "@/marketing/router";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { Button } from "@/marketing/components/ui/button";
+import { isAllowlistedAdminEmail } from "@/lib/admin-access";
 import { safeRedirectPath } from "@/marketing/lib/redirect";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 
@@ -48,7 +49,8 @@ export default function Login() {
       if (!data.session) throw new Error("No session returned. Confirm your email if required, then try again.");
 
       // Full navigation so the server sees the new session cookie on the first hub render.
-      window.location.assign(redirectTo === "/" ? "/hub" : redirectTo);
+      const home = isAllowlistedAdminEmail(email) ? "/admin" : "/hub";
+      window.location.assign(redirectTo === "/" ? home : redirectTo);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign-in failed.";
       setError(message);

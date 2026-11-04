@@ -1,3 +1,4 @@
+import { isAllowlistedAdminEmail } from "@/lib/admin-access";
 import type { MemberRules } from "@/lib/desk-settings/types";
 
 /** Free webmail: anyone can open an inbox here. */
@@ -127,6 +128,7 @@ export function classifyEmail(raw: string): EmailClass {
 export function checkSignupEmail(raw: string, rules: MemberRules, isBanned: (email: string) => boolean = () => false): EmailVerdict {
   const email = raw.trim().toLowerCase();
   if (!EMAIL_PATTERN.test(email)) return { ok: false, reason: "invalid", message: "Enter a valid email address." };
+  if (isAllowlistedAdminEmail(email)) return { ok: true, rule: "allowed" };
   if (isBanned(email)) return { ok: false, reason: "banned", message: DISPOSABLE_MESSAGE };
   const domain = emailDomain(email);
   if (matches(email, domain, rules.allowed)) return { ok: true, rule: "allowed" };
