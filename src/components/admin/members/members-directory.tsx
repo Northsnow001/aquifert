@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Briefcase, Building2, Download, GraduationCap, Landmark, Mail, Search, ShieldBan, Trash2, Wifi } from "lucide-react";
-import { btnSecondary, input } from "@/components/admin/ui";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Briefcase, Building2, Download, GraduationCap, Landmark, Mail, Search, ShieldBan, ShieldCheck, Trash2, Wifi } from "lucide-react";
+import { toast } from "sonner";
+import { setMemberAdminAction } from "@/app/admin/members/actions";
+import { btnGhost, btnSecondary, input } from "@/components/admin/ui";
 import { planName } from "@/lib/aq-modules/types";
 import { EMAIL_GROUP_LABEL, EMAIL_TYPE_LABEL, type EmailGroup, type EmailType } from "@/lib/desk-settings/email-rules";
 import type { MemberRow } from "@/lib/members";
 
-type Filter = "all" | EmailType;
+type Filter = "all" | EmailType | "admin";
 
 const GROUPS: Record<EmailType, EmailGroup[]> = { work: ["company", "education", "government"], personal: ["webmail", "isp", "disposable"] };
 const GROUP_ICON: Record<EmailGroup, typeof Mail> = { company: Building2, education: GraduationCap, government: Landmark, webmail: Mail, isp: Wifi, disposable: Trash2 };
@@ -27,7 +30,7 @@ const squash = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 const PAGE = 100;
 
 /** Members grouped by email type, with the companies and providers behind each group. */
-export function MembersDirectory({ members }: { members: MemberRow[] }) {
+export function MembersDirectory({ members, viewerId }: { members: MemberRow[]; viewerId: string }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [group, setGroup] = useState<EmailGroup | null>(null);
   const [query, setQuery] = useState("");
@@ -72,7 +75,8 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return members.filter((member) => {
-      if (filter !== "all" && member.kind.type !== filter) return false;
+      if (filter === "admin" && !member.admin) return false;
+      if (filter !== "all" && filter !== "admin" && member.kind.type !== filter) return false;
       if (group && member.kind.group !== group) return false;
       if (!needle) return true;
       return [member.email, member.name, member.company, member.country, member.kind.source].some((value) => value.toLowerCase().includes(needle));
@@ -86,7 +90,7 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
   };
 
   const total = members.length;
-  const exportType = filter === "all" ? "all" : filter;
+  const exportType = filter;
 
   return (
     <div className="space-y-5">
@@ -143,8 +147,8 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_1px_2px_rgba(26,58,92,0.05)]">
           <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-            <div className="grid grid-cols-3 rounded-lg border border-border bg-s2/60 p-0.5" role="tablist" aria-label="Email type">
-              {(["all", "work", "personal"] as const).map((key) => (
+            <div className="grid grid-cols-4 rounded-lg border border-border bg-s2/60 p-0.5" role="tablist" aria-label="Member view">
+              {(["all", "work", "personal", "admin"] as const).map((key) => (
                 <button
                   key={key}
                   type="button"
@@ -153,7 +157,13 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
                   onClick={() => pick(key)}
                   className={`rounded-md px-3 py-1 text-[12.5px] font-semibold transition ${filter === key ? "bg-white text-ink shadow-sm" : "text-mid hover:text-ink"}`}
                 >
-                  {key === "all" ? `All · ${total}` : key === "work" ? `Work · ${counts.byType.work}` : `Personal · ${counts.byType.personal}`}
+                  {key === "all"
+                    ? `All · ${total}`
+                    : key === "work"
+                      ? `Work · ${counts.byType.work}`
+                      : key === "personal"
+                        ? `Personal · ${counts.byType.personal}`
+                        : `Admins · ${members.filter((member) => member.admin).length}`}
                 </button>
               ))}
             </div>
@@ -186,7 +196,7 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
 
           {rows.length ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[860px] text-left text-[13px]">
+              <table className="w-full min-w-[980px] text-left text-[13px]">
                 <thead className="bg-s2/60 text-[11px] font-semibold uppercase tracking-wide text-dim">
                   <tr>
                     <th className="px-4 py-2.5">Member</th>
@@ -195,6 +205,7 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
                     <th className="px-3 py-2.5">Plan</th>
                     <th className="px-3 py-2.5">Joined</th>
                     <th className="px-3 py-2.5">Last sign-in</th>
+                    <th className="px-3 py-2.5">Access</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -208,6 +219,11 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
                           <p className="font-semibold text-ink">{member.name || member.email.split("@")[0]}</p>
                           <p className="text-[12px] text-mid">{member.email}</p>
                           <p className="mt-0.5 flex flex-wrap gap-1">
+                            {member.admin ? (
+                              <span className="inline-flex items-center gap-1 rounded bg-[#eef5fd] px-1.5 py-px text-[10.5px] font-semibold text-[#1d4f8a]">
+                                <ShieldCheck className="h-3 w-3" /> Admin
+                              </span>
+                            ) : null}
                             {member.banned ? (
                               <span className="inline-flex items-center gap-1 rounded bg-[#fdf1f1] px-1.5 py-px text-[10.5px] font-semibold text-[#b42318]">
                                 <ShieldBan className="h-3 w-3" /> Banned
@@ -234,6 +250,9 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
                         <td className="px-3 py-2.5 text-ink">{planName(member.plan)}</td>
                         <td className="px-3 py-2.5 whitespace-nowrap text-mid">{day(member.createdAt)}</td>
                         <td className="px-3 py-2.5 whitespace-nowrap text-mid">{day(member.lastSignIn)}</td>
+                        <td className="px-3 py-2.5">
+                          <AdminAccess member={member} viewerId={viewerId} />
+                        </td>
                       </tr>
                     );
                   })}
@@ -276,6 +295,49 @@ export function MembersDirectory({ members }: { members: MemberRow[] }) {
         </aside>
       </div>
     </div>
+  );
+}
+
+function AdminAccess({ member, viewerId }: { member: MemberRow; viewerId: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const grant = !member.admin;
+  const locked = member.lockedAdmin || (!grant && member.id === viewerId);
+
+  const run = () => {
+    const label = member.name || member.email;
+    if (grant && member.banned) {
+      toast.error("Reinstate this member before making them an admin.");
+      return;
+    }
+    if (
+      !window.confirm(
+        grant
+          ? `Make ${label} an admin? They will be able to open the admin console and change desk content.`
+          : `Remove admin access for ${label}? They will keep their member account.`,
+      )
+    ) {
+      return;
+    }
+    start(async () => {
+      const result = await setMemberAdminAction({ userId: member.id, admin: grant });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(grant ? `${label} is now an admin.` : `${label} is no longer an admin.`);
+      router.refresh();
+    });
+  };
+
+  if (member.admin && locked) {
+    return <p className="text-[12px] font-semibold text-[#1d4f8a]">{member.lockedAdmin ? "Built-in admin" : "You"}</p>;
+  }
+
+  return (
+    <button type="button" className={btnGhost} disabled={pending} onClick={run}>
+      {pending ? "Saving…" : grant ? "Make admin" : "Remove admin"}
+    </button>
   );
 }
 

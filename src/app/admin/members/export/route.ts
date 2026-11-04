@@ -18,9 +18,13 @@ export async function GET(request: Request) {
   const list = await listMembers();
   if (!list.available) return new Response(list.reason, { status: 503 });
   const type = new URL(request.url).searchParams.get("type");
-  const rows = list.members.filter((member) => type !== "work" && type !== "personal" ? true : member.kind.type === type);
+  const rows = list.members.filter((member) => {
+    if (type === "work" || type === "personal") return member.kind.type === type;
+    if (type === "admin") return member.admin;
+    return true;
+  });
   const csv = toCsv([
-    ["Email", "Name", "Email type", "Kind", "Domain or provider", "Company", "Country", "Plan", "Joined (UTC)", "Last sign-in (UTC)", "Verified", "Banned"],
+    ["Email", "Name", "Email type", "Kind", "Domain or provider", "Company", "Country", "Plan", "Joined (UTC)", "Last sign-in (UTC)", "Verified", "Banned", "Admin"],
     ...rows.map((member) => [
       member.email,
       member.name,
@@ -34,9 +38,10 @@ export async function GET(request: Request) {
       stamp(member.lastSignIn),
       member.verified ? "yes" : "no",
       member.banned ? "yes" : "no",
+      member.admin ? "yes" : "no",
     ]),
   ]);
-  const label = type === "work" ? "work-email" : type === "personal" ? "personal-email" : "all";
+  const label = type === "work" ? "work-email" : type === "personal" ? "personal-email" : type === "admin" ? "admins" : "all";
   return new Response(`\uFEFF${csv}`, {
     headers: {
       "content-type": "text/csv; charset=utf-8",

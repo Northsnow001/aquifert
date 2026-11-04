@@ -551,7 +551,7 @@ export const GUIDE: GuideSection[] = [
     title: "All members",
     icon: "members",
     href: "/admin/members",
-    summary: "Everyone with an account, sorted by email type: work email (company, education, government) or personal / public email (Gmail, Yahoo, internet providers).",
+    summary: "Everyone with an account, sorted by email type: work email (company, education, government) or personal / public email (Gmail, Yahoo, internet providers). Admins can grant or remove admin access from a member's row.",
     tasks: [
       {
         title: "See who is on the platform",
@@ -561,6 +561,14 @@ export const GUIDE: GuideSection[] = [
           "Search by name, email, company, country or provider. Companies lists the work domains with the most members; Personal providers lists where personal addresses come from. Click an entry to filter by it.",
           "A personal-address member whose company already has colleagues on a work domain is marked Colleagues sign in with @domain, so you can follow up.",
           "CSV downloads the members in the current view, with their email type.",
+        ],
+      },
+      {
+        title: "Make another user an admin",
+        steps: [
+          "Find the member. Press Make admin and confirm.",
+          "They can open /admin on their next page load. The Admin link also appears in the hub.",
+          "Remove admin takes that access away. You cannot remove your own admin access, and built-in admins stay admin.",
         ],
       },
     ],
