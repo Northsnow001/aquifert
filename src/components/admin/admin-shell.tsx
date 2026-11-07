@@ -4,6 +4,7 @@ import type { NavGroup } from "@/components/admin/admin-nav";
 import { listMembershipRequests, listRegistrations } from "@/lib/aq-modules/members";
 import { getAqModules, upcomingCalls } from "@/lib/aq-modules/store";
 import { countRecords } from "@/lib/data/records";
+import { listDeskDeals } from "@/lib/desk-hitl/store";
 import { NITROGEN_REPORTS } from "@/lib/data/tables";
 import { auditPorts } from "@/lib/freight-desk/port-quality";
 import { getFreightDesk } from "@/lib/freight-desk/store";
@@ -17,7 +18,7 @@ import type { SessionUser } from "@/lib/session-shared";
 import { listZeroRegistrations } from "@/lib/zero-interest";
 
 export async function AdminShell({ user, children }: { user: SessionUser; children: React.ReactNode }) {
-  const [content, inbox, desk, netback, zero, banList, aq, requests, registrations, nitrogenReports] = await Promise.all([
+  const [content, inbox, desk, netback, zero, banList, aq, requests, registrations, nitrogenReports, deskDeals] = await Promise.all([
     getHubContent(),
     listInbox(),
     getFreightDesk(),
@@ -28,6 +29,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
     listMembershipRequests().catch(() => []),
     listRegistrations().catch(() => []),
     countRecords(NITROGEN_REPORTS).catch(() => 0),
+    listDeskDeals().catch(() => []),
   ]);
   const drafts = content.telex.filter((item) => item.status === "draft").length;
   const portIssues = auditPorts(desk.ports).size;
@@ -40,6 +42,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
   const nextCall = upcomingCalls(aq).next;
   const nextCallRegistered = nextCall ? registrations.filter((row) => row.callId === nextCall.id && row.status === "registered").length : 0;
   const requestsNew = requests.filter((row) => row.status === "new").length;
+  const deskWaiting = deskDeals.filter((row) => row.status === "waiting_desk").length;
 
   const groups: NavGroup[] = [
     { title: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }] },
@@ -91,6 +94,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
     {
       title: "Desk",
       items: [
+        { href: "/admin/desk", label: "Desk shortlists", icon: "desk", badge: deskWaiting ? `${deskWaiting} wait` : deskDeals.length },
         { href: "/admin/enquiries", label: "Enquiries", icon: "inbox", badge: inbox.length },
         { href: "/admin/zero", label: "Aquifert Zero", icon: "zero", badge: zeroNew ? `${zeroNew} new` : zero.length },
       ],

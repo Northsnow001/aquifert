@@ -2,6 +2,7 @@ import type { CallRegistration, MemberAlert, MemberPrefs, MembershipRequest, Nit
 import type { CalcLog, DebugEntry } from "@/lib/freight-desk/types";
 import type { NetbackLog } from "@/lib/netback-desk/types";
 import type { TelexVisit } from "@/lib/telex-reads/stats";
+import type { DeskDeal } from "@/lib/desk-hitl/types";
 import type { ZeroRegistration } from "@/lib/zero-types";
 
 /** Admin-edited documents: one JSON row each in `app_documents`, or `data/<key>.json` on a local machine. */
@@ -132,6 +133,18 @@ export const MEMBERSHIP_REQUESTS: RecordSpec<MembershipRequest> = {
   keys: (row) => ({ id: row.id, at: row.at, userId: row.userId, email: lower(row.email) }),
 };
 
+export const DESK_DEALS: RecordSpec<DeskDeal> = {
+  table: "desk_deals",
+  file: "desk-deals.json",
+  keys: (row) => ({ id: row.id, at: row.at, email: row.buyerPhone || null }),
+  columns: (row) => ({
+    status: row.status,
+    request_id: row.requestId,
+    product: row.product,
+    buyer_phone: row.buyerPhone || null,
+  }),
+};
+
 export const TELEX_VISITS: RecordSpec<TelexVisit> = {
   table: "telex_reads",
   file: "telex-reads.json",
@@ -153,6 +166,7 @@ export const RECORD_SPECS = [
   MEMBER_ALERTS,
   MEMBER_PREFS,
   MEMBERSHIP_REQUESTS,
+  DESK_DEALS,
   TELEX_VISITS,
 ] as RecordSpec<unknown>[];
 

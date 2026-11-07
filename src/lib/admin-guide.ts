@@ -13,6 +13,7 @@ export type GuideIcon =
   | "scale"
   | "anchor"
   | "inbox"
+  | "desk"
   | "zero"
   | "aquibot"
   | "members"
@@ -77,6 +78,7 @@ export const GUIDE: GuideSection[] = [
         title: "Every day",
         steps: [
           "Post the day's intel in Telex and clear any drafts.",
+          "Check Desk shortlists for WF8 offers waiting for a margin and WhatsApp indication.",
           "Check Enquiries for new Order Desk requests and Contact messages.",
           "Check Aquifert Zero for registrations still marked New.",
           "Glance at the Freight Calculator badge. Check means a market data source failed on its last refresh.",
@@ -421,6 +423,36 @@ export const GUIDE: GuideSection[] = [
           "Make a port inactive to remove it from member search without losing its history.",
         ],
       },
+    ],
+  },
+  {
+    id: "desk",
+    group: "Desk",
+    title: "Desk shortlists",
+    icon: "desk",
+    href: "/admin/desk",
+    summary:
+      "When the RFQ closer finds matching supplier offers, the first three land here. Pick one, add your margin, and the buyer price goes out on WhatsApp. YES is firm interest; anything else stays in the thread so you can reply from your phone.",
+    tasks: [
+      {
+        title: "Send an indication",
+        steps: [
+          "Open Desk shortlists. Needs Matt means WF8 posted offers and nobody has priced them yet.",
+          "Tap a deal, pick one of the three offers, type your margin percent. The buyer unit price is supplier × (1 + margin%).",
+          "Send indication to buyer. n8n picks it up and WhatsApps the buyer. You do not message them from Twilio yourself.",
+        ],
+      },
+      {
+        title: "Negotiate or take firm interest",
+        steps: [
+          "If they reply YES (or agree / confirm / accept), the deal becomes Firm interest on its own.",
+          "If they push back, the thread stays open. Type a reply in the app; n8n still delivers it on WhatsApp.",
+        ],
+      },
+    ],
+    tips: [
+      "Buyers stay on WhatsApp. This screen is only for the desk.",
+      "Sheets stay the source for RFQs and offers. This table is the deal thread and firm-interest flag.",
     ],
   },
   {
