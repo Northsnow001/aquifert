@@ -19,6 +19,18 @@ async function save(deal: DeskDeal) {
   return (await getRecord(DESK_DEALS, deal.id)) ?? next;
 }
 
+/** n8n WF9. Override with DESK_INDICATION_WEBHOOK_URL. */
+const DEFAULT_INDICATION_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/response_from_matt";
+
+function indicationWebhookUrls(callbackUrl?: string | null) {
+  const urls = new Set<string>();
+  for (const raw of [callbackUrl, process.env.DESK_INDICATION_WEBHOOK_URL, DEFAULT_INDICATION_WEBHOOK]) {
+    const url = raw?.trim().replace(/\/$/, "");
+    if (url?.startsWith("https://") || url?.startsWith("http://localhost")) urls.add(url);
+  }
+  return [...urls];
+}
+
 async function notify(url: string | null | undefined, payload: Record<string, unknown>) {
   if (!url?.startsWith("https://") && !url?.startsWith("http://localhost")) return;
   try {
@@ -29,8 +41,12 @@ async function notify(url: string | null | undefined, payload: Record<string, un
       signal: AbortSignal.timeout(12_000),
     });
   } catch {
-    // n8n Wait is best-effort; the desk still has the deal.
+    // n8n Wait / WF9 is best-effort; the desk still has the deal.
   }
+}
+
+async function notifyIndication(callbackUrl: string | null | undefined, payload: Record<string, unknown>) {
+  await Promise.all(indicationWebhookUrls(callbackUrl).map((url) => notify(url, payload)));
 }
 
 export const listDeskDeals = () => listRecords(DESK_DEALS);
@@ -110,7 +126,7 @@ export async function confirmIndication(input: {
   const body = indicationWhatsApp(next);
   next.messages.push(message({ from: "desk", channel: "whatsapp", text: body, outboundStatus: "queued" }));
   const saved = (await save(next))!;
-  await notify(saved.callbackUrl, {
+  await notifyIndication(saved.callbackUrl, {
     event: "indication_ready",
     dealId: saved.id,
     requestId: saved.requestId,
