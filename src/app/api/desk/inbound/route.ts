@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { deskHitlAuthorized } from "@/lib/desk-hitl/n8n-auth";
 import { recordBuyerInbound } from "@/lib/desk-hitl/store";
+import { buyerDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 export const runtime = "nodejs";
 
@@ -16,10 +17,21 @@ export async function POST(req: NextRequest) {
     text: typeof body?.text === "string" ? body.text : typeof body?.body === "string" ? body.body : "",
   });
   if ("error" in deal) return NextResponse.json({ ok: false, error: deal.error }, { status: 400 });
+  const buyerDocs =
+    deal.status === "firm_interest"
+      ? {
+          proforma: buyerDocumentFromDeal(deal, "proforma"),
+          sales_contract: buyerDocumentFromDeal(deal, "sales_contract"),
+        }
+      : null;
   return NextResponse.json({
     ok: true,
     dealId: deal.id,
+    requestId: deal.requestId,
     status: deal.status,
     event: deal.status === "firm_interest" ? "firm_interest" : "negotiating",
+    buyerPhone: deal.buyerPhone,
+    buyerPrice: deal.buyerPrice,
+    buyer_documents: buyerDocs,
   });
 }

@@ -4,6 +4,7 @@ import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody } from "@/lib/desk-hitl/logic";
 import type { DeskDeal, DeskMessage } from "@/lib/desk-hitl/types";
+import { buyerDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
 const idOf = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -138,6 +139,7 @@ export async function confirmIndication(input: {
     product: saved.product,
     supplierName: offer.supplierName,
     supplierUnitPrice: offer.unitPrice,
+    supplierOpenId: offer.wechatOpenId,
     offerId: offer.id,
     incoterm: offer.incoterm || saved.incoterm,
     adminUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com").replace(/\/$/, "")}/admin/desk/${saved.id}`,
@@ -182,7 +184,10 @@ export async function recordBuyerInbound(input: {
       requestId: saved.requestId,
       buyerPhone: saved.buyerPhone,
       buyerPrice: saved.buyerPrice,
-      marginPct: saved.marginPct,
+      buyer_documents: {
+        proforma: buyerDocumentFromDeal(saved, "proforma"),
+        sales_contract: buyerDocumentFromDeal(saved, "sales_contract"),
+      },
     });
     return saved;
   }

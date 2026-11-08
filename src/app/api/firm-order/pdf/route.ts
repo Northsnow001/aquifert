@@ -41,7 +41,7 @@ async function maybeSignedUrl(bytes: Uint8Array, filename: string): Promise<stri
 }
 
 /**
- * n8n True branch: POST firm_order JSON → Aquifert-branded PDF.
+ * n8n firm-interest branch: POST firm_order JSON → Purchase Order PDF (supplier cost).
  * Auth: header `x-firm-order-secret` or `Authorization: Bearer` = FIRM_ORDER_PDF_SECRET.
  * Response JSON: { ok, filename, contentType, pdfBase64, pdfUrl }.
  * Optional `?binary=1` returns raw application/pdf.
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const order = parseFirmOrder(body);
   if (!order) {
-    return NextResponse.json({ ok: false, error: "Invalid firm_order payload (product required)." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid document payload (product and locked unit price required)." }, { status: 400 });
   }
 
   try {
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
       pdfBase64: Buffer.from(bytes).toString("base64"),
       pdfUrl,
       status: order.status,
+      document: order.document,
     });
   } catch (err) {
     console.error("[firm-order/pdf]", err);
