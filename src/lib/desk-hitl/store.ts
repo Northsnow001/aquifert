@@ -139,7 +139,7 @@ export async function confirmIndication(input: {
     product: saved.product,
     supplierName: offer.supplierName,
     supplierUnitPrice: offer.unitPrice,
-    supplierOpenId: offer.wechatOpenId,
+    supplierOpenId: offer.wechatOpenId ?? "",
     offerId: offer.id,
     incoterm: offer.incoterm || saved.incoterm,
     adminUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com").replace(/\/$/, "")}/admin/desk/${saved.id}`,

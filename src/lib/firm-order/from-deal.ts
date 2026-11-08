@@ -99,7 +99,7 @@ export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
       address: "",
       city: "",
       country: "",
-      wechat_open_id: offer.wechatOpenId,
+      wechat_open_id: offer.wechatOpenId ?? "",
     },
     buyer: {
       name: deal.buyerName || null,

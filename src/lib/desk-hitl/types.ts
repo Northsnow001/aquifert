@@ -19,6 +19,7 @@ export type DeskOffer = {
   destination: string;
   receivedAt: string;
   notes: string;
+  wechatOpenId?: string;
 };
 
 export type DeskMessage = {

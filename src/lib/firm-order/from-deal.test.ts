@@ -32,7 +32,7 @@ const deal = {
       wechatOpenId: "ovOFi3E3kW8qc8PI_FlNLxwBfOuk",
     },
   ],
-} as DeskDeal;
+} as unknown as DeskDeal;
 
 describe("firmOrderFromDeal", () => {
   it("uses supplier unit price, never buyer indication", () => {

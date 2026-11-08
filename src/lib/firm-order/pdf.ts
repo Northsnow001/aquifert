@@ -77,17 +77,18 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
 
   y = 118;
   font(10, "bold");
-  const partyLines = isPi
-    ? [order.buyer.name, order.buyer.phone ? `WhatsApp: ${order.buyer.phone}` : "", order.buyer.email].filter(Boolean)
+  const partyLines = (isPi
+    ? [order.buyer.name, order.buyer.phone ? `WhatsApp: ${order.buyer.phone}` : "", order.buyer.email]
     : [
         order.supplier.name,
         order.supplier.attention ? `Attention: ${order.supplier.attention}` : "",
         order.supplier.address,
         order.supplier.city,
         order.supplier.country,
-      ].filter(Boolean);
+      ]
+  ).filter((line): line is string => Boolean(line));
   if (!partyLines.length) partyLines.push(isPi ? "Buyer" : "Supplier to be confirmed");
-  doc.text(partyLines[0] as string, margin + 18, y);
+  doc.text(partyLines[0], margin + 18, y);
   font(9);
   color(MUTED);
   let sy = y + 13;
