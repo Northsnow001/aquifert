@@ -92,6 +92,7 @@ export function parseShortlistBody(body: unknown): {
         destination: text(o.destination ?? o.dest, 120),
         receivedAt: text(o.receivedAt ?? o.received_at, 40),
         notes: text(o.notes, 500),
+        wechatOpenId: text(o.wechatOpenId ?? o.wechat_open_id ?? o.openid ?? o.openId ?? o.wechatId, 80),
       };
     })
     .filter((o): o is DeskOffer => Boolean(o))

@@ -1,0 +1,210 @@
+{
+  "name": "10. Supplier documents after payment",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF10 — supplier pack\nTriggered after buyer **payment** (desk button or POST).\n\nEmails Harbour (selected supplier) **only**:\n- Purchase Order\n- Purchase Contract\n- Documentary Instructions\n\nPrice = **supplier offer** (205). Never 221.40. Never the buyer.\n\nAfter import:\n1. Select Google Sheets + Gmail credentials\n2. Put `x-firm-order-secret` on Generate Documents\n3. Production webhook path `supplier_documents`",
+        "height": 460,
+        "width": 380,
+        "color": 7
+      },
+      "id": "note-wf10",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-320, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "supplier_documents",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [140, 400],
+      "webhookId": "supplier-documents-wf10"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Buyer Requests",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Request ID",
+              "lookupValue": "={{ $json.requestId || $json.body?.requestId || $json.reference }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-get-requests",
+      "name": "Get Buyer Requests",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [400, 400]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Supplier Offers",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Linked Request ID",
+              "lookupValue": "={{ $('Get Buyer Requests').item.json['Request ID'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-get-offers",
+      "name": "Get Supplier Offers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [660, 400]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function newest(rows, keys) {\n  return rows.slice().sort((a, b) => {\n    const ta = Date.parse(a[keys[0]] || a[keys[1]] || 0) || 0;\n    const tb = Date.parse(b[keys[0]] || b[keys[1]] || 0) || 0;\n    return tb - ta;\n  })[0];\n}\nfunction num(v) {\n  if (typeof v === 'number' && Number.isFinite(v)) return v;\n  const n = Number(String(v ?? '').replace(/[^\\d.]/g, ''));\n  return Number.isFinite(n) ? n : 0;\n}\nfunction text(v) {\n  return String(v ?? '').trim();\n}\n\nconst hook = $('Webhook').first().json;\nconst body = hook.body && typeof hook.body === 'object' ? hook.body : hook;\nconst req = newest($('Get Buyer Requests').all().map((i) => i.json), ['Last Updated', 'Date Received']);\nif (!req) throw new Error('No Buyer Requests row');\n\nconst requestId = text(body.requestId || req['Request ID']);\nconst selectedName = text(body.supplierName || req['Selected Supplier']);\nconst product = text(body.product || req['Product Name']);\nconst offers = $('Get Supplier Offers').all().map((i) => i.json);\n\nconst matched = offers.filter((o) => {\n  const sameRequest = text(o['Linked Request ID']).toLowerCase() === requestId.toLowerCase();\n  const sameSupplier = text(o['Supplier Name']) === selectedName;\n  const sameProduct = text(o['Product Name']).toLowerCase() === product.toLowerCase();\n  return sameRequest && sameSupplier && sameProduct;\n});\nconst offer = newest(matched, ['Received At', 'Last Updated']);\nif (!offer) throw new Error('No offer for ' + selectedName + ' / ' + product + ' on ' + requestId);\n\nconst unit = num(body.supplierUnitPrice || offer['Unit Price (per MT)']);\nconst indication = num(req['Target Price']);\nif (unit <= 0) throw new Error('Supplier unit price missing');\nif (indication > 0 && Math.abs(unit - indication) < 0.001) {\n  throw new Error('Refusing supplier pack: price equals buyer indication ' + indication);\n}\n\nconst email = text(offer['Supplier Email']);\nif (!email.includes('@')) throw new Error(selectedName + ' has no Supplier Email');\n\nconst digits = requestId.replace(/\\D/g, '');\nconst shared = {\n  product,\n  quantity_mt: num(req['Quantity (MT)']) || num(offer['Quantity Available (MT)']),\n  supplierUnitPrice: unit,\n  currency: text(offer.Currency) || 'USD',\n  incoterm: text(offer.Incoterm) || text(req.Incoterm),\n  load_port: text(offer['Load Port']),\n  discharge_port: text(req['Destination Port']),\n  packing: text(offer['Packing Type']),\n  origin: text(offer.Origin),\n  payment_terms: text(offer['Payment Terms']),\n  shipping: text(req['Delivery/Shipment Window']),\n  reference: requestId,\n  supplier: { name: text(offer['Supplier Name']), email },\n};\n\nreturn [\n  { json: { ...shared, document: 'purchase_order', order_ref: 'PO-' + digits.padStart(4, '0') } },\n  { json: { ...shared, document: 'purchase_contract', order_ref: 'AQ-TE-' + digits.padStart(6, '0') } },\n  { json: { ...shared, document: 'documentary_instructions', order_ref: 'AQ-TE-' + digits.padStart(6, '0') } },\n];\n"
+      },
+      "id": "node-build-pack",
+      "name": "Build supplier pack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://aquifert.com/api/firm-order/pdf",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-firm-order-secret",
+              "value": "SET_FIRM_ORDER_PDF_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "node-pdf",
+      "name": "Generate Documents",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1180, 400]
+    },
+    {
+      "parameters": {
+        "operation": "binary",
+        "sourceProperty": "pdfBase64",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ $json.filename }}",
+          "mimeType": "application/pdf"
+        }
+      },
+      "id": "node-file",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1440, 400]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const files = $('Convert to File').all();\nconst deal = $('Build supplier pack').first().json;\n\nconst pick = (part) => {\n  const row = files.find((i) => String(i.binary?.data?.fileName || '').toLowerCase().includes(part));\n  const file = row?.binary?.data;\n  if (!file) throw new Error('Missing PDF binary for ' + part);\n  return file;\n};\n\nif (Number(deal.supplierUnitPrice) === Number($('Get Buyer Requests').first().json['Target Price'])) {\n  throw new Error('Will not email supplier at buyer indication price');\n}\n\nreturn [\n  {\n    json: {\n      to: deal.supplier.email,\n      name: deal.supplier.name,\n      product: deal.product,\n      qty: deal.quantity_mt,\n      price: deal.supplierUnitPrice,\n      reference: deal.reference,\n    },\n    binary: {\n      po: pick('purchase_order'),\n      contract: pick('purchase_contract'),\n      instructions: pick('documentary'),\n    },\n  },\n];\n"
+      },
+      "id": "node-merge",
+      "name": "Merge supplier docs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1700, 400]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "=Aquifert Purchase Order {{ $json.reference }} — {{ $json.product }}",
+        "emailType": "text",
+        "message": "=Dear {{ $json.name }},\n\nPlease find attached our Purchase Order, Purchase Contract and Documentary Instructions for {{ $json.qty }} MT {{ $json.product }} at USD {{ $json.price }} / MT.\n\nKindly confirm receipt and proceed with production / shipment readiness per the documentary instructions.\n\nKind regards,\nAquifert Limited",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              { "property": "po" },
+              { "property": "contract" },
+              { "property": "instructions" }
+            ]
+          }
+        }
+      },
+      "id": "node-gmail",
+      "name": "Email supplier",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1960, 400],
+      "webhookId": "gmail-wf10"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Get Buyer Requests", "type": "main", "index": 0 }]]
+    },
+    "Get Buyer Requests": {
+      "main": [[{ "node": "Get Supplier Offers", "type": "main", "index": 0 }]]
+    },
+    "Get Supplier Offers": {
+      "main": [[{ "node": "Build supplier pack", "type": "main", "index": 0 }]]
+    },
+    "Build supplier pack": {
+      "main": [[{ "node": "Generate Documents", "type": "main", "index": 0 }]]
+    },
+    "Generate Documents": {
+      "main": [[{ "node": "Convert to File", "type": "main", "index": 0 }]]
+    },
+    "Convert to File": {
+      "main": [[{ "node": "Merge supplier docs", "type": "main", "index": 0 }]]
+    },
+    "Merge supplier docs": {
+      "main": [[{ "node": "Email supplier", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "active": false,
+  "tags": []
+}

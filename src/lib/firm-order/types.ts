@@ -1,4 +1,10 @@
-export const TRADE_DOCUMENTS = ["purchase_order", "proforma", "sales_contract"] as const;
+export const TRADE_DOCUMENTS = [
+  "purchase_order",
+  "proforma",
+  "sales_contract",
+  "purchase_contract",
+  "documentary_instructions",
+] as const;
 export type TradeDocument = (typeof TRADE_DOCUMENTS)[number];
 
 /** Trade PDF posted by n8n or the desk. Price is locked by document kind. */
@@ -113,14 +119,22 @@ function poDate(value?: string) {
 function parseDocument(raw: Record<string, unknown>): TradeDocument {
   const value = str(raw.document ?? raw.doc ?? raw.kind, 40).toLowerCase().replace(/[\s-]+/g, "_");
   if (value === "proforma" || value === "proforma_invoice" || value === "pi") return "proforma";
-  if (value === "sales_contract" || value === "sale_contract" || value === "contract") return "sales_contract";
+  if (value === "sales_contract" || value === "sale_contract") return "sales_contract";
+  if (value === "purchase_contract" || value === "supplier_contract") return "purchase_contract";
+  if (value === "documentary_instructions" || value === "doc_instructions" || value === "shipping_instructions") {
+    return "documentary_instructions";
+  }
   return "purchase_order";
+}
+
+function isSupplierDocument(document: TradeDocument) {
+  return document === "purchase_order" || document === "purchase_contract" || document === "documentary_instructions";
 }
 
 function unitForDocument(document: TradeDocument, raw: Record<string, unknown>) {
   const buyer = num(raw.buyer_unit_price ?? raw.buyerUnitPrice ?? raw.buyerPrice ?? raw.target_price ?? raw.targetPrice);
   const supplier = num(raw.supplier_unit_price ?? raw.supplierUnitPrice);
-  if (document === "purchase_order") return supplier ?? (buyer == null ? num(raw.unit_price_usd) : null);
+  if (isSupplierDocument(document)) return supplier ?? (buyer == null ? num(raw.unit_price_usd) : null);
   return buyer ?? (supplier == null ? num(raw.unit_price_usd) : null);
 }
 
@@ -143,7 +157,13 @@ export function parseFirmOrder(body: unknown): FirmOrderDraft | null {
   const reference = str(raw.reference ?? raw.requestId ?? raw.request_id, 80);
   const orderRef =
     str(raw.order_ref ?? raw.po_number ?? raw.poNumber ?? raw.invoice_number, 64) ||
-    (reference ? (document === "purchase_order" ? purchaseOrderNumber(reference) : document === "proforma" ? invoiceNumber(reference) : contractReference(reference)) : null);
+    (reference
+      ? document === "purchase_order"
+        ? purchaseOrderNumber(reference)
+        : document === "proforma"
+          ? invoiceNumber(reference)
+          : contractReference(reference)
+      : null);
 
   return {
     document,

@@ -34,7 +34,7 @@ describe("parseShortlistBody", () => {
       destination: "Lagos",
       phone: "+234 801 000 0000",
       offers: [
-        { supplier: "A", unitPrice: 400, currency: "USD" },
+        { supplier: "A", unitPrice: 400, currency: "USD", openid: "ovOFi3E3kW8qc8PI_FlNLxwBfOuk" },
         { supplier_name: "B", price: "410" },
         { supplierName: "C", unit_price: 390 },
         { supplierName: "D", unitPrice: 380 },

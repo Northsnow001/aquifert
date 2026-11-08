@@ -131,3 +131,19 @@ export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
     assumed: [],
   };
 }
+
+/** Supplier pack after payment: PO, purchase contract, documentary instructions at supplier cost. */
+export function supplierDocumentFromDeal(
+  deal: DeskDeal,
+  document: "purchase_order" | "purchase_contract" | "documentary_instructions",
+): FirmOrderDraft | null {
+  const po = firmOrderFromDeal(deal);
+  if (!po) return null;
+  return {
+    ...po,
+    document,
+    status: document.toUpperCase(),
+    order_ref:
+      document === "purchase_order" ? purchaseOrderNumber(deal.requestId) : contractReference(deal.requestId),
+  };
+}

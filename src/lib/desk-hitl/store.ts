@@ -2,9 +2,9 @@ import "server-only";
 
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
 import type { DeskDeal, DeskMessage } from "@/lib/desk-hitl/types";
-import { buyerDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
 const idOf = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -22,6 +22,8 @@ async function save(deal: DeskDeal) {
 
 /** n8n WF9. Override with DESK_INDICATION_WEBHOOK_URL. */
 const DEFAULT_INDICATION_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/response_from_matt";
+/** n8n WF10 after payment. Override with DESK_SUPPLIER_PACK_WEBHOOK_URL. */
+const DEFAULT_SUPPLIER_PACK_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/supplier_documents";
 
 function indicationWebhookUrls(callbackUrl?: string | null) {
   const urls = new Set<string>();
@@ -230,6 +232,52 @@ export async function queuedWhatsApp() {
     }
   }
   return out;
+}
+
+export async function issueSupplierPack(input: { id: string; actor: string }): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status !== "firm_interest") return { error: "Confirm firm interest and buyer payment before issuing supplier documents." };
+  const offer = selectedOffer(deal);
+  if (!offer) return { error: "No selected supplier on this deal." };
+
+  const next: DeskDeal = {
+    ...deal,
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `${input.actor || "Desk"} issued supplier documents to ${offer.supplierName} at ${offer.currency} ${offer.unitPrice}/MT.`,
+      }),
+    ],
+  };
+  const saved = (await save(next))!;
+  const urls = new Set<string>();
+  for (const raw of [process.env.DESK_SUPPLIER_PACK_WEBHOOK_URL, DEFAULT_SUPPLIER_PACK_WEBHOOK]) {
+    const url = raw?.trim().replace(/\/$/, "");
+    if (url?.startsWith("https://") || url?.startsWith("http://localhost")) urls.add(url);
+  }
+  const payload = {
+    event: "supplier_pack",
+    dealId: saved.id,
+    requestId: saved.requestId,
+    product: saved.product,
+    quantityMt: saved.quantityMt,
+    destination: saved.destination,
+    incoterm: offer.incoterm || saved.incoterm,
+    loadPort: offer.loadPort,
+    packing: offer.notes,
+    supplierName: offer.supplierName,
+    supplierUnitPrice: offer.unitPrice,
+    currency: offer.currency || saved.currency,
+    supplierOpenId: offer.wechatOpenId ?? "",
+    purchase_order: supplierDocumentFromDeal(saved, "purchase_order"),
+    purchase_contract: supplierDocumentFromDeal(saved, "purchase_contract"),
+    documentary_instructions: supplierDocumentFromDeal(saved, "documentary_instructions"),
+  };
+  await Promise.all([...urls].map((url) => notify(url, payload)));
+  return saved;
 }
 
 export async function markWhatsAppSent(dealId: string, messageId: string): Promise<DeskDeal | { error: string }> {

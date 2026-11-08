@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
-import { confirmIndication, sendDeskReply } from "@/lib/desk-hitl/store";
+import { confirmIndication, issueSupplierPack, sendDeskReply } from "@/lib/desk-hitl/store";
 import { getSession } from "@/lib/session";
 
 async function requireAdmin() {
@@ -39,6 +39,20 @@ export async function sendDeskReplyAction(input: {
   const deal = await sendDeskReply({
     id: String(input.id ?? "").trim(),
     text: String(input.text ?? ""),
+    actor: user.name || user.email,
+  });
+  if ("error" in deal) return { ok: false, message: deal.error };
+  revalidatePath("/admin/desk");
+  revalidatePath(`/admin/desk/${deal.id}`);
+  return { ok: true };
+}
+
+export async function issueSupplierPackAction(input: {
+  id: string;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  const user = await requireAdmin();
+  const deal = await issueSupplierPack({
+    id: String(input.id ?? "").trim(),
     actor: user.name || user.email,
   });
   if ("error" in deal) return { ok: false, message: deal.error };

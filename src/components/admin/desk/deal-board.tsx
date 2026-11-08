@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { confirmIndicationAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
+import { confirmIndicationAction, issueSupplierPackAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import { buyerUnitPrice } from "@/lib/desk-hitl/logic";
 import { DEAL_STATUS_LABEL, type DeskDeal } from "@/lib/desk-hitl/types";
@@ -85,6 +85,7 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
                   </span>
                   <span className="mt-1 block text-[12.5px] text-mid">
                     {[item.incoterm, item.loadPort, item.destination].filter(Boolean).join(" · ") || "No extra terms"}
+                    {item.wechatOpenId ? ` · WeChat ${item.wechatOpenId}` : ""}
                   </span>
                 </span>
               </div>
@@ -124,6 +125,26 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
             </span>
             {deal.marginPct != null ? ` (supplier + ${deal.marginPct}%)` : ""}
           </p>
+          {deal.status === "firm_interest" ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                start(async () => {
+                  const result = await issueSupplierPackAction({ id: deal.id });
+                  if (!result.ok) {
+                    toast.error(result.message);
+                    return;
+                  }
+                  toast.success("Supplier documents queued. n8n will email the PO pack.");
+                  router.refresh();
+                });
+              }}
+              className={`${btnPrimary} mt-3 w-full sm:w-auto`}
+            >
+              {pending ? "Issuing…" : "Issue supplier documents"}
+            </button>
+          ) : null}
         </section>
       )}
 

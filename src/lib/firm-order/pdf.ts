@@ -44,6 +44,8 @@ function lineAmount(order: FirmOrderDraft) {
 /** Commercial PDF. PO = supplier cost. Proforma / sales contract = buyer price. Never mix. */
 export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Array> {
   if (order.document === "sales_contract") return buildSalesContractPdf(order);
+  if (order.document === "purchase_contract") return buildPurchaseContractPdf(order);
+  if (order.document === "documentary_instructions") return buildDocumentaryInstructionsPdf(order);
 
   const [{ jsPDF }, logo] = await Promise.all([import("jspdf"), logoDataUrl()]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -256,6 +258,8 @@ export function firmOrderFilename(order: FirmOrderDraft) {
   const ref = (order.order_ref || order.reference || "doc").replace(/[^\w-]+/g, "-");
   if (order.document === "proforma") return `Proforma_Invoice_${ref}.pdf`;
   if (order.document === "sales_contract") return `Sales_Contract_${ref}.pdf`;
+  if (order.document === "purchase_contract") return `Purchase_Contract_${ref}.pdf`;
+  if (order.document === "documentary_instructions") return `Documentary_Instructions_${ref}.pdf`;
   return `Purchase_Order_${ref}.pdf`;
 }
 
@@ -361,4 +365,176 @@ async function buildSalesContractPdf(order: FirmOrderDraft): Promise<Uint8Array>
   doc.text(AQUIFERT_PO_ISSUER.footer, pageW / 2, pageH - 28, { align: "center", maxWidth: pageW - margin * 2 });
   const ab = doc.output("arraybuffer");
   return new Uint8Array(ab);
+}
+
+async function buildPurchaseContractPdf(order: FirmOrderDraft): Promise<Uint8Array> {
+  const [{ jsPDF }] = await Promise.all([import("jspdf")]);
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const right = pageW - margin;
+  let y = 56;
+  const amount = lineAmount(order);
+  const unit = order.unit_price_usd != null ? money(order.unit_price_usd) : "—";
+  const sellerName = order.supplier.name || "the Seller";
+
+  const color = (rgb: RGB) => doc.setTextColor(...rgb);
+  const font = (size: number, style: "normal" | "bold" | "italic" = "normal") => {
+    doc.setFont("helvetica", style);
+    doc.setFontSize(size);
+  };
+  const block = (title: string, body: string) => {
+    if (y > pageH - 90) {
+      doc.addPage();
+      y = 56;
+    }
+    color(INK);
+    font(8, "bold");
+    doc.text(title, margin, y);
+    y += 12;
+    font(9);
+    const lines = doc.splitTextToSize(body, right - margin) as string[];
+    doc.text(lines, margin, y);
+    y += lines.length * 12 + 10;
+  };
+
+  color(MUTED);
+  font(8);
+  doc.text(AQUIFERT_PO_ISSUER.footer, margin, y, { maxWidth: right - margin });
+  y += 28;
+  color(INK);
+  font(18, "bold");
+  doc.text("PURCHASE CONTRACT", margin, y);
+  y += 22;
+  font(9);
+  doc.text(`CONTRACT REFERENCE: ${order.order_ref || order.reference}`, margin, y);
+  y += 14;
+  doc.text(`DATE: ${displayDate(order.po_date) || displayDate(new Date().toISOString())}`, margin, y);
+  y += 18;
+
+  block(
+    "BUYER:",
+    `${AQUIFERT_PO_ISSUER.name}\n71-75 Shelton Street, Covent Garden, London, WC2H 9JQ\nVAT NO: ${AQUIFERT_PO_ISSUER.vatNumber}`,
+  );
+  block(
+    "SELLER:",
+    [sellerName, order.supplier.attention, order.supplier.address, order.supplier.city, order.supplier.country]
+      .filter(Boolean)
+      .join("\n") || sellerName,
+  );
+  block("PRODUCT:", [order.product, order.form_grade].filter(Boolean).join(" — "));
+  block("QUANTITY:", `${order.quantity_mt || "—"} MTS +/- ${order.tolerance_pct || 5}%`);
+  if (order.packing) block("PACKING:", order.packing);
+  if (order.origin) block("ORIGIN:", order.origin);
+  block(
+    "DELIVERY:",
+    `${order.incoterm} ${order.discharge_port || order.price_basis || order.load_port} (Incoterms 2020)${order.shipping ? `. ${order.shipping}` : ""}`,
+  );
+  block(
+    "PRICE:",
+    `USD ${unit} PER METRIC TONNE ${order.incoterm} ${order.load_port || order.price_basis}${amount != null ? `. TOTAL VALUE USD ${money(amount)}` : ""}`,
+  );
+  block(
+    "PAYMENT:",
+    order.payment_terms ||
+      "As agreed. Payment to Seller's designated account without discount or rebate. Bank charges for Buyer's account.",
+  );
+  block(
+    "INSPECTION:",
+    "As per internationally recognised third party inspection certificate of analysis and quantity at load port.",
+  );
+  block("INSURANCE:", "As per Incoterms 2020.");
+  block(
+    "GENERAL TERMS:",
+    "The provisions of Incoterms 2020 and the General Terms and Conditions of Aquifert Limited are incorporated into this contract.",
+  );
+  y += 8;
+  font(9, "bold");
+  doc.text("FOR AND ON BEHALF OF AQUIFERT LTD", margin, y);
+  doc.text(`FOR AND ON BEHALF OF ${sellerName.toUpperCase()}`, right, y, { align: "right" });
+  y += 36;
+  font(8);
+  doc.text("NAME: MATT O'LEARY", margin, y);
+  y += 12;
+  doc.text("TITLE: MANAGING DIRECTOR", margin, y);
+
+  color(MUTED);
+  font(7);
+  doc.text(AQUIFERT_PO_ISSUER.footer, pageW / 2, pageH - 28, { align: "center", maxWidth: pageW - margin * 2 });
+  return new Uint8Array(doc.output("arraybuffer"));
+}
+
+async function buildDocumentaryInstructionsPdf(order: FirmOrderDraft): Promise<Uint8Array> {
+  const [{ jsPDF }] = await Promise.all([import("jspdf")]);
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  let y = 56;
+
+  const color = (rgb: RGB) => doc.setTextColor(...rgb);
+  const font = (size: number, style: "normal" | "bold" | "italic" = "normal") => {
+    doc.setFont("helvetica", style);
+    doc.setFontSize(size);
+  };
+  const block = (title: string, body: string) => {
+    if (y > pageH - 90) {
+      doc.addPage();
+      y = 56;
+    }
+    color(INK);
+    font(8, "bold");
+    doc.text(title, margin, y);
+    y += 12;
+    font(9);
+    const lines = doc.splitTextToSize(body, pageW - margin * 2) as string[];
+    doc.text(lines, margin, y);
+    y += lines.length * 12 + 10;
+  };
+
+  color(MUTED);
+  font(8);
+  doc.text(AQUIFERT_PO_ISSUER.footer, margin, y, { maxWidth: pageW - margin * 2 });
+  y += 28;
+  color(INK);
+  font(16, "bold");
+  doc.text("DOCUMENTARY INSTRUCTIONS", margin, y);
+  y += 18;
+  font(10);
+  doc.text(
+    `${order.quantity_mt || ""} MT OF ${order.product.toUpperCase()} TO ${(order.discharge_port || order.price_basis || "").toUpperCase()}`,
+    margin,
+    y,
+  );
+  y += 22;
+
+  block("GOODS DESCRIPTION", [order.product, order.form_grade, order.packing].filter(Boolean).join(" — "));
+  block("QUANTITY", `${order.quantity_mt || "—"} MTS ± ${order.tolerance_pct || 5}%`);
+  block(
+    "SHIPPER",
+    `${AQUIFERT_PO_ISSUER.name}\n71-75 Shelton Street, Covent Garden, London, WC2H 9JQ\nVAT NO: ${AQUIFERT_PO_ISSUER.vatNumber}`,
+  );
+  block("POD", order.discharge_port || order.price_basis || "—");
+  block("LOAD PORT", order.load_port || "—");
+  block("INCOTERM", `${order.incoterm} (Incoterms 2020)`);
+  block("BL TO SHOW", "TOTAL NET / GROSS WEIGHT\nNO. OF PACKAGES");
+  block(
+    "DOCUMENTS REQUIRED",
+    [
+      "1 Original and one copy: Commercial Invoice",
+      "3 Original and one copy: Bill of Lading",
+      "1 Original and one copy: Analysis Certificate",
+      "1 Original and one copy: Weight Certificate",
+      "1 Original and one copy: Origin Certificate",
+      "1 Original and one copy: Packing List",
+      "1 Original and one copy: Insurance Certificate (as per Incoterm)",
+    ].join("\n"),
+  );
+  block("TRADE REF", order.reference || order.order_ref || "—");
+
+  color(MUTED);
+  font(7);
+  doc.text(AQUIFERT_PO_ISSUER.footer, pageW / 2, pageH - 28, { align: "center", maxWidth: pageW - margin * 2 });
+  return new Uint8Array(doc.output("arraybuffer"));
 }

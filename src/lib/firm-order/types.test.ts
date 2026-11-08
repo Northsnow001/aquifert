@@ -51,6 +51,18 @@ describe("parseFirmOrder", () => {
     assert.equal(parseFirmOrder({ document: "proforma", product: "Urea", supplierUnitPrice: 205 }), null);
   });
 
+  it("locks purchase contract to supplier cost", () => {
+    const order = parseFirmOrder({
+      document: "purchase_contract",
+      product: "Sulphuric dioxide",
+      buyerPrice: 221.4,
+      supplierUnitPrice: 205,
+    });
+    assert.ok(order);
+    assert.equal(order.document, "purchase_contract");
+    assert.equal(order.unit_price_usd, 205);
+  });
+
   it("rejects empty product", () => {
     assert.equal(parseFirmOrder({ product: "" }), null);
   });

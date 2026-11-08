@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerDocumentFromDeal, firmOrderFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, firmOrderFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 import { parseFirmOrder } from "@/lib/firm-order/types";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
@@ -53,6 +53,13 @@ describe("firmOrderFromDeal", () => {
     assert.equal(pi.unit_price_usd, 221.4);
     assert.equal(pi.supplier.name, "");
     assert.equal(pi.document, "proforma");
+  });
+
+  it("supplier pack stays on offer cost", () => {
+    const pack = supplierDocumentFromDeal(deal, "purchase_contract");
+    assert.ok(pack);
+    assert.equal(pack.unit_price_usd, 205);
+    assert.equal(pack.supplier.name, "Harbour Fertiliser");
   });
 });
 
