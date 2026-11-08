@@ -55,4 +55,4 @@ export type DeskDeal = {
   firmInterestAt: string | null;
 };
 
-export type BuyerReplyKind = "agree" | "negotiate";
+export type BuyerReplyKind = "agree" | "negotiate" | "chat";

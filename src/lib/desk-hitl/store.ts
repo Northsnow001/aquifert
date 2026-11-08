@@ -153,7 +153,7 @@ export async function recordBuyerInbound(input: {
   phone?: string;
   requestId?: string;
   text: string;
-}): Promise<DeskDeal | { error: string }> {
+}): Promise<DeskDeal | { error: string } | { event: "chat" }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
 
@@ -168,9 +168,9 @@ export async function recordBuyerInbound(input: {
       return theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs));
     }) ??
     null;
-  if (!deal) return { error: "No open indication for this buyer. Pass requestId or the WhatsApp phone." };
-
   const kind = classifyBuyerReply(text);
+  if (!deal || kind === "chat") return { event: "chat" };
+
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
   if (kind === "agree") {
     const next: DeskDeal = {

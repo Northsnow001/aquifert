@@ -23,6 +23,12 @@ describe("classifyBuyerReply", () => {
     assert.equal(classifyBuyerReply("can you reduce to 410"), "negotiate");
     assert.equal(classifyBuyerReply("what is the load port?"), "negotiate");
   });
+
+  it("does not treat onboarding or RFQ chat as a desk reply", () => {
+    assert.equal(classifyBuyerReply("Kaytoba49@gmail.com\nCountry is Nigeria"), "chat");
+    assert.equal(classifyBuyerReply("Hi"), "chat");
+    assert.equal(classifyBuyerReply("500 MT urea CFR Lagos"), "chat");
+  });
 });
 
 describe("parseShortlistBody", () => {

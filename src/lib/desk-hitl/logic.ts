@@ -16,8 +16,12 @@ export function classifyBuyerReply(text: string): BuyerReplyKind {
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  if (!t) return "negotiate";
-  if (/\b(no|not|dont|don't|cannot|cant|too high|too much|lower|reduce|negotiate|counter|expensive)\b/.test(t)) {
+  if (!t) return "chat";
+  if (
+    /\b(no|not|dont|don't|cannot|cant|too high|too much|lower|reduce|negotiate|counter|expensive|load port)\b/.test(
+      t,
+    )
+  ) {
     return "negotiate";
   }
   if (
@@ -28,7 +32,7 @@ export function classifyBuyerReply(text: string): BuyerReplyKind {
     return "agree";
   }
   if (/\b(yes|agree|confirm|accept|interested)\b/.test(t) && t.length < 80) return "agree";
-  return "negotiate";
+  return "chat";
 }
 
 export function indicationWhatsApp(deal: DeskDeal): string {
