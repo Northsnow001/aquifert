@@ -136,6 +136,10 @@ export async function confirmIndication(input: {
     marginPct: saved.marginPct,
     currency: saved.currency,
     product: saved.product,
+    supplierName: offer.supplierName,
+    supplierUnitPrice: offer.unitPrice,
+    offerId: offer.id,
+    incoterm: offer.incoterm || saved.incoterm,
     adminUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com").replace(/\/$/, "")}/admin/desk/${saved.id}`,
   });
   return saved;
