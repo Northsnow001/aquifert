@@ -5,9 +5,19 @@ import { clearRecords, getRecord, listRecords, putRecords } from "@/lib/data/rec
 import { OUTBOX } from "@/lib/data/tables";
 import type { DeliverySettings } from "@/lib/desk-settings/types";
 
-export type MailKind = "order-applicant" | "order-admin" | "zero-applicant" | "zero-admin" | "analytics-applicant" | "contact-applicant" | "test";
+export type MailKind =
+  | "order-applicant"
+  | "order-admin"
+  | "zero-applicant"
+  | "zero-admin"
+  | "analytics-applicant"
+  | "contact-applicant"
+  | "pi-buyer"
+  | "test";
 
-type Message = { to: string; subject: string; html: string; text: string };
+export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string };
+
+type Message = { to: string; subject: string; html: string; text: string; attachments?: MailAttachment[] };
 
 export type OutboxEntry = {
   id: string;
@@ -56,6 +66,15 @@ async function sendWithSmtp(message: Message, delivery: DeliverySettings, from: 
     html: message.html,
     text: message.text,
     ...(delivery.replyTo.trim() ? { replyTo: delivery.replyTo.trim() } : {}),
+    ...(message.attachments?.length
+      ? {
+          attachments: message.attachments.map((file) => ({
+            filename: file.filename,
+            content: Buffer.from(file.content),
+            contentType: file.contentType,
+          })),
+        }
+      : {}),
   });
 }
 
@@ -76,6 +95,14 @@ async function sendWithResend(message: Message, delivery: DeliverySettings, from
       html: message.html,
       text: message.text,
       ...(delivery.replyTo.trim() ? { reply_to: delivery.replyTo.trim() } : {}),
+      ...(message.attachments?.length
+        ? {
+            attachments: message.attachments.map((file) => ({
+              filename: file.filename,
+              content: Buffer.from(file.content).toString("base64"),
+            })),
+          }
+        : {}),
     }),
     signal: AbortSignal.timeout(10_000),
   });
@@ -86,7 +113,10 @@ async function sendWithResend(message: Message, delivery: DeliverySettings, from
 }
 
 /** Sends one email and records it in the outbox. Never throws, so a mail failure cannot lose a submission. */
-export async function sendEmail(message: { kind: MailKind; to: string; subject: string; html: string; text: string }, delivery: DeliverySettings): Promise<OutboxEntry> {
+export async function sendEmail(
+  message: { kind: MailKind; to: string; subject: string; html: string; text: string; attachments?: MailAttachment[] },
+  delivery: DeliverySettings,
+): Promise<OutboxEntry> {
   const status = deliveryStatus();
   const entry: OutboxEntry = {
     id: `mail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

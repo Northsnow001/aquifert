@@ -1,0 +1,217 @@
+{
+  "name": "11. Buyer PI from email reply",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF11 — PI for Matt (not email to buyer)\nBuyer replies to the firm offer. Match From → Buyers Email, Status Firm interest, then POST the proforma JSON to the desk. Matt edits and sends from /admin/desk.\n\nInsert: Match → Agent (send_pi) → Code gate → Submit PI for review.\nDo not Gmail the buyer from this workflow.",
+        "height": 420,
+        "width": 400,
+        "color": 5
+      },
+      "id": "note-wf11",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-360, 180]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [{ "mode": "everyMinute" }]
+        },
+        "simple": true,
+        "filters": {},
+        "options": {}
+      },
+      "id": "node-gmail-trigger",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [80, 400]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Buyers",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "node-get-buyers",
+      "name": "Get Buyers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [320, 400]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Buyer Requests",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "node-get-requests",
+      "name": "Get Buyer Requests",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [560, 400]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function text(v) {\n  return String(v ?? '').trim();\n}\nfunction digits(v) {\n  return String(v ?? '').replace(/\\D/g, '');\n}\nfunction num(v) {\n  if (typeof v === 'number' && Number.isFinite(v)) return v;\n  const n = Number(String(v ?? '').replace(/[^\\d.]/g, ''));\n  return Number.isFinite(n) ? n : 0;\n}\nfunction newest(rows, keys) {\n  return rows.slice().sort((a, b) => {\n    const ta = Date.parse(a[keys[0]] || a[keys[1]] || 0) || 0;\n    const tb = Date.parse(b[keys[0]] || b[keys[1]] || 0) || 0;\n    return tb - ta;\n  })[0];\n}\nfunction fromEmail(raw) {\n  if (raw && typeof raw === 'object') {\n    return fromEmail(raw.value?.[0]?.address || raw.address || raw.text || '');\n  }\n  const s = text(raw);\n  const m = s.match(/<([^>]+@[^>]+)>/) || s.match(/([^\\s<>]+@[^\\s<>]+)/);\n  return (m ? m[1] : s).toLowerCase();\n}\n\nconst mail = $('Gmail Trigger').first().json;\nconst subject = text(mail.subject || mail.Subject);\nconst sender = fromEmail(mail.from || mail.From || mail.headers?.from || '');\n\nif (/proforma invoice/i.test(subject) && !/^\\s*re\\s*:/i.test(subject)) return [];\nif (!sender.includes('@')) return [];\n\nconst buyers = $('Get Buyers').all().map((i) => i.json);\nconst buyer = buyers.find((b) => text(b.Email).toLowerCase() === sender);\nif (!buyer) return [];\n\nconst phone = digits(buyer['Phone/WhatsApp']);\nconst buyerId = text(buyer['Buyer ID']);\nconst requests = $('Get Buyer Requests').all().map((i) => i.json);\nconst eligible = requests.filter((r) => {\n  const st = text(r.Status).toLowerCase();\n  if (st !== 'firm interest') return false;\n  const rid = text(r['Buyer ID']);\n  return rid === buyerId || (phone && digits(rid) === phone) || text(r.Email).toLowerCase() === sender;\n});\nconst req = newest(eligible, ['Last Updated', 'Date Received']);\nif (!req) return [];\n\nconst buyerPrice = num(req['Target Price']);\nif (buyerPrice <= 0) throw new Error('Target Price missing on ' + req['Request ID']);\n\nconst refDigits = text(req['Request ID']).replace(/\\D/g, '');\nreturn [{\n  json: {\n    document: 'proforma',\n    product: text(req['Product Name']),\n    quantity_mt: num(req['Quantity (MT)']),\n    buyer_unit_price: buyerPrice,\n    currency: text(req.Currency) || 'USD',\n    incoterm: text(req.Incoterm),\n    price_basis: text(req['Destination Port']),\n    load_port: '',\n    discharge_port: text(req['Destination Port']),\n    packing: text(req.Packing),\n    shipping: text(req['Delivery/Shipment Window']),\n    payment_terms: text(req['Payment Terms']),\n    reference: text(req['Request ID']),\n    order_ref: refDigits ? ('AQ' + refDigits.padStart(6, '0')) : 'AQ000000',\n    buyer: {\n      name: text(req['Buyer Contact'] || buyer['Contact Name']),\n      email: text(buyer.Email),\n      phone: buyer['Phone/WhatsApp'] || '',\n    },\n  },\n}];\n"
+      },
+      "id": "node-match",
+      "name": "Match firm-interest buyer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.aquifert.com/api/firm-order/pdf",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-firm-order-secret",
+              "value": "SET_FIRM_ORDER_PDF_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "node-pdf",
+      "name": "Generate PI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 400]
+    },
+    {
+      "parameters": {
+        "operation": "binary",
+        "sourceProperty": "pdfBase64",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ $json.filename }}",
+          "mimeType": "application/pdf"
+        }
+      },
+      "id": "node-file",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1280, 400]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const deal = $('Match firm-interest buyer').first().json;\nconst file = $('Convert to File').first();\nconst binKey = file?.binary ? Object.keys(file.binary)[0] : null;\nconst pdf = binKey ? file.binary[binKey] : null;\nif (!pdf) throw new Error('Missing PI PDF binary');\nif (!String(deal.buyer?.email || '').includes('@')) throw new Error('Buyer Email missing');\n\nreturn [{\n  json: {\n    to: deal.buyer.email,\n    name: deal.buyer.name,\n    product: deal.product,\n    qty: deal.quantity_mt,\n    price: deal.buyer_unit_price,\n    incoterm: deal.incoterm,\n    reference: deal.reference,\n  },\n  binary: { data: pdf },\n}];\n"
+      },
+      "id": "node-attach",
+      "name": "Attach PI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.aquifert.com/api/desk/pi-draft",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-firm-order-secret",
+              "value": "SET_FIRM_ORDER_PDF_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "node-submit-desk",
+      "name": "Submit PI for review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, 400]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Buyer Requests",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Request ID": "={{ $('Match firm-interest buyer').item.json.reference }}",
+            "Status": "PI sent"
+          },
+          "matchingColumns": ["Request ID"],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "node-update",
+      "name": "Mark PI sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2000, 400]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [[{ "node": "Get Buyers", "type": "main", "index": 0 }]]
+    },
+    "Get Buyers": {
+      "main": [[{ "node": "Get Buyer Requests", "type": "main", "index": 0 }]]
+    },
+    "Get Buyer Requests": {
+      "main": [[{ "node": "Match firm-interest buyer", "type": "main", "index": 0 }]]
+    },
+    "Match firm-interest buyer": {
+      "main": [[{ "node": "Submit PI for review", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "active": false,
+  "tags": []
+}

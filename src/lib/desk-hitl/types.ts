@@ -1,5 +1,18 @@
+import type { FirmOrderDraft } from "@/lib/firm-order/types";
+
 export const DEAL_STATUSES = ["waiting_desk", "indication_sent", "negotiating", "firm_interest"] as const;
 export type DealStatus = (typeof DEAL_STATUSES)[number];
+
+export type DeskPiStatus = "review" | "sent";
+
+/** Proforma parked on the deal for Matt. Buyer never sees this until he sends it. */
+export type DeskPi = {
+  status: DeskPiStatus;
+  updatedAt: string;
+  sentAt: string | null;
+  sentTo: string | null;
+  order: FirmOrderDraft;
+};
 
 export const DEAL_STATUS_LABEL: Record<DealStatus, string> = {
   waiting_desk: "Needs Matt",
@@ -53,6 +66,7 @@ export type DeskDeal = {
   /** n8n Wait resume URL, if WF8 is paused on this deal. */
   callbackUrl: string | null;
   firmInterestAt: string | null;
+  pi?: DeskPi | null;
 };
 
 export type BuyerReplyKind = "agree" | "negotiate" | "chat";

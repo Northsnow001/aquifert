@@ -14,7 +14,7 @@ const TONE: Record<DealStatus, "amber" | "blue" | "teal" | "neutral"> = {
 
 export default async function DeskShortlistsPage() {
   const deals = await listDeskDeals();
-  const waiting = deals.filter((d) => d.status === "waiting_desk").length;
+  const waiting = deals.filter((d) => d.status === "waiting_desk" || d.pi?.status === "review").length;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -30,7 +30,10 @@ export default async function DeskShortlistsPage() {
           />
         ) : (
           <ul>
-            {deals.map((deal) => (
+            {deals.map((deal) => {
+              const piReview = deal.pi?.status === "review";
+              const piSent = deal.pi?.status === "sent";
+              return (
               <li key={deal.id} className="border-b border-border last:border-b-0">
                 <Link href={`/admin/desk/${deal.id}`} className="flex items-start justify-between gap-3 px-4 py-3.5 no-underline hover:bg-s2/50">
                   <span className="min-w-0">
@@ -42,14 +45,17 @@ export default async function DeskShortlistsPage() {
                     </span>
                     <span className="mt-0.5 block font-mono text-[11px] text-dim">{deal.requestId}</span>
                   </span>
-                  <Pill tone={TONE[deal.status]}>{DEAL_STATUS_LABEL[deal.status]}</Pill>
+                  <Pill tone={piReview ? "amber" : piSent ? "teal" : TONE[deal.status]}>
+                    {piReview ? "PI to review" : piSent ? "PI sent" : DEAL_STATUS_LABEL[deal.status]}
+                  </Pill>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </Card>
-      {waiting ? <p className="mt-3 text-[12.5px] text-mid">{waiting} waiting for you.</p> : null}
+      {waiting ? <p className="mt-3 text-[12.5px] text-mid">{waiting} waiting for you (indication or PI review).</p> : null}
     </div>
   );
 }

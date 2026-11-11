@@ -3,6 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
+import { applyPiEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskMessage } from "@/lib/desk-hitl/types";
 import { buyerDocumentFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
@@ -278,6 +279,79 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
   };
   await Promise.all([...urls].map((url) => notify(url, payload)));
   return saved;
+}
+
+function findDealForPi(deals: DeskDeal[], requestId: string, phone: string) {
+  const ref = requestId.trim().toLowerCase();
+  const digits = phone.replace(/\D/g, "");
+  return (
+    deals.find((row) => row.requestId.trim().toLowerCase() === ref) ??
+    deals.find((row) => {
+      const theirs = row.buyerPhone.replace(/\D/g, "");
+      return Boolean(theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs)));
+    }) ??
+    null
+  );
+}
+
+/** n8n WF11: park a proforma on the desk deal. Does not email the buyer. */
+export async function submitPiForReview(body: unknown): Promise<DeskDeal | { error: string }> {
+  const order = proformaFromN8n(body);
+  if (!order) return { error: "Need a proforma payload (document: proforma, product, buyer unit price)." };
+  const deals = await listRecords(DESK_DEALS);
+  const deal = findDealForPi(deals, order.reference, order.buyer.phone || "");
+  if (!deal) return { error: `No desk deal for ${order.reference || "that buyer"}.` };
+
+  const next: DeskDeal = {
+    ...deal,
+    pi: {
+      status: "review",
+      updatedAt: now(),
+      sentAt: deal.pi?.sentAt ?? null,
+      sentTo: deal.pi?.sentTo ?? null,
+      order,
+    },
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `Proforma ${order.order_ref || order.reference} is ready for review. Edit it on this card, then send to the buyer by email.`,
+      }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function savePiDraft(
+  id: string,
+  values: PiEditorValues,
+  _actor: string,
+): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal?.pi) return { error: "No proforma on this deal yet." };
+  const order = applyPiEditor(deal.pi.order, values);
+  if ("error" in order) return order;
+  const next: DeskDeal = {
+    ...deal,
+    pi: { ...deal.pi, status: "review", updatedAt: now(), order },
+  };
+  return (await save(next))!;
+}
+
+export async function markPiSent(id: string, to: string, actor: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal?.pi) return { error: "No proforma on this deal yet." };
+  const at = now();
+  const next: DeskDeal = {
+    ...deal,
+    pi: { ...deal.pi, status: "sent", updatedAt: at, sentAt: at, sentTo: to },
+    messages: [
+      ...deal.messages,
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} emailed the proforma invoice to ${to}.` }),
+    ],
+  };
+  return (await save(next))!;
 }
 
 export async function markWhatsAppSent(dealId: string, messageId: string): Promise<DeskDeal | { error: string }> {

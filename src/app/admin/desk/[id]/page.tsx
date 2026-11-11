@@ -10,7 +10,7 @@ export default async function DeskDealPage({ params }: { params: Promise<{ id: s
   const deal = await getDeskDeal(id);
   if (!deal) notFound();
   return (
-    <div className="mx-auto max-w-lg pb-24 md:max-w-3xl md:pb-8">
+    <div className={`mx-auto pb-24 md:pb-8 ${deal.pi ? "max-w-6xl" : "max-w-lg md:max-w-3xl"}`}>
       <PageHeader
         title={deal.product}
         description={`${deal.buyerName || deal.buyerCompany || "Buyer"}${deal.quantityMt ? ` · ${deal.quantityMt} MT` : ""}${deal.destination ? ` → ${deal.destination}` : ""}`}
