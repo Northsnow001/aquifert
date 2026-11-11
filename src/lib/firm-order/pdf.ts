@@ -298,14 +298,21 @@ async function buildLegalContractPdf(
   order: FirmOrderDraft,
   kind: "sales" | "purchase",
 ): Promise<Uint8Array> {
-  const [{ jsPDF }] = await Promise.all([import("jspdf")]);
+  const [{ jsPDF }, logo] = await Promise.all([import("jspdf"), logoDataUrl()]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const margin = 54;
+  const margin = 52;
   const right = pageW - margin;
-  const labelW = 118;
-  let y = 56;
+  const contentW = right - margin;
+  const labelCol = 148;
+  const valueX = margin + labelCol;
+  const valueW = contentW - labelCol;
+  const footerY = pageH - 36;
+  const logoRatio = 814 / 214;
+  const logoH = 34;
+  const logoW = logoH * logoRatio;
+  let y = 102;
   const amount = lineAmount(order);
   const unit = order.unit_price_usd != null ? money(order.unit_price_usd) : "—";
   const counterparty =
@@ -314,137 +321,200 @@ async function buildLegalContractPdf(
       : order.supplier.name || "the Seller";
   const destination = order.discharge_port || order.price_basis || "";
   const basis = [order.incoterm, destination].filter(Boolean).join(" ");
+  const title = kind === "sales" ? "SALES CONTRACT" : "PURCHASE CONTRACT";
+  const contractDate = displayDate(order.po_date) || displayDate(new Date().toISOString());
+  const leading = 13;
 
   const color = (rgb: RGB) => doc.setTextColor(...rgb);
   const font = (size: number, style: "normal" | "bold" | "italic" = "normal") => {
-    doc.setFont("helvetica", style);
+    doc.setFont("times", style);
     doc.setFontSize(size);
   };
+  const drawLogo = () => {
+    if (!logo) {
+      color(INK);
+      font(16, "bold");
+      doc.text("aquifert", right, 48, { align: "right" });
+      return;
+    }
+    try {
+      doc.addImage(logo, "PNG", right - logoW, 24, logoW, logoH);
+    } catch {
+      color(INK);
+      font(16, "bold");
+      doc.text("aquifert", right, 48, { align: "right" });
+    }
+  };
   const letterhead = () => {
+    drawLogo();
     color(MUTED);
     font(8);
-    const lines = doc.splitTextToSize(CONTRACT_LETTERHEAD, right - margin) as string[];
+    const lines = doc.splitTextToSize(CONTRACT_LETTERHEAD, contentW - logoW - 12) as string[];
     doc.text(lines, margin, 40);
+    doc.setDrawColor(...RULE);
+    doc.setLineWidth(0.8);
+    doc.line(margin, 72, right, 72);
   };
-  const ensure = (need: number) => {
-    if (y + need < pageH - 48) return;
+  const newPage = () => {
     doc.addPage();
     letterhead();
-    y = 72;
+    y = 102;
   };
-  const field = (label: string, body: string) => {
+  const ensure = (need: number) => {
+    if (y + need < footerY - 18) return;
+    newPage();
+  };
+  const term = (label: string, body: string) => {
     if (!body.trim()) return;
-    const lines = doc.splitTextToSize(body, right - margin - labelW) as string[];
-    ensure(lines.length * 11 + 16);
+    const lines = doc.splitTextToSize(body, valueW) as string[];
+    ensure(lines.length * leading + 10);
     color(INK);
-    font(8, "bold");
+    font(9, "bold");
     doc.text(label, margin, y);
-    font(9);
-    doc.text(lines, margin + labelW, y);
-    y += lines.length * 11 + 10;
+    font(10);
+    doc.text(lines, valueX, y);
+    y += lines.length * leading + 8;
+  };
+  const clause = (heading: string, body: string) => {
+    const paragraphs = body.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+    ensure(leading * 4);
+    color(INK);
+    font(10, "bold");
+    const head = doc.splitTextToSize(heading, contentW) as string[];
+    doc.text(head, margin, y);
+    y += head.length * leading + 6;
+    font(10);
+    for (const para of paragraphs) {
+      const lines = doc.splitTextToSize(para, contentW) as string[];
+      ensure(lines.length * leading + 8);
+      doc.text(lines, margin, y);
+      y += lines.length * leading + 10;
+    }
+    y += 4;
   };
 
   letterhead();
-  y = 72;
   color(INK);
-  font(18, "bold");
-  doc.text(kind === "sales" ? "SALES CONTRACT" : "PURCHASE CONTRACT", margin, y);
-  y += 22;
-  font(9);
+  font(22, "bold");
+  doc.text(title, pageW / 2, y, { align: "center" });
+  y += 26;
+  font(10);
   doc.text(`CONTRACT REFERENCE: ${order.order_ref || order.reference}`, margin, y);
   y += 14;
-  doc.text(`DATE: ${displayDate(order.po_date) || displayDate(new Date().toISOString())}`, margin, y);
-  y += 20;
+  doc.text(`DATE: ${contractDate}`, margin, y);
+  y += 18;
+  font(10, "italic");
+  const preamble =
+    kind === "sales"
+      ? `This Sales Contract is entered into between Aquifert Limited (“Seller”) and ${order.buyer.name || "the Buyer"} (“Buyer”) on the terms and conditions set out below.`
+      : `This Purchase Contract is entered into between Aquifert Limited (“Buyer”) and ${order.supplier.name || "the Seller"} (“Seller”) on the terms and conditions set out below.`;
+  const preambleLines = doc.splitTextToSize(preamble, contentW) as string[];
+  doc.text(preambleLines, margin, y);
+  y += preambleLines.length * leading + 14;
 
   if (kind === "sales") {
-    field("BUYER:", [order.buyer.name, order.buyer.phone, order.buyer.email].filter(Boolean).join("\n") || "As notified");
-    field("SELLER:", AQUIFERT_LEGAL_ADDRESS);
+    term("BUYER:", [order.buyer.name, order.buyer.phone, order.buyer.email].filter(Boolean).join("\n") || "As notified");
+    term("SELLER:", AQUIFERT_LEGAL_ADDRESS);
   } else {
-    field("BUYER:", AQUIFERT_LEGAL_ADDRESS);
-    field(
+    term("BUYER:", AQUIFERT_LEGAL_ADDRESS);
+    term(
       "SELLER:",
       [order.supplier.name, order.supplier.attention, order.supplier.address, order.supplier.city, order.supplier.country]
         .filter(Boolean)
         .join("\n") || "As notified",
     );
   }
-  field("PRODUCT:", [order.product, order.form_grade].filter(Boolean).join(" — "));
-  field(
-    "QUANTITY:",
-    `${order.quantity_mt || "—"} MTS +/- ${order.tolerance_pct || 5}% IN BUYERS OPTION`,
-  );
-  field(
+  if (order.reference && order.reference !== order.order_ref) term("TRADE REFERENCE:", order.reference);
+  term("PRODUCT:", [order.product, order.form_grade].filter(Boolean).join(" — "));
+  term("QUANTITY:", `${order.quantity_mt || "—"} MTS +/- ${order.tolerance_pct || 5}% IN BUYERS OPTION`);
+  term(
     "QUALITY:",
     order.form_grade
-      ? `The product shall meet the following specifications: ${order.form_grade}`
+      ? `The product shall meet the following specifications: ${order.form_grade}. Quality and quantity as per internationally recognised third-party certificate of analysis at load port.`
       : "The product shall meet the commercially agreed specification. Quality and quantity as per internationally recognised third-party certificate of analysis at load port.",
   );
-  if (order.packing) field("PACKING:", order.packing);
-  if (order.origin) field("ORIGIN:", order.origin);
-  field(
+  if (order.packing) term("PACKING:", order.packing);
+  if (order.origin) term("ORIGIN:", order.origin);
+  term(
     "DELIVERY:",
-    `${basis} (Incoterms 2020). Duty unpaid, customs uncleared and taxes unpaid unless otherwise stated.${order.shipping ? ` ${order.shipping}` : ""}`,
+    `${basis} (Incoterms 2020). Duty unpaid, customs uncleared and taxes unpaid unless otherwise stated.`,
   );
-  field("FREE DAYS:", "As per standard conditions of the liner.");
-  field(
+  term("FREE DAYS:", "As per standard conditions of the liner.");
+  term(
     "SHIPMENT PERIOD:",
     order.shipping
       ? `${order.shipping} from loading port in Seller option. Transhipment is allowed and partial deliveries are allowed.`
       : "As agreed, from loading port in Seller option. Transhipment is allowed and partial deliveries are allowed.",
   );
-  field(
+  term(
     "PRICE:",
     `USD ${unit} PER METRIC TONNE ${basis}${amount != null ? `. TOTAL VALUE USD ${money(amount)}` : ""}`,
   );
-  field(
+  term(
     "PAYMENT:",
     order.payment_terms ||
       (kind === "sales"
         ? "As stated on the Proforma Invoice. Full amount due into Seller's designated bank account without any discount or rebate. Bank charges for Buyer's account."
         : "As agreed. Payment to Seller's designated bank account without any discount or rebate. Bank charges for Buyer's account."),
   );
-  field("PREPAYMENT ALLOCATION AND REIMBURSEMENT:", PREPAYMENT_CLAUSE);
-  field(
-    "INSPECTION:",
+
+  newPage();
+  clause("PREPAYMENT ALLOCATION AND REIMBURSEMENT", PREPAYMENT_CLAUSE);
+  clause(
+    "INSPECTION",
     kind === "sales"
       ? "As per internationally recognised third party inspections company's (AMSPEC, TCI and SGS etc.) certificate of analysis and quantity at load port for Aquifert cost."
       : "As per internationally recognised third party inspections company's certificate of analysis and quantity at load port for Buyer's cost.",
   );
-  field(
-    "INSURANCE:",
+  clause(
+    "INSURANCE",
     kind === "sales"
       ? "For Seller's account and responsibility as per Incoterms 2020."
       : "For Buyer's account and responsibility as per Incoterms 2020.",
   );
-  field("UNLOADING/UNSTUFFING CONTAINERS:", UNLOADING_CLAUSE);
-  field("RETURNING CONTAINERS:", RETURNING_CLAUSE);
-  field("GOVERNING LAW AND JURISDICTION:", LAW_CLAUSE);
-  field(
-    "GENERAL TERMS:",
-    "The provisions of Incoterms 2020 and the General Terms and Conditions for CFR/CIF sales of Aquifert Limited shall be incorporated into this contract.",
+  clause("UNLOADING/UNSTUFFING CONTAINERS", UNLOADING_CLAUSE);
+  clause("RETURNING CONTAINERS", RETURNING_CLAUSE);
+  clause("GOVERNING LAW AND JURISDICTION", LAW_CLAUSE);
+  clause(
+    "GENERAL TERMS",
+    "The provisions of Incoterms 2020 and the General Terms and Conditions for CFR/CIF sales of Aquifert Limited shall be incorporated into this contract. In the event of any inconsistency between those terms and this contract, this contract shall prevail.",
   );
 
-  ensure(110);
-  y += 8;
-  font(9, "bold");
+  ensure(160);
+  y += 18;
+  font(10, "bold");
   doc.text("FOR AND ON BEHALF OF AQUIFERT LTD", margin, y);
-  doc.text(`FOR AND ON BEHALF OF ${counterparty.toUpperCase()}`, right, y, { align: "right" });
-  y += 28;
-  font(8);
-  doc.text("------------------------------------------------------", margin, y);
-  doc.text("------------------------------------------------------", right, y, { align: "right" });
+  doc.text(`FOR AND ON BEHALF OF ${counterparty.toUpperCase()}`, right - 200, y);
+  y += 46;
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(0.6);
+  doc.line(margin, y, margin + 200, y);
+  doc.line(right - 200, y, right, y);
   y += 14;
+  font(9);
   doc.text("SIGNATURE", margin, y);
-  doc.text("SIGNATURE", right, y, { align: "right" });
-  y += 14;
+  doc.text("SIGNATURE", right - 200, y);
+  y += 16;
   doc.text("NAME: MATT O'LEARY", margin, y);
-  doc.text("NAME:", right, y, { align: "right" });
-  y += 12;
+  doc.text("NAME:", right - 200, y);
+  y += 14;
   doc.text("TITLE: MANAGING DIRECTOR", margin, y);
-  doc.text("TITLE:", right, y, { align: "right" });
-  y += 12;
-  doc.text(`DATE: ${displayDate(order.po_date) || displayDate(new Date().toISOString())}`, margin, y);
-  doc.text("DATE:", right, y, { align: "right" });
+  doc.text("TITLE:", right - 200, y);
+  y += 14;
+  doc.text(`DATE: ${contractDate}`, margin, y);
+  doc.text("DATE:", right - 200, y);
+
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i += 1) {
+    doc.setPage(i);
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.4);
+    doc.line(margin, footerY - 10, right, footerY - 10);
+    color(MUTED);
+    font(7.5);
+    doc.text(AQUIFERT_PO_ISSUER.footer, margin, footerY, { maxWidth: contentW - 70 });
+    doc.text(`Page ${i} of ${pages}`, right, footerY, { align: "right" });
+  }
 
   return new Uint8Array(doc.output("arraybuffer"));
 }
@@ -458,12 +528,13 @@ async function buildPurchaseContractPdf(order: FirmOrderDraft): Promise<Uint8Arr
 }
 
 async function buildDocumentaryInstructionsPdf(order: FirmOrderDraft): Promise<Uint8Array> {
-  const [{ jsPDF }] = await Promise.all([import("jspdf")]);
+  const [{ jsPDF }, logo] = await Promise.all([import("jspdf"), logoDataUrl()]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 48;
-  let y = 56;
+  const right = pageW - margin;
+  let y = 96;
 
   const color = (rgb: RGB) => doc.setTextColor(...rgb);
   const font = (size: number, style: "normal" | "bold" | "italic" = "normal") => {
@@ -485,10 +556,21 @@ async function buildDocumentaryInstructionsPdf(order: FirmOrderDraft): Promise<U
     y += lines.length * 12 + 10;
   };
 
+  if (logo) {
+    try {
+      const logoH = 34;
+      const logoW = logoH * (814 / 214);
+      doc.addImage(logo, "PNG", right - logoW, 24, logoW, logoH);
+    } catch {
+      /* keep text letterhead */
+    }
+  }
   color(MUTED);
   font(8);
-  doc.text(CONTRACT_LETTERHEAD, margin, y, { maxWidth: pageW - margin * 2 });
-  y += 28;
+  doc.text(CONTRACT_LETTERHEAD, margin, 40, { maxWidth: pageW - margin * 2 - 160 });
+  doc.setDrawColor(...RULE);
+  doc.setLineWidth(0.7);
+  doc.line(margin, 72, right, 72);
   color(INK);
   font(16, "bold");
   doc.text("DOCUMENTARY INSTRUCTIONS", margin, y);
