@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   const buyerDocs =
     result.status === "firm_interest"
       ? {
+          firm_offer: buyerDocumentFromDeal(result, "firm_offer"),
           proforma: buyerDocumentFromDeal(result, "proforma"),
           sales_contract: buyerDocumentFromDeal(result, "sales_contract"),
         }

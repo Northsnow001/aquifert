@@ -3,6 +3,7 @@ import type { DeskDeal } from "@/lib/desk-hitl/types";
 import {
   DEFAULT_PO_ADDITIONAL,
   contractReference,
+  firmOfferNumber,
   invoiceNumber,
   purchaseOrderNumber,
   type FirmOrderDraft,
@@ -29,15 +30,23 @@ function baseFromDeal(deal: DeskDeal) {
   };
 }
 
-/** Buyer PI / sales contract. Price is indication (supplier + margin). Never includes supplier identity or cost. */
-export function buyerDocumentFromDeal(deal: DeskDeal, document: "proforma" | "sales_contract"): FirmOrderDraft | null {
+/** Buyer firm offer / PI / sales contract. Price is indication (supplier + margin). Never includes supplier identity or cost. */
+export function buyerDocumentFromDeal(
+  deal: DeskDeal,
+  document: "firm_offer" | "proforma" | "sales_contract",
+): FirmOrderDraft | null {
   if (deal.buyerPrice == null || deal.buyerPrice <= 0) return null;
   const { qty, destination, incoterm, packing, currency, load_port } = baseFromDeal(deal);
   const ref = deal.requestId;
   return {
     document,
     status: document.toUpperCase(),
-    order_ref: document === "proforma" ? invoiceNumber(ref) : contractReference(ref),
+    order_ref:
+      document === "proforma"
+        ? invoiceNumber(ref)
+        : document === "firm_offer"
+          ? firmOfferNumber(ref)
+          : contractReference(ref),
     reference: ref,
     po_date: new Date().toISOString().slice(0, 10),
     delivery_date: "",

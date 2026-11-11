@@ -55,6 +55,7 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
   const right = pageW - margin;
   let y = 42;
   const isPi = order.document === "proforma";
+  const isOffer = order.document === "firm_offer";
 
   const color = (rgb: RGB) => doc.setTextColor(...rgb);
   const font = (size: number, style: "normal" | "bold" | "italic" = "normal") => {
@@ -75,11 +76,11 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
   y = 92;
   color(INK);
   font(22, "bold");
-  doc.text(isPi ? "PROFORMA INVOICE" : "PURCHASE ORDER", margin, y);
+  doc.text(isPi ? "PROFORMA INVOICE" : isOffer ? "FIRM OFFER" : "PURCHASE ORDER", margin, y);
 
   y = 118;
   font(10, "bold");
-  const partyLines = (isPi
+  const partyLines = (isPi || isOffer
     ? [order.buyer.name, order.buyer.phone ? `WhatsApp: ${order.buyer.phone}` : "", order.buyer.email]
     : [
         order.supplier.name,
@@ -89,7 +90,7 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
         order.supplier.country,
       ]
   ).filter((line): line is string => Boolean(line));
-  if (!partyLines.length) partyLines.push(isPi ? "Buyer" : "Supplier to be confirmed");
+  if (!partyLines.length) partyLines.push(isPi || isOffer ? "Buyer" : "Supplier to be confirmed");
   doc.text(partyLines[0], margin + 18, y);
   font(9);
   color(MUTED);
@@ -101,7 +102,14 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
 
   const metaX = 318;
   const metaValueX = 430;
-  const meta = isPi
+  const meta = isOffer
+    ? [
+        ["Offer Date", displayDate(order.po_date) || displayDate(new Date().toISOString())],
+        ["Offer Number", order.order_ref || "—"],
+        ["Reference", order.reference || "—"],
+        ["VAT Number", order.vat_number || AQUIFERT_PO_ISSUER.vatNumber],
+      ]
+    : isPi
     ? [
         ["Invoice Date", displayDate(order.po_date) || displayDate(new Date().toISOString())],
         ["Invoice Number", order.order_ref || "—"],
@@ -256,6 +264,7 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
 
 export function firmOrderFilename(order: FirmOrderDraft) {
   const ref = (order.order_ref || order.reference || "doc").replace(/[^\w-]+/g, "-");
+  if (order.document === "firm_offer") return `Firm_Offer_${ref}.pdf`;
   if (order.document === "proforma") return `Proforma_Invoice_${ref}.pdf`;
   if (order.document === "sales_contract") return `Sales_Contract_${ref}.pdf`;
   if (order.document === "purchase_contract") return `Purchase_Contract_${ref}.pdf`;

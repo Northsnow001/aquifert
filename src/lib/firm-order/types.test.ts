@@ -35,6 +35,18 @@ describe("parseFirmOrder", () => {
     assert.equal(order.unit_price_usd, 380);
   });
 
+  it("locks a firm offer to buyer price", () => {
+    const order = parseFirmOrder({
+      document: "firm_offer",
+      product: "Urea",
+      buyerPrice: 221.4,
+      supplierUnitPrice: 205,
+    });
+    assert.ok(order);
+    assert.equal(order.document, "firm_offer");
+    assert.equal(order.unit_price_usd, 221.4);
+  });
+
   it("locks proforma to buyer price when both prices are present", () => {
     const order = parseFirmOrder({
       document: "proforma",

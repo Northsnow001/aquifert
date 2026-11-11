@@ -47,6 +47,15 @@ describe("firmOrderFromDeal", () => {
     assert.equal(po.document, "purchase_order");
   });
 
+  it("buyer firm offer uses indication price and hides the supplier", () => {
+    const offer = buyerDocumentFromDeal(deal, "firm_offer");
+    assert.ok(offer);
+    assert.equal(offer.unit_price_usd, 221.4);
+    assert.equal(offer.supplier.name, "");
+    assert.equal(offer.document, "firm_offer");
+    assert.equal(offer.order_ref, "FO-0002");
+  });
+
   it("buyer proforma uses indication price and hides the supplier", () => {
     const pi = buyerDocumentFromDeal(deal, "proforma");
     assert.ok(pi);

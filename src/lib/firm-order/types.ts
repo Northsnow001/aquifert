@@ -1,5 +1,6 @@
 export const TRADE_DOCUMENTS = [
   "purchase_order",
+  "firm_offer",
   "proforma",
   "sales_contract",
   "purchase_contract",
@@ -87,6 +88,12 @@ export function invoiceNumber(requestId: string) {
   return `AQ${Date.now().toString().slice(-6)}`;
 }
 
+export function firmOfferNumber(requestId: string) {
+  const digits = requestId.replace(/\D/g, "");
+  if (digits) return `FO-${digits.padStart(4, "0")}`;
+  return `FO-${Date.now().toString().slice(-4)}`;
+}
+
 export function contractReference(requestId: string) {
   const digits = requestId.replace(/\D/g, "") || "0000";
   const now = new Date();
@@ -118,6 +125,7 @@ function poDate(value?: string) {
 
 function parseDocument(raw: Record<string, unknown>): TradeDocument {
   const value = str(raw.document ?? raw.doc ?? raw.kind, 40).toLowerCase().replace(/[\s-]+/g, "_");
+  if (value === "firm_offer" || value === "offer" || value === "commercial_offer") return "firm_offer";
   if (value === "proforma" || value === "proforma_invoice" || value === "pi") return "proforma";
   if (value === "sales_contract" || value === "sale_contract") return "sales_contract";
   if (value === "purchase_contract" || value === "supplier_contract") return "purchase_contract";
@@ -160,9 +168,11 @@ export function parseFirmOrder(body: unknown): FirmOrderDraft | null {
     (reference
       ? document === "purchase_order"
         ? purchaseOrderNumber(reference)
-        : document === "proforma"
-          ? invoiceNumber(reference)
-          : contractReference(reference)
+        : document === "firm_offer"
+          ? firmOfferNumber(reference)
+          : document === "proforma"
+            ? invoiceNumber(reference)
+            : contractReference(reference)
       : null);
 
   return {
