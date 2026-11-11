@@ -16,7 +16,6 @@ const geistMono = Geist_Mono({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
 });
 
 // Variable font. A weight list makes Google emit kit URLs with extra query
