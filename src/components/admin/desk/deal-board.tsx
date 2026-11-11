@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { confirmIndicationAction, issueSupplierPackAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
+import { confirmIndicationAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
+import { AfterPayment } from "@/components/admin/desk/after-payment";
 import { PiEditor } from "@/components/admin/desk/pi-editor";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import { buyerUnitPrice } from "@/lib/desk-hitl/logic";
@@ -126,30 +127,11 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
             </span>
             {deal.marginPct != null ? ` (supplier + ${deal.marginPct}%)` : ""}
           </p>
-          {deal.status === "firm_interest" && deal.pi?.status === "sent" ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                start(async () => {
-                  const result = await issueSupplierPackAction({ id: deal.id });
-                  if (!result.ok) {
-                    toast.error(result.message);
-                    return;
-                  }
-                  toast.success("Supplier documents queued. n8n will email the PO pack.");
-                  router.refresh();
-                });
-              }}
-              className={`${btnPrimary} mt-3 w-full sm:w-auto`}
-            >
-              {pending ? "Issuing…" : "Issue supplier documents"}
-            </button>
-          ) : null}
         </section>
       )}
 
       {deal.pi ? <PiEditor deal={deal} /> : null}
+      {deal.pi?.status === "sent" ? <AfterPayment deal={deal} /> : null}
 
       <section className="rounded-2xl border border-border bg-white">
         <h2 className="border-b border-border px-4 py-2.5 text-[13px] font-semibold text-ink">Thread</h2>

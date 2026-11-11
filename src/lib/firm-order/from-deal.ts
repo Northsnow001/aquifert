@@ -90,6 +90,24 @@ export function buyerDocumentFromDeal(
   };
 }
 
+/** Sales contract from the PI Matt already approved. Buyer price only. Never the supplier. */
+export function salesContractFromPi(pi: FirmOrderDraft): FirmOrderDraft {
+  return {
+    ...pi,
+    document: "sales_contract",
+    status: "SALES_CONTRACT",
+    order_ref: contractReference(pi.reference || pi.order_ref || ""),
+    supplier: {
+      name: "",
+      attention: "",
+      address: "",
+      city: "",
+      country: "",
+      wechat_open_id: "",
+    },
+  };
+}
+
 /** PO JSON for the desk button after payment. Supplier cost only. */
 export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
   const { offer, qty, destination, incoterm, packing, currency, load_port } = baseFromDeal(deal);

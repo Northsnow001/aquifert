@@ -67,6 +67,8 @@ export type DeskDeal = {
   callbackUrl: string | null;
   firmInterestAt: string | null;
   pi?: DeskPi | null;
+  salesContract?: DeskPi | null;
+  supplierPackSentAt?: string | null;
 };
 
 export type BuyerReplyKind = "agree" | "negotiate" | "chat";

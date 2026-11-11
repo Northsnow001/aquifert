@@ -183,7 +183,7 @@ export function PiEditor({ deal }: { deal: DeskDeal }) {
           </div>
         </form>
         <div className="min-h-[28rem]">
-          <iframe title="Proforma preview" src={preview} className="h-full min-h-[28rem] w-full rounded-xl border border-border bg-s2" />
+          <iframe title="Proforma preview" src={preview} className="h-[40rem] w-full rounded-xl border border-border bg-white" />
         </div>
       </div>
     </section>

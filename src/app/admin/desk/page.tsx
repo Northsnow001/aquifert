@@ -33,6 +33,7 @@ export default async function DeskShortlistsPage() {
             {deals.map((deal) => {
               const piReview = deal.pi?.status === "review";
               const piSent = deal.pi?.status === "sent";
+              const contractSent = deal.salesContract?.status === "sent";
               return (
               <li key={deal.id} className="border-b border-border last:border-b-0">
                 <Link href={`/admin/desk/${deal.id}`} className="flex items-start justify-between gap-3 px-4 py-3.5 no-underline hover:bg-s2/50">
@@ -45,8 +46,8 @@ export default async function DeskShortlistsPage() {
                     </span>
                     <span className="mt-0.5 block font-mono text-[11px] text-dim">{deal.requestId}</span>
                   </span>
-                  <Pill tone={piReview ? "amber" : piSent ? "teal" : TONE[deal.status]}>
-                    {piReview ? "PI to review" : piSent ? "PI sent" : DEAL_STATUS_LABEL[deal.status]}
+                  <Pill tone={piReview ? "amber" : contractSent ? "teal" : piSent ? "teal" : TONE[deal.status]}>
+                    {piReview ? "PI to review" : contractSent ? "Contract sent" : piSent ? "PI sent" : DEAL_STATUS_LABEL[deal.status]}
                   </Pill>
                 </Link>
               </li>

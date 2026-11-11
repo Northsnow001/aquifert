@@ -13,6 +13,7 @@ export type MailKind =
   | "analytics-applicant"
   | "contact-applicant"
   | "pi-buyer"
+  | "sales-contract-buyer"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string };

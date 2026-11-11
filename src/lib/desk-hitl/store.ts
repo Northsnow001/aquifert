@@ -238,12 +238,14 @@ export async function queuedWhatsApp() {
 export async function issueSupplierPack(input: { id: string; actor: string }): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, input.id);
   if (!deal) return { error: "That shortlist was not found." };
-  if (deal.status !== "firm_interest") return { error: "Confirm firm interest and buyer payment before issuing supplier documents." };
+  if (deal.status !== "firm_interest") return { error: "Confirm firm interest before issuing supplier documents." };
+  if (deal.pi?.status !== "sent") return { error: "Email the proforma and confirm offline payment before issuing supplier documents." };
   const offer = selectedOffer(deal);
   if (!offer) return { error: "No selected supplier on this deal." };
 
   const next: DeskDeal = {
     ...deal,
+    supplierPackSentAt: now(),
     messages: [
       ...deal.messages,
       message({
@@ -335,6 +337,27 @@ export async function savePiDraft(
   const next: DeskDeal = {
     ...deal,
     pi: { ...deal.pi, status: "review", updatedAt: now(), order },
+  };
+  return (await save(next))!;
+}
+
+export async function markSalesContractSent(id: string, to: string, actor: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal?.pi) return { error: "Send the proforma first." };
+  const at = now();
+  const next: DeskDeal = {
+    ...deal,
+    salesContract: {
+      status: "sent",
+      updatedAt: at,
+      sentAt: at,
+      sentTo: to,
+      order: deal.salesContract?.order ?? deal.pi.order,
+    },
+    messages: [
+      ...deal.messages,
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} emailed the sales contract to ${to}.` }),
+    ],
   };
   return (await save(next))!;
 }

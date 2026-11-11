@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerDocumentFromDeal, firmOrderFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, firmOrderFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 import { parseFirmOrder } from "@/lib/firm-order/types";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
@@ -62,6 +62,17 @@ describe("firmOrderFromDeal", () => {
     assert.equal(pi.unit_price_usd, 221.4);
     assert.equal(pi.supplier.name, "");
     assert.equal(pi.document, "proforma");
+  });
+
+  it("sales contract from PI keeps buyer price and hides supplier", () => {
+    const pi = buyerDocumentFromDeal(deal, "proforma");
+    assert.ok(pi);
+    pi.supplier.name = "Harbour Fertiliser";
+    const contract = salesContractFromPi(pi);
+    assert.equal(contract.document, "sales_contract");
+    assert.equal(contract.unit_price_usd, 221.4);
+    assert.equal(contract.supplier.name, "");
+    assert.notEqual(contract.order_ref, pi.order_ref);
   });
 
   it("supplier pack stays on offer cost", () => {

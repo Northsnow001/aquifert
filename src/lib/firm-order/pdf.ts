@@ -193,20 +193,16 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
   if (order.shipping || order.laycan_from || order.laycan_to) {
     notes.push(`Shipping: ${order.shipping || [order.laycan_from, order.laycan_to].filter(Boolean).join(" → ")}`);
   }
-  notes.push(`ADDITIONAL INFORMATION:\n${order.additional_information}`);
+  if (order.additional_information.trim()) notes.push(`ADDITIONAL INFORMATION:\n${order.additional_information.trim()}`);
   if (order.packing) notes.push(`Packing: ${order.packing}`);
-  if (order.documents) notes.push(order.documents);
+  if (order.documents.trim()) notes.push(order.documents.trim());
 
   font(8);
   color(INK);
   for (const block of notes) {
     const lines = doc.splitTextToSize(block, right - margin) as string[];
-    if (y + lines.length * 11 > pageH - 140) {
-      doc.addPage();
-      y = 56;
-    }
     doc.text(lines, margin, y);
-    y += lines.length * 11 + 6;
+    y += lines.length * 11 + 4;
   }
 
   y += 10;
@@ -256,7 +252,9 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
 
   color(MUTED);
   font(7);
+  doc.setPage(1);
   doc.text(AQUIFERT_PO_ISSUER.footer, pageW / 2, pageH - 28, { align: "center", maxWidth: pageW - margin * 2 });
+  while (doc.getNumberOfPages() > 1) doc.deletePage(doc.getNumberOfPages());
 
   const ab = doc.output("arraybuffer");
   return new Uint8Array(ab);
