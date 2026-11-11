@@ -5,6 +5,7 @@ import { DESK_DEALS } from "@/lib/data/tables";
 import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
 import { applyPiEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskMessage } from "@/lib/desk-hitl/types";
+import { listOutbox } from "@/lib/mailer";
 import { buyerDocumentFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
@@ -53,8 +54,52 @@ async function notifyIndication(callbackUrl: string | null | undefined, payload:
   await Promise.all(indicationWebhookUrls(callbackUrl).map((url) => notify(url, payload)));
 }
 
-export const listDeskDeals = () => listRecords(DESK_DEALS);
-export const getDeskDeal = (id: string) => getRecord(DESK_DEALS, id);
+function stripHtml(html: string) {
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** WF8 used to wipe PI; recover emailed PI terms from the outbox. */
+async function recoverPiIfSent(deal: DeskDeal, mails?: Awaited<ReturnType<typeof listOutbox>>): Promise<DeskDeal> {
+  if (deal.pi?.status === "sent" && deal.pi.order?.unit_price_usd) return deal;
+  const box = mails ?? (await listOutbox().catch(() => []));
+  const hit = box
+    .filter((row) => row.kind === "pi-buyer" && row.subject.toLowerCase().includes(deal.requestId.toLowerCase()))
+    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0];
+  if (!hit) return deal;
+  const base = deal.pi?.order ?? buyerDocumentFromDeal(deal, "proforma");
+  if (!base) return deal;
+  const body = stripHtml(hit.html);
+  const parsed = body.match(/for\s+([\d.]+)\s+MT\s+(.+?)\s+at USD\s+([\d.]+)/i);
+  const next: DeskDeal = {
+    ...deal,
+    pi: {
+      status: "sent",
+      updatedAt: hit.at,
+      sentAt: hit.at,
+      sentTo: hit.to,
+      order: {
+        ...base,
+        document: "proforma",
+        quantity_mt: parsed ? Number(parsed[1]) : base.quantity_mt,
+        product: parsed ? parsed[2].trim() : base.product,
+        unit_price_usd: parsed ? Number(parsed[3]) : base.unit_price_usd,
+        buyer: { ...base.buyer, email: hit.to },
+      },
+    },
+  };
+  return (await save(next))!;
+}
+
+export async function listDeskDeals() {
+  const [rows, mails] = await Promise.all([listRecords(DESK_DEALS), listOutbox().catch(() => [])]);
+  return Promise.all(rows.map((row) => recoverPiIfSent(row, mails)));
+}
+
+export async function getDeskDeal(id: string) {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return null;
+  return recoverPiIfSent(deal);
+}
 
 export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error: string }> {
   const parsed = parseShortlistBody(body);
@@ -86,6 +131,9 @@ export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error
       : [message({ from: "system", channel: "app", text: `Shortlist of ${parsed.offers.length} offer(s) from WF8.` })],
     callbackUrl: parsed.callbackUrl ?? existing?.callbackUrl ?? null,
     firmInterestAt: existing?.firmInterestAt ?? null,
+    pi: existing?.pi ?? null,
+    salesContract: existing?.salesContract ?? null,
+    supplierPackSentAt: existing?.supplierPackSentAt ?? null,
   };
   if (existing?.status === "firm_interest") {
     await putRecords(DESK_DEALS, [deal]);
