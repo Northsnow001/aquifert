@@ -2,9 +2,10 @@ import "server-only";
 
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
+import { resolveBuyerReply } from "@/lib/desk-hitl/classify-reply";
+import { buyerUnitPrice, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
 import { applyPiEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
-import type { DeskDeal, DeskMessage } from "@/lib/desk-hitl/types";
+import type { DeskDeal, DeskExecution, DeskMessage } from "@/lib/desk-hitl/types";
 import { listOutbox } from "@/lib/mailer";
 import { buyerDocumentFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
@@ -131,6 +132,7 @@ export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error
       : [message({ from: "system", channel: "app", text: `Shortlist of ${parsed.offers.length} offer(s) from WF8.` })],
     callbackUrl: parsed.callbackUrl ?? existing?.callbackUrl ?? null,
     firmInterestAt: existing?.firmInterestAt ?? null,
+    execution: existing?.execution ?? null,
     pi: existing?.pi ?? null,
     salesContract: existing?.salesContract ?? null,
     supplierPackSentAt: existing?.supplierPackSentAt ?? null,
@@ -217,7 +219,7 @@ export async function recordBuyerInbound(input: {
       return theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs));
     }) ??
     null;
-  const kind = classifyBuyerReply(text);
+  const kind = await resolveBuyerReply(text, Boolean(deal));
   if (!deal || kind === "chat") return { event: "chat" };
 
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
@@ -318,7 +320,7 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
     destination: saved.destination,
     incoterm: offer.incoterm || saved.incoterm,
     loadPort: offer.loadPort,
-    packing: offer.notes,
+    packing: saved.execution?.packing || offer.notes,
     supplierName: offer.supplierName,
     supplierUnitPrice: offer.unitPrice,
     currency: offer.currency || saved.currency,
@@ -344,6 +346,86 @@ function findDealForPi(deals: DeskDeal[], requestId: string, phone: string) {
   );
 }
 
+function textField(value: unknown, max = 500) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function parseExecution(body: unknown): { requestId: string; phone: string; execution: DeskExecution } | null {
+  if (!body || typeof body !== "object") return null;
+  const raw = body as Record<string, unknown>;
+  const profile = raw.profile && typeof raw.profile === "object" ? (raw.profile as Record<string, unknown>) : raw;
+  const requestId = textField(raw.requestId ?? raw.request_id ?? raw.reference, 80);
+  const phone = textField(raw.phone ?? raw.buyerPhone, 40);
+  const packing = textField(profile.packing, 200);
+  const paymentTerms = textField(profile.payment_terms ?? profile.paymentTerms, 500);
+  if (!requestId && !phone) return null;
+  if (!packing && !paymentTerms && !textField(profile.origin_preference ?? profile.origin, 120)) return null;
+  return {
+    requestId,
+    phone,
+    execution: {
+      packing,
+      origin: textField(profile.origin_preference ?? profile.origin, 120),
+      destinationPort: textField(profile.destination_port ?? profile.destinationPort, 120),
+      incoterm: textField(profile.incoterm, 40),
+      shipmentWindow: textField(profile.shipment_window ?? profile.shipmentWindow, 120),
+      paymentTerms,
+      inspection: textField(profile.inspection_requirements ?? profile.inspection, 300),
+      documentation: textField(profile.documentation_requirements ?? profile.documentation, 300),
+      specification: textField(profile.specification, 200),
+      urgency: textField(profile.urgency_level ?? profile.urgency, 40),
+      notes: textField(profile.additional_notes ?? profile.notes, 800),
+      confirmedAt: now(),
+    },
+  };
+}
+
+function applyExecutionToOrder(deal: DeskDeal, order: NonNullable<ReturnType<typeof buyerDocumentFromDeal>>) {
+  const filled = buyerDocumentFromDeal({ ...deal, execution: deal.execution }, order.document as "firm_offer" | "proforma" | "sales_contract");
+  if (!filled) return order;
+  return {
+    ...order,
+    packing: order.packing || filled.packing,
+    origin: order.origin || filled.origin,
+    shipping: order.shipping || filled.shipping,
+    payment_terms: order.payment_terms || filled.payment_terms,
+    discharge_port: order.discharge_port || filled.discharge_port,
+    price_basis: order.price_basis || filled.price_basis,
+    incoterm: order.incoterm || filled.incoterm,
+    form_grade: order.form_grade || filled.form_grade,
+    documents: order.documents || filled.documents,
+    additional_information: order.additional_information || filled.additional_information,
+  };
+}
+
+/** n8n firm-order agent: lock WhatsApp terms onto the deal so every PDF uses them. */
+export async function saveFirmTerms(body: unknown): Promise<DeskDeal | { error: string }> {
+  const parsed = parseExecution(body);
+  if (!parsed) return { error: "Need requestId and the confirmed packing / origin / payment terms." };
+  const deals = await listRecords(DESK_DEALS);
+  const deal = findDealForPi(deals, parsed.requestId, parsed.phone);
+  if (!deal) return { error: `No desk deal for ${parsed.requestId || "that buyer"}.` };
+
+  const next: DeskDeal = {
+    ...deal,
+    destination: parsed.execution.destinationPort || deal.destination,
+    incoterm: parsed.execution.incoterm || deal.incoterm,
+    execution: parsed.execution,
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `Buyer confirmed execution terms: packing ${parsed.execution.packing || "n/a"}, ${parsed.execution.incoterm || deal.incoterm} ${parsed.execution.destinationPort || deal.destination}, ${parsed.execution.paymentTerms || "payment tbc"}.`,
+      }),
+    ],
+  };
+  if (next.pi?.status === "review") {
+    next.pi = { ...next.pi, updatedAt: now(), order: applyExecutionToOrder(next, next.pi.order) };
+  }
+  return (await save(next))!;
+}
+
 /** n8n WF11: park a proforma on the desk deal. Does not email the buyer. */
 export async function submitPiForReview(body: unknown): Promise<DeskDeal | { error: string }> {
   const order = proformaFromN8n(body);
@@ -351,6 +433,7 @@ export async function submitPiForReview(body: unknown): Promise<DeskDeal | { err
   const deals = await listRecords(DESK_DEALS);
   const deal = findDealForPi(deals, order.reference, order.buyer.phone || "");
   if (!deal) return { error: `No desk deal for ${order.reference || "that buyer"}.` };
+  const filled = applyExecutionToOrder(deal, order);
 
   const next: DeskDeal = {
     ...deal,
@@ -359,7 +442,7 @@ export async function submitPiForReview(body: unknown): Promise<DeskDeal | { err
       updatedAt: now(),
       sentAt: deal.pi?.sentAt ?? null,
       sentTo: deal.pi?.sentTo ?? null,
-      order,
+      order: filled,
     },
     messages: [
       ...deal.messages,

@@ -603,7 +603,10 @@ async function buildDocumentaryInstructionsPdf(order: FirmOrderDraft): Promise<U
       "1 Original and one copy: Origin Certificate",
       "1 Original and one copy: Packing List",
       "1 Original and one copy: Insurance Certificate (as per Incoterm)",
-    ].join("\n"),
+      order.documents.trim() ? `Buyer / inspection: ${order.documents.trim()}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
   );
   block("TRADE REF", order.reference || order.order_ref || "—");
   block(

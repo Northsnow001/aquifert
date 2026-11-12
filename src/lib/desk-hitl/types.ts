@@ -35,6 +35,22 @@ export type DeskOffer = {
   wechatOpenId?: string;
 };
 
+/** Collected after YES. Buyer price stays on the deal; these are the commercial terms for PDFs. */
+export type DeskExecution = {
+  packing: string;
+  origin: string;
+  destinationPort: string;
+  incoterm: string;
+  shipmentWindow: string;
+  paymentTerms: string;
+  inspection: string;
+  documentation: string;
+  specification: string;
+  urgency: string;
+  notes: string;
+  confirmedAt: string;
+};
+
 export type DeskMessage = {
   id: string;
   at: string;
@@ -66,6 +82,8 @@ export type DeskDeal = {
   /** n8n Wait resume URL, if WF8 is paused on this deal. */
   callbackUrl: string | null;
   firmInterestAt: string | null;
+  /** WhatsApp firm-order agent terms. These fill FO / PI / contracts / supplier pack. */
+  execution?: DeskExecution | null;
   pi?: DeskPi | null;
   salesContract?: DeskPi | null;
   supplierPackSentAt?: string | null;

@@ -81,6 +81,41 @@ describe("firmOrderFromDeal", () => {
     assert.equal(pack.unit_price_usd, 205);
     assert.equal(pack.supplier.name, "Harbour Fertiliser");
   });
+
+  it("WhatsApp execution terms fill packing, origin, payment and window on buyer and supplier docs", () => {
+    const locked = {
+      ...deal,
+      execution: {
+        packing: "25kg bags in jumbo",
+        origin: "China",
+        destinationPort: "Manzanillo",
+        incoterm: "CFR",
+        shipmentWindow: "January 2026",
+        paymentTerms: "BL + 90",
+        inspection: "SGS at load",
+        documentation: "COA, COO",
+        specification: "KH2PO4 99%",
+        urgency: "30-60 Days",
+        notes: "Private label ok",
+        confirmedAt: "2026-11-12T00:00:00.000Z",
+      },
+    } as DeskDeal;
+    const offer = buyerDocumentFromDeal(locked, "firm_offer");
+    assert.ok(offer);
+    assert.equal(offer.packing, "25kg bags in jumbo");
+    assert.equal(offer.origin, "China");
+    assert.equal(offer.discharge_port, "Manzanillo");
+    assert.equal(offer.incoterm, "CFR");
+    assert.equal(offer.shipping, "January 2026");
+    assert.equal(offer.payment_terms, "BL + 90");
+    assert.equal(offer.form_grade, "KH2PO4 99%");
+    assert.match(offer.documents, /SGS/);
+    const po = firmOrderFromDeal(locked);
+    assert.ok(po);
+    assert.equal(po.packing, "25kg bags in jumbo");
+    assert.equal(po.unit_price_usd, 205);
+    assert.equal(po.payment_terms, "BL + 90");
+  });
 });
 
 describe("parseFirmOrder supplier price aliases", () => {

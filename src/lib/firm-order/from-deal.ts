@@ -14,17 +14,35 @@ function packingFromNotes(notes: string) {
   return match?.[1]?.trim().slice(0, 200) ?? "";
 }
 
+function docsFromDeal(deal: DeskDeal) {
+  const execution = deal.execution;
+  return [execution?.inspection, execution?.documentation].filter(Boolean).join("\n");
+}
+
+function additionalFromDeal(deal: DeskDeal) {
+  const notes = deal.execution?.notes?.trim();
+  if (notes) return notes;
+  return DEFAULT_PO_ADDITIONAL;
+}
+
 function baseFromDeal(deal: DeskDeal) {
   const offer = selectedOffer(deal);
+  const execution = deal.execution;
   const qty = deal.quantityMt ?? offer?.quantityMt ?? 0;
-  const destination = offer?.destination || deal.destination;
-  const incoterm = offer?.incoterm || deal.incoterm;
+  const destination = execution?.destinationPort || offer?.destination || deal.destination;
+  const incoterm = execution?.incoterm || offer?.incoterm || deal.incoterm;
   return {
     offer,
     qty,
     destination,
     incoterm,
-    packing: packingFromNotes(offer?.notes ?? ""),
+    packing: execution?.packing || packingFromNotes(offer?.notes ?? ""),
+    origin: execution?.origin || "",
+    shipping: execution?.shipmentWindow || "",
+    payment_terms: execution?.paymentTerms || "",
+    form_grade: execution?.specification || "",
+    documents: docsFromDeal(deal),
+    additional_information: additionalFromDeal(deal),
     currency: offer?.currency || deal.currency || "USD",
     load_port: offer?.loadPort ?? "",
   };
@@ -36,7 +54,20 @@ export function buyerDocumentFromDeal(
   document: "firm_offer" | "proforma" | "sales_contract",
 ): FirmOrderDraft | null {
   if (deal.buyerPrice == null || deal.buyerPrice <= 0) return null;
-  const { qty, destination, incoterm, packing, currency, load_port } = baseFromDeal(deal);
+  const {
+    qty,
+    destination,
+    incoterm,
+    packing,
+    origin,
+    shipping,
+    payment_terms,
+    form_grade,
+    documents,
+    additional_information,
+    currency,
+    load_port,
+  } = baseFromDeal(deal);
   const ref = deal.requestId;
   return {
     document,
@@ -65,7 +96,7 @@ export function buyerDocumentFromDeal(
       phone: deal.buyerPhone || null,
     },
     product: deal.product,
-    form_grade: "",
+    form_grade,
     packing,
     quantity_mt: qty,
     tolerance_pct: 5,
@@ -77,13 +108,13 @@ export function buyerDocumentFromDeal(
     price_basis: destination,
     load_port,
     discharge_port: destination,
-    origin: "",
-    shipping: "",
+    origin,
+    shipping,
     laycan_from: "",
     laycan_to: "",
-    payment_terms: "",
-    additional_information: DEFAULT_PO_ADDITIONAL,
-    documents: "",
+    payment_terms,
+    additional_information,
+    documents,
     flags: [],
     negotiation_summary: "",
     assumed: [],
@@ -110,7 +141,21 @@ export function salesContractFromPi(pi: FirmOrderDraft): FirmOrderDraft {
 
 /** PO JSON for the desk button after payment. Supplier cost only. */
 export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
-  const { offer, qty, destination, incoterm, packing, currency, load_port } = baseFromDeal(deal);
+  const {
+    offer,
+    qty,
+    destination,
+    incoterm,
+    packing,
+    origin,
+    shipping,
+    payment_terms,
+    form_grade,
+    documents,
+    additional_information,
+    currency,
+    load_port,
+  } = baseFromDeal(deal);
   if (!offer) return null;
   return {
     document: "purchase_order",
@@ -134,7 +179,7 @@ export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
       phone: deal.buyerPhone || null,
     },
     product: deal.product,
-    form_grade: "",
+    form_grade,
     packing,
     quantity_mt: qty,
     tolerance_pct: 5,
@@ -146,13 +191,13 @@ export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
     price_basis: destination,
     load_port,
     discharge_port: destination,
-    origin: "",
-    shipping: "",
+    origin,
+    shipping,
     laycan_from: "",
     laycan_to: "",
-    payment_terms: "",
-    additional_information: DEFAULT_PO_ADDITIONAL,
-    documents: "",
+    payment_terms,
+    additional_information,
+    documents,
     flags: [],
     negotiation_summary: "",
     assumed: [],

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseShortlistBody } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -28,6 +28,15 @@ describe("classifyBuyerReply", () => {
     assert.equal(classifyBuyerReply("Kaytoba49@gmail.com\nCountry is Nigeria"), "chat");
     assert.equal(classifyBuyerReply("Hi"), "chat");
     assert.equal(classifyBuyerReply("500 MT urea CFR Lagos"), "chat");
+    assert.equal(classifyBuyerReply("NeoGuard"), "chat");
+  });
+});
+
+describe("parseReplyIntent", () => {
+  it("maps Gemini JSON to desk kinds", () => {
+    assert.equal(parseReplyIntent('{"intent":"agree"}'), "agree");
+    assert.equal(parseReplyIntent('{"intent":"go ahead"}'), null);
+    assert.equal(parseReplyIntent('{"intent":"negotiate"}'), "negotiate");
   });
 });
 
