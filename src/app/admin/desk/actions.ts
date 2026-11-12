@@ -6,14 +6,13 @@ import { isAdminUser } from "@/lib/admin-access";
 import type { PiEditorValues } from "@/lib/desk-hitl/pi";
 import {
   confirmIndication,
-  getDeskDeal,
   issueSupplierPack,
   markPiSent,
   markSalesContractSent,
   savePiDraft,
+  saveSalesContractDraft,
   sendDeskReply,
 } from "@/lib/desk-hitl/store";
-import { salesContractFromPi } from "@/lib/firm-order/from-deal";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { buildFirmOrderPdf, firmOrderFilename } from "@/lib/firm-order/pdf";
 import { sendEmail } from "@/lib/mailer";
@@ -110,17 +109,31 @@ export async function sendPiToBuyerAction(input: {
   return { ok: true };
 }
 
+export async function saveSalesContractDraftAction(input: {
+  id: string;
+  values: PiEditorValues;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  const user = await requireAdmin();
+  const deal = await saveSalesContractDraft(String(input.id ?? "").trim(), input.values, user.name || user.email);
+  if ("error" in deal) return { ok: false, message: deal.error };
+  revalidatePath("/admin/desk");
+  revalidatePath(`/admin/desk/${deal.id}`);
+  return { ok: true };
+}
+
 export async function sendSalesContractAndSupplierPackAction(input: {
   id: string;
+  values: PiEditorValues;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
   const user = await requireAdmin();
   const id = String(input.id ?? "").trim();
-  const deal = await getDeskDeal(id);
-  if (!deal) return { ok: false, message: "That shortlist was not found." };
-  if (deal.pi?.status !== "sent") return { ok: false, message: "Email the proforma first." };
-  const order = salesContractFromPi(deal.pi.order);
+  const saved = await saveSalesContractDraft(id, input.values, user.name || user.email);
+  if ("error" in saved) return { ok: false, message: saved.error };
+  if (saved.pi?.status !== "sent") return { ok: false, message: "Email the proforma first." };
+  const order = saved.salesContract?.order;
+  if (!order) return { ok: false, message: "No sales contract on this deal yet." };
   const to = order.buyer.email?.trim() || "";
-  if (!to.includes("@")) return { ok: false, message: "The proforma has no buyer email." };
+  if (!to.includes("@")) return { ok: false, message: "Set a buyer email on the sales contract before sending." };
 
   const bytes = await buildFirmOrderPdf(order);
   const filename = firmOrderFilename(order);

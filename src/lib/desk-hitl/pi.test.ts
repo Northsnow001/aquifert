@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyPiEditor, proformaFromN8n, valuesFromPi } from "@/lib/desk-hitl/pi";
+import { applyPiEditor, applySalesContractEditor, proformaFromN8n, valuesFromPi } from "@/lib/desk-hitl/pi";
 
 const n8nPayload = {
   document: "proforma",
@@ -47,6 +47,23 @@ describe("applyPiEditor", () => {
     assert.equal(next.packing, "25kg bags");
     assert.equal(next.additional_information, "Validity 7 days.");
     assert.equal(next.document, "proforma");
+    assert.equal(next.supplier.name, "");
+  });
+});
+
+describe("applySalesContractEditor", () => {
+  it("keeps buyer price and marks the document as a sales contract", () => {
+    const base = proformaFromN8n(n8nPayload);
+    assert.ok(base);
+    const next = applySalesContractEditor(base, {
+      ...valuesFromPi(base),
+      packing: "jumbo bags",
+      unitPrice: "470",
+    });
+    assert.ok(!("error" in next));
+    assert.equal(next.document, "sales_contract");
+    assert.equal(next.unit_price_usd, 470);
+    assert.equal(next.packing, "jumbo bags");
     assert.equal(next.supplier.name, "");
   });
 });

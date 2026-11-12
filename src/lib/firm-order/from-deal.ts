@@ -121,6 +121,20 @@ export function buyerDocumentFromDeal(
   };
 }
 
+/** Saved desk draft if Matt edited it; otherwise a contract cloned from the PI. */
+export function salesContractDraftFromDeal(deal: DeskDeal): FirmOrderDraft | null {
+  const stored = deal.salesContract?.order;
+  if (stored) {
+    return stored.document === "sales_contract" ? { ...stored, supplier: emptySupplier() } : salesContractFromPi(stored);
+  }
+  if (deal.pi?.order) return salesContractFromPi(deal.pi.order);
+  return buyerDocumentFromDeal(deal, "sales_contract");
+}
+
+function emptySupplier(): FirmOrderDraft["supplier"] {
+  return { name: "", attention: "", address: "", city: "", country: "", wechat_open_id: "" };
+}
+
 /** Sales contract from the PI Matt already approved. Buyer price only. Never the supplier. */
 export function salesContractFromPi(pi: FirmOrderDraft): FirmOrderDraft {
   return {
@@ -128,14 +142,7 @@ export function salesContractFromPi(pi: FirmOrderDraft): FirmOrderDraft {
     document: "sales_contract",
     status: "SALES_CONTRACT",
     order_ref: contractReference(pi.reference || pi.order_ref || ""),
-    supplier: {
-      name: "",
-      attention: "",
-      address: "",
-      city: "",
-      country: "",
-      wechat_open_id: "",
-    },
+    supplier: emptySupplier(),
   };
 }
 

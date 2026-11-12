@@ -4,10 +4,10 @@ import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
 import { buyerUnitPrice, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
-import { applyPiEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
+import { applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskMessage } from "@/lib/desk-hitl/types";
 import { listOutbox } from "@/lib/mailer";
-import { buyerDocumentFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
 const idOf = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -488,9 +488,35 @@ export async function savePiDraft(
   return (await save(next))!;
 }
 
+export async function saveSalesContractDraft(
+  id: string,
+  values: PiEditorValues,
+  _actor: string,
+): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal?.pi) return { error: "Send the proforma first." };
+  const base = salesContractDraftFromDeal(deal) ?? salesContractFromPi(deal.pi.order);
+  const order = applySalesContractEditor(base, values);
+  if ("error" in order) return order;
+  const prior = deal.salesContract;
+  const next: DeskDeal = {
+    ...deal,
+    salesContract: {
+      status: "review",
+      updatedAt: now(),
+      sentAt: prior?.sentAt ?? null,
+      sentTo: prior?.sentTo ?? null,
+      order,
+    },
+  };
+  return (await save(next))!;
+}
+
 export async function markSalesContractSent(id: string, to: string, actor: string): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, id);
   if (!deal?.pi) return { error: "Send the proforma first." };
+  const order = salesContractDraftFromDeal(deal);
+  if (!order) return { error: "No sales contract on this deal yet." };
   const at = now();
   const next: DeskDeal = {
     ...deal,
@@ -499,7 +525,7 @@ export async function markSalesContractSent(id: string, to: string, actor: strin
       updatedAt: at,
       sentAt: at,
       sentTo: to,
-      order: deal.salesContract?.order ?? deal.pi.order,
+      order,
     },
     messages: [
       ...deal.messages,

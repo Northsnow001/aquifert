@@ -91,6 +91,13 @@ export function applyPiEditor(order: FirmOrderDraft, values: PiEditorValues): Fi
   };
 }
 
+/** Matt’s form → stored sales contract. Buyer price only; supplier identity never written. */
+export function applySalesContractEditor(order: FirmOrderDraft, values: PiEditorValues): FirmOrderDraft | { error: string } {
+  const next = applyPiEditor(order, values);
+  if ("error" in next) return next;
+  return { ...next, document: "sales_contract", status: "SALES_CONTRACT" };
+}
+
 /** n8n PI payload → stored draft. Rejects firm offer / PO / supplier pack. */
 export function proformaFromN8n(body: unknown): FirmOrderDraft | null {
   const parsed = parseFirmOrder(body);

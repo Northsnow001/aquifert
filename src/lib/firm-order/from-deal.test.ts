@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerDocumentFromDeal, firmOrderFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, firmOrderFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 import { parseFirmOrder } from "@/lib/firm-order/types";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
@@ -73,6 +73,23 @@ describe("firmOrderFromDeal", () => {
     assert.equal(contract.unit_price_usd, 221.4);
     assert.equal(contract.supplier.name, "");
     assert.notEqual(contract.order_ref, pi.order_ref);
+  });
+
+  it("desk sales contract preview prefers Matt’s saved draft", () => {
+    const pi = buyerDocumentFromDeal(deal, "proforma");
+    assert.ok(pi);
+    const fromPi = salesContractDraftFromDeal({ ...deal, pi: { status: "sent", updatedAt: "", sentAt: null, sentTo: null, order: pi } });
+    assert.equal(fromPi?.document, "sales_contract");
+    assert.equal(fromPi?.unit_price_usd, 221.4);
+    const edited = { ...salesContractFromPi(pi), packing: "jumbo", unit_price_usd: 500 };
+    const fromDraft = salesContractDraftFromDeal({
+      ...deal,
+      pi: { status: "sent", updatedAt: "", sentAt: null, sentTo: null, order: pi },
+      salesContract: { status: "review", updatedAt: "", sentAt: null, sentTo: null, order: edited },
+    });
+    assert.equal(fromDraft?.packing, "jumbo");
+    assert.equal(fromDraft?.unit_price_usd, 500);
+    assert.equal(fromDraft?.supplier.name, "");
   });
 
   it("supplier pack stays on offer cost", () => {
