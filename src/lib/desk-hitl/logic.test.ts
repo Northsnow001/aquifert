@@ -85,6 +85,5 @@ describe("indicationWhatsApp", () => {
     const text = indicationWhatsApp(deal);
     assert.match(text, /Indication: USD 432 \/ MT/);
     assert.match(text, /Reply YES/);
-    assert.match(text, /more details before the firm offer/i);
   });
 });

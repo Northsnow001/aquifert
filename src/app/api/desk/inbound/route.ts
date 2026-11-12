@@ -18,11 +18,8 @@ export async function POST(req: NextRequest) {
   });
   if ("error" in result) return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
   if ("event" in result) return NextResponse.json({ ok: true, event: "chat" });
-  const firm = result.status === "firm_interest";
-  const hasTerms = Boolean(result.execution?.packing || result.execution?.paymentTerms);
-  // Firm offer PDFs only after the AI agent has saved execution terms.
   const buyerDocs =
-    firm && hasTerms
+    result.status === "firm_interest"
       ? {
           firm_offer: buyerDocumentFromDeal(result, "firm_offer"),
           proforma: buyerDocumentFromDeal(result, "proforma"),
@@ -34,10 +31,9 @@ export async function POST(req: NextRequest) {
     dealId: result.id,
     requestId: result.requestId,
     status: result.status,
-    event: firm ? "firm_interest" : "negotiating",
+    event: result.status === "firm_interest" ? "firm_interest" : "negotiating",
     buyerPhone: result.buyerPhone,
     buyerPrice: result.buyerPrice,
-    start_firm_order_agent: firm && !hasTerms,
     buyer_documents: buyerDocs,
   });
 }

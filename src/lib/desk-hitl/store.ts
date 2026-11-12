@@ -228,32 +228,19 @@ export async function recordBuyerInbound(input: {
       ...deal,
       status: "firm_interest",
       firmInterestAt: now(),
-      messages: [
-        ...deal.messages,
-        inbound,
-        message({
-          from: "system",
-          channel: "app",
-          text: "Buyer agreed. Firm interest created — start the firm-order AI agent to collect packing, payment, origin and other terms before issuing the firm offer.",
-        }),
-      ],
+      messages: [...deal.messages, inbound, message({ from: "system", channel: "app", text: "Buyer agreed. Firm interest created." })],
     };
     const saved = (await save(next))!;
-    // Do not attach firm offer / PI yet. n8n must run the info-collection agent first;
-    // docs are built when POST /api/desk/firm-terms lands with confirmed execution.
     await notify(saved.callbackUrl, {
       event: "firm_interest",
       dealId: saved.id,
       requestId: saved.requestId,
       buyerPhone: saved.buyerPhone,
       buyerPrice: saved.buyerPrice,
-      currency: saved.currency,
-      product: saved.product,
-      quantityMt: saved.quantityMt,
-      destination: saved.destination,
-      incoterm: saved.incoterm,
-      start_firm_order_agent: true,
-      buyer_documents: null,
+      buyer_documents: {
+        proforma: buyerDocumentFromDeal(saved, "proforma"),
+        sales_contract: buyerDocumentFromDeal(saved, "sales_contract"),
+      },
     });
     return saved;
   }
