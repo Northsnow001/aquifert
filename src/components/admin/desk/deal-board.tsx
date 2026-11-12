@@ -99,7 +99,7 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
       {waiting ? (
         <section className="rounded-2xl border border-border bg-white px-4 py-4">
           <label className={label} htmlFor="margin">
-            Your margin % (0–80)
+            Your margin %
           </label>
           <input
             id="margin"
@@ -108,26 +108,13 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
             onChange={(e) => setMargin(e.target.value)}
             className={`${input} mt-1 max-w-[8rem]`}
           />
-          {!Number.isFinite(marginPct) || marginPct < 0 || marginPct > 80 ? (
-            <p className="mt-2 text-[12.5px] text-red-700">Margin must be between 0 and 80%. 100% will be rejected.</p>
-          ) : (
-            <p className="mt-2 text-[13.5px] text-ink">
-              Buyer sees{" "}
-              <span className="font-semibold">
-                {preview != null && offer ? money(preview, offer.currency) : "—"} / MT
-              </span>
-            </p>
-          )}
-          <p className="mt-3 text-[12.5px] leading-relaxed text-mid">
-            After send: buyer WhatsApp is monitored. <strong>YES / agree</strong> → firm interest (then firm offer / PI).{" "}
-            <strong>New product / RFQ / hi</strong> → chat (more enquiries — not a firm offer). Negotiate stays on this desk.
+          <p className="mt-2 text-[13.5px] text-ink">
+            Buyer sees{" "}
+            <span className="font-semibold">
+              {preview != null && offer ? money(preview, offer.currency) : "—"} / MT
+            </span>
           </p>
-          <button
-            type="button"
-            disabled={pending || !offerId || !Number.isFinite(marginPct) || marginPct < 0 || marginPct > 80}
-            onClick={confirm}
-            className={`${btnPrimary} mt-4 w-full sm:w-auto`}
-          >
+          <button type="button" disabled={pending || !offerId} onClick={confirm} className={`${btnPrimary} mt-4 w-full sm:w-auto`}>
             {pending ? "Sending…" : "Send indication to buyer"}
           </button>
         </section>
@@ -140,16 +127,6 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
             </span>
             {deal.marginPct != null ? ` (supplier + ${deal.marginPct}%)` : ""}
           </p>
-          {deal.status === "indication_sent" || deal.status === "negotiating" ? (
-            <p className="mt-2 text-[12.5px] leading-relaxed text-mid">
-              Waiting on buyer. Only a clear YES creates firm interest. A new enquiry / product name returns{" "}
-              <code className="rounded bg-s2 px-1">event: chat</code> so n8n can open another RFQ — firm offer is not
-              created yet.
-            </p>
-          ) : null}
-          {deal.status === "firm_interest" ? (
-            <p className="mt-2 text-[12.5px] text-mid">Buyer agreed — firm interest is open. Review PI before payment.</p>
-          ) : null}
         </section>
       )}
 

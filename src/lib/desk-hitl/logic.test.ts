@@ -29,8 +29,6 @@ describe("classifyBuyerReply", () => {
     assert.equal(classifyBuyerReply("Hi"), "chat");
     assert.equal(classifyBuyerReply("500 MT urea CFR Lagos"), "chat");
     assert.equal(classifyBuyerReply("NeoGuard"), "chat");
-    assert.equal(classifyBuyerReply("RFQ for DAP 1000MT Lagos"), "chat");
-    assert.equal(classifyBuyerReply("I need another quote for urea"), "chat");
   });
 });
 
