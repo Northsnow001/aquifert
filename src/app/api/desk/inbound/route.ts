@@ -11,13 +11,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  const phone = typeof body?.phone === "string" ? body.phone : typeof body?.from === "string" ? body.from : "";
+  const text = typeof body?.text === "string" ? body.text : typeof body?.body === "string" ? body.body : "";
   const result = await recordBuyerInbound({
-    phone: typeof body?.phone === "string" ? body.phone : typeof body?.from === "string" ? body.from : "",
+    phone,
     requestId: typeof body?.requestId === "string" ? body.requestId : undefined,
-    text: typeof body?.text === "string" ? body.text : typeof body?.body === "string" ? body.body : "",
+    text,
   });
   if ("error" in result) return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
-  if ("event" in result) return NextResponse.json({ ok: true, event: "chat" });
+  const echo = { phone, text, body: text };
+  if (!("status" in result)) {
+    return NextResponse.json({ ok: true, event: result.event, dealId: result.dealId, requestId: result.requestId, ...echo });
+  }
   const buyerDocs =
     result.status === "firm_interest"
       ? {
@@ -26,14 +31,17 @@ export async function POST(req: NextRequest) {
           sales_contract: buyerDocumentFromDeal(result, "sales_contract"),
         }
       : null;
+  const collectingTerms = result.status === "firm_interest" && !result.execution?.confirmedAt;
   return NextResponse.json({
     ok: true,
     dealId: result.id,
     requestId: result.requestId,
     status: result.status,
     event: result.status === "firm_interest" ? "firm_interest" : "negotiating",
+    collectingTerms,
     buyerPhone: result.buyerPhone,
     buyerPrice: result.buyerPrice,
     buyer_documents: buyerDocs,
+    ...echo,
   });
 }

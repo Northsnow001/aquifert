@@ -10,6 +10,22 @@ export function selectedOffer(deal: DeskDeal): DeskOffer | null {
   return deal.offers.find((offer) => offer.id === deal.selectedOfferId) ?? null;
 }
 
+export type FollowUpIntent = "firm_order" | "chat";
+
+export function parseFollowUpIntent(raw: string): FollowUpIntent | null {
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned) as { intent?: unknown };
+    const value = String(parsed.intent ?? "").toLowerCase().trim();
+    if (value === "firm_order" || value === "details" || value === "followup") return "firm_order";
+    if (value === "chat" || value === "rfq" || value === "new") return "chat";
+  } catch {
+    if (/\bfirm_order\b/i.test(cleaned)) return "firm_order";
+    if (/\bchat\b/i.test(cleaned)) return "chat";
+  }
+  return null;
+}
+
 export function parseReplyIntent(raw: string): BuyerReplyKind | null {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
   try {

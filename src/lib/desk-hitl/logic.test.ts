@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseFollowUpIntent, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -29,6 +29,13 @@ describe("classifyBuyerReply", () => {
     assert.equal(classifyBuyerReply("Hi"), "chat");
     assert.equal(classifyBuyerReply("500 MT urea CFR Lagos"), "chat");
     assert.equal(classifyBuyerReply("NeoGuard"), "chat");
+  });
+});
+
+describe("parseFollowUpIntent", () => {
+  it("keeps packing answers on firm_order", () => {
+    assert.equal(parseFollowUpIntent('{"intent":"firm_order"}'), "firm_order");
+    assert.equal(parseFollowUpIntent('{"intent":"chat"}'), "chat");
   });
 });
 

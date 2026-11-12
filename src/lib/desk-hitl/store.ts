@@ -2,7 +2,7 @@ import "server-only";
 
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
-import { resolveBuyerReply } from "@/lib/desk-hitl/classify-reply";
+import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
 import { buyerUnitPrice, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
 import { applyPiEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskMessage } from "@/lib/desk-hitl/types";
@@ -200,11 +200,16 @@ export async function confirmIndication(input: {
   return saved;
 }
 
+function phoneMatches(deal: DeskDeal, digits: string) {
+  const theirs = deal.buyerPhone.replace(/\D/g, "");
+  return Boolean(theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs)));
+}
+
 export async function recordBuyerInbound(input: {
   phone?: string;
   requestId?: string;
   text: string;
-}): Promise<DeskDeal | { error: string } | { event: "chat" }> {
+}): Promise<DeskDeal | { error: string } | { event: "chat"; dealId?: string; requestId?: string }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
 
@@ -215,11 +220,22 @@ export async function recordBuyerInbound(input: {
     (input.requestId ? deals.find((row) => row.requestId === input.requestId) : null) ??
     deals.find((row) => {
       if (row.status !== "indication_sent" && row.status !== "negotiating") return false;
-      const theirs = row.buyerPhone.replace(/\D/g, "");
-      return theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs));
+      return phoneMatches(row, digits);
     }) ??
     null;
+  const collecting =
+    deals.find((row) => row.status === "firm_interest" && !row.execution?.confirmedAt && phoneMatches(row, digits)) ??
+    null;
   const kind = await resolveBuyerReply(text, Boolean(deal));
+  if (!deal && collecting && kind !== "negotiate") {
+    const follow = await resolveFirmFollowUp(text);
+    if (follow === "firm_order") {
+      return (await save({
+        ...collecting,
+        messages: [...collecting.messages, message({ from: "buyer", channel: "whatsapp", text })],
+      }))!;
+    }
+  }
   if (!deal || kind === "chat") return { event: "chat" };
 
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
