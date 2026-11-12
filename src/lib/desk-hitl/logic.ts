@@ -63,7 +63,7 @@ export function indicationWhatsApp(deal: DeskDeal): string {
     `Aquifert desk — ${deal.product}`,
     `${qty}${dest ? ` to ${dest}` : ""}${deal.incoterm || offer?.incoterm ? `, ${deal.incoterm || offer?.incoterm}` : ""}.`,
     `Indication: ${price}.`,
-    "Reply YES to confirm firm interest, or tell us what you need changed.",
+    "Reply YES to confirm firm interest (we will then ask a few more details before the firm offer), or tell us what you need changed.",
   ];
   return lines.join("\n");
 }

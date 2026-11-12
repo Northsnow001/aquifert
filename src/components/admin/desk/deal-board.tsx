@@ -119,8 +119,9 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
             </p>
           )}
           <p className="mt-3 text-[12.5px] leading-relaxed text-mid">
-            After send: buyer WhatsApp is monitored. <strong>YES / agree</strong> → firm interest (then firm offer / PI).{" "}
-            <strong>New product / RFQ / hi</strong> → chat (more enquiries — not a firm offer). Negotiate stays on this desk.
+            After send: buyer WhatsApp is monitored. <strong>YES</strong> → firm interest → AI agent asks for more info
+            (packing, payment, origin…) → then firm offer / PI. <strong>New product / RFQ / hi</strong> → chat (more
+            enquiries). Negotiate stays on this desk.
           </p>
           <button
             type="button"
@@ -142,13 +143,17 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
           </p>
           {deal.status === "indication_sent" || deal.status === "negotiating" ? (
             <p className="mt-2 text-[12.5px] leading-relaxed text-mid">
-              Waiting on buyer. Only a clear YES creates firm interest. A new enquiry / product name returns{" "}
-              <code className="rounded bg-s2 px-1">event: chat</code> so n8n can open another RFQ — firm offer is not
-              created yet.
+              Waiting on buyer. Only a clear YES → firm interest + firm-order AI agent. A new enquiry returns{" "}
+              <code className="rounded bg-s2 px-1">event: chat</code> (more RFQs). Firm offer waits until the agent
+              saves terms.
             </p>
           ) : null}
           {deal.status === "firm_interest" ? (
-            <p className="mt-2 text-[12.5px] text-mid">Buyer agreed — firm interest is open. Review PI before payment.</p>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-mid">
+              {deal.execution?.packing || deal.execution?.paymentTerms
+                ? "Execution terms collected — firm offer / PI can be built. Review PI before payment."
+                : "Buyer agreed. Firm-order AI agent should collect packing, payment, origin and related terms next — firm offer is not issued yet."}
+            </p>
           ) : null}
         </section>
       )}
