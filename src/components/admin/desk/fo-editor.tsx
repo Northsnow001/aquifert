@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   closeDealAction,
-  confirmSupplierFoAction,
   rejectFirmOfferAction,
   removeFoAttachmentAction,
   saveFirmOfferDraftAction,
@@ -138,7 +137,7 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
               ? "This request is closed. The PDF is still on file."
               : fo?.status === "sent"
                 ? `Last sent to ${fo.sentTo || "buyer"}. Edit and send again if they rejected terms.`
-                : "Buyer has not received this. Edit the FO, attach COA/TDS/photos, confirm the mill, then send. Supplier cost never appears."}
+                : "Buyer has not received this. Edit the FO, attach COA/TDS/photos, then send. Supplier cost never appears."}
           </p>
         </div>
         <span
@@ -298,44 +297,13 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
               ))}
             </ul>
           </fieldset>
-          <fieldset className="space-y-2" disabled={closed}>
-            <legend className="text-[12px] font-semibold uppercase tracking-wide text-dim">Mill sign-off</legend>
-            {deal.foPack?.supplierConfirmedAt ? (
-              <p className="text-[13px] text-ink">
-                Confirmed {new Date(deal.foPack.supplierConfirmedAt).toLocaleString("en-GB")}
-                {deal.foPack.supplierConfirmedBy ? ` by ${deal.foPack.supplierConfirmedBy}` : ""}.
-              </p>
-            ) : (
-              <p className="text-[12.5px] text-mid">Ask the mill on WeChat with their price only (no buyer). Then confirm here. Send stays locked until you do.</p>
-            )}
-            {!deal.foPack?.supplierConfirmedAt ? (
-              <button
-                type="button"
-                disabled={pending || closed}
-                className={btnSecondary}
-                onClick={() => {
-                  start(async () => {
-                    const result = await confirmSupplierFoAction({ id: deal.id });
-                    if (!result.ok) {
-                      toast.error(result.message);
-                      return;
-                    }
-                    toast.success("Mill sign-off recorded.");
-                    router.refresh();
-                  });
-                }}
-              >
-                Mill confirmed this FO
-              </button>
-            ) : null}
-          </fieldset>
           <div className="flex flex-wrap gap-2">
             <button type="submit" disabled={pending || closed} className={btnSecondary}>
               {pending ? "Saving…" : "Save & refresh PDF"}
             </button>
             <button
               type="button"
-              disabled={pending || closed || !deal.foPack?.supplierConfirmedAt}
+              disabled={pending || closed}
               onClick={send}
               className={btnPrimary}
             >

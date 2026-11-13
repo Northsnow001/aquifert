@@ -97,9 +97,6 @@ export async function sendFirmOfferToBuyerAction(input: {
   if (!order) return { ok: false, message: "No firm offer on this deal yet." };
   const to = order.buyer.email?.trim() || "";
   if (!to.includes("@")) return { ok: false, message: "Set a buyer email on the firm offer before sending." };
-  if (!saved.foPack?.supplierConfirmedAt) {
-    return { ok: false, message: "Confirm the mill signed off this FO (WeChat) before sending the pack to the buyer." };
-  }
 
   const bytes = await buildFirmOrderPdf(order);
   const filename = firmOrderFilename(order);
