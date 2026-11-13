@@ -92,7 +92,7 @@ export function buyerDocumentFromDeal(
     },
     buyer: {
       name: deal.buyerName || deal.buyerCompany || null,
-      email: null,
+      email: deal.buyerEmail || null,
       phone: deal.buyerPhone || null,
     },
     product: deal.product,
@@ -121,11 +121,25 @@ export function buyerDocumentFromDeal(
   };
 }
 
+function withDealBuyer(deal: DeskDeal, order: FirmOrderDraft): FirmOrderDraft {
+  return {
+    ...order,
+    supplier: emptySupplier(),
+    buyer: {
+      ...order.buyer,
+      name: order.buyer.name || deal.buyerName || deal.buyerCompany || null,
+      email: order.buyer.email || deal.buyerEmail || null,
+      phone: order.buyer.phone || deal.buyerPhone || null,
+    },
+  };
+}
+
 /** Saved FO draft if Matt edited it; otherwise built from the deal + WhatsApp terms. */
 export function firmOfferDraftFromDeal(deal: DeskDeal): FirmOrderDraft | null {
   const stored = deal.firmOffer?.order;
-  if (stored?.document === "firm_offer") return { ...stored, supplier: emptySupplier() };
-  return buyerDocumentFromDeal(deal, "firm_offer");
+  if (stored?.document === "firm_offer") return withDealBuyer(deal, stored);
+  const generated = buyerDocumentFromDeal(deal, "firm_offer");
+  return generated ? withDealBuyer(deal, generated) : null;
 }
 
 /** Saved desk draft if Matt edited it; otherwise a contract cloned from the PI. */
@@ -189,7 +203,7 @@ export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
     },
     buyer: {
       name: deal.buyerName || null,
-      email: null,
+      email: deal.buyerEmail || null,
       phone: deal.buyerPhone || null,
     },
     product: deal.product,

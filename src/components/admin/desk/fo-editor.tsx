@@ -64,7 +64,15 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [kind, setKind] = useState<FoAttachmentKind>("coa");
-  const [values, setValues] = useState<PiEditorValues>(() => (order ? valuesFromPi(order) : emptyValues));
+  const [values, setValues] = useState<PiEditorValues>(() => {
+    const v = order ? valuesFromPi(order) : emptyValues;
+    return {
+      ...v,
+      buyerName: v.buyerName || deal.buyerName || "",
+      buyerEmail: v.buyerEmail || deal.buyerEmail || "",
+      buyerPhone: v.buyerPhone || deal.buyerPhone || "",
+    };
+  });
   if (!order || deal.status === "waiting_desk") return null;
   const closed = deal.status === "closed";
   const fo = deal.firmOffer;

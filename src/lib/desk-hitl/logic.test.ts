@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, parseFollowUpIntent, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, deskPhase, indicationWhatsApp, looksLikeNewRfq, parseFollowUpIntent, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -29,6 +29,29 @@ describe("classifyBuyerReply", () => {
     assert.equal(classifyBuyerReply("Hi"), "chat");
     assert.equal(classifyBuyerReply("500 MT urea CFR Lagos"), "chat");
     assert.equal(classifyBuyerReply("NeoGuard"), "chat");
+  });
+});
+
+describe("looksLikeNewRfq", () => {
+  it("treats hello and product names as a new enquiry", () => {
+    assert.equal(looksLikeNewRfq("hello"), true);
+    assert.equal(looksLikeNewRfq("SplashFert"), true);
+    assert.equal(looksLikeNewRfq("new order"), true);
+  });
+
+  it("keeps packing answers on the current deal", () => {
+    assert.equal(looksLikeNewRfq("25kg bags"), false);
+    assert.equal(looksLikeNewRfq("ok send it"), false);
+    assert.equal(looksLikeNewRfq("China origin, SGS"), false);
+  });
+});
+
+describe("deskPhase", () => {
+  it("maps inbound event to the buyer-desk prompt phase", () => {
+    assert.equal(deskPhase({ event: "chat" }), "rfq");
+    assert.equal(deskPhase({ event: "firm_interest", collectingTerms: true }), "post_yes");
+    assert.equal(deskPhase({ event: "chat", firmOfferStatus: "sent" }), "offer_review");
+    assert.equal(deskPhase({ event: "chat", piStatus: "sent" }), "pi_sent");
   });
 });
 
@@ -66,6 +89,7 @@ describe("parseShortlistBody", () => {
     assert.ok(parsed);
     assert.equal(parsed.offers.length, 3);
     assert.equal(parsed.buyerPhone, "+2348010000000");
+    assert.equal(parsed.buyerEmail, "");
     assert.equal(parsed.quantityMt, 500);
     assert.equal(parsed.callbackUrl, "https://n8n.example/webhook/wait");
   });

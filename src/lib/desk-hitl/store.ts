@@ -31,7 +31,7 @@ function parkFirmOffer(deal: DeskDeal): DeskDeal {
   const generated = buyerDocumentFromDeal(deal, "firm_offer");
   if (!generated) return { ...deal, foPack: emptyFoPack(deal.foPack) };
   const prior = deal.firmOffer;
-  const email = prior?.order.buyer.email || generated.buyer.email;
+  const email = generated.buyer.email || prior?.order.buyer.email;
   return {
     ...deal,
     foPack: emptyFoPack(deal.foPack),
@@ -134,6 +134,9 @@ export async function getDeskDeal(id: string) {
   if (recovered.execution?.confirmedAt && recovered.buyerPrice != null && recovered.firmOffer?.status !== "sent" && !recovered.firmOffer) {
     return (await save(parkFirmOffer(recovered)))!;
   }
+  if (recovered.buyerEmail && recovered.firmOffer?.order && !recovered.firmOffer.order.buyer.email) {
+    return (await save(applyBuyerEmail(recovered, recovered.buyerEmail)))!;
+  }
   return recovered;
 }
 
@@ -157,6 +160,7 @@ export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error
     buyerName: parsed.buyerName,
     buyerPhone: parsed.buyerPhone,
     buyerCompany: parsed.buyerCompany,
+    buyerEmail: parsed.buyerEmail || existing?.buyerEmail || "",
     offers: parsed.offers,
     selectedOfferId: existing?.selectedOfferId ?? null,
     marginPct: existing?.marginPct ?? null,
@@ -243,13 +247,28 @@ function phoneMatches(deal: DeskDeal, digits: string) {
   return Boolean(theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs)));
 }
 
+function applyBuyerEmail(deal: DeskDeal, email: string): DeskDeal {
+  const nextEmail = email.includes("@") ? email : deal.buyerEmail || "";
+  const order = deal.firmOffer?.order;
+  const stampFo =
+    deal.firmOffer && order && nextEmail && !order.buyer.email
+      ? {
+          ...deal.firmOffer,
+          order: { ...order, buyer: { ...order.buyer, email: nextEmail } },
+        }
+      : deal.firmOffer;
+  return { ...deal, buyerEmail: nextEmail, firmOffer: stampFo };
+}
+
 export async function recordBuyerInbound(input: {
   phone?: string;
   requestId?: string;
   text: string;
+  email?: string;
 }): Promise<DeskDeal | { error: string } | { event: "chat"; dealId?: string; requestId?: string }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
+  const inboundEmail = String(input.email || "").trim();
 
   const deals = await listRecords(DESK_DEALS);
   const phone = (input.phone || "").replace(/\s+/g, "");
@@ -280,12 +299,20 @@ export async function recordBuyerInbound(input: {
         phoneMatches(row, digits),
     ) ?? null;
   const kind = await resolveBuyerReply(text, Boolean(deal || awaitingFo));
+  if (inboundEmail.includes("@")) {
+    const open = deals.filter((row) => row.status !== "closed" && phoneMatches(row, digits));
+    for (const row of open) {
+      if (row.buyerEmail === inboundEmail && row.firmOffer?.order.buyer.email) continue;
+      await save(applyBuyerEmail(row, inboundEmail));
+    }
+  }
   if (!deal && collecting && kind !== "negotiate") {
     const follow = await resolveFirmFollowUp(text);
     if (follow === "firm_order") {
+      const row = inboundEmail.includes("@") ? applyBuyerEmail(collecting, inboundEmail) : collecting;
       return (await save({
-        ...collecting,
-        messages: [...collecting.messages, message({ from: "buyer", channel: "whatsapp", text })],
+        ...row,
+        messages: [...row.messages, message({ from: "buyer", channel: "whatsapp", text })],
       }))!;
     }
   }
@@ -441,12 +468,18 @@ function textField(value: unknown, max = 500) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
-function parseExecution(body: unknown): { requestId: string; phone: string; execution: DeskExecution } | null {
+function parseExecution(body: unknown): {
+  requestId: string;
+  phone: string;
+  email: string;
+  execution: DeskExecution;
+} | null {
   if (!body || typeof body !== "object") return null;
   const raw = body as Record<string, unknown>;
   const profile = raw.profile && typeof raw.profile === "object" ? (raw.profile as Record<string, unknown>) : raw;
   const requestId = textField(raw.requestId ?? raw.request_id ?? raw.reference, 80);
   const phone = textField(raw.phone ?? raw.buyerPhone, 40);
+  const email = textField(raw.email ?? raw.buyerEmail ?? profile.email, 160);
   const packing = textField(profile.packing, 200);
   const paymentTerms = textField(profile.payment_terms ?? profile.paymentTerms, 500);
   if (!requestId && !phone) return null;
@@ -454,6 +487,7 @@ function parseExecution(body: unknown): { requestId: string; phone: string; exec
   return {
     requestId,
     phone,
+    email,
     execution: {
       packing,
       origin: textField(profile.origin_preference ?? profile.origin, 120),
@@ -499,6 +533,7 @@ export async function saveFirmTerms(body: unknown): Promise<DeskDeal | { error: 
 
   const next: DeskDeal = {
     ...deal,
+    buyerEmail: parsed.email || deal.buyerEmail || "",
     destination: parsed.execution.destinationPort || deal.destination,
     incoterm: parsed.execution.incoterm || deal.incoterm,
     execution: parsed.execution,

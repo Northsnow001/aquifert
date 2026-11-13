@@ -1,7 +1,13 @@
 import "server-only";
 
 import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
-import { classifyBuyerReply, parseFollowUpIntent, parseReplyIntent, type FollowUpIntent } from "@/lib/desk-hitl/logic";
+import {
+  classifyBuyerReply,
+  looksLikeNewRfq,
+  parseFollowUpIntent,
+  parseReplyIntent,
+  type FollowUpIntent,
+} from "@/lib/desk-hitl/logic";
 import type { BuyerReplyKind } from "@/lib/desk-hitl/types";
 
 /** Gemini only when keywords are unsure and this phone has an indication waiting. */
@@ -38,7 +44,8 @@ const CONFIRM = /^(yes|yep|yeah|ok|okay|sure|correct|confirmed?|send it|please s
 /** After firm interest: packing answers vs a brand-new RFQ. */
 export async function resolveFirmFollowUp(text: string): Promise<FollowUpIntent> {
   if (CONFIRM.test(text.trim()) || (DETAILS.test(text) && text.length < 240)) return "firm_order";
-  if (!geminiKey()) return "firm_order";
+  if (looksLikeNewRfq(text)) return "chat";
+  if (!geminiKey()) return "chat";
   try {
     const result = await generateText({
       model: EXTRACTION_MODEL,
@@ -47,15 +54,15 @@ export async function resolveFirmFollowUp(text: string): Promise<FollowUpIntent>
       maxOutputTokens: 64,
       timeoutMs: 8_000,
       temperature: 0,
-      system: `The buyer already confirmed firm interest on a fertiliser indication. We are collecting packing, origin, port, window, payment, inspection, documents, or they are confirming a recap / "send the firm offer to my email".
+      system: `The buyer may already have firm interest on one fertiliser indication. Classify this WhatsApp.
 Return JSON only: {"intent":"firm_order"|"chat"}
 - firm_order: packing/origin/port/window/payment/inspection/docs answers, recap confirmations, or yes send the firm offer email.
-- chat: a new product enquiry or unrelated RFQ (different product + quantity).
-Do not treat packing answers or short yes/ok as a new RFQ.`,
+- chat: greeting, a product name only (e.g. SplashFert, urea), a new RFQ, or anything that is not answering packing/terms on the current deal.
+A product brand or “hello” is chat, not firm_order.`,
       turns: [{ role: "user", text: text.slice(0, 500) }],
     });
-    return parseFollowUpIntent(result.text) ?? "firm_order";
+    return parseFollowUpIntent(result.text) ?? "chat";
   } catch {
-    return "firm_order";
+    return "chat";
   }
 }

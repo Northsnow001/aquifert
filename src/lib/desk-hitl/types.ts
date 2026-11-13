@@ -99,6 +99,8 @@ export type DeskDeal = {
   buyerName: string;
   buyerPhone: string;
   buyerCompany: string;
+  /** From Buyers sheet / shortlist / firm-terms. FO Email (send to) uses this. */
+  buyerEmail: string;
   offers: DeskOffer[];
   selectedOfferId: string | null;
   marginPct: number | null;

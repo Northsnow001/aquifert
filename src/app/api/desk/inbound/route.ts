@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { deskPhase } from "@/lib/desk-hitl/logic";
 import { deskHitlAuthorized } from "@/lib/desk-hitl/n8n-auth";
 import { recordBuyerInbound } from "@/lib/desk-hitl/store";
 import { buyerDocumentFromDeal } from "@/lib/firm-order/from-deal";
@@ -13,15 +14,24 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   const phone = typeof body?.phone === "string" ? body.phone : typeof body?.from === "string" ? body.from : "";
   const text = typeof body?.text === "string" ? body.text : typeof body?.body === "string" ? body.body : "";
+  const email = typeof body?.email === "string" ? body.email : typeof body?.buyerEmail === "string" ? body.buyerEmail : "";
   const result = await recordBuyerInbound({
     phone,
     requestId: typeof body?.requestId === "string" ? body.requestId : undefined,
     text,
+    email,
   });
   if ("error" in result) return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
   const echo = { phone, text, body: text };
   if (!("status" in result)) {
-    return NextResponse.json({ ok: true, event: result.event, dealId: result.dealId, requestId: result.requestId, ...echo });
+    return NextResponse.json({
+      ok: true,
+      event: result.event,
+      phase: deskPhase({ event: result.event }),
+      dealId: result.dealId,
+      requestId: result.requestId,
+      ...echo,
+    });
   }
   const buyerDocs =
     result.status === "firm_interest"
@@ -34,12 +44,20 @@ export async function POST(req: NextRequest) {
   const collectingTerms = result.status === "firm_interest" && !result.execution?.confirmedAt;
   const event =
     collectingTerms ? "firm_interest" : result.status === "negotiating" ? "negotiating" : "chat";
+  const phase = deskPhase({
+    event,
+    collectingTerms,
+    status: result.status,
+    firmOfferStatus: result.firmOffer?.status,
+    piStatus: result.pi?.status,
+  });
   return NextResponse.json({
     ok: true,
     dealId: result.id,
     requestId: result.requestId,
     status: result.status,
     event,
+    phase,
     collectingTerms,
     buyerPhone: result.buyerPhone,
     buyerPrice: result.buyerPrice,
