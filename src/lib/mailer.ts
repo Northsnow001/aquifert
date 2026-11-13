@@ -13,6 +13,7 @@ export type MailKind =
   | "analytics-applicant"
   | "contact-applicant"
   | "pi-buyer"
+  | "firm-offer-buyer"
   | "sales-contract-buyer"
   | "test";
 

@@ -4,10 +4,11 @@ import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
 import { buyerUnitPrice, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
-import { applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
-import type { DeskDeal, DeskExecution, DeskMessage } from "@/lib/desk-hitl/types";
+import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
+import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
+import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
 import { listOutbox } from "@/lib/mailer";
-import { buyerDocumentFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, firmOfferDraftFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
 const idOf = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -15,6 +16,36 @@ const dealIdFor = (requestId: string) => `deal-${requestId.toLowerCase().replace
 
 function message(partial: Omit<DeskMessage, "id" | "at"> & { at?: string }): DeskMessage {
   return { id: idOf("msg"), at: partial.at ?? now(), ...partial };
+}
+
+function emptyFoPack(existing?: DeskFoPack | null): DeskFoPack {
+  return {
+    attachments: existing?.attachments ?? [],
+    supplierConfirmedAt: existing?.supplierConfirmedAt ?? null,
+    supplierConfirmedBy: existing?.supplierConfirmedBy ?? null,
+  };
+}
+
+function parkFirmOffer(deal: DeskDeal): DeskDeal {
+  if (deal.firmOffer?.status === "sent") return { ...deal, foPack: emptyFoPack(deal.foPack) };
+  const generated = buyerDocumentFromDeal(deal, "firm_offer");
+  if (!generated) return { ...deal, foPack: emptyFoPack(deal.foPack) };
+  const prior = deal.firmOffer;
+  const email = prior?.order.buyer.email || generated.buyer.email;
+  return {
+    ...deal,
+    foPack: emptyFoPack(deal.foPack),
+    firmOffer: {
+      status: "review",
+      updatedAt: now(),
+      sentAt: prior?.sentAt ?? null,
+      sentTo: prior?.sentTo ?? null,
+      order: applyExecutionToOrder(deal, {
+        ...generated,
+        buyer: { ...generated.buyer, email: email ?? generated.buyer.email },
+      }),
+    },
+  };
 }
 
 async function save(deal: DeskDeal) {
@@ -99,7 +130,11 @@ export async function listDeskDeals() {
 export async function getDeskDeal(id: string) {
   const deal = await getRecord(DESK_DEALS, id);
   if (!deal) return null;
-  return recoverPiIfSent(deal);
+  const recovered = await recoverPiIfSent(deal);
+  if (recovered.execution?.confirmedAt && recovered.buyerPrice != null && recovered.firmOffer?.status !== "sent" && !recovered.firmOffer) {
+    return (await save(parkFirmOffer(recovered)))!;
+  }
+  return recovered;
 }
 
 export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error: string }> {
@@ -133,6 +168,8 @@ export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error
     callbackUrl: parsed.callbackUrl ?? existing?.callbackUrl ?? null,
     firmInterestAt: existing?.firmInterestAt ?? null,
     execution: existing?.execution ?? null,
+    firmOffer: existing?.firmOffer ?? null,
+    foPack: existing?.foPack ?? null,
     pi: existing?.pi ?? null,
     salesContract: existing?.salesContract ?? null,
     supplierPackSentAt: existing?.supplierPackSentAt ?? null,
@@ -153,6 +190,7 @@ export async function confirmIndication(input: {
 }): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, input.id);
   if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status === "closed") return { error: "This request is closed." };
   if (deal.status === "firm_interest") return { error: "This deal is already firm interest." };
   const offer = deal.offers.find((item) => item.id === input.offerId);
   if (!offer) return { error: "Choose one of the three offers." };
@@ -219,6 +257,7 @@ export async function recordBuyerInbound(input: {
   const deal =
     (input.requestId ? deals.find((row) => row.requestId === input.requestId) : null) ??
     deals.find((row) => {
+      if (row.status === "closed") return false;
       if (row.status !== "indication_sent" && row.status !== "negotiating") return false;
       return phoneMatches(row, digits);
     }) ??
@@ -226,7 +265,15 @@ export async function recordBuyerInbound(input: {
   const collecting =
     deals.find((row) => row.status === "firm_interest" && !row.execution?.confirmedAt && phoneMatches(row, digits)) ??
     null;
-  const kind = await resolveBuyerReply(text, Boolean(deal));
+  const awaitingFo =
+    deals.find(
+      (row) =>
+        row.status === "firm_interest" &&
+        row.firmOffer?.status === "sent" &&
+        row.pi?.status !== "sent" &&
+        phoneMatches(row, digits),
+    ) ?? null;
+  const kind = await resolveBuyerReply(text, Boolean(deal || awaitingFo));
   if (!deal && collecting && kind !== "negotiate") {
     const follow = await resolveFirmFollowUp(text);
     if (follow === "firm_order") {
@@ -235,6 +282,27 @@ export async function recordBuyerInbound(input: {
         messages: [...collecting.messages, message({ from: "buyer", channel: "whatsapp", text })],
       }))!;
     }
+  }
+  if (!deal && awaitingFo && kind === "agree") {
+    return (await save({
+      ...awaitingFo,
+      messages: [
+        ...awaitingFo.messages,
+        message({ from: "buyer", channel: "whatsapp", text }),
+        message({ from: "system", channel: "app", text: "Buyer accepted the firm offer on WhatsApp." }),
+      ],
+    }))!;
+  }
+  if (!deal && awaitingFo && kind === "negotiate") {
+    return (await save({
+      ...awaitingFo,
+      status: "negotiating",
+      messages: [
+        ...awaitingFo.messages,
+        message({ from: "buyer", channel: "whatsapp", text }),
+        message({ from: "system", channel: "app", text: "Buyer rejected the firm offer. Desk can edit and send again." }),
+      ],
+    }))!;
   }
   if (!deal || kind === "chat") return { event: "chat" };
 
@@ -275,6 +343,7 @@ export async function sendDeskReply(input: { id: string; text: string; actor: st
   const text = input.text.trim().slice(0, 1500);
   if (!text) return { error: "Write a reply." };
   if (deal.status === "waiting_desk") return { error: "Send the indication first." };
+  if (deal.status === "closed") return { error: "This request is closed." };
   if (deal.status === "firm_interest") return { error: "This deal is already firm interest." };
 
   const next: DeskDeal = {
@@ -439,7 +508,18 @@ export async function saveFirmTerms(body: unknown): Promise<DeskDeal | { error: 
   if (next.pi?.status === "review") {
     next.pi = { ...next.pi, updatedAt: now(), order: applyExecutionToOrder(next, next.pi.order) };
   }
-  return (await save(next))!;
+  const parked = parkFirmOffer(next);
+  if (parked.firmOffer && next.firmOffer?.status !== "sent") {
+    parked.messages = [
+      ...parked.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `Firm offer ${parked.firmOffer.order.order_ref || parked.requestId} is on the desk. Edit it, attach COA/TDS/photos, confirm the mill, then send.`,
+      }),
+    ];
+  }
+  return (await save(parked))!;
 }
 
 /** n8n WF11: park a proforma on the desk deal. Does not email the buyer. */
@@ -530,6 +610,151 @@ export async function markSalesContractSent(id: string, to: string, actor: strin
     messages: [
       ...deal.messages,
       message({ from: "system", channel: "app", text: `${actor || "Desk"} emailed the sales contract to ${to}.` }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function addFoAttachment(
+  id: string,
+  file: DeskFoAttachment,
+  bytes: Uint8Array,
+  actor: string,
+): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status === "closed") return { error: "This request is closed." };
+  const pack = emptyFoPack(deal.foPack);
+  if (pack.attachments.length >= FO_MAX_FILES) return { error: `At most ${FO_MAX_FILES} files on the pack.` };
+  await storeFoAttachmentFile(file.id, file.filename, bytes, file.contentType);
+  pack.attachments = [...pack.attachments, file];
+  const next: DeskDeal = {
+    ...deal,
+    foPack: pack,
+    messages: [
+      ...deal.messages,
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} attached ${file.kind.toUpperCase()} (${file.filename}).` }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function removeFoAttachment(id: string, attachmentId: string, actor: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  const pack = emptyFoPack(deal.foPack);
+  const hit = pack.attachments.find((row) => row.id === attachmentId);
+  if (!hit) return { error: "That file is not on this pack." };
+  await deleteFoAttachmentFile(attachmentId);
+  pack.attachments = pack.attachments.filter((row) => row.id !== attachmentId);
+  const next: DeskDeal = {
+    ...deal,
+    foPack: pack,
+    messages: [
+      ...deal.messages,
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} removed ${hit.kind.toUpperCase()} (${hit.filename}).` }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function confirmSupplierFo(id: string, actor: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status === "closed") return { error: "This request is closed." };
+  const at = now();
+  const pack = emptyFoPack(deal.foPack);
+  pack.supplierConfirmedAt = at;
+  pack.supplierConfirmedBy = actor;
+  const next: DeskDeal = {
+    ...deal,
+    foPack: pack,
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `${actor || "Desk"} confirmed the mill signed off this firm offer (WeChat).`,
+      }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function saveFirmOfferDraft(
+  id: string,
+  values: PiEditorValues,
+  _actor: string,
+): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status === "closed") return { error: "This request is closed." };
+  const base = firmOfferDraftFromDeal(deal);
+  if (!base) return { error: "Need a buyer price on this deal before the firm offer." };
+  const order = applyFirmOfferEditor(base, values);
+  if ("error" in order) return order;
+  const prior = deal.firmOffer;
+  const next: DeskDeal = {
+    ...deal,
+    firmOffer: {
+      status: "review",
+      updatedAt: now(),
+      sentAt: prior?.sentAt ?? null,
+      sentTo: prior?.sentTo ?? null,
+      order,
+    },
+  };
+  return (await save(next))!;
+}
+
+export async function markFirmOfferSent(id: string, to: string, actor: string, whatsappBody: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal?.firmOffer) return { error: "No firm offer on this deal yet." };
+  if (deal.status === "closed") return { error: "This request is closed." };
+  const at = now();
+  const next: DeskDeal = {
+    ...deal,
+    status: deal.status === "negotiating" ? "firm_interest" : deal.status,
+    firmOffer: { ...deal.firmOffer, status: "sent", updatedAt: at, sentAt: at, sentTo: to },
+    messages: [
+      ...deal.messages,
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} sent the firm offer to ${to}.` }),
+      message({ from: "desk", channel: "whatsapp", text: whatsappBody, outboundStatus: "queued" }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function rejectFirmOffer(id: string, actor: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status === "closed") return { error: "This request is closed." };
+  const next: DeskDeal = {
+    ...deal,
+    status: "negotiating",
+    firmOffer: deal.firmOffer ? { ...deal.firmOffer, status: "review", updatedAt: now() } : deal.firmOffer,
+    messages: [
+      ...deal.messages,
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} sent the firm offer back to negotiate.` }),
+    ],
+  };
+  return (await save(next))!;
+}
+
+export async function closeDeal(id: string, actor: string): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status === "closed") return deal;
+  const next: DeskDeal = {
+    ...deal,
+    status: "closed",
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `${actor || "Desk"} closed ${deal.requestId}. The trade id is kept.`,
+      }),
     ],
   };
   return (await save(next))!;

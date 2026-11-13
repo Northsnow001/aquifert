@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { applyPiEditor, applySalesContractEditor, proformaFromN8n, valuesFromPi } from "@/lib/desk-hitl/pi";
+import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, valuesFromPi } from "@/lib/desk-hitl/pi";
+import { FO_ATTACHMENT_KINDS } from "@/lib/desk-hitl/types";
 
 const n8nPayload = {
   document: "proforma",
@@ -47,6 +48,29 @@ describe("applyPiEditor", () => {
     assert.equal(next.packing, "25kg bags");
     assert.equal(next.additional_information, "Validity 7 days.");
     assert.equal(next.document, "proforma");
+    assert.equal(next.supplier.name, "");
+  });
+});
+
+describe("FO pack kinds", () => {
+  it("only allows COA, TDS and photo", () => {
+    assert.deepEqual([...FO_ATTACHMENT_KINDS], ["coa", "tds", "photo"]);
+  });
+});
+
+describe("applyFirmOfferEditor", () => {
+  it("keeps buyer price and marks the document as a firm offer", () => {
+    const base = proformaFromN8n(n8nPayload);
+    assert.ok(base);
+    const next = applyFirmOfferEditor(base, {
+      ...valuesFromPi(base),
+      packing: "25kg bags",
+      unitPrice: "221.4",
+    });
+    assert.ok(!("error" in next));
+    assert.equal(next.document, "firm_offer");
+    assert.equal(next.unit_price_usd, 221.4);
+    assert.equal(next.packing, "25kg bags");
     assert.equal(next.supplier.name, "");
   });
 });

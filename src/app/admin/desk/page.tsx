@@ -10,17 +10,20 @@ const TONE: Record<DealStatus, "amber" | "blue" | "teal" | "neutral"> = {
   indication_sent: "blue",
   negotiating: "blue",
   firm_interest: "teal",
+  closed: "neutral",
 };
 
 export default async function DeskShortlistsPage() {
   const deals = await listDeskDeals();
-  const waiting = deals.filter((d) => d.status === "waiting_desk" || d.pi?.status === "review").length;
+  const waiting = deals.filter(
+    (d) => d.status === "waiting_desk" || d.pi?.status === "review" || d.firmOffer?.status === "review",
+  ).length;
 
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Desk shortlists"
-        description="WF8 drops the first three offers here. Pick one, add your margin, send the buyer price on WhatsApp. If they reply YES, this becomes firm interest."
+        description="WF8 drops the first three offers here. Pick one, add your margin, send the indication. After the buyer confirms terms, the firm offer waits here until you send it."
       />
       <Card>
         {deals.length === 0 ? (
@@ -31,6 +34,8 @@ export default async function DeskShortlistsPage() {
         ) : (
           <ul>
             {deals.map((deal) => {
+              const foReview = deal.firmOffer?.status === "review";
+              const foSent = deal.firmOffer?.status === "sent";
               const piReview = deal.pi?.status === "review";
               const piSent = deal.pi?.status === "sent";
               const contractSent = deal.salesContract?.status === "sent";
@@ -46,8 +51,30 @@ export default async function DeskShortlistsPage() {
                     </span>
                     <span className="mt-0.5 block font-mono text-[11px] text-dim">{deal.requestId}</span>
                   </span>
-                  <Pill tone={piReview ? "amber" : contractSent ? "teal" : piSent ? "teal" : TONE[deal.status]}>
-                    {piReview ? "PI to review" : contractSent ? "Contract sent" : piSent ? "PI sent" : DEAL_STATUS_LABEL[deal.status]}
+                  <Pill
+                    tone={
+                      deal.status === "closed"
+                        ? "neutral"
+                        : piReview || foReview
+                          ? "amber"
+                          : contractSent || piSent || foSent
+                            ? "teal"
+                            : TONE[deal.status]
+                    }
+                  >
+                    {deal.status === "closed"
+                      ? "Closed"
+                      : piReview
+                        ? "PI to review"
+                        : foReview
+                          ? "FO to review"
+                          : contractSent
+                            ? "Contract sent"
+                            : piSent
+                              ? "PI sent"
+                              : foSent
+                                ? "FO sent"
+                                : DEAL_STATUS_LABEL[deal.status]}
                   </Pill>
                 </Link>
               </li>
@@ -56,7 +83,7 @@ export default async function DeskShortlistsPage() {
           </ul>
         )}
       </Card>
-      {waiting ? <p className="mt-3 text-[12.5px] text-mid">{waiting} waiting for you (indication or PI review).</p> : null}
+      {waiting ? <p className="mt-3 text-[12.5px] text-mid">{waiting} waiting for you (indication, FO or PI review).</p> : null}
     </div>
   );
 }

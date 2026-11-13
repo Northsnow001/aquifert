@@ -121,6 +121,13 @@ export function buyerDocumentFromDeal(
   };
 }
 
+/** Saved FO draft if Matt edited it; otherwise built from the deal + WhatsApp terms. */
+export function firmOfferDraftFromDeal(deal: DeskDeal): FirmOrderDraft | null {
+  const stored = deal.firmOffer?.order;
+  if (stored?.document === "firm_offer") return { ...stored, supplier: emptySupplier() };
+  return buyerDocumentFromDeal(deal, "firm_offer");
+}
+
 /** Saved desk draft if Matt edited it; otherwise a contract cloned from the PI. */
 export function salesContractDraftFromDeal(deal: DeskDeal): FirmOrderDraft | null {
   const stored = deal.salesContract?.order;

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { confirmIndicationAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
 import { AfterPayment } from "@/components/admin/desk/after-payment";
+import { FoEditor } from "@/components/admin/desk/fo-editor";
 import { PiEditor } from "@/components/admin/desk/pi-editor";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import { buyerUnitPrice } from "@/lib/desk-hitl/logic";
@@ -130,6 +131,7 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
         </section>
       )}
 
+      {deal.buyerPrice != null && (deal.firmOffer || deal.execution?.confirmedAt) ? <FoEditor deal={deal} /> : null}
       {deal.pi ? <PiEditor deal={deal} /> : null}
       {deal.pi?.status === "sent" ? <AfterPayment deal={deal} /> : null}
 

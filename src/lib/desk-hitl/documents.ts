@@ -20,9 +20,16 @@ export function dealDocumentRows(deal: DeskDeal): DealDocRow[] {
       audience: "buyer",
       title: "Firm offer",
       kind: "firm_offer",
-      status: deal.status === "waiting_desk" ? "Not sent" : "Issued with indication",
-      to: deal.buyerPhone || null,
-      at: null,
+      status:
+        deal.firmOffer?.status === "sent"
+          ? "Sent"
+          : deal.firmOffer
+            ? "On desk"
+            : deal.execution?.confirmedAt
+              ? "Terms in — for review"
+              : "Not sent",
+      to: deal.firmOffer?.sentTo ?? deal.buyerPhone ?? null,
+      at: deal.firmOffer?.sentAt ?? deal.firmOffer?.updatedAt ?? null,
       href: `/admin/desk/${deal.id}/file/firm_offer`,
     },
     {

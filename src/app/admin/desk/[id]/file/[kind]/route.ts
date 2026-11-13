@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdminUser } from "@/lib/admin-access";
 import { getDeskDeal } from "@/lib/desk-hitl/store";
-import { buyerDocumentFromDeal, salesContractDraftFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, firmOfferDraftFromDeal, salesContractDraftFromDeal, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 import { buildFirmOrderPdf, firmOrderFilename } from "@/lib/firm-order/pdf";
 import { TRADE_DOCUMENTS, type TradeDocument } from "@/lib/firm-order/types";
 import { getSession } from "@/lib/session";
@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     kind === "proforma"
       ? (deal.pi?.order ?? buyerDocumentFromDeal(deal, "proforma"))
       : kind === "firm_offer"
-        ? buyerDocumentFromDeal(deal, "firm_offer")
+        ? firmOfferDraftFromDeal(deal)
         : kind === "sales_contract"
           ? salesContractDraftFromDeal(deal)
           : kind === "purchase_order" || kind === "purchase_contract" || kind === "documentary_instructions"

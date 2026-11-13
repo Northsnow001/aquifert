@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerDocumentFromDeal, firmOrderFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
+import { buyerDocumentFromDeal, firmOfferDraftFromDeal, firmOrderFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 import { parseFirmOrder } from "@/lib/firm-order/types";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
@@ -73,6 +73,20 @@ describe("firmOrderFromDeal", () => {
     assert.equal(contract.unit_price_usd, 221.4);
     assert.equal(contract.supplier.name, "");
     assert.notEqual(contract.order_ref, pi.order_ref);
+  });
+
+  it("desk firm offer preview prefers Matt’s saved draft", () => {
+    const generated = buyerDocumentFromDeal(deal, "firm_offer");
+    assert.ok(generated);
+    const edited = { ...generated, packing: "jumbo", unit_price_usd: 230 };
+    const fromDraft = firmOfferDraftFromDeal({
+      ...deal,
+      firmOffer: { status: "review", updatedAt: "", sentAt: null, sentTo: null, order: edited },
+    });
+    assert.equal(fromDraft?.packing, "jumbo");
+    assert.equal(fromDraft?.unit_price_usd, 230);
+    assert.equal(fromDraft?.supplier.name, "");
+    assert.equal(fromDraft?.document, "firm_offer");
   });
 
   it("desk sales contract preview prefers Matt’s saved draft", () => {

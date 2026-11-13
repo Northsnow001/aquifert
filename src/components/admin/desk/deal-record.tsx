@@ -31,8 +31,30 @@ export function DealRecord({ deal }: { deal: DeskDeal }) {
       <section className="rounded-2xl border border-border bg-white px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="font-mono text-[12px] text-dim">{deal.requestId}</p>
-          <Pill tone={deal.pi?.status === "review" ? "amber" : deal.pi?.status === "sent" ? "teal" : "neutral"}>
-            {deal.pi?.status === "review" ? "PI to review" : deal.pi?.status === "sent" ? "PI sent" : DEAL_STATUS_LABEL[deal.status]}
+          <Pill
+            tone={
+              deal.status === "closed"
+                ? "neutral"
+                : deal.pi?.status === "review"
+                  ? "amber"
+                  : deal.firmOffer?.status === "review"
+                    ? "amber"
+                    : deal.pi?.status === "sent" || deal.firmOffer?.status === "sent"
+                      ? "teal"
+                      : "neutral"
+            }
+          >
+            {deal.status === "closed"
+              ? "Closed"
+              : deal.pi?.status === "review"
+                ? "PI to review"
+                : deal.firmOffer?.status === "review"
+                  ? "FO to review"
+                  : deal.pi?.status === "sent"
+                    ? "PI sent"
+                    : deal.firmOffer?.status === "sent"
+                      ? "FO sent"
+                      : DEAL_STATUS_LABEL[deal.status]}
           </Pill>
         </div>
         <dl className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2 lg:grid-cols-4">

@@ -32,12 +32,14 @@ export async function POST(req: NextRequest) {
         }
       : null;
   const collectingTerms = result.status === "firm_interest" && !result.execution?.confirmedAt;
+  const event =
+    collectingTerms ? "firm_interest" : result.status === "negotiating" ? "negotiating" : "chat";
   return NextResponse.json({
     ok: true,
     dealId: result.id,
     requestId: result.requestId,
     status: result.status,
-    event: result.status === "firm_interest" ? "firm_interest" : "negotiating",
+    event,
     collectingTerms,
     buyerPhone: result.buyerPhone,
     buyerPrice: result.buyerPrice,
