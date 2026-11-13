@@ -748,7 +748,7 @@ export async function saveFirmOfferDraft(
   return (await save(next))!;
 }
 
-export async function markFirmOfferSent(id: string, to: string, actor: string, whatsappBody: string): Promise<DeskDeal | { error: string }> {
+export async function markFirmOfferSent(id: string, to: string, actor: string): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, id);
   if (!deal?.firmOffer) return { error: "No firm offer on this deal yet." };
   if (deal.status === "closed") return { error: "This request is closed." };
@@ -759,8 +759,7 @@ export async function markFirmOfferSent(id: string, to: string, actor: string, w
     firmOffer: { ...deal.firmOffer, status: "sent", updatedAt: at, sentAt: at, sentTo: to },
     messages: [
       ...deal.messages,
-      message({ from: "system", channel: "app", text: `${actor || "Desk"} sent the firm offer to ${to}.` }),
-      message({ from: "desk", channel: "whatsapp", text: whatsappBody, outboundStatus: "queued" }),
+      message({ from: "system", channel: "app", text: `${actor || "Desk"} sent the firm offer to ${to}. Reply YES on that email to accept.` }),
     ],
   };
   return (await save(next))!;

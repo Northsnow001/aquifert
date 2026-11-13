@@ -98,7 +98,7 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
         toast.error(result.message);
         return;
       }
-      toast.success(`Firm offer emailed to ${values.buyerEmail}. WhatsApp is queued.`);
+      toast.success(`Firm offer emailed to ${values.buyerEmail}.`);
       router.refresh();
     });
   };

@@ -69,8 +69,19 @@ export async function sendDeskReplyAction(input: {
   return { ok: true };
 }
 
-function firmOfferWhatsApp(order: { reference: string; product: string; quantity_mt: number; unit_price_usd: number | null; incoterm: string }) {
-  return `Aquifert firm offer ${order.reference}: ${order.quantity_mt} MT ${order.product} at USD ${order.unit_price_usd} / MT, ${order.incoterm}. The PDF is in your email. Reply YES to accept, NO if you want different terms, or ask us to CLOSE this request.`;
+function firmOfferEmailCopy(order: {
+  buyer: { name: string | null };
+  product: string;
+  quantity_mt: number;
+  unit_price_usd: number | null;
+  incoterm: string;
+}) {
+  const name = order.buyer.name || "Buyer";
+  const line = `Please find attached our firm offer for ${order.quantity_mt} MT ${order.product} at USD ${order.unit_price_usd} / MT, ${order.incoterm}.`;
+  return {
+    text: `Dear ${name},\n\n${line}\n\nReply YES to this email to accept.\nKind regards,\nAquifert Limited`,
+    html: `<p>Dear ${name},</p><p>${line}</p><p>Reply YES to this email to accept.</p><p>Kind regards,<br/>Aquifert Limited</p>`,
+  };
 }
 
 export async function saveFirmOfferDraftAction(input: {
@@ -107,17 +118,14 @@ export async function sendFirmOfferToBuyerAction(input: {
     extras.push({ filename: `${FO_ATTACHMENT_LABEL[file.kind]}-${file.filename}`, content, contentType: file.contentType });
   }
   const settings = await getDeskSettings();
-  const whatsappBody = firmOfferWhatsApp(order);
-  const extraNote = extras.length
-    ? `\n\nAlso attached: ${extras.map((file) => file.filename).join(", ")}.`
-    : "";
+  const copy = firmOfferEmailCopy(order);
   const mailed = await sendEmail(
     {
       kind: "firm-offer-buyer",
       to,
       subject: `Aquifert firm offer ${order.reference} — ${order.product}`,
-      text: `Dear ${order.buyer.name || "Buyer"},\n\nPlease find attached our firm offer for ${order.quantity_mt} MT ${order.product} at USD ${order.unit_price_usd} / MT, ${order.incoterm}.${extraNote}\n\nReply YES to this email (or on WhatsApp) to accept. Reply if you want different terms. Ask us to close the request if you are stopping.\n\nKind regards,\nAquifert Limited`,
-      html: `<p>Dear ${order.buyer.name || "Buyer"},</p><p>Please find attached our firm offer for ${order.quantity_mt} MT ${order.product} at USD ${order.unit_price_usd} / MT, ${order.incoterm}.</p>${extras.length ? `<p>Also attached: ${extras.map((file) => file.filename).join(", ")}.</p>` : ""}<p>Reply <strong>YES</strong> to this email (or on WhatsApp) to accept. Reply if you want different terms. Ask us to close the request if you are stopping.</p><p>Kind regards,<br/>Aquifert Limited</p>`,
+      text: copy.text,
+      html: copy.html,
       attachments: [{ filename, content: bytes, contentType: "application/pdf" }, ...extras],
     },
     settings.delivery,
@@ -126,28 +134,8 @@ export async function sendFirmOfferToBuyerAction(input: {
   if (mailed.status === "held") {
     return { ok: false, message: "Email is not connected (SMTP or Resend). The firm offer was saved but not sent." };
   }
-  const sent = await markFirmOfferSent(id, to, user.name || user.email, whatsappBody);
+  const sent = await markFirmOfferSent(id, to, user.name || user.email);
   if ("error" in sent) return { ok: false, message: sent.error };
-
-  const hook = process.env.DESK_FO_SENT_WEBHOOK_URL?.trim();
-  if (hook?.startsWith("https://") || hook?.startsWith("http://localhost")) {
-    try {
-      await fetch(hook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "firm_offer_sent",
-          dealId: sent.id,
-          requestId: sent.requestId,
-          buyerPhone: sent.buyerPhone,
-          whatsappBody,
-        }),
-        signal: AbortSignal.timeout(12_000),
-      });
-    } catch {
-      /* WhatsApp via n8n is best-effort; email already went. */
-    }
-  }
 
   revalidatePath("/admin/desk");
   revalidatePath(`/admin/desk/${id}`);
