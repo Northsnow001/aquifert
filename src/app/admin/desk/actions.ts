@@ -101,7 +101,7 @@ export async function sendFirmOfferToBuyerAction(input: {
   const bytes = await buildFirmOrderPdf(order);
   const filename = firmOrderFilename(order);
   const extras = [];
-  for (const file of saved.foPack.attachments) {
+  for (const file of saved.foPack?.attachments ?? []) {
     const content = await readFoAttachmentFile(file);
     if (!content) return { ok: false, message: `Could not read ${file.filename}. Upload it again.` };
     extras.push({ filename: `${FO_ATTACHMENT_LABEL[file.kind]}-${file.filename}`, content, contentType: file.contentType });
