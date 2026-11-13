@@ -263,11 +263,17 @@ export async function recordBuyerInbound(input: {
     }) ??
     null;
   const collecting =
-    deals.find((row) => row.status === "firm_interest" && !row.execution?.confirmedAt && phoneMatches(row, digits)) ??
-    null;
+    deals.find(
+      (row) =>
+        row.status !== "closed" &&
+        row.status === "firm_interest" &&
+        !row.execution?.confirmedAt &&
+        phoneMatches(row, digits),
+    ) ?? null;
   const awaitingFo =
     deals.find(
       (row) =>
+        row.status !== "closed" &&
         row.status === "firm_interest" &&
         row.firmOffer?.status === "sent" &&
         row.pi?.status !== "sent" &&
@@ -739,6 +745,21 @@ export async function rejectFirmOffer(id: string, actor: string): Promise<DeskDe
     ],
   };
   return (await save(next))!;
+}
+
+export async function closeAllOpenDeals(actor: string): Promise<{ closed: string[]; alreadyClosed: string[] }> {
+  const deals = await listRecords(DESK_DEALS);
+  const closed: string[] = [];
+  const alreadyClosed: string[] = [];
+  for (const deal of deals) {
+    if (deal.status === "closed") {
+      alreadyClosed.push(deal.requestId || deal.id);
+      continue;
+    }
+    const result = await closeDeal(deal.id, actor);
+    if (!("error" in result)) closed.push(result.requestId || result.id);
+  }
+  return { closed, alreadyClosed };
 }
 
 export async function closeDeal(id: string, actor: string): Promise<DeskDeal | { error: string }> {

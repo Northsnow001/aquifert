@@ -6,6 +6,7 @@ import { isAdminUser } from "@/lib/admin-access";
 import type { PiEditorValues } from "@/lib/desk-hitl/pi";
 import {
   addFoAttachment,
+  closeAllOpenDeals,
   closeDeal,
   confirmIndication,
   confirmSupplierFo,
@@ -227,6 +228,15 @@ export async function closeDealAction(input: {
   revalidatePath("/admin/desk");
   revalidatePath(`/admin/desk/${deal.id}`);
   return { ok: true };
+}
+
+export async function closeAllOpenDealsAction(): Promise<
+  { ok: true; closed: number } | { ok: false; message: string }
+> {
+  const user = await requireAdmin();
+  const result = await closeAllOpenDeals(user.name || user.email);
+  revalidatePath("/admin/desk");
+  return { ok: true, closed: result.closed.length };
 }
 
 export async function savePiDraftAction(input: {

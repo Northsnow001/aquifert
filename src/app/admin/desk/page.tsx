@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CloseAllDealsButton } from "@/components/admin/desk/close-all-deals";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/admin/ui";
 import { DEAL_STATUS_LABEL, type DealStatus } from "@/lib/desk-hitl/types";
 import { listDeskDeals } from "@/lib/desk-hitl/store";
@@ -15,7 +16,9 @@ const TONE: Record<DealStatus, "amber" | "blue" | "teal" | "neutral"> = {
 
 export default async function DeskShortlistsPage() {
   const deals = await listDeskDeals();
-  const waiting = deals.filter(
+  const open = deals.filter((d) => d.status !== "closed");
+  const closedCount = deals.length - open.length;
+  const waiting = open.filter(
     (d) => d.status === "waiting_desk" || d.pi?.status === "review" || d.firmOffer?.status === "review",
   ).length;
 
@@ -24,16 +27,21 @@ export default async function DeskShortlistsPage() {
       <PageHeader
         title="Desk shortlists"
         description="WF8 drops the first three offers here. Pick one, add your margin, send the indication. After the buyer confirms terms, the firm offer waits here until you send it."
+        actions={<CloseAllDealsButton openCount={open.length} />}
       />
       <Card>
-        {deals.length === 0 ? (
+        {open.length === 0 ? (
           <EmptyState
-            title="No shortlists yet"
-            body="When the RFQ closer finds matching offers, they appear here. Point WF8 True at POST /api/desk/shortlists."
+            title={closedCount ? "No open requests" : "No shortlists yet"}
+            body={
+              closedCount
+                ? `${closedCount} closed trade(s) kept on file. A new WhatsApp RFQ will open a new rfq#.`
+                : "When the RFQ closer finds matching offers, they appear here. Point WF8 True at POST /api/desk/shortlists."
+            }
           />
         ) : (
           <ul>
-            {deals.map((deal) => {
+            {open.map((deal) => {
               const foReview = deal.firmOffer?.status === "review";
               const foSent = deal.firmOffer?.status === "sent";
               const piReview = deal.pi?.status === "review";
@@ -84,6 +92,7 @@ export default async function DeskShortlistsPage() {
         )}
       </Card>
       {waiting ? <p className="mt-3 text-[12.5px] text-mid">{waiting} waiting for you (indication, FO or PI review).</p> : null}
+      {closedCount ? <p className="mt-1 text-[12.5px] text-dim">{closedCount} closed (hidden). Trade ids are kept.</p> : null}
     </div>
   );
 }
