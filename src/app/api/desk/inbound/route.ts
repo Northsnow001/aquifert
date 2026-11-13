@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     email,
   });
   if ("error" in result) return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
-  const echo = { phone, text, body: text };
+  const echo = { phone, text, body: text, email: email || "" };
   if (!("status" in result)) {
     return NextResponse.json({
       ok: true,
