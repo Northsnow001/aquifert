@@ -23,6 +23,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { LiveAnalyticsPanel } from "@/components/admin/live-analytics";
 import { Card, CardHeader, PageHeader, StatusBadge, btnPrimary, btnSecondary } from "@/components/admin/ui";
 import { excerpt, formatDay, formatStamp, hedgeRowCount, telexHeadline } from "@/lib/content-types";
 import { getHubContent, sortHedge, sortTelex } from "@/lib/hub-content";
@@ -140,6 +141,8 @@ export default async function AdminHomePage() {
           </>
         }
       />
+
+      <LiveAnalyticsPanel />
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         {stats.map((stat) => (
