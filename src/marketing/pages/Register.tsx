@@ -9,7 +9,7 @@ import { safeReturnPath } from "@/lib/idle-timeout";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/marketing/components/ui/button";
 import { Logo } from "@/marketing/components/shared/Logo";
-import { authInputCls, saveSignupPending } from "@/marketing/lib/auth-signup";
+import { authInputCls, phoneToE164, saveSignupPending, type SignupChannel } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { checkSignupAddress } from "@/app/(auth)/signup-check";
 import { checkSignupEmail, DEFAULT_SIGNUP_RULES, EMAIL_PATTERN, signupCheck, type SignupCheck } from "@/lib/desk-settings/email-rules";
@@ -34,6 +34,7 @@ export default function Register() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = safeReturnPath(params.get("redirect_to"));
+  const [method, setMethod] = useState<SignupChannel>("email");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -106,18 +107,23 @@ export default function Register() {
   }, []);
 
   const submit = async () => {
+    const byPhone = method === "sms";
     const e: Record<string, string> = {};
     if (form.name.trim().length < 2) e.name = "Enter your full name.";
-    if (!EMAIL_PATTERN.test(form.email.trim().toLowerCase())) e.email = "Enter a valid email address.";
+    if (!byPhone && !EMAIL_PATTERN.test(form.email.trim().toLowerCase())) e.email = "Enter a valid email address.";
     if (!form.company.trim()) e.company = "Enter your company.";
     if (!form.country.trim()) e.country = "Enter your country.";
+    const phone = byPhone ? phoneToE164(form.phone) : form.phone.trim() || null;
+    if (byPhone && !phone) e.phone = "Enter the phone number with its country code, for example +44…";
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
-    setPending(true);
-    const allowed = await vetEmail(form.email);
-    setPending(false);
-    if (!allowed) return;
+    if (!byPhone) {
+      setPending(true);
+      const allowed = await vetEmail(form.email);
+      setPending(false);
+      if (!allowed) return;
+    }
 
     if (!isSupabaseBrowserConfigured()) {
       setErrors({
@@ -129,33 +135,53 @@ export default function Register() {
     setPending(true);
     setErrors({});
     try {
-      const email = form.email.trim().toLowerCase();
+      const email = byPhone ? "" : form.email.trim().toLowerCase();
       const profile = {
         email,
         name: form.name.trim(),
         company: form.company.trim(),
         country: form.country.trim(),
-        phone: form.phone.trim() || undefined,
+        phone: phone ?? undefined,
+        channel: method,
         next: next ?? undefined,
       };
 
       const supabase = getSupabaseBrowser();
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          data: {
-            name: profile.name,
-            company: profile.company,
-            country: profile.country,
-            phone: profile.phone,
-          },
-        },
-      });
+      const { error } = await supabase.auth.signInWithOtp(
+        byPhone
+          ? {
+              phone: phone!,
+              options: {
+                shouldCreateUser: true,
+                channel: "sms",
+                data: {
+                  name: profile.name,
+                  company: profile.company,
+                  country: profile.country,
+                  phone: profile.phone,
+                },
+              },
+            }
+          : {
+              email,
+              options: {
+                shouldCreateUser: true,
+                data: {
+                  name: profile.name,
+                  company: profile.company,
+                  country: profile.country,
+                  phone: profile.phone,
+                },
+              },
+            },
+      );
       if (error) throw error;
 
       saveSignupPending(profile);
-      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+      const query = byPhone
+        ? `phone=${encodeURIComponent(phone!)}`
+        : `email=${encodeURIComponent(email)}`;
+      navigate(`/verify-email?${query}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not start sign-up.";
       setErrors({ form: friendlyAuthError(message, "signup") });
@@ -176,8 +202,34 @@ export default function Register() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Create your account</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          We&apos;ll email a verification code. You&apos;ll set a password after that.
+          {method === "sms"
+            ? "We'll text a verification code. You'll set a password after that."
+            : "We'll email a verification code. You'll set a password after that."}
         </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-1 rounded-lg bg-slate-200/70 p-1" role="group" aria-label="How to receive the verification code">
+          {(
+            [
+              ["email", "Email"],
+              ["sms", "Phone number"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={method === value}
+              onClick={() => {
+                setMethod(value);
+                setErrors({});
+              }}
+              className={`h-9 rounded-md text-[13px] font-semibold ${
+                method === value ? "bg-white text-navy-900 shadow-sm" : "text-slate-600 hover:text-navy-900"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className="mt-6 space-y-4">
           <div>
@@ -193,36 +245,38 @@ export default function Register() {
             />
             {errors.name && <p className={errCls}>{errors.name}</p>}
           </div>
-          <div>
-            <label htmlFor="rg-email" className="text-[13px] font-semibold text-navy-900">
-              Email *
-            </label>
-            <input
-              id="rg-email"
-              type="email"
-              autoComplete="email"
-              value={form.email}
-              onChange={(ev) => {
-                currentEmail.current = ev.target.value;
-                setForm({ ...form, email: ev.target.value });
-                if (errors.email) clearEmailError();
-              }}
-              onBlur={onEmailBlur}
-              aria-invalid={Boolean(errors.email)}
-              aria-describedby="rg-email-note"
-              placeholder="name@company.com"
-              className={`${authInputCls} mt-1`}
-            />
-            {errors.email ? (
-              <p id="rg-email-note" className={errCls}>
-                {errors.email}
-              </p>
-            ) : (
-              <p id="rg-email-note" className="mt-1 text-[12px] text-slate-500">
-                Any email you use every day works. A company address helps the desk recognise your business.
-              </p>
-            )}
-          </div>
+          {method === "email" && (
+            <div>
+              <label htmlFor="rg-email" className="text-[13px] font-semibold text-navy-900">
+                Email *
+              </label>
+              <input
+                id="rg-email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={(ev) => {
+                  currentEmail.current = ev.target.value;
+                  setForm({ ...form, email: ev.target.value });
+                  if (errors.email) clearEmailError();
+                }}
+                onBlur={onEmailBlur}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby="rg-email-note"
+                placeholder="name@company.com"
+                className={`${authInputCls} mt-1`}
+              />
+              {errors.email ? (
+                <p id="rg-email-note" className={errCls}>
+                  {errors.email}
+                </p>
+              ) : (
+                <p id="rg-email-note" className="mt-1 text-[12px] text-slate-500">
+                  Any email you use every day works. A company address helps the desk recognise your business.
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="rg-company" className="text-[13px] font-semibold text-navy-900">
@@ -253,19 +307,28 @@ export default function Register() {
           </div>
           <div>
             <label htmlFor="rg-phone" className="text-[13px] font-semibold text-navy-900">
-              Phone
+              {method === "sms" ? "Phone number *" : "Phone"}
             </label>
             <input
               id="rg-phone"
               type="tel"
               autoComplete="tel"
+              inputMode="tel"
               value={form.phone}
               onChange={(ev) => setForm({ ...form, phone: ev.target.value })}
+              placeholder={method === "sms" ? "+44 7400 123456" : undefined}
+              aria-invalid={Boolean(errors.phone)}
               className={`${authInputCls} mt-1`}
             />
-            <p className="mt-1 text-[12px] text-slate-500">
-              Optional. The trading desk uses this only to reach you on a live enquiry.
-            </p>
+            {errors.phone ? (
+              <p className={errCls}>{errors.phone}</p>
+            ) : (
+              <p className="mt-1 text-[12px] text-slate-500">
+                {method === "sms"
+                  ? "Include the country code. We'll text the verification code to this number."
+                  : "Optional. The trading desk uses this only to reach you on a live enquiry."}
+              </p>
+            )}
           </div>
           {errors.form && (
             <p

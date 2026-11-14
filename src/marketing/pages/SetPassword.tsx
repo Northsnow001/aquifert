@@ -120,6 +120,11 @@ export default function SetPassword() {
           return;
         }
 
+        if (pending?.channel === "sms" && pending.phone) {
+          navigate(`/verify-email?phone=${encodeURIComponent(pending.phone)}`, { replace: true });
+          return;
+        }
+
         if (pending?.email) {
           navigate(`/verify-email?email=${encodeURIComponent(pending.email)}`, { replace: true });
           return;
@@ -133,7 +138,7 @@ export default function SetPassword() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, pending?.email]);
+  }, [navigate, pending?.channel, pending?.email, pending?.phone]);
 
   const submit = async () => {
     const e: Record<string, string> = {};
@@ -273,11 +278,11 @@ export default function SetPassword() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Set your password</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          {fromInvite ? "You were invited" : "Email verified"}
-          {email || pending?.email ? (
+          {fromInvite ? "You were invited" : pending?.channel === "sms" ? "Phone verified" : "Email verified"}
+          {email || pending?.email || pending?.phone ? (
             <>
               {" "}
-              for <span className="font-semibold text-navy-900">{email || pending?.email}</span>
+              for <span className="font-semibold text-navy-900">{email || pending?.email || pending?.phone}</span>
             </>
           ) : null}
           . Choose a password, then sign in with it.

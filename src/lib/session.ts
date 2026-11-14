@@ -54,7 +54,7 @@ async function readSession(): Promise<SessionUser | null> {
     return {
       id: user.id,
       email: user.email ?? "",
-      name: profile?.full_name || user.email || "Member",
+      name: profile?.full_name || text(meta.full_name) || text(meta.name) || user.phone || user.email || "Member",
       plan,
       firstName: text(meta.first_name),
       lastName: text(meta.last_name),

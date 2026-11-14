@@ -1,13 +1,30 @@
+/** How the verification code is delivered. Email is the existing path. */
+export type SignupChannel = "email" | "sms";
+
 /** Pending signup profile stored between register → verify → set-password. */
 export type SignupPending = {
+  /** Empty when the account is created from a phone number. */
   email: string;
   name: string;
   company: string;
   country: string;
   phone?: string;
+  /** Missing on profiles saved before phone sign-up existed; those are email. */
+  channel?: SignupChannel;
   /** Hub page to open once the password is set, e.g. a shared TELEX flash. */
   next?: string;
 };
+
+/**
+ * International number Supabase can text. Accepts spaces and a 00 prefix.
+ * Returns null when the country code is missing or the length is not E.164.
+ */
+export function phoneToE164(raw: string): string | null {
+  const compact = raw.trim().replace(/[\s().-]/g, "");
+  if (!compact) return null;
+  const withPlus = compact.startsWith("00") ? `+${compact.slice(2)}` : compact;
+  return /^\+[1-9]\d{7,14}$/.test(withPlus) ? withPlus : null;
+}
 
 const KEY = "aq.signup.pending";
 

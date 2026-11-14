@@ -10,6 +10,7 @@ import { Button } from "@/marketing/components/ui/button";
 import { Logo } from "@/marketing/components/shared/Logo";
 import {
   authInputCls,
+  phoneToE164,
   readSignupPending,
   saveSignupPending,
   type SignupPending,
@@ -27,7 +28,10 @@ export default function VerifyEmail() {
   const [pending, setPendingSignup] = useState<SignupPending | null>(null);
   useEffect(() => setPendingSignup(readSignupPending()), []);
   const emailFromQuery = (params.get("email") ?? "").trim().toLowerCase();
+  const phoneFromQuery = phoneToE164(params.get("phone") ?? "") ?? "";
+  const channel = pending?.channel === "sms" || (!emailFromQuery && phoneFromQuery) ? "sms" : "email";
   const email = (pending?.email || emailFromQuery).toLowerCase();
+  const phone = (pending?.channel === "sms" ? phoneToE164(pending.phone ?? "") : null) || phoneFromQuery;
 
   const [digits, setDigits] = useState<string[]>(Array(CODE_LEN).fill(""));
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +41,14 @@ export default function VerifyEmail() {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    if (!email && !readSignupPending()?.email) {
-      navigate("/register", { replace: true });
+    const stored = readSignupPending();
+    const sms = channel === "sms" || stored?.channel === "sms";
+    if (sms) {
+      if (!phone && !phoneToE164(stored?.phone ?? "")) navigate("/register", { replace: true });
+      return;
     }
-  }, [email, navigate]);
+    if (!email && !stored?.email) navigate("/register", { replace: true });
+  }, [channel, email, navigate, phone]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -80,7 +88,7 @@ export default function VerifyEmail() {
 
   const verify = async () => {
     if (code.length !== CODE_LEN) {
-      setError("Enter the 6-digit code from your email.");
+      setError(channel === "sms" ? "Enter the 6-digit code from the text message." : "Enter the 6-digit code from your email.");
       return;
     }
     if (!isSupabaseBrowserConfigured()) {
@@ -91,21 +99,21 @@ export default function VerifyEmail() {
     setError(null);
     try {
       const supabase = getSupabaseBrowser();
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: "email",
-      });
+      const { data, error: verifyError } =
+        channel === "sms"
+          ? await supabase.auth.verifyOtp({ phone, token: code, type: "sms" })
+          : await supabase.auth.verifyOtp({ email, token: code, type: "email" });
       if (verifyError) throw verifyError;
       if (!data.session) throw new Error("Verification succeeded but no session was created.");
 
-      if (!pending && email) {
+      if (!pending && (email || phone)) {
         saveSignupPending({
           email,
-          name: (data.user?.user_metadata?.name as string) || email.split("@")[0] || "User",
+          name: (data.user?.user_metadata?.name as string) || (email ? email.split("@")[0] : "") || "User",
           company: (data.user?.user_metadata?.company as string) || "",
           country: (data.user?.user_metadata?.country as string) || "",
-          phone: (data.user?.user_metadata?.phone as string) || undefined,
+          phone: phone || (data.user?.user_metadata?.phone as string) || data.user?.phone || undefined,
+          channel,
         });
       }
 
@@ -118,40 +126,46 @@ export default function VerifyEmail() {
   };
 
   const resend = async () => {
-    if (resendIn > 0 || !email) return;
+    if (resendIn > 0 || (channel === "sms" ? !phone : !email)) return;
     if (!isSupabaseBrowserConfigured()) return;
     setResending(true);
     setError(null);
     try {
-      const allowed = await checkSignupAddress(email).catch(() => signupCheck(checkSignupEmail(email, DEFAULT_SIGNUP_RULES)));
-      if (!allowed.ok) throw new Error(allowed.message);
+      if (channel !== "sms") {
+        const allowed = await checkSignupAddress(email).catch(() => signupCheck(checkSignupEmail(email, DEFAULT_SIGNUP_RULES)));
+        if (!allowed.ok) throw new Error(allowed.message);
+      }
+      const profileData = pending
+        ? {
+            name: pending.name,
+            company: pending.company,
+            country: pending.country,
+            phone: pending.phone,
+          }
+        : undefined;
       const supabase = getSupabaseBrowser();
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          data: pending
-            ? {
-                name: pending.name,
-                company: pending.company,
-                country: pending.country,
-                phone: pending.phone,
-              }
-            : undefined,
-        },
-      });
+      const { error: otpError } =
+        channel === "sms"
+          ? await supabase.auth.signInWithOtp({
+              phone,
+              options: { shouldCreateUser: true, channel: "sms", data: profileData },
+            })
+          : await supabase.auth.signInWithOtp({
+              email,
+              options: { shouldCreateUser: true, data: profileData },
+            });
       if (otpError) throw otpError;
       setResendIn(60);
       setDigits(Array(CODE_LEN).fill(""));
       inputsRef.current[0]?.focus();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not resend code.");
+      setError(friendlyAuthError(err instanceof Error ? err.message : "Could not resend code.", "signup"));
     } finally {
       setResending(false);
     }
   };
 
-  if (!email) return null;
+  if (channel === "sms" ? !phone : !email) return null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
@@ -165,8 +179,17 @@ export default function VerifyEmail() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Enter verification code</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
-          We sent a 6-digit code to <span className="font-semibold text-navy-900">{email}</span>.
-          Copy it from your email and enter it below.
+          {channel === "sms" ? (
+            <>
+              We sent a 6-digit code by text to <span className="font-semibold text-navy-900">{phone}</span>.
+              Enter it below.
+            </>
+          ) : (
+            <>
+              We sent a 6-digit code to <span className="font-semibold text-navy-900">{email}</span>.
+              Copy it from your email and enter it below.
+            </>
+          )}
         </p>
 
         <div className="mt-8 flex justify-between gap-2" role="group" aria-label="Verification code">
@@ -201,12 +224,14 @@ export default function VerifyEmail() {
           className="mt-6 h-11 w-full bg-navy-700 text-white hover:bg-navy-800"
           size="lg"
         >
-          {pendingVerify ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Verify email"}
+          {pendingVerify ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : channel === "sms" ? "Verify phone" : "Verify email"}
         </Button>
 
-        <p className="mt-5 text-center text-[13px] leading-relaxed text-slate-600">
-          If the code hasn&apos;t arrived, check your junk or spam folder. A security filter on your inbox can place it there to protect you.
-        </p>
+        {channel === "email" && (
+          <p className="mt-5 text-center text-[13px] leading-relaxed text-slate-600">
+            If the code hasn&apos;t arrived, check your junk or spam folder. A security filter on your inbox can place it there to protect you.
+          </p>
+        )}
         <p className="mt-3 text-center text-[13px] text-slate-600">
           Still waiting?{" "}
           <button
@@ -224,7 +249,7 @@ export default function VerifyEmail() {
         </p>
         <p className="mt-3 text-center text-[13px]">
           <Link to="/register" className="font-medium text-slate-500 underline-offset-2 hover:underline">
-            Use a different email
+            {channel === "sms" ? "Use a different phone number" : "Use a different email"}
           </Link>
         </p>
       </div>
