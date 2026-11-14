@@ -109,7 +109,7 @@ export type DeskTestResult = { to: string; outcome: DeskTestOutcome; detail: str
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Resend can confirm the inbox received it. Wait a short while for that event. */
-async function resendOutcome(id: string): Promise<{ outcome: DeskTestOutcome; detail: string } | null> {
+async function resendOutcome(id: string): Promise<{ outcome: DeskTestOutcome; detail: string }> {
   let latest: string | null = null;
   for (let attempt = 0; attempt < 6; attempt += 1) {
     latest = await resendDelivery(id);
@@ -148,7 +148,8 @@ export async function sendDeskEventTest(): Promise<Result<{ results: DeskTestRes
     } else if (entry.status === "failed") {
       results.push({ to, outcome: "failed", detail: entry.error ?? "The provider refused it." });
     } else if (entry.providerId) {
-      results.push({ to, ...(await resendOutcome(entry.providerId)) });
+      const checked = await resendOutcome(entry.providerId);
+      results.push({ to, outcome: checked.outcome, detail: checked.detail });
     } else {
       results.push({ to, outcome: "accepted", detail: "The mail server accepted it. That confirms sending, not that it is in the inbox." });
     }

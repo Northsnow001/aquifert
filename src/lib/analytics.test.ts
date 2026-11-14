@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cleanParams, contentGroup } from "./analytics.ts";
+import { cleanParams, contentGroup } from "./analytics";
 
 test("content groups follow the part of Aquifert someone is using", () => {
   assert.equal(contentGroup("/"), "Marketing");
