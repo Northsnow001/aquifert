@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 1 — Collect profile + email, send a 6-digit OTP (no password yet).
+ * Step 1 — Collect profile, email, and phone, then send both codes together.
  */
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "@/marketing/router";
@@ -9,8 +9,8 @@ import { safeReturnPath } from "@/lib/idle-timeout";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/marketing/components/ui/button";
 import { Logo } from "@/marketing/components/shared/Logo";
-import { authInputCls, phoneToE164, saveSignupPending, type SignupChannel } from "@/marketing/lib/auth-signup";
-import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
+import { authInputCls, phoneToE164, saveSignupPending } from "@/marketing/lib/auth-signup";
+import { isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { checkSignupAddress } from "@/app/(auth)/signup-check";
 import { checkSignupEmail, DEFAULT_SIGNUP_RULES, EMAIL_PATTERN, signupCheck, type SignupCheck } from "@/lib/desk-settings/email-rules";
 import { friendlyAuthError } from "@/marketing/lib/auth-errors";
@@ -34,7 +34,6 @@ export default function Register() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = safeReturnPath(params.get("redirect_to"));
-  const [method, setMethod] = useState<SignupChannel>("email");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -107,23 +106,20 @@ export default function Register() {
   }, []);
 
   const submit = async () => {
-    const byPhone = method === "sms";
     const e: Record<string, string> = {};
     if (form.name.trim().length < 2) e.name = "Enter your full name.";
-    if (!byPhone && !EMAIL_PATTERN.test(form.email.trim().toLowerCase())) e.email = "Enter a valid email address.";
+    if (!EMAIL_PATTERN.test(form.email.trim().toLowerCase())) e.email = "Enter a valid email address.";
     if (!form.company.trim()) e.company = "Enter your company.";
     if (!form.country.trim()) e.country = "Enter your country.";
-    const phone = byPhone ? phoneToE164(form.phone) : form.phone.trim() || null;
-    if (byPhone && !phone) e.phone = "Enter the phone number with its country code, for example +44…";
+    const phone = phoneToE164(form.phone);
+    if (!phone) e.phone = "Enter the phone number with its country code, for example +44…";
     setErrors(e);
-    if (Object.keys(e).length > 0) return;
+    if (Object.keys(e).length > 0 || !phone) return;
 
-    if (!byPhone) {
-      setPending(true);
-      const allowed = await vetEmail(form.email);
-      setPending(false);
-      if (!allowed) return;
-    }
+    setPending(true);
+    const allowed = await vetEmail(form.email);
+    setPending(false);
+    if (!allowed) return;
 
     if (!isSupabaseBrowserConfigured()) {
       setErrors({
@@ -135,53 +131,26 @@ export default function Register() {
     setPending(true);
     setErrors({});
     try {
-      const email = byPhone ? "" : form.email.trim().toLowerCase();
+      const email = form.email.trim().toLowerCase();
       const profile = {
         email,
         name: form.name.trim(),
         company: form.company.trim(),
         country: form.country.trim(),
-        phone: phone ?? undefined,
-        channel: method,
+        phone,
+        channel: "both" as const,
         next: next ?? undefined,
       };
-
-      const supabase = getSupabaseBrowser();
-      const { error } = await supabase.auth.signInWithOtp(
-        byPhone
-          ? {
-              phone: phone!,
-              options: {
-                shouldCreateUser: true,
-                channel: "sms",
-                data: {
-                  name: profile.name,
-                  company: profile.company,
-                  country: profile.country,
-                  phone: profile.phone,
-                },
-              },
-            }
-          : {
-              email,
-              options: {
-                shouldCreateUser: true,
-                data: {
-                  name: profile.name,
-                  company: profile.company,
-                  country: profile.country,
-                  phone: profile.phone,
-                },
-              },
-            },
-      );
-      if (error) throw error;
+      const response = await fetch("/api/signup/codes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      const body = (await response.json().catch(() => null)) as { message?: string } | null;
+      if (!response.ok) throw new Error(body?.message || "Could not send the codes.");
 
       saveSignupPending(profile);
-      const query = byPhone
-        ? `phone=${encodeURIComponent(phone!)}`
-        : `email=${encodeURIComponent(email)}`;
-      navigate(`/verify-email?${query}`);
+      navigate(`/verify-email?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not start sign-up.";
       setErrors({ form: friendlyAuthError(message, "signup") });
@@ -202,34 +171,8 @@ export default function Register() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Create your account</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          {method === "sms"
-            ? "We'll text a verification code. You'll set a password after that."
-            : "We'll email a verification code. You'll set a password after that."}
+          We&apos;ll email a code and text a code at the same time. You&apos;ll set a password after both are entered.
         </p>
-
-        <div className="mt-6 grid grid-cols-2 gap-1 rounded-lg bg-slate-200/70 p-1" role="group" aria-label="How to receive the verification code">
-          {(
-            [
-              ["email", "Email"],
-              ["sms", "Phone number"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={method === value}
-              onClick={() => {
-                setMethod(value);
-                setErrors({});
-              }}
-              className={`h-9 rounded-md text-[13px] font-semibold ${
-                method === value ? "bg-white text-navy-900 shadow-sm" : "text-slate-600 hover:text-navy-900"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
 
         <div className="mt-6 space-y-4">
           <div>
@@ -245,8 +188,7 @@ export default function Register() {
             />
             {errors.name && <p className={errCls}>{errors.name}</p>}
           </div>
-          {method === "email" && (
-            <div>
+          <div>
               <label htmlFor="rg-email" className="text-[13px] font-semibold text-navy-900">
                 Email *
               </label>
@@ -276,7 +218,6 @@ export default function Register() {
                 </p>
               )}
             </div>
-          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="rg-company" className="text-[13px] font-semibold text-navy-900">
@@ -307,7 +248,7 @@ export default function Register() {
           </div>
           <div>
             <label htmlFor="rg-phone" className="text-[13px] font-semibold text-navy-900">
-              {method === "sms" ? "Phone number *" : "Phone"}
+              Phone number *
             </label>
             <input
               id="rg-phone"
@@ -316,7 +257,7 @@ export default function Register() {
               inputMode="tel"
               value={form.phone}
               onChange={(ev) => setForm({ ...form, phone: ev.target.value })}
-              placeholder={method === "sms" ? "+44 7400 123456" : undefined}
+              placeholder="+44 7400 123456"
               aria-invalid={Boolean(errors.phone)}
               className={`${authInputCls} mt-1`}
             />
@@ -324,9 +265,7 @@ export default function Register() {
               <p className={errCls}>{errors.phone}</p>
             ) : (
               <p className="mt-1 text-[12px] text-slate-500">
-                {method === "sms"
-                  ? "Include the country code. We'll text the verification code to this number."
-                  : "Optional. The trading desk uses this only to reach you on a live enquiry."}
+                Include the country code. A text is sent here at the same time as the email.
               </p>
             )}
           </div>
@@ -344,7 +283,7 @@ export default function Register() {
             className="h-11 w-full bg-navy-700 text-white hover:bg-navy-800"
             size="lg"
           >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Send verification code"}
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Send verification codes"}
           </Button>
           <p className="text-center text-[11.5px] leading-relaxed text-slate-500">
             By creating an account you agree to our{" "}

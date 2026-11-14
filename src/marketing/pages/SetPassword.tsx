@@ -120,6 +120,14 @@ export default function SetPassword() {
           return;
         }
 
+        if (pending?.channel === "both" && pending.email && pending.phone) {
+          navigate(
+            `/verify-email?email=${encodeURIComponent(pending.email)}&phone=${encodeURIComponent(pending.phone)}`,
+            { replace: true },
+          );
+          return;
+        }
+
         if (pending?.channel === "sms" && pending.phone) {
           navigate(`/verify-email?phone=${encodeURIComponent(pending.phone)}`, { replace: true });
           return;
@@ -278,7 +286,7 @@ export default function SetPassword() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Set your password</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          {fromInvite ? "You were invited" : pending?.channel === "sms" ? "Phone verified" : "Email verified"}
+          {fromInvite ? "You were invited" : pending?.channel === "both" ? "Email and phone verified" : pending?.channel === "sms" ? "Phone verified" : "Email verified"}
           {email || pending?.email || pending?.phone ? (
             <>
               {" "}

@@ -1,5 +1,5 @@
-/** How the verification code is delivered. Email is the existing path. */
-export type SignupChannel = "email" | "sms";
+/** How the verification code is delivered. `both` sends an email code and a text together. */
+export type SignupChannel = "email" | "sms" | "both";
 
 /** Pending signup profile stored between register → verify → set-password. */
 export type SignupPending = {
@@ -24,6 +24,15 @@ export function phoneToE164(raw: string): string | null {
   if (!compact) return null;
   const withPlus = compact.startsWith("00") ? `+${compact.slice(2)}` : compact;
   return /^\+[1-9]\d{7,14}$/.test(withPlus) ? withPlus : null;
+}
+
+/** Email conflict, phone conflict, or some other "already registered" reply. */
+export function existingAccountKind(message: string): "email" | "phone" | "other" | null {
+  const lower = message.toLowerCase();
+  if (!/already|registered|exists|duplicate/.test(lower)) return null;
+  if (/phone/.test(lower)) return "phone";
+  if (/email/.test(lower)) return "email";
+  return "other";
 }
 
 const KEY = "aq.signup.pending";
