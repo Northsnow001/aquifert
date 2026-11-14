@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   Anchor,
   BookOpen,
@@ -94,42 +96,72 @@ export function AdminNavIcon({ item, tone = "", size = 26 }: { item: NavItem; to
   );
 }
 
-export function AdminNav({ groups, onNavigate, collapsed = false }: { groups: NavGroup[]; onNavigate?: () => void; collapsed?: boolean }) {
+function activeGroup(pathname: string, groups: NavGroup[]) {
+  return groups.find((group) => group.items.some((item) => isAdminActive(pathname, item.href)))?.title ?? null;
+}
+
+export function AdminNav({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const currentGroup = activeGroup(pathname, groups);
+  const [open, setOpen] = useState<Set<string>>(() => new Set(currentGroup ? [currentGroup] : []));
+
+  useEffect(() => {
+    if (!currentGroup) return;
+    setOpen((current) => (current.has(currentGroup) ? current : new Set(current).add(currentGroup)));
+  }, [currentGroup]);
+
+  function toggle(title: string) {
+    setOpen((current) => {
+      const next = new Set(current);
+      if (next.has(title)) next.delete(title);
+      else next.add(title);
+      return next;
+    });
+  }
+
   return (
-    <nav aria-label="Admin" className={`flex flex-col gap-4 pb-4 pt-1 ${collapsed ? "px-2" : "px-3"}`}>
-      {groups.map((group) => (
-        <div key={group.title} className="flex flex-col gap-0.5">
-          <p className={collapsed ? "sr-only" : "px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim"}>{group.title}</p>
-          {group.items.map((item) => {
-            const active = isAdminActive(pathname, item.href);
-            const marked = item.badge !== undefined && item.badge !== 0;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                title={collapsed ? item.label : undefined}
-                aria-current={active ? "page" : undefined}
-                className={`aq-nav-link flex items-center rounded-xl py-[6px] text-[13.5px] no-underline transition-colors ${
-                  collapsed ? "justify-center px-0" : "gap-2.5 px-2.5"
-                } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"}`}
-              >
-                <span className="relative">
-                  <AdminNavIcon item={item} tone={GROUP_TONE[group.title]} />
-                  {collapsed && marked ? <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-blue" /> : null}
-                </span>
-                <span className={collapsed ? "sr-only" : "min-w-0 flex-1 truncate"}>{item.label}</span>
-                {!collapsed && marked ? (
-                  <span className={`shrink-0 rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums ${active ? "bg-blue-light text-blue" : "bg-black/[.05] text-mid"}`}>
-                    {item.badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+    <nav aria-label="Admin" className="flex flex-col gap-1 px-3 pb-4 pt-1">
+      {groups.map((group) => {
+        const expanded = open.has(group.title);
+        return (
+          <div key={group.title} className="flex flex-col gap-0.5">
+            <button
+              type="button"
+              onClick={() => toggle(group.title)}
+              aria-expanded={expanded}
+              className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim transition hover:bg-white/60 hover:text-ink"
+            >
+              {group.title}
+              <ChevronDown className={`h-3.5 w-3.5 transition ${expanded ? "" : "-rotate-90"}`} />
+            </button>
+            {expanded
+              ? group.items.map((item) => {
+                  const active = isAdminActive(pathname, item.href);
+                  const marked = item.badge !== undefined && item.badge !== 0;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onNavigate}
+                      aria-current={active ? "page" : undefined}
+                      className={`aq-nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-[6px] text-[13.5px] no-underline transition-colors ${
+                        active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"
+                      }`}
+                    >
+                      <AdminNavIcon item={item} tone={GROUP_TONE[group.title]} />
+                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                      {marked ? (
+                        <span className={`shrink-0 rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums ${active ? "bg-blue-light text-blue" : "bg-black/[.05] text-mid"}`}>
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </Link>
+                  );
+                })
+              : null}
+          </div>
+        );
+      })}
     </nav>
   );
 }

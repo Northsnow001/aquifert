@@ -4,22 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, LogOut, Menu, PanelLeft, PanelLeftClose, Search, X } from "lucide-react";
+import { ArrowUpRight, LogOut, Menu, Search, X } from "lucide-react";
 import { AdminNav, AdminNavIcon, isAdminActive, type NavGroup } from "@/components/admin/admin-nav";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
 import { IdleTimeout } from "@/components/app/idle-timeout";
 import { initials, type SessionUser } from "@/lib/session-shared";
 
-const NAV_KEY = "aq.admin.nav";
-
-function Brand({ compact = false }: { compact?: boolean }) {
-  if (compact) {
-    return (
-      <Link href="/admin" aria-label="Admin dashboard" title="Admin" className="flex items-center justify-center no-underline transition-opacity hover:opacity-80">
-        <Image src="/brand/mark-v2.png" alt="" width={148} height={214} className="h-8 w-auto" priority />
-      </Link>
-    );
-  }
+function Brand() {
   return (
     <Link href="/admin" aria-label="Admin dashboard" className="flex items-center gap-2 no-underline transition-opacity hover:opacity-80">
       <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-7 w-auto" priority />
@@ -28,21 +19,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function UserCard({ user, compact = false }: { user: SessionUser; compact?: boolean }) {
-  if (compact) {
-    return (
-      <div className="flex flex-col items-center gap-2">
-        <span title={user.name} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12px] font-bold text-white">
-          {initials(user.name)}
-        </span>
-        <form action="/api/logout" method="post">
-          <button type="submit" aria-label="Log out" title="Log out" className="flex h-8 w-8 items-center justify-center rounded-full text-dim transition hover:bg-red-50 hover:text-danger">
-            <LogOut className="h-4 w-4" />
-          </button>
-        </form>
-      </div>
-    );
-  }
+function UserCard({ user }: { user: SessionUser }) {
   return (
     <div className="flex items-center gap-2.5">
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[12px] font-bold text-white">
@@ -64,27 +41,6 @@ function UserCard({ user, compact = false }: { user: SessionUser; compact?: bool
 export function AdminFrame({ user, groups, children }: { user: SessionUser; groups: NavGroup[]; children: React.ReactNode }) {
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
-  const [collapsed, setCollapsed] = useState(true);
-
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(NAV_KEY) === "open") setCollapsed(false);
-    } catch {
-      // A blocked store still leaves the menu collapsed.
-    }
-  }, []);
-
-  function toggleNav() {
-    setCollapsed((current) => {
-      const next = !current;
-      try {
-        window.localStorage.setItem(NAV_KEY, next ? "closed" : "open");
-      } catch {
-        // The choice still applies for this visit.
-      }
-      return next;
-    });
-  }
 
   const items = groups.flatMap((group) => group.items.map((item) => ({ ...item, group: group.title })));
   const current = items.filter((item) => isAdminActive(pathname, item.href)).sort((a, b) => b.href.length - a.href.length)[0];
@@ -121,27 +77,23 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
         Skip to content
       </a>
       <div className="aq-canvas flex h-full overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)]">
-        <aside className={`aq-rail hidden shrink-0 flex-col border-r border-black/[.06] transition-[width] duration-200 lg:flex ${collapsed ? "w-[76px]" : "w-[256px]"}`}>
-          <div className={`flex h-16 shrink-0 items-center ${collapsed ? "justify-center px-2" : "px-5"}`}>
-            <Brand compact={collapsed} />
+        <aside className="aq-rail hidden w-[256px] shrink-0 flex-col border-r border-black/[.06] lg:flex">
+          <div className="flex h-16 shrink-0 items-center px-5">
+            <Brand />
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-            <AdminNav groups={groups} collapsed={collapsed} />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <AdminNav groups={groups} />
           </div>
-          <div className={`shrink-0 space-y-3 border-t border-black/[.06] ${collapsed ? "p-2" : "p-3"}`}>
+          <div className="shrink-0 space-y-3 border-t border-black/[.06] p-3">
             <Link
               href="/hub"
-              title={collapsed ? "Open the hub" : undefined}
-              aria-label={collapsed ? "Open the hub" : undefined}
-              className={`flex items-center rounded-xl bg-white/70 text-[12.5px] font-semibold text-ink no-underline shadow-[0_1px_2px_rgb(16_38_59/0.06)] transition hover:bg-white hover:text-blue ${
-                collapsed ? "mx-auto h-10 w-10 justify-center" : "justify-between px-3 py-2"
-              }`}
+              className="flex items-center justify-between rounded-xl bg-white/70 px-3 py-2 text-[12.5px] font-semibold text-ink no-underline shadow-[0_1px_2px_rgb(16_38_59/0.06)] transition hover:bg-white hover:text-blue"
             >
-              {collapsed ? null : "Open the hub"}
+              Open the hub
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
-            <div className={collapsed ? "" : "px-1"}>
-              <UserCard user={user} compact={collapsed} />
+            <div className="px-1">
+              <UserCard user={user} />
             </div>
           </div>
         </aside>
@@ -159,15 +111,6 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
             <div className="lg:hidden">
               <Brand />
             </div>
-            <button
-              type="button"
-              onClick={toggleNav}
-              aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-              aria-expanded={!collapsed}
-              className="hidden h-9 w-9 items-center justify-center rounded-full text-ink transition hover:bg-black/[.05] lg:flex"
-            >
-              {collapsed ? <PanelLeft className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
-            </button>
             <div className="hidden min-w-0 items-center gap-2 text-[14px] lg:flex" aria-label="Current page">
               <span className="text-dim">{current?.group ?? "Admin"}</span>
               <span className="text-[#c5cfd9]">/</span>
