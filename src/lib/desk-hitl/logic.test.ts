@@ -33,18 +33,21 @@ describe("classifyBuyerReply", () => {
 });
 
 describe("looksLikeNewRfq", () => {
-  it("treats hello and product names as a new enquiry", () => {
+  it("treats hello and a different product as a new enquiry", () => {
     assert.equal(looksLikeNewRfq("hello"), true);
-    assert.equal(looksLikeNewRfq("SplashFert"), true);
+    assert.equal(looksLikeNewRfq("SplashFert", "Normal Alkaline"), true);
     assert.equal(looksLikeNewRfq("new order"), true);
+    assert.equal(looksLikeNewRfq("another product"), true);
   });
 
-  it("keeps packing answers on the current deal", () => {
+  it("keeps packing and payment answers on the current deal", () => {
     assert.equal(looksLikeNewRfq("25kg bags"), false);
     assert.equal(looksLikeNewRfq("ok send it"), false);
     assert.equal(looksLikeNewRfq("China origin, SGS"), false);
     assert.equal(looksLikeNewRfq("BL 60"), false);
     assert.equal(looksLikeNewRfq("CAD"), false);
+    assert.equal(looksLikeNewRfq("TT 30 days"), false);
+    assert.equal(looksLikeNewRfq("Normal Alkaline", "Normal Alkaline"), false);
   });
 });
 

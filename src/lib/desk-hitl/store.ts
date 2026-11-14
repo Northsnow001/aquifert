@@ -306,8 +306,9 @@ export async function recordBuyerInbound(input: {
       await save(applyBuyerEmail(row, inboundEmail));
     }
   }
-  if (!deal && collecting && kind !== "negotiate") {
-    const follow = await resolveFirmFollowUp(text);
+  // Packing is the live thread. Do not let a leftover indication or Gemini send this to RFQ Agent.
+  if (collecting) {
+    const follow = await resolveFirmFollowUp(text, collecting.product);
     if (follow === "firm_order") {
       const row = inboundEmail.includes("@") ? applyBuyerEmail(collecting, inboundEmail) : collecting;
       return (await save({

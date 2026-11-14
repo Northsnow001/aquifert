@@ -14,21 +14,34 @@ export type FollowUpIntent = "firm_order" | "chat";
 export type DeskPhase = "rfq" | "post_yes" | "offer_review" | "pi_sent";
 
 const PACKING_DETAIL =
-  /\b(bag|packing|jumbo|bulk|sgs|bv|coa|coo|bl\s*\+?|bl\b|lc|sblc|cad|tt\b|da\b|dp\b|origin|cfr|cif|fob|inspect|permit|25kg|50kg|sight|days?|payment)\b/i;
-const CONFIRM_LINE = /^(yes|yep|yeah|ok|okay|sure|correct|confirmed?|send it|please send|go ahead|email it)[\s!.]*$/i;
+  /\b(bags?|packing|jumbo|bulk|sgs|bv|coa|coo|bl\s*\+?|bl\b|lc|sblc|cad|tt\b|da\b|dp\b|origin|cfr|cif|fob|inspect|permit|25\s*kg|50\s*kg|sight|days?|payment)\b/i;
+const CONFIRM_LINE =
+  /^(yes|yep|yeah|ok|okay|sure|correct|confirmed?)(\s+(please\s+)?(send it|go ahead|email it))?[\s!.]*$|^(please send|send it|go ahead|email it)[\s!.]*$/i;
 const GREETING_ONLY = /^(hi|hello|hey|hiya|good (morning|afternoon|evening))[\s!.]*$/i;
 const NEW_RFQ_PHRASE =
   /\b(new (order|rfq|request|enquiry|inquiry)|another (order|rfq|product)|different product|start (over|again)|fresh (rfq|enquiry))\b/i;
 
-/** Product names, hellos, and “new RFQ” language must leave packing / FO follow-up. */
-export function looksLikeNewRfq(text: string): boolean {
+function normProduct(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/**
+ * While packing is open, stay on that deal unless they clearly start something else.
+ * Commercial fragments (BL 60, CAD, SGS) are never a new RFQ.
+ */
+export function looksLikeNewRfq(text: string, currentProduct = ""): boolean {
   const t = text.trim();
   if (!t) return false;
   if (CONFIRM_LINE.test(t)) return false;
   if (PACKING_DETAIL.test(t) && t.length < 240) return false;
-  if (GREETING_ONLY.test(t) || NEW_RFQ_PHRASE.test(t)) return true;
+  if (/\d/.test(t)) return false;
+  if (NEW_RFQ_PHRASE.test(t) || GREETING_ONLY.test(t)) return true;
   const words = t.split(/\s+/).filter(Boolean);
-  return words.length <= 6 && !/\b(yes|ok|okay|bags?|jumbo|bulk|origin|inspect|lc|bl|cad|sgs|bv|coa)\b/i.test(t);
+  if (words.length > 6) return false;
+  const token = normProduct(t);
+  const current = normProduct(currentProduct);
+  if (current && token && (token.includes(current) || current.includes(token))) return false;
+  return /[a-z]{3,}/i.test(t);
 }
 
 export function deskPhase(input: {
