@@ -48,6 +48,10 @@ describe("looksLikeNewRfq", () => {
     assert.equal(looksLikeNewRfq("CAD"), false);
     assert.equal(looksLikeNewRfq("TT 30 days"), false);
     assert.equal(looksLikeNewRfq("Normal Alkaline", "Normal Alkaline"), false);
+    assert.equal(looksLikeNewRfq("india", "GoldenFert"), false);
+    assert.equal(looksLikeNewRfq("India", "GoldenFert"), false);
+    assert.equal(looksLikeNewRfq("lagos", "GoldenFert"), false);
+    assert.equal(looksLikeNewRfq("jumbo bags", "GoldenFert"), false);
   });
 });
 

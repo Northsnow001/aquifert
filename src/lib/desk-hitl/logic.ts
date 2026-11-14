@@ -25,9 +25,16 @@ function normProduct(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+const PRODUCT_NAME =
+  /\b(urea|dap|mop|map|npk|sop|kcl|tsp|ssp|uan|ammonium|nitrate|phosphate|sulphate|sulfate|potash|compound|fertilisers?|fertilizers?)\b|[a-z]*fert\b/i;
+
+function looksLikeProductName(text: string) {
+  return PRODUCT_NAME.test(text.trim());
+}
+
 /**
  * While packing is open, stay on that deal unless they clearly start something else.
- * Commercial fragments (BL 60, CAD, SGS) are never a new RFQ.
+ * Origin/port/country answers (india, lagos) stay. Only a different fertiliser SKU leaves.
  */
 export function looksLikeNewRfq(text: string, currentProduct = ""): boolean {
   const t = text.trim();
@@ -41,7 +48,7 @@ export function looksLikeNewRfq(text: string, currentProduct = ""): boolean {
   const token = normProduct(t);
   const current = normProduct(currentProduct);
   if (current && token && (token.includes(current) || current.includes(token))) return false;
-  return /[a-z]{3,}/i.test(t);
+  return looksLikeProductName(t);
 }
 
 export function deskPhase(input: {
