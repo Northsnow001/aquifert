@@ -38,7 +38,8 @@ Do not treat a product name or a new RFQ as agree.`,
   }
 }
 
-const DETAILS = /\b(bag|packing|jumbo|bulk|sgs|bl\s*\+|lc |origin|cfr|cif|fob|inspect|coa|permit|25kg|50kg|mt\b)\b/i;
+const DETAILS =
+  /\b(bag|packing|jumbo|bulk|sgs|bv|coa|coo|bl\s*\+?|bl\b|lc|sblc|cad|tt\b|da\b|dp\b|origin|cfr|cif|fob|inspect|permit|25kg|50kg|mt\b|sight|days?|payment)\b/i;
 const CONFIRM = /^(yes|yep|yeah|ok|okay|sure|correct|confirmed?|send it|please send|go ahead|email it)[\s!.]*$/i;
 
 /** After firm interest: packing answers vs a brand-new RFQ. */
@@ -57,8 +58,8 @@ export async function resolveFirmFollowUp(text: string): Promise<FollowUpIntent>
       system: `The buyer may already have firm interest on one fertiliser indication. Classify this WhatsApp.
 Return JSON only: {"intent":"firm_order"|"chat"}
 - firm_order: packing/origin/port/window/payment/inspection/docs answers, recap confirmations, or yes send the firm offer email.
-- chat: greeting, a product name only (e.g. SplashFert, urea), a new RFQ, or anything that is not answering packing/terms on the current deal.
-A product brand or “hello” is chat, not firm_order.`,
+- chat: greeting, a product name only (e.g. SplashFert, urea), or they clearly start a new RFQ.
+Payment fragments (BL 60, CAD, LC) and packing/origin answers are firm_order, not a new RFQ.`,
       turns: [{ role: "user", text: text.slice(0, 500) }],
     });
     return parseFollowUpIntent(result.text) ?? "chat";

@@ -43,6 +43,8 @@ describe("looksLikeNewRfq", () => {
     assert.equal(looksLikeNewRfq("25kg bags"), false);
     assert.equal(looksLikeNewRfq("ok send it"), false);
     assert.equal(looksLikeNewRfq("China origin, SGS"), false);
+    assert.equal(looksLikeNewRfq("BL 60"), false);
+    assert.equal(looksLikeNewRfq("CAD"), false);
   });
 });
 
