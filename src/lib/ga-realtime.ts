@@ -58,6 +58,23 @@ async function accessToken() {
   return body.access_token;
 }
 
+const VIEWER_MESSAGE = "The Google reader cannot view this property yet. In Analytics, open Property access management and add its email as a Viewer.";
+
+async function realtimeReport(bearer: string, request: Record<string, unknown>): Promise<RealtimeReport> {
+  const response = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${propertyId()}:runRealtimeReport`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${bearer}`, "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+    signal: AbortSignal.timeout(12_000),
+  });
+  const body = (await response.json().catch(() => null)) as (RealtimeReport & { error?: { message?: string; status?: string } }) | null;
+  if (!response.ok || !body || body.error) {
+    const denied = response.status === 403 || body?.error?.status === "PERMISSION_DENIED";
+    throw Object.assign(new Error(denied ? VIEWER_MESSAGE : body?.error?.message || `Google Analytics returned ${response.status}.`), { denied });
+  }
+  return body;
+}
+
 /** Active visitors, pages and events from the last 30 minutes. Never throws. */
 export async function liveAnalytics(): Promise<LiveAnalytics | LiveAnalyticsFailure> {
   if (!readerConfigured()) {
@@ -69,50 +86,31 @@ export async function liveAnalytics(): Promise<LiveAnalytics | LiveAnalyticsFail
   }
   try {
     const bearer = await accessToken();
-    const response = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${propertyId()}:batchRunRealtimeReports`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${bearer}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        requests: [
-          { metrics: [{ name: "activeUsers" }, { name: "eventCount" }, { name: "screenPageViews" }] },
-          {
-            dimensions: [{ name: "minutesAgo" }],
-            metrics: [{ name: "activeUsers" }],
-            minuteRanges: [{ startMinutesAgo: 29, endMinutesAgo: 0 }],
-          },
-          {
-            dimensions: [{ name: "unifiedScreenName" }],
-            metrics: [{ name: "activeUsers" }, { name: "screenPageViews" }],
-            limit: 6,
-            orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
-          },
-          {
-            dimensions: [{ name: "eventName" }],
-            metrics: [{ name: "eventCount" }],
-            limit: 6,
-            orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
-          },
-          {
-            dimensions: [{ name: "deviceCategory" }],
-            metrics: [{ name: "activeUsers" }],
-            orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
-          },
-        ],
+    const [totals, minutes, screens, events, devices] = await Promise.all([
+      realtimeReport(bearer, { metrics: [{ name: "activeUsers" }, { name: "eventCount" }, { name: "screenPageViews" }] }),
+      realtimeReport(bearer, {
+        dimensions: [{ name: "minutesAgo" }],
+        metrics: [{ name: "activeUsers" }],
+        minuteRanges: [{ startMinutesAgo: 29, endMinutesAgo: 0 }],
       }),
-      signal: AbortSignal.timeout(12_000),
-    });
-    const body = (await response.json().catch(() => null)) as { reports?: RealtimeReport[]; error?: { message?: string; status?: string } } | null;
-    if (!response.ok || !body?.reports) {
-      const denied = response.status === 403 || body?.error?.status === "PERMISSION_DENIED";
-      return {
-        ok: false,
-        reason: denied ? "denied" : "failed",
-        message: denied
-          ? "The Google reader cannot view this property yet. In Analytics, open Property access management and add its email as a Viewer."
-          : body?.error?.message || `Google Analytics returned ${response.status}.`,
-      };
-    }
-    const [totals, minutes, screens, events, devices] = body.reports;
+      realtimeReport(bearer, {
+        dimensions: [{ name: "unifiedScreenName" }],
+        metrics: [{ name: "activeUsers" }, { name: "screenPageViews" }],
+        limit: "6",
+        orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+      }),
+      realtimeReport(bearer, {
+        dimensions: [{ name: "eventName" }],
+        metrics: [{ name: "eventCount" }],
+        limit: "6",
+        orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+      }),
+      realtimeReport(bearer, {
+        dimensions: [{ name: "deviceCategory" }],
+        metrics: [{ name: "activeUsers" }],
+        orderBys: [{ metric: { metricName: "activeUsers" }, desc: true }],
+      }),
+    ]);
     const total = metricMap(totals);
     return {
       ok: true,
@@ -130,6 +128,11 @@ export async function liveAnalytics(): Promise<LiveAnalytics | LiveAnalyticsFail
       devices: rowsOf(devices).map((row) => ({ name: String(row.deviceCategory || "unknown"), users: num(String(row.activeUsers)) })),
     };
   } catch (error) {
-    return { ok: false, reason: "failed", message: error instanceof Error ? error.message : "The live report could not be read." };
+    const denied = Boolean(error && typeof error === "object" && "denied" in error && error.denied);
+    return {
+      ok: false,
+      reason: denied ? "denied" : "failed",
+      message: error instanceof Error ? error.message : "The live report could not be read.",
+    };
   }
 }
