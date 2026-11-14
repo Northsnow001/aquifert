@@ -219,6 +219,10 @@ export default function SetPassword() {
 
       clearSignupPending();
 
+      if (!fromInvite && !inviteToken) {
+        await fetch("/api/signup/desk", { method: "POST" }).catch(() => undefined);
+      }
+
       if (fromInvite || inviteToken) {
         try {
           await supabase.auth.signOut({ scope: "local" });

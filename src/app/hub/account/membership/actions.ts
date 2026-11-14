@@ -6,7 +6,7 @@ import { getHubAccess } from "@/lib/aq-modules/access";
 import { isCycle, isTier, TIER_LABEL } from "@/lib/aq-modules/membership";
 import { addMembershipRequest } from "@/lib/aq-modules/members";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
-import { sendAnalyticsWaitlistEmail } from "@/lib/email/member-emails";
+import { sendAnalyticsWaitlistEmail, sendDeskAlert } from "@/lib/email/member-emails";
 
 type Result = { ok: true; email: string } | { ok: false; message: string };
 
@@ -43,6 +43,21 @@ export async function requestPlan(input: {
       message: note || (tier && requestedPlan === user.plan ? `Move my membership to ${TIER_LABEL[tier]}.` : ""),
     });
     if (requestedPlan === "growth") await sendAnalyticsWaitlistEmail({ name: user.name, email: user.email });
+    await sendDeskAlert({
+      kind: "membership-admin",
+      subject: `Plan request — ${user.name} — ${PLAN_LABEL[requestedPlan]}`,
+      heading: "Plan request",
+      preheader: `${user.name} asked for ${PLAN_LABEL[requestedPlan]}.`,
+      rows: [
+        ["Name", user.name],
+        ["Email", user.email],
+        ["Company", String(input.company ?? "")],
+        ["Current plan", PLAN_LABEL[user.plan]],
+        ["Requested plan", PLAN_LABEL[requestedPlan]],
+        ["Tier", tier ? TIER_LABEL[tier] : ""],
+        ["Message", note],
+      ],
+    });
     revalidatePath("/hub/account/membership");
     return { ok: true, email: user.email };
   } catch (error) {

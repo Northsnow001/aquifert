@@ -11,7 +11,12 @@ export type MailKind =
   | "zero-applicant"
   | "zero-admin"
   | "analytics-applicant"
+  | "analytics-admin"
   | "contact-applicant"
+  | "contact-admin"
+  | "lead-admin"
+  | "signup-admin"
+  | "membership-admin"
   | "pi-buyer"
   | "firm-offer-buyer"
   | "sales-contract-buyer"
@@ -42,6 +47,13 @@ export function deliveryStatus() {
 
 const sender = (delivery: DeliverySettings, from: string) => (delivery.fromName.trim() ? `${delivery.fromName.trim()} <${from}>` : from);
 
+/** A reply address that is the recipient itself makes some mail hosts drop the message as a loop. */
+function replyAddress(delivery: DeliverySettings, to: string) {
+  const reply = delivery.replyTo.trim();
+  if (!reply || reply.toLowerCase() === to.trim().toLowerCase()) return undefined;
+  return reply;
+}
+
 let smtp: Transporter | null = null;
 
 function smtpTransport() {
@@ -67,7 +79,7 @@ async function sendWithSmtp(message: Message, delivery: DeliverySettings, from: 
     subject: message.subject,
     html: message.html,
     text: message.text,
-    ...(delivery.replyTo.trim() ? { replyTo: delivery.replyTo.trim() } : {}),
+    ...(replyAddress(delivery, message.to) ? { replyTo: replyAddress(delivery, message.to) } : {}),
     ...(message.attachments?.length
       ? {
           attachments: message.attachments.map((file) => ({
@@ -86,7 +98,7 @@ export const getOutboxEntry = (id: string) => getRecord(OUTBOX, id) as Promise<O
 
 export const clearOutbox = () => clearRecords(OUTBOX);
 
-async function sendWithResend(message: Message, delivery: DeliverySettings, from: string) {
+async function sendWithResend(message: Message, delivery: DeliverySettings, from: string): Promise<string | undefined> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
@@ -96,7 +108,7 @@ async function sendWithResend(message: Message, delivery: DeliverySettings, from
       subject: message.subject,
       html: message.html,
       text: message.text,
-      ...(delivery.replyTo.trim() ? { reply_to: delivery.replyTo.trim() } : {}),
+      ...(replyAddress(delivery, message.to) ? { reply_to: replyAddress(delivery, message.to) } : {}),
       ...(message.attachments?.length
         ? {
             attachments: message.attachments.map((file) => ({
@@ -112,13 +124,15 @@ async function sendWithResend(message: Message, delivery: DeliverySettings, from
     const detail = await response.text().catch(() => "");
     throw new Error(`Resend returned ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`);
   }
+  const body = (await response.json().catch(() => null)) as { id?: unknown } | null;
+  return typeof body?.id === "string" ? body.id : undefined;
 }
 
 /** Sends one email and records it in the outbox. Never throws, so a mail failure cannot lose a submission. */
 export async function sendEmail(
   message: { kind: MailKind; to: string; subject: string; html: string; text: string; attachments?: MailAttachment[] },
   delivery: DeliverySettings,
-): Promise<OutboxEntry> {
+): Promise<OutboxEntry & { providerId?: string }> {
   const status = deliveryStatus();
   const entry: OutboxEntry = {
     id: `mail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -129,9 +143,11 @@ export async function sendEmail(
     status: "held",
     html: message.html,
   };
+  let providerId: string | undefined;
   if (status.provider && status.from) {
     try {
-      await (status.provider === "SMTP" ? sendWithSmtp : sendWithResend)(message, delivery, status.from);
+      if (status.provider === "SMTP") await sendWithSmtp(message, delivery, status.from);
+      else providerId = await sendWithResend(message, delivery, status.from);
       entry.status = "sent";
     } catch (error) {
       entry.status = "failed";
@@ -143,5 +159,18 @@ export async function sendEmail(
   } catch (error) {
     console.error("[mailer] could not record the email", error);
   }
-  return entry;
+  return providerId ? { ...entry, providerId } : entry;
+}
+
+/** Resend's latest event for a message it already accepted. Null when the provider has no update yet. */
+export async function resendDelivery(id: string): Promise<string | null> {
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) return null;
+  const response = await fetch(`https://api.resend.com/emails/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${key}` },
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) return null;
+  const body = (await response.json().catch(() => null)) as { last_event?: unknown } | null;
+  return typeof body?.last_event === "string" ? body.last_event : null;
 }

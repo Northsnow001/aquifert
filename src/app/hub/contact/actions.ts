@@ -2,7 +2,7 @@
 
 import { saveEnquiry } from "@/app/(auth)/actions";
 import { emailReference } from "@/lib/email/brand";
-import { sendContactReceipt } from "@/lib/email/member-emails";
+import { sendContactReceipt, sendDeskAlert } from "@/lib/email/member-emails";
 
 export async function sendContactMessage(input: {
   name: string;
@@ -27,5 +27,18 @@ export async function sendContactMessage(input: {
   });
   if (result.saved === "error") return { ok: false as const, message: result.message ?? "Could not send your message." };
   await sendContactReceipt({ name, email, message, reference });
+  await sendDeskAlert({
+    kind: "contact-admin",
+    subject: `New message — ${reference} — ${name}`,
+    heading: "New contact message",
+    preheader: `${name} sent a message from the hub.`,
+    rows: [
+      ["Reference", reference],
+      ["Name", name],
+      ["Email", email],
+      ["Company", company],
+      ["Message", message],
+    ],
+  });
   return { ok: true as const, delivered: result.saved === "remote" };
 }

@@ -135,6 +135,27 @@ export function splitTopic(message: string, fallback = "General enquiry") {
   return match ? { topic: match[1].trim(), body: match[2].trim() } : { topic: fallback, body: message.trim() };
 }
 
+/** Short alert for the desk inbox. Rows are label, value. */
+export function deskAlertEmail(input: { subject: string; heading: string; preheader: string; rows: Array<[string, string]> }): ComposedEmail {
+  const rows = input.rows.filter(([, value]) => value.trim());
+  return compose(input.subject, {
+    title: input.heading,
+    preheader: input.preheader,
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: "Desk alert",
+    heading: input.heading,
+    blocks: [
+      {
+        kind: "details",
+        title: "Details",
+        sections: [{ title: "Details", rows }],
+      },
+    ],
+    footerNote: "You received this because an event on Aquifert was addressed to the desk.",
+    deskEmail: DESK_EMAIL,
+  });
+}
+
 export function contactReceiptEmail(input: { name: string; reference: string; topic: string; message: string; deskEmail?: string }): ComposedEmail {
   const first = firstName(input.name);
   const snippet = input.message.replace(/\s+/g, " ").trim();

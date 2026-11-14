@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Inbox, PlugZap, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { emptyOutbox, saveDelivery } from "@/app/admin/settings/actions";
+import { emptyOutbox, saveDelivery, sendDeskEventTest, type DeskTestResult } from "@/app/admin/settings/actions";
 import { Panel, SaveBar, useEditorGuards } from "@/components/admin/aquibot/shared";
-import { EmptyState, btnDanger, input, label } from "@/components/admin/ui";
+import { EmptyState, btnDanger, btnPrimary, input, label } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
 import type { DeliverySettings } from "@/lib/desk-settings/types";
 
@@ -18,7 +18,12 @@ const KIND: Record<string, string> = {
   "zero-applicant": "Zero · member",
   "zero-admin": "Zero · desk",
   "analytics-applicant": "AQ Analytics waitlist · member",
+  "analytics-admin": "AQ Analytics waitlist · desk",
   "contact-applicant": "Contact · member",
+  "contact-admin": "Contact · desk",
+  "lead-admin": "Lead · desk",
+  "signup-admin": "New account · desk",
+  "membership-admin": "Plan request · desk",
   test: "Test",
 };
 
@@ -47,6 +52,8 @@ export function DeliveryPanel({
   const [filter, setFilter] = useState<"all" | OutboxRow["status"]>("all");
   const [saving, start] = useTransition();
   const [clearing, startClear] = useTransition();
+  const [testing, startTest] = useTransition();
+  const [testResults, setTestResults] = useState<DeskTestResult[] | null>(null);
   const dirty = JSON.stringify(draft) !== baseline;
   const shown = filter === "all" ? outbox : outbox.filter((row) => row.status === filter);
   const active = outbox.find((row) => row.id === selected) ?? null;
@@ -78,6 +85,36 @@ export function DeliveryPanel({
   };
 
   const sender = draft.fromName.trim() ? `${draft.fromName.trim()} <${status.from ?? "address set on the server"}>` : (status.from ?? "address set on the server");
+  const deskAddress = initial.replyTo.trim() || "noreply@aquifert.com";
+
+  const sendTest = () =>
+    startTest(async () => {
+      const result = await sendDeskEventTest();
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      setTestResults(result.results);
+      const delivered = result.results.filter((row) => row.outcome === "delivered");
+      const failed = result.results.filter((row) => row.outcome === "failed" || row.outcome === "held");
+      if (delivered.length === result.results.length) toast.success(result.results.length === 1 ? "The test email was delivered." : "Both test emails were delivered.");
+      else if (failed.length === result.results.length) toast.error("The test did not leave the server.");
+      else toast.success("Test finished. The result for each inbox is under the button.");
+      router.refresh();
+    });
+
+  const outcomeTone: Record<DeskTestResult["outcome"], string> = {
+    delivered: "text-[#1f7a45]",
+    accepted: "text-[#9a5b00]",
+    held: "text-[#9a5b00]",
+    failed: "text-[#b42318]",
+  };
+  const outcomeLabel: Record<DeskTestResult["outcome"], string> = {
+    delivered: "Delivered",
+    accepted: "Accepted, not confirmed in the inbox",
+    held: "Held",
+    failed: "Failed",
+  };
 
   return (
     <div className="space-y-5">
@@ -128,6 +165,28 @@ export function DeliveryPanel({
             </div>
           </div>
           <p className="mt-3 truncate rounded-lg bg-s2 px-3 py-2 font-mono text-[12px] text-mid">From: {sender}</p>
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="text-[13px] font-semibold text-ink">Test a desk event</p>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-mid">
+              Sends the same alert used for a new account, a contact message, a lead, or a plan request to <span className="font-mono text-ink">{deskAddress}</span> and{" "}
+              <span className="font-mono text-ink">kaytoba49@gmail.com</span>. Delivered means the provider confirmed the inbox received it.
+            </p>
+            <button type="button" className={`${btnPrimary} mt-3`} onClick={sendTest} disabled={testing}>
+              <Send className="h-3.5 w-3.5" />
+              {testing ? "Sending test…" : "Send test email"}
+            </button>
+            {testResults ? (
+              <ul className="mt-3 space-y-2">
+                {testResults.map((row) => (
+                  <li key={row.to} className="rounded-lg bg-s2 px-3 py-2 text-[12.5px]">
+                    <span className="font-mono text-ink">{row.to}</span>
+                    <span className={`ml-2 font-semibold ${outcomeTone[row.outcome]}`}>{outcomeLabel[row.outcome]}</span>
+                    <span className="mt-0.5 block text-mid">{row.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         </Panel>
       </div>
 

@@ -8,7 +8,9 @@ import { formEmail, sampleFor } from "@/lib/desk-settings/forms";
 import { siteOrigin } from "@/lib/desk-settings/notify";
 import { getDeskSettings, updateDeskSettings } from "@/lib/desk-settings/store";
 import type { DeskSettings, EmailTemplate, FormEmails, MemberRules, TemplateKind } from "@/lib/desk-settings/types";
-import { clearOutbox, sendEmail } from "@/lib/mailer";
+import { deskAlertEmail } from "@/lib/email/templates";
+import { deskInbox } from "@/lib/email/member-emails";
+import { clearOutbox, resendDelivery, sendEmail } from "@/lib/mailer";
 import { getSession } from "@/lib/session";
 
 async function requireAdmin() {
@@ -96,6 +98,63 @@ export async function sendTestEmail(kind: TemplateKind, audience: "applicant" | 
   const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, delivery);
   refresh();
   return { ok: true, status: entry.status, to: user.email, error: entry.error };
+}
+
+const DESK_TEST_COPY = "kaytoba49@gmail.com";
+
+export type DeskTestOutcome = "delivered" | "accepted" | "held" | "failed";
+
+export type DeskTestResult = { to: string; outcome: DeskTestOutcome; detail: string };
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Resend can confirm the inbox received it. Wait a short while for that event. */
+async function resendOutcome(id: string): Promise<{ outcome: DeskTestOutcome; detail: string } | null> {
+  let latest: string | null = null;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    latest = await resendDelivery(id);
+    if (latest === "delivered") return { outcome: "delivered", detail: "Resend confirmed this message was delivered." };
+    if (latest === "bounced" || latest === "complained" || latest === "failed") return { outcome: "failed", detail: `Resend reports ${latest}.` };
+    if (attempt < 5) await sleep(2_000);
+  }
+  return latest
+    ? { outcome: "accepted", detail: `Resend accepted it (${latest}). Delivery to the inbox is not confirmed yet.` }
+    : { outcome: "accepted", detail: "Resend accepted it. Delivery to the inbox is not confirmed yet." };
+}
+
+/** Sends the same desk alert used for sign-ups and other events, to the desk inbox and a second check address. */
+export async function sendDeskEventTest(): Promise<Result<{ results: DeskTestResult[] }>> {
+  await requireAdmin();
+  const { delivery } = await getDeskSettings();
+  const desk = deskInbox(delivery.replyTo);
+  const targets = [...new Set([desk, DESK_TEST_COPY].map((address) => address.toLowerCase()))];
+  const sentAt = new Date().toISOString();
+  const email = deskAlertEmail({
+    subject: "Aquifert desk test",
+    heading: "Desk test",
+    preheader: "This is a test that an Aquifert event reached the desk inbox.",
+    rows: [
+      ["Event", "Test from Admin, Settings, Email delivery"],
+      ["Sent at", sentAt],
+      ["Desk inbox", desk],
+      ["Check copy", DESK_TEST_COPY],
+    ],
+  });
+  const results: DeskTestResult[] = [];
+  for (const to of targets) {
+    const entry = await sendEmail({ kind: "test", to, ...email, subject: `[Test] ${email.subject}` }, delivery);
+    if (entry.status === "held") {
+      results.push({ to, outcome: "held", detail: "Nothing left the server. Email delivery is not connected." });
+    } else if (entry.status === "failed") {
+      results.push({ to, outcome: "failed", detail: entry.error ?? "The provider refused it." });
+    } else if (entry.providerId) {
+      results.push({ to, ...(await resendOutcome(entry.providerId)) });
+    } else {
+      results.push({ to, outcome: "accepted", detail: "The mail server accepted it. That confirms sending, not that it is in the inbox." });
+    }
+  }
+  refresh();
+  return { ok: true, results };
 }
 
 export async function emptyOutbox(): Promise<Result> {

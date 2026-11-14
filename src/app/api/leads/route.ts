@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { sendDeskAlert } from "@/lib/email/member-emails";
 import { createAdminClient, notifyAdmins } from "@/lib/supabase/admin";
 
 type LeadInput = {
@@ -113,6 +114,22 @@ export async function POST(req: NextRequest) {
     .single();
   if (error) return NextResponse.json({ error: "Could not save lead" }, { status: 500 });
 
+  await sendDeskAlert({
+    kind: "lead-admin",
+    subject: `New lead — ${input.fullName} — ${input.company}`,
+    heading: "New lead",
+    preheader: `${input.fullName} from ${input.company} left their details.`,
+    rows: [
+      ["Name", input.fullName],
+      ["Email", input.email],
+      ["Company", input.company],
+      ["Country", input.country],
+      ["Role", input.role ?? ""],
+      ["Annual volume", input.annualVolume ?? ""],
+      ["Timeline", input.timeline ?? ""],
+      ["Score", score],
+    ],
+  });
   if (score === "HOT") {
     await notifyAdmins(
       db,

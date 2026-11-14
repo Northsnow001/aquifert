@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { emailReference } from "@/lib/email/brand";
-import { sendContactReceipt } from "@/lib/email/member-emails";
+import { sendContactReceipt, sendDeskAlert } from "@/lib/email/member-emails";
 import { createAdminClient, notifyAdmins } from "@/lib/supabase/admin";
 
 const CHANNELS = {
@@ -15,7 +15,7 @@ type Channel = keyof typeof CHANNELS;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const str = (v: unknown, max = 255) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
-/** Public contact-page message (no account needed). Always notifies the desk. */
+/** Public contact-page message (no account needed). Emails the desk and confirms to the sender. */
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   const channel = str(body?.channel, 32) as Channel;
@@ -42,5 +42,19 @@ export async function POST(req: NextRequest) {
     `${reference} · ${name} (${email}${company ? ", " + company : ""}): ${message.slice(0, 300)}`,
   );
   await sendContactReceipt({ name, email, message, reference, topic: CHANNELS[channel] });
+  await sendDeskAlert({
+    kind: "contact-admin",
+    subject: `New message — ${reference} — ${name}`,
+    heading: "New contact message",
+    preheader: `${name} sent a message through the contact page.`,
+    rows: [
+      ["Reference", reference],
+      ["Channel", CHANNELS[channel]],
+      ["Name", name],
+      ["Email", email],
+      ["Company", company ?? ""],
+      ["Message", message],
+    ],
+  });
   return NextResponse.json({ ok: true });
 }
