@@ -94,28 +94,33 @@ export function AdminNavIcon({ item, tone = "", size = 26 }: { item: NavItem; to
   );
 }
 
-export function AdminNav({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
+export function AdminNav({ groups, onNavigate, collapsed = false }: { groups: NavGroup[]; onNavigate?: () => void; collapsed?: boolean }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Admin" className="flex flex-col gap-4 px-3 pb-4 pt-1">
+    <nav aria-label="Admin" className={`flex flex-col gap-4 pb-4 pt-1 ${collapsed ? "px-2" : "px-3"}`}>
       {groups.map((group) => (
         <div key={group.title} className="flex flex-col gap-0.5">
-          <p className="px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim">{group.title}</p>
+          <p className={collapsed ? "sr-only" : "px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-dim"}>{group.title}</p>
           {group.items.map((item) => {
             const active = isAdminActive(pathname, item.href);
+            const marked = item.badge !== undefined && item.badge !== 0;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={onNavigate}
+                title={collapsed ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
-                className={`aq-nav-link flex items-center gap-2.5 rounded-xl px-2.5 py-[6px] text-[13.5px] no-underline transition-colors ${
-                  active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"
-                }`}
+                className={`aq-nav-link flex items-center rounded-xl py-[6px] text-[13.5px] no-underline transition-colors ${
+                  collapsed ? "justify-center px-0" : "gap-2.5 px-2.5"
+                } ${active ? "bg-white font-semibold text-ink shadow-[0_1px_2px_rgb(16_38_59/0.08),0_4px_12px_-6px_rgb(16_38_59/0.12)]" : "font-medium text-mid hover:bg-white/70 hover:text-ink"}`}
               >
-                <AdminNavIcon item={item} tone={GROUP_TONE[group.title]} />
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {item.badge !== undefined && item.badge !== 0 ? (
+                <span className="relative">
+                  <AdminNavIcon item={item} tone={GROUP_TONE[group.title]} />
+                  {collapsed && marked ? <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-blue" /> : null}
+                </span>
+                <span className={collapsed ? "sr-only" : "min-w-0 flex-1 truncate"}>{item.label}</span>
+                {!collapsed && marked ? (
                   <span className={`shrink-0 rounded-full px-1.5 py-px text-[10.5px] font-semibold tabular-nums ${active ? "bg-blue-light text-blue" : "bg-black/[.05] text-mid"}`}>
                     {item.badge}
                   </span>
