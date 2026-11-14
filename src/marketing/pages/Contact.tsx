@@ -16,6 +16,7 @@ import { Textarea } from "@/marketing/components/ui/textarea";
 import { postJson, useMutation } from "@/marketing/lib/mutation";
 import { useSiteGlobal } from "@/marketing/lib/site-global";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 
 type Channel = "whatsapp" | "book_call" | "message" | "callback";
 
@@ -45,6 +46,7 @@ export default function ContactPage({ content }: { content: SiteContent["contact
   const send = useMutation(sendContact, {
     onSuccess: () => {
       setSent(true);
+      track("generate_lead", { form_name: "contact", method: channel });
       toast.success("Sent — the desk has it");
     },
     onError: (e) => toast.error(e.message),

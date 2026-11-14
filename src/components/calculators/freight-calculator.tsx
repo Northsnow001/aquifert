@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowDown, Calculator, RefreshCw, Share2, Ship } from "lucide-react";
 import { runFreightQuote, type QuoteResponse, type Usage } from "@/app/hub/freight-calculator/actions";
+import { track } from "@/lib/analytics";
 import { PortField } from "@/components/calculators/port-field";
 import { TIER_LABEL } from "@/lib/freight-desk/benchmark";
 import { DISCHARGE_RATES, LOAD_RATES, type Market } from "@/lib/freight/reference";
@@ -127,6 +128,7 @@ export function FreightCalculator({
       if (response.ok) {
         setQuote({ ...response, key });
         setError(null);
+        track("tool_calculate", { tool_name: "freight" });
       } else {
         setError(response.message);
       }

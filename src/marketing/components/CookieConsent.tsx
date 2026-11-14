@@ -23,7 +23,7 @@ const CATEGORIES = [
   {
     key: "analytics",
     label: "Analytics",
-    desc: "Anonymous usage measurement that helps us improve the platform.",
+    desc: "Google Analytics 4 measures how the platform is used: pages, searches and tools. No name, email or phone number is sent.",
     locked: false,
   },
   {

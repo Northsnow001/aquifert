@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeftRight, Calculator, PackageOpen, Share2 } from "lucide-react";
 import { runNetback, type NetbackUsage } from "@/app/hub/netback/actions";
+import { track } from "@/lib/analytics";
 import { PortField } from "@/components/calculators/port-field";
 import { CURRENCIES, findCurrency } from "@/lib/netback/currencies";
 import { basisCosts, type Basis, type ForwardOrigin, type NetbackCosts, type ReverseOrigin } from "@/lib/netback/calculate";
@@ -179,6 +180,7 @@ export function NetbackCalculator({ ports, config, usage: initialUsage }: { port
         return;
       }
       setRun({ request, destination });
+      track("tool_calculate", { tool_name: mode === "forward" ? "forward" : "netback" });
     });
   }
 

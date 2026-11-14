@@ -6,6 +6,7 @@ import { Clock, Loader2 } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { Button } from "@/marketing/components/ui/button";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
+import { track } from "@/lib/analytics";
 import { REAUTH_EMAIL_KEY, safeReturnPath } from "@/lib/idle-timeout";
 
 const inputCls =
@@ -46,6 +47,7 @@ export default function SessionExpired() {
       const { data, error: signError } = await getSupabaseBrowser().auth.signInWithPassword({ email, password });
       if (signError) throw signError;
       if (!data.session) throw new Error("No session returned. Try again.");
+      track("login", { method: "email" });
       try {
         sessionStorage.removeItem(REAUTH_EMAIL_KEY);
       } catch {

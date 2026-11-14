@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { CalendarRange, Check, Copy, FileText, FlaskConical, History, Lock, Newspaper, Route, Send, SquarePen, Square, Trash2, TriangleAlert, User } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAquibotSession } from "@/app/hub/aquibot/actions";
+import { track } from "@/lib/analytics";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { useI18n } from "@/components/app/i18n";
 import { Markdown } from "@/components/hub/markdown";
@@ -113,6 +114,7 @@ export function AquibotChat({
   function send(text: string) {
     if (!engine.ready || chat.busy || chat.limitReached || !text.trim()) return;
     setInput("");
+    track("aquibot_message", { surface: "chat" });
     void chat.send(text, { testMode: testMode && isAdmin }).then(() => inputRef.current?.focus());
   }
 

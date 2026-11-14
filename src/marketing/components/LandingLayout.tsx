@@ -10,7 +10,7 @@ import { Link, useLocation } from "@/marketing/router";
 import { Menu, Search, X } from "lucide-react";
 import { Logo } from "@/marketing/components/shared/Logo";
 import { SiteLink, SiteNavLink } from "@/marketing/components/shared/SiteLink";
-import { CookieConsent, OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
+import { OPEN_COOKIE_PREFS_EVENT } from "@/marketing/components/CookieConsent";
 import { SiteSearch } from "@/marketing/components/SiteSearch";
 import { COMPANY_DETAILS, LEGAL_LINKS } from "@/lib/legal/documents";
 import { fillYear } from "@/lib/site-content/normalize";
@@ -160,8 +160,6 @@ export function LandingLayout({ children }: { children: ReactNode }) {
       <main id="main-content">{children}</main>
 
       <SiteSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-
-      <CookieConsent />
 
       {/* 12, Footer */}
       <footer className="bg-navy-900 text-slate-300">

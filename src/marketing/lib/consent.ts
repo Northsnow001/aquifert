@@ -6,7 +6,7 @@
  * anywhere before a choice is recorded.
  */
 
-export const COOKIE_POLICY_VERSION = "1.0";
+export const COOKIE_POLICY_VERSION = "1.1";
 const KEY = "aq.consent";
 const REPROMPT_MS = 365 * 864e5; // 12 months
 

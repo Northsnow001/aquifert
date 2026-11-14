@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { CheckCircle2, CircleAlert, Send, X } from "lucide-react";
 import { submitOrderEnquiry } from "@/app/hub/order-desk/actions";
+import { track } from "@/lib/analytics";
 import { areaClass, btnPrimary, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { countryTriggerClass } from "@/components/app/country-select";
 import { PortField } from "@/components/calculators/port-field";
@@ -144,6 +145,7 @@ export function OrderDeskBoard({
                 return;
               }
               setSent(true);
+              track("generate_lead", { form_name: "order_desk" });
             });
           }}
         >

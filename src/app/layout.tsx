@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { CookieConsent } from "@/marketing/components/CookieConsent";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -69,6 +71,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="relative z-0 min-h-full bg-bg text-sm text-ink">
         {children}
+        <CookieConsent />
+        <GoogleAnalytics />
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

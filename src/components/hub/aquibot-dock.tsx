@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Check, Copy, Expand, Factory, FileText, Newspaper, Radio, Ship, SquarePen, Square, TrendingUp, TriangleAlert, X } from "lucide-react";
 import { getAquibotDockState, type AquibotDockState } from "@/app/hub/aquibot/actions";
+import { track } from "@/lib/analytics";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
 import { closeAquibot } from "@/components/app/aquibot-dock-store";
 import { useI18n } from "@/components/app/i18n";
@@ -81,6 +82,7 @@ export function AquibotDock({ open }: { open: boolean }) {
     if (!ready || chat.busy || chat.limitReached || !text.trim()) return;
     setChatting(true);
     setInput("");
+    track("aquibot_message", { surface: "dock" });
     void chat.send(text).then(() => inputRef.current?.focus());
   }
 

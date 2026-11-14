@@ -21,6 +21,7 @@ import { jsPDF } from "jspdf";
 import { priceSlider } from "@/marketing/lib/prices";
 import { useAuth } from "@/marketing/hooks/useAuth";
 import { COOKIE_POLICY_VERSION, getConsent, marketingAllowed } from "@/marketing/lib/consent";
+import { track } from "@/lib/analytics";
 import { Logo } from "@/marketing/components/shared/Logo";
 
 /** Event the modal listens for; the header's Request access button sends it. */
@@ -365,6 +366,7 @@ export function LeadMagnet({ auto = true }: { auto?: boolean }) {
         landingPage: window.location.href,
       });
       // Price snapshot for selected products × first selected delivery region
+      track("generate_lead", { form_name: "lead", method: s1.intent });
       setSnapshot(priceSlider(s1.regions[0]).items.slice(0, 8));
       // Slider opens on their region next visit (consent given)
       localStorage.setItem("aq.slider.region", s1.regions[0]);

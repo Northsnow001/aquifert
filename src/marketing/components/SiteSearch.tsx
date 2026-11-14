@@ -7,6 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@/marketing/router";
+import { track } from "@/lib/analytics";
 import { ArrowRight, Search, X } from "lucide-react";
 
 type Entry = { title: string; section: string; keywords: string; to: string };
@@ -80,6 +81,8 @@ export function SiteSearch({ open, onClose }: { open: boolean; onClose: () => vo
   if (!open) return null;
 
   const go = (to: string) => {
+    const term = q.trim();
+    if (term) track("search", { search_term: term, search_surface: "site" });
     onClose();
     navigate(to);
   };

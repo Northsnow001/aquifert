@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { ArrowRight, Check, CheckCircle2, CircleAlert, Crown, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { requestPlan } from "@/app/hub/account/membership/actions";
+import { track } from "@/lib/analytics";
 import { areaClass, btnSubmit, dialogBody, dialogFooter, fieldClass, hintClass, labelClass, noticeError } from "@/components/app/form";
 import { useI18n } from "@/components/app/i18n";
 import { AccountIntro } from "@/components/hub/kit";
@@ -241,6 +242,7 @@ function RequestDialog({
                   return;
                 }
                 toast.success(t("mem.sent", { email: result.email }));
+                track("generate_lead", { form_name: "plan_request", plan_name: offer.plan });
                 setSent(result.email);
               });
             }}

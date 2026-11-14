@@ -10,6 +10,7 @@ import { friendlyAuthError } from "@/marketing/lib/auth-errors";
 import { safeRedirectPath } from "@/marketing/lib/redirect";
 import { phoneToE164 } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
+import { track } from "@/lib/analytics";
 
 const inputCls =
   "h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-navy-900 placeholder:text-slate-400 focus:border-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-700/20";
@@ -56,6 +57,7 @@ export default function Login() {
       );
       if (signError) throw signError;
       if (!data.session) throw new Error("No session returned. Confirm your email if required, then try again.");
+      track("login", { method });
 
       // Full navigation so the server sees the new session cookie on the first hub render.
       const admin = isAdminUser({

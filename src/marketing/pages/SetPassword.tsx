@@ -17,6 +17,7 @@ import {
 } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { safeReturnPath } from "@/lib/idle-timeout";
+import { track } from "@/lib/analytics";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
 const errCls = "mt-1 text-[12px] text-red-700";
@@ -220,6 +221,7 @@ export default function SetPassword() {
       clearSignupPending();
 
       if (!fromInvite && !inviteToken) {
+        track("sign_up", { method: "email_and_phone" });
         await fetch("/api/signup/desk", { method: "POST" }).catch(() => undefined);
       }
 

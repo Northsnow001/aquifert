@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { CalendarClock, Check, CheckCircle2, CircleAlert, ListChecks, PhoneCall, Send, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { markZeroCallBooked, registerZeroInterest } from "@/app/hub/order-desk/zero-actions";
+import { track } from "@/lib/analytics";
 import { areaClass, btnSecondary, btnSubmit, dialogBody, dialogFooter, fieldClass, labelClass, noticeError } from "@/components/app/form";
 import { CalendlyFrame } from "@/components/hub/calendly-frame";
 import { calendlyLink } from "@/lib/calendly";
@@ -297,6 +298,7 @@ export function ZeroRegisterDialog({
                   company: value("company"),
                 };
                 setSaved(summary);
+                track("generate_lead", { form_name: "aq_zero", programme: selected });
                 onSaved(summary);
                 setContact({ name: value("name"), email: value("email") });
                 if (intent === "call") {

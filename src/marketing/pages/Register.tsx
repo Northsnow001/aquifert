@@ -14,6 +14,7 @@ import { isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { checkSignupAddress } from "@/app/(auth)/signup-check";
 import { checkSignupEmail, DEFAULT_SIGNUP_RULES, EMAIL_PATTERN, signupCheck, type SignupCheck } from "@/lib/desk-settings/email-rules";
 import { friendlyAuthError } from "@/marketing/lib/auth-errors";
+import { track } from "@/lib/analytics";
 
 const errCls = "mt-1 text-[12px] text-red-700";
 
@@ -150,6 +151,7 @@ export default function Register() {
       if (!response.ok) throw new Error(body?.message || "Could not send the codes.");
 
       saveSignupPending(profile);
+      track("sign_up_start", { method: "email_and_phone" });
       navigate(`/verify-email?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not start sign-up.";

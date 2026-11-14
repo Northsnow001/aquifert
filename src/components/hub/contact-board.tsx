@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { CalendarClock, CheckCircle2, CircleAlert, FileText, MessageSquare, Phone, Send, X } from "lucide-react";
 import { sendContactMessage } from "@/app/hub/contact/actions";
+import { track } from "@/lib/analytics";
 import { areaClass, btnPrimary, fieldClass, labelClass, noticeError, noticeOk } from "@/components/app/form";
 import { CalendlyFrame } from "@/components/hub/calendly-frame";
 
@@ -159,6 +160,7 @@ export function ContactBoard({ name, email, topic = "" }: { name: string; email:
                     return;
                   }
                   setSent(result.delivered ? "remote" : "local");
+                  track("generate_lead", { form_name: "hub_contact" });
                 });
               }}
             >
