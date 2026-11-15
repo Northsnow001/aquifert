@@ -72,11 +72,12 @@ export async function sendDeskReplyAction(input: {
   return { ok: true };
 }
 
-export async function handNegotiationToAgentAction(input: { id: string }): Promise<{ ok: true } | { ok: false; message: string }> {
+export async function handNegotiationToAgentAction(input: { id: string; price: number }): Promise<{ ok: true } | { ok: false; message: string }> {
   const user = await requireAdmin();
   const deal = await handNegotiationToAgent({
     id: String(input.id ?? "").trim(),
     actor: user.name || user.email,
+    price: Number(input.price),
   });
   if ("error" in deal) return { ok: false, message: deal.error };
   revalidatePath("/admin/desk");

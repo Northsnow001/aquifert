@@ -562,21 +562,28 @@ export async function sendDeskReply(input: { id: string; text: string; actor: st
   return deliverDeskLines(saved, [outbound.id]);
 }
 
-export async function handNegotiationToAgent(input: { id: string; actor: string }): Promise<DeskDeal | { error: string }> {
+export async function handNegotiationToAgent(input: { id: string; actor: string; price: number }): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, input.id);
   if (!deal) return { error: "That shortlist was not found." };
   if (!deal.mattThread) return { error: "This thread is not in negotiation." };
   if (deal.status === "closed") return { error: "This request is closed." };
+  const price = Math.round(Number(input.price) * 100) / 100;
+  if (!Number.isFinite(price) || price <= 0 || price > 10000) return { error: "Enter the agreed price per MT." };
   const actor = input.actor || "Desk";
-  const outbound = message({ from: "desk", channel: "whatsapp", text: packingHandoff(deal), outboundStatus: "queued" });
+  const agreed: DeskDeal = { ...deal, buyerPrice: price };
+  const outbound = message({ from: "desk", channel: "whatsapp", text: packingHandoff(agreed), outboundStatus: "queued" });
   const saved = (await save({
-    ...deal,
+    ...agreed,
     status: "firm_interest",
     mattThread: false,
     firmInterestAt: now(),
     messages: [
       ...deal.messages,
-      message({ from: "system", channel: "app", text: `${actor} handed this conversation to the firm offer agent.` }),
+      message({
+        from: "system",
+        channel: "app",
+        text: `${actor} agreed ${agreed.currency || "USD"} ${price} / MT and handed this to the firm offer agent.`,
+      }),
       outbound,
     ],
   }))!;

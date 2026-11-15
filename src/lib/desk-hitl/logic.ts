@@ -188,6 +188,24 @@ export function isPlainRefusal(text: string): boolean {
   return /^(no|nope|nah|no thanks|no thank you|not interested|not for us|pass|decline|declined|stop|cancel|no offer)$/.test(t);
 }
 
+/** Latest standalone price in the negotiation, skipping the order quantity. */
+export function agreedPriceFromThread(input: {
+  quantityMt: number | null;
+  messages: Array<{ from: string; text: string }>;
+}): number | null {
+  let found: number | null = null;
+  for (const msg of input.messages) {
+    if (msg.from !== "buyer" && msg.from !== "desk") continue;
+    const match = msg.text.trim().match(/^(?:usd|us\$|\$)?\s*(\d{2,5}(?:\.\d{1,2})?)\s*(?:\/\s*mt|per\s*mt)?$/i);
+    if (!match) continue;
+    const price = Number(match[1]);
+    if (!Number.isFinite(price) || price < 20 || price > 5000) continue;
+    if (input.quantityMt != null && price === input.quantityMt) continue;
+    found = price;
+  }
+  return found;
+}
+
 /** A change to price, volume, or terms, said without the words the keyword list already catches. */
 export function looksLikeCounter(text: string): boolean {
   const t = text.toLowerCase().replace(/\s+/g, " ").trim();

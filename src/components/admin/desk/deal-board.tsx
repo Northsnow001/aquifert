@@ -8,7 +8,7 @@ import { AfterPayment } from "@/components/admin/desk/after-payment";
 import { FoEditor } from "@/components/admin/desk/fo-editor";
 import { PiEditor } from "@/components/admin/desk/pi-editor";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
-import { buyerUnitPrice } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, buyerUnitPrice } from "@/lib/desk-hitl/logic";
 import { DEAL_STATUS_LABEL, type DeskDeal } from "@/lib/desk-hitl/types";
 
 const money = (n: number, currency: string) =>
@@ -20,6 +20,8 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
   const [offerId, setOfferId] = useState(deal.selectedOfferId ?? deal.offers[0]?.id ?? "");
   const [margin, setMargin] = useState(deal.marginPct != null ? String(deal.marginPct) : "8");
   const [reply, setReply] = useState("");
+  const suggested = agreedPriceFromThread(deal);
+  const [agreed, setAgreed] = useState(suggested != null ? String(suggested) : "");
   const [pending, start] = useTransition();
   const matt = Boolean(deal.mattThread && deal.status === "negotiating");
 
@@ -61,12 +63,12 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
 
   const handOver = () => {
     start(async () => {
-      const result = await handNegotiationToAgentAction({ id: deal.id });
+      const result = await handNegotiationToAgentAction({ id: deal.id, price: Number(agreed) });
       if (!result.ok) {
         toast.error(result.message);
         return;
       }
-      toast.success("Firm offer agent has the thread. The buyer was asked about packing.");
+      toast.success(`Handed over at ${deal.currency || "USD"} ${agreed} / MT. The buyer was asked about packing.`);
       router.refresh();
     });
   };
@@ -192,11 +194,21 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
               Reply on WhatsApp
             </label>
             <textarea id="reply" value={reply} onChange={(e) => setReply(e.target.value)} className={`${textarea} mt-1`} rows={3} />
+            <label className={`${label} mt-3`} htmlFor="agreed">
+              Agreed price / MT
+            </label>
+            <input
+              id="agreed"
+              inputMode="decimal"
+              value={agreed}
+              onChange={(e) => setAgreed(e.target.value)}
+              className={`${input} mt-1 max-w-[8rem]`}
+            />
             <div className="mt-2 flex flex-wrap gap-2">
               <button type="button" disabled={pending || !reply.trim()} onClick={send} className={btnPrimary}>
                 Send to buyer
               </button>
-              <button type="button" disabled={pending} onClick={handOver} className={btnSecondary}>
+              <button type="button" disabled={pending || !(Number(agreed) > 0)} onClick={handOver} className={btnSecondary}>
                 Hand to firm offer agent
               </button>
               <button type="button" disabled={pending} onClick={endChat} className={btnSecondary}>

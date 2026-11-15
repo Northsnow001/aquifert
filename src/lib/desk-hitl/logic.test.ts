@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -35,6 +35,19 @@ describe("classifyBuyerReply", () => {
     assert.equal(isPlainRefusal("can you do 480"), false);
     assert.equal(looksLikeCounter("can you do 480"), true);
     assert.equal(looksLikeCounter("500 MT urea CFR Lagos"), false);
+    assert.equal(
+      agreedPriceFromThread({
+        quantityMt: 4000,
+        messages: [
+          { from: "buyer", text: "Too expensive" },
+          { from: "desk", text: "how much do you plan" },
+          { from: "buyer", text: "400" },
+          { from: "desk", text: "Okay that's fine" },
+        ],
+      }),
+      400,
+    );
+    assert.equal(agreedPriceFromThread({ quantityMt: 4000, messages: [{ from: "buyer", text: "4000" }] }), null);
   });
 });
 
