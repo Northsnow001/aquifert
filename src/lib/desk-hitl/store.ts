@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { buyerUnitPrice, indicationWhatsApp, parseShortlistBody, selectedOffer } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, lockedInboundDecision, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseShortlistBody, selectedOffer, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -265,7 +265,7 @@ export async function recordBuyerInbound(input: {
   requestId?: string;
   text: string;
   email?: string;
-}): Promise<DeskDeal | { error: string } | { event: "chat"; dealId?: string; requestId?: string }> {
+}): Promise<DeskDeal | { error: string } | { event: "chat"; phase?: DeskPhase; dealId?: string; requestId?: string }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
   const inboundEmail = String(input.email || "").trim();
@@ -273,13 +273,13 @@ export async function recordBuyerInbound(input: {
   const deals = await listRecords(DESK_DEALS);
   const phone = (input.phone || "").replace(/\s+/g, "");
   const digits = phone.replace(/\D/g, "");
+  const negotiable = (row: DeskDeal) =>
+    row.status !== "closed" &&
+    !offerIsLocked(row) &&
+    (row.status === "indication_sent" || row.status === "negotiating");
   const deal =
-    (input.requestId ? deals.find((row) => row.requestId === input.requestId) : null) ??
-    deals.find((row) => {
-      if (row.status === "closed") return false;
-      if (row.status !== "indication_sent" && row.status !== "negotiating") return false;
-      return phoneMatches(row, digits);
-    }) ??
+    (input.requestId ? deals.find((row) => row.requestId === input.requestId && negotiable(row)) : null) ??
+    deals.find((row) => negotiable(row) && phoneMatches(row, digits)) ??
     null;
   const collecting =
     deals.find(
@@ -306,8 +306,47 @@ export async function recordBuyerInbound(input: {
       await save(applyBuyerEmail(row, inboundEmail));
     }
   }
+  const locked =
+    deals
+      .filter((row) => row.status !== "closed" && offerIsLocked(row) && phoneMatches(row, digits))
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ?? null;
+  if (locked) {
+    const draftOpen = Boolean(locked.newEnquiry);
+    const acceptingFirmOffer =
+      !draftOpen &&
+      locked.status === "firm_interest" &&
+      locked.firmOffer?.status === "sent" &&
+      locked.pi?.status !== "sent" &&
+      !looksLikeNewSupply(text, locked.product) &&
+      !mentionsLockedRequest(text, locked.requestId) &&
+      classifyBuyerReply(text) === "agree";
+    const takeLocked = !acceptingFirmOffer && (draftOpen || !deal || looksLikeNewSupply(text, locked.product) || mentionsLockedRequest(text, locked.requestId));
+    if (takeLocked) {
+      const row = inboundEmail.includes("@") ? applyBuyerEmail(locked, inboundEmail) : locked;
+      const decision = lockedInboundDecision({
+        text,
+        product: row.product,
+        requestId: row.requestId,
+        draft: row.newEnquiry ? row.newEnquiry.product : null,
+        piSent: row.pi?.status === "sent",
+      });
+      if (decision.take === "follow_up") {
+        const saved = (await save({
+          ...row,
+          newEnquiry: null,
+          messages: [...row.messages, message({ from: "buyer", channel: "whatsapp", text })],
+        }))!;
+        return { event: "chat", phase: decision.phase, dealId: saved.id, requestId: saved.requestId };
+      }
+      const saved = (await save({
+        ...row,
+        newEnquiry: { product: decision.product, at: now() },
+      }))!;
+      return { event: "chat", phase: "rfq", dealId: saved.id, requestId: saved.requestId };
+    }
+  }
   // Packing is the live thread. Do not let a leftover indication or Gemini send this to RFQ Agent.
-  if (collecting) {
+  if (collecting && !offerIsLocked(collecting)) {
     const follow = await resolveFirmFollowUp(text, collecting.product);
     if (follow === "firm_order") {
       const row = inboundEmail.includes("@") ? applyBuyerEmail(collecting, inboundEmail) : collecting;
@@ -327,7 +366,7 @@ export async function recordBuyerInbound(input: {
       ],
     }))!;
   }
-  if (!deal && awaitingFo && kind === "negotiate") {
+  if (!deal && awaitingFo && kind === "negotiate" && !offerIsLocked(awaitingFo)) {
     return (await save({
       ...awaitingFo,
       status: "negotiating",

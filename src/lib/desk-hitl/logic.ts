@@ -19,7 +19,7 @@ const CONFIRM_LINE =
   /^(yes|yep|yeah|ok|okay|sure|correct|confirmed?)(\s+(please\s+)?(send it|go ahead|email it))?[\s!.]*$|^(please send|send it|go ahead|email it)[\s!.]*$/i;
 const GREETING_ONLY = /^(hi|hello|hey|hiya|good (morning|afternoon|evening))[\s!.]*$/i;
 const NEW_RFQ_PHRASE =
-  /\b(new (order|rfq|request|enquiry|inquiry)|another (order|rfq|product)|different product|start (over|again)|fresh (rfq|enquiry))\b/i;
+  /\b(new (order|rfq|request|enquiry|inquiry|supply)|another (order|rfq|product|supply)|different product|start (over|again)|fresh (rfq|enquiry))\b/i;
 
 function normProduct(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -49,6 +49,71 @@ export function looksLikeNewRfq(text: string, currentProduct = ""): boolean {
   const current = normProduct(currentProduct);
   if (current && token && (token.includes(current) || current.includes(token))) return false;
   return looksLikeProductName(t);
+}
+
+/** Firm offer already sent, or the proforma is out. Price, quantity, and port stay as they are. */
+export function offerIsLocked(deal: {
+  firmOffer?: { status?: string } | null;
+  pi?: { status?: string } | null;
+}): boolean {
+  return deal.pi?.status === "sent" || deal.firmOffer?.status === "sent";
+}
+
+/** The buyer is pointing back at the document already sent, not at a new supply. */
+export function mentionsLockedRequest(text: string, requestId = ""): boolean {
+  if (/\b(proforma|firm offer|invoice|pi)\b/i.test(text)) return true;
+  if (/\brfq\s*#?\s*\d+\b/i.test(text)) return true;
+  const id = requestId.trim().toLowerCase();
+  return Boolean(id && text.toLowerCase().includes(id));
+}
+
+/**
+ * A different product, or a phrase such as "new supply".
+ * A quantity and port ("600 Apapa port") is not enough on its own.
+ */
+export function looksLikeNewSupply(text: string, currentProduct = ""): boolean {
+  const t = text.trim();
+  if (!t || CONFIRM_LINE.test(t) || GREETING_ONLY.test(t)) return false;
+  if (NEW_RFQ_PHRASE.test(t)) return true;
+  if (/\d/.test(t) || (PACKING_DETAIL.test(t) && t.length < 240)) return false;
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length > 6 || !looksLikeProductName(t)) return false;
+  const token = normProduct(t);
+  const current = normProduct(currentProduct);
+  if (current && token && (token.includes(current) || current.includes(token))) return false;
+  return true;
+}
+
+/** Keep the product already named on the draft. A bare quantity does not replace it. */
+export function draftProductFrom(text: string, previous = ""): string {
+  const t = text.trim();
+  if (!t || /\d/.test(t) || NEW_RFQ_PHRASE.test(t) || !looksLikeProductName(t)) return previous;
+  return t.slice(0, 80);
+}
+
+export type LockedInbound = {
+  take: "follow_up" | "new_supply";
+  phase: DeskPhase;
+  product: string;
+};
+
+/**
+ * On a locked request: a new product stays a draft, and everything else is a follow-up.
+ * An open draft keeps the following messages, including a quantity, off that request.
+ */
+export function lockedInboundDecision(input: {
+  text: string;
+  product: string;
+  requestId: string;
+  draft: string | null;
+  piSent: boolean;
+}): LockedInbound {
+  const back = mentionsLockedRequest(input.text, input.requestId);
+  const opening = input.draft !== null || looksLikeNewSupply(input.text, input.product);
+  if (back || !opening) {
+    return { take: "follow_up", phase: input.piSent ? "pi_sent" : "offer_review", product: input.draft ?? "" };
+  }
+  return { take: "new_supply", phase: "rfq", product: draftProductFrom(input.text, input.draft ?? "") };
 }
 
 export function deskPhase(input: {

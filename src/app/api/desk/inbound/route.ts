@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       event: result.event,
-      phase: deskPhase({ event: result.event }),
+      phase: result.phase ?? deskPhase({ event: result.event }),
       dealId: result.dealId,
       requestId: result.requestId,
       ...echo,

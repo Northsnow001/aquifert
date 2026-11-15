@@ -109,6 +109,11 @@ export type DeskDeal = {
   messages: DeskMessage[];
   /** n8n Wait resume URL, if WF8 is paused on this deal. */
   callbackUrl: string | null;
+  /**
+   * Set while this phone is collecting a different supply.
+   * The locked request is left unchanged until they name it again.
+   */
+  newEnquiry?: { product: string; at: string } | null;
   firmInterestAt: string | null;
   /** WhatsApp firm-order agent terms. These fill FO / PI / contracts / supplier pack. */
   execution?: DeskExecution | null;

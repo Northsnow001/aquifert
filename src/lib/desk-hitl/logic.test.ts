@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, deskPhase, indicationWhatsApp, looksLikeNewRfq, parseFollowUpIntent, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, lockedInboundDecision, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -52,6 +52,44 @@ describe("looksLikeNewRfq", () => {
     assert.equal(looksLikeNewRfq("India", "GoldenFert"), false);
     assert.equal(looksLikeNewRfq("lagos", "GoldenFert"), false);
     assert.equal(looksLikeNewRfq("jumbo bags", "GoldenFert"), false);
+  });
+});
+
+describe("locked request", () => {
+  it("locks a sent firm offer and a sent proforma", () => {
+    assert.equal(offerIsLocked({ firmOffer: { status: "sent" }, pi: null }), true);
+    assert.equal(offerIsLocked({ firmOffer: null, pi: { status: "sent" } }), true);
+    assert.equal(offerIsLocked({ firmOffer: { status: "review" }, pi: null }), false);
+  });
+
+  it("treats a different product or 'new supply' as a new request", () => {
+    assert.equal(looksLikeNewSupply("Corkage Fert", "Normal Alkaline"), true);
+    assert.equal(looksLikeNewSupply("need a new supply", "Normal Alkaline"), true);
+    assert.equal(looksLikeNewSupply("600 Apapa port", "Normal Alkaline"), false);
+    assert.equal(looksLikeNewSupply("hello", "Normal Alkaline"), false);
+    assert.equal(looksLikeNewSupply("Normal Alkaline", "Normal Alkaline"), false);
+  });
+
+  it("keeps a quantity on the draft, and a proforma mention leaves it", () => {
+    assert.equal(mentionsLockedRequest("where is the PI", "rfq#027"), true);
+    assert.equal(mentionsLockedRequest("600 Apapa port", "rfq#027"), false);
+    assert.deepEqual(
+      lockedInboundDecision({ text: "Corkage Fert", product: "Normal Alkaline", requestId: "rfq#027", draft: null, piSent: true }),
+      { take: "new_supply", phase: "rfq", product: "Corkage Fert" },
+    );
+    assert.equal(draftProductFrom("600 Apapa port", "Corkage Fert"), "Corkage Fert");
+    assert.deepEqual(
+      lockedInboundDecision({ text: "600 Apapa port", product: "Normal Alkaline", requestId: "rfq#027", draft: "Corkage Fert", piSent: true }),
+      { take: "new_supply", phase: "rfq", product: "Corkage Fert" },
+    );
+    assert.deepEqual(
+      lockedInboundDecision({ text: "600 Apapa port", product: "Normal Alkaline", requestId: "rfq#027", draft: null, piSent: true }),
+      { take: "follow_up", phase: "pi_sent", product: "" },
+    );
+    assert.deepEqual(
+      lockedInboundDecision({ text: "the invoice", product: "Normal Alkaline", requestId: "rfq#027", draft: "Corkage Fert", piSent: true }),
+      { take: "follow_up", phase: "pi_sent", product: "Corkage Fert" },
+    );
   });
 });
 
