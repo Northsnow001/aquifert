@@ -63,8 +63,9 @@ export function analyticsAllowed() {
 export function loadGoogleAnalytics() {
   if (!gaConfigured() || typeof window === "undefined" || window.gtag) return;
   window.dataLayer = window.dataLayer ?? [];
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer?.push(args);
+  window.gtag = function gtag() {
+    // Google only records the Arguments object. A plain array is ignored, so no visit is sent.
+    window.dataLayer?.push(arguments);
   };
   window.gtag("js", new Date());
   window.gtag("consent", "default", {
