@@ -176,6 +176,24 @@ export function parseReplyIntent(raw: string): BuyerReplyKind | null {
   return null;
 }
 
+/** A flat no to the indication. Not a counter, and not a new enquiry. */
+export function isPlainRefusal(text: string): boolean {
+  const t = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t || t.length > 40) return false;
+  if (/\b(but|too|high|lower|price|port|qty|quantity|mt|usd|can|could)\b/.test(t)) return false;
+  return /^(no|nope|nah|no thanks|no thank you|not interested|not for us|pass|decline|declined|stop|cancel|no offer)$/.test(t);
+}
+
+/** A change to price, volume, or terms, said without the words the keyword list already catches. */
+export function looksLikeCounter(text: string): boolean {
+  const t = text.toLowerCase().replace(/\s+/g, " ").trim();
+  return /\b(can you|could you|what about|how about|your best|best price|last price|target price|target|instead of|do better|come down)\b/.test(t);
+}
+
 export function classifyBuyerReply(text: string): BuyerReplyKind {
   const t = text
     .toLowerCase()

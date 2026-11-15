@@ -115,6 +115,12 @@ export type DeskDeal = {
    */
   newEnquiry?: { product: string; at: string } | null;
   firmInterestAt: string | null;
+  /**
+   * Matt is talking to the buyer on this indication.
+   * Buyer messages stay on the desk until he hands the thread to the firm offer agent or ends it.
+   */
+  mattThread?: boolean;
+  mattNotifiedAt?: string | null;
   /** WhatsApp firm-order agent terms. These fill FO / PI / contracts / supplier pack. */
   execution?: DeskExecution | null;
   /** Parked when terms are confirmed. Buyer does not see this until Matt sends. */

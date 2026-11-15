@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, lockedInboundDecision, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -29,6 +29,12 @@ describe("classifyBuyerReply", () => {
     assert.equal(classifyBuyerReply("Hi"), "chat");
     assert.equal(classifyBuyerReply("500 MT urea CFR Lagos"), "chat");
     assert.equal(classifyBuyerReply("NeoGuard"), "chat");
+    assert.equal(isPlainRefusal("No"), true);
+    assert.equal(isPlainRefusal("no thanks"), true);
+    assert.equal(isPlainRefusal("no but too high"), false);
+    assert.equal(isPlainRefusal("can you do 480"), false);
+    assert.equal(looksLikeCounter("can you do 480"), true);
+    assert.equal(looksLikeCounter("500 MT urea CFR Lagos"), false);
   });
 });
 

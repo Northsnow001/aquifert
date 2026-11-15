@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { confirmIndicationAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
+import { confirmIndicationAction, endNegotiationAction, handNegotiationToAgentAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
 import { AfterPayment } from "@/components/admin/desk/after-payment";
 import { FoEditor } from "@/components/admin/desk/fo-editor";
 import { PiEditor } from "@/components/admin/desk/pi-editor";
@@ -21,6 +21,13 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
   const [margin, setMargin] = useState(deal.marginPct != null ? String(deal.marginPct) : "8");
   const [reply, setReply] = useState("");
   const [pending, start] = useTransition();
+  const matt = Boolean(deal.mattThread && deal.status === "negotiating");
+
+  useEffect(() => {
+    if (!matt) return;
+    const timer = window.setInterval(() => router.refresh(), 8000);
+    return () => window.clearInterval(timer);
+  }, [matt, router]);
 
   const offer = deal.offers.find((item) => item.id === offerId) ?? deal.offers[0];
   const marginPct = Number(margin);
@@ -47,8 +54,32 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
         return;
       }
       setReply("");
-      toast.success("Reply queued for WhatsApp.");
+      toast.success(matt ? "Sent to the buyer." : "Reply queued for WhatsApp.");
       router.refresh();
+    });
+  };
+
+  const handOver = () => {
+    start(async () => {
+      const result = await handNegotiationToAgentAction({ id: deal.id });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Firm offer agent has the thread. The buyer was asked about packing.");
+      router.refresh();
+    });
+  };
+
+  const endChat = () => {
+    start(async () => {
+      const result = await endNegotiationAction({ id: deal.id });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Conversation ended.");
+      router.push("/admin/desk/negotiation");
     });
   };
 
@@ -154,7 +185,26 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
             </li>
           ))}
         </ul>
-        {deal.status === "indication_sent" || deal.status === "negotiating" ? (
+        {matt ? (
+          <div className="border-t border-border px-4 py-3">
+            <p className="text-[12.5px] text-mid">You have this conversation. The buyer’s replies land here. The agent stays quiet.</p>
+            <label className={label} htmlFor="reply">
+              Reply on WhatsApp
+            </label>
+            <textarea id="reply" value={reply} onChange={(e) => setReply(e.target.value)} className={`${textarea} mt-1`} rows={3} />
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button type="button" disabled={pending || !reply.trim()} onClick={send} className={btnPrimary}>
+                Send to buyer
+              </button>
+              <button type="button" disabled={pending} onClick={handOver} className={btnSecondary}>
+                Hand to firm offer agent
+              </button>
+              <button type="button" disabled={pending} onClick={endChat} className={btnSecondary}>
+                End conversation
+              </button>
+            </div>
+          </div>
+        ) : deal.status === "indication_sent" || deal.status === "negotiating" ? (
           <div className="border-t border-border px-4 py-3">
             <label className={label} htmlFor="reply">
               Reply on WhatsApp

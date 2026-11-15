@@ -14,7 +14,11 @@ export default async function DeskDealPage({ params }: { params: Promise<{ id: s
       <PageHeader
         title={deal.product}
         description={`${deal.buyerName || deal.buyerCompany || "Buyer"}${deal.quantityMt ? ` · ${deal.quantityMt} MT` : ""}${deal.destination ? ` → ${deal.destination}` : ""}`}
-        crumbs={[{ href: "/admin/desk", label: "Desk shortlists" }]}
+        crumbs={
+          deal.mattThread
+            ? [{ href: "/admin/desk/negotiation", label: "Negotiation" }]
+            : [{ href: "/admin/desk", label: "Desk shortlists" }]
+        }
       />
       <DealRecord deal={deal} />
     </div>

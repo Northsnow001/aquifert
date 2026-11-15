@@ -3,11 +3,12 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, lockedInboundDecision, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseShortlistBody, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseShortlistBody, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
-import { listOutbox } from "@/lib/mailer";
+import { getDeskSettings } from "@/lib/desk-settings/store";
+import { listOutbox, sendEmail } from "@/lib/mailer";
 import { buyerDocumentFromDeal, firmOfferDraftFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
@@ -60,6 +61,8 @@ const DEFAULT_INDICATION_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/resp
 const DEFAULT_SUPPLIER_PACK_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/supplier_documents";
 /** WhatsApp after Matt emails the firm offer. Override with DESK_FIRM_OFFER_WEBHOOK_URL. */
 const DEFAULT_FIRM_OFFER_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/notify_buyer_on_firm_offer";
+/** Matt's replies, the opening line, the handoff, and the close. Workflow 13. */
+const DEFAULT_DESK_REPLY_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/desk_to_buyer";
 
 function indicationWebhookUrls(callbackUrl?: string | null) {
   const urls = new Set<string>();
@@ -71,21 +74,28 @@ function indicationWebhookUrls(callbackUrl?: string | null) {
 }
 
 async function notify(url: string | null | undefined, payload: Record<string, unknown>) {
-  if (!url?.startsWith("https://") && !url?.startsWith("http://localhost")) return;
+  if (!url?.startsWith("https://") && !url?.startsWith("http://localhost")) return false;
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(12_000),
     });
+    return res.ok;
   } catch {
     // n8n Wait / WF9 is best-effort; the desk still has the deal.
+    return false;
   }
 }
 
 async function notifyIndication(callbackUrl: string | null | undefined, payload: Record<string, unknown>) {
   await Promise.all(indicationWebhookUrls(callbackUrl).map((url) => notify(url, payload)));
+}
+
+function deskReplyWebhookUrl() {
+  const url = (process.env.DESK_BUYER_WHATSAPP_WEBHOOK_URL || DEFAULT_DESK_REPLY_WEBHOOK).trim().replace(/\/$/, "");
+  return url.startsWith("https://") || url.startsWith("http://localhost") ? url : "";
 }
 
 function firmOfferWebhookUrl() {
@@ -278,7 +288,7 @@ export async function recordBuyerInbound(input: {
   requestId?: string;
   text: string;
   email?: string;
-}): Promise<DeskDeal | { error: string } | { event: "chat"; phase?: DeskPhase; dealId?: string; requestId?: string }> {
+}): Promise<DeskDeal | { error: string } | { event: "chat" | "negotiating"; phase?: DeskPhase; dealId?: string; requestId?: string }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
   const inboundEmail = String(input.email || "").trim();
@@ -397,6 +407,46 @@ export async function recordBuyerInbound(input: {
       ],
     }))!;
   }
+  if (deal?.mattThread) {
+    return (await save({
+      ...deal,
+      status: "negotiating",
+      messages: [...deal.messages, message({ from: "buyer", channel: "whatsapp", text })],
+    }))!;
+  }
+
+  if (deal?.status === "indication_sent" && isPlainRefusal(text)) {
+    const saved = (await save({
+      ...deal,
+      messages: [...deal.messages, message({ from: "buyer", channel: "whatsapp", text })],
+    }))!;
+    return { event: "negotiating", phase: "rfq", dealId: saved.id, requestId: saved.requestId };
+  }
+
+  if (deal?.status === "indication_sent" && (kind === "negotiate" || looksLikeCounter(text)) && !isPlainRefusal(text)) {
+    const ack = message({
+      from: "desk",
+      channel: "whatsapp",
+      text: "Thanks. The desk has this and will reply to you here.",
+      outboundStatus: "queued",
+    });
+    const saved = (await save({
+      ...deal,
+      status: "negotiating",
+      mattThread: true,
+      mattNotifiedAt: now(),
+      messages: [
+        ...deal.messages,
+        message({ from: "buyer", channel: "whatsapp", text }),
+        message({ from: "system", channel: "app", text: "Buyer asked to negotiate. Matt has the thread." }),
+        ack,
+      ],
+    }))!;
+    await emailMattAboutNegotiation(saved, text);
+    const delivered = await deliverDeskLines(saved, [ack.id]);
+    return delivered;
+  }
+
   if (!deal || kind === "chat") return { event: "chat" };
 
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
@@ -434,6 +484,66 @@ export async function recordBuyerInbound(input: {
   return (await save(next))!;
 }
 
+async function deliverDeskLines(deal: DeskDeal, messageIds: string[]) {
+  const phone = deal.buyerPhone?.trim();
+  const pending = new Set(messageIds);
+  if (!phone || pending.size === 0) return deal;
+  let current = deal;
+  for (const msg of deal.messages) {
+    if (!pending.has(msg.id) || msg.outboundStatus !== "queued") continue;
+    const ok = await notify(deskReplyWebhookUrl(), {
+      event: "desk_reply",
+      dealId: current.id,
+      requestId: current.requestId,
+      buyerPhone: phone,
+      whatsappBody: msg.text,
+    });
+    if (!ok) continue;
+    current = (await save({
+      ...current,
+      messages: current.messages.map((row) => (row.id === msg.id ? { ...row, outboundStatus: "sent" as const } : row)),
+    }))!;
+  }
+  return current;
+}
+
+async function emailMattAboutNegotiation(deal: DeskDeal, buyerText: string) {
+  const settings = await getDeskSettings();
+  const to = (process.env.DESK_ALERT_EMAIL || settings.delivery.replyTo || settings.orderDesk.recipient || "").trim();
+  if (!to.includes("@")) return;
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com").replace(/\/$/, "");
+  const who = deal.buyerName || deal.buyerCompany || deal.buyerPhone || "The buyer";
+  const price = deal.buyerPrice != null ? `${deal.currency} ${deal.buyerPrice} / MT` : "the indication";
+  const subject = `Negotiation — ${deal.requestId} — ${deal.product}`;
+  const link = `${site}/admin/desk/negotiation`;
+  const text = [
+    `${who} wants to change the indication on ${deal.requestId} (${deal.product}${deal.quantityMt ? `, ${deal.quantityMt} MT` : ""}).`,
+    `Indication on the table: ${price}.`,
+    "",
+    `They wrote:`,
+    buyerText,
+    "",
+    `The thread is yours until you hand it to the firm offer agent or end it.`,
+    link,
+  ].join("\n");
+  const html = `<p>${escapeHtml(who)} wants to change the indication on <strong>${escapeHtml(deal.requestId)}</strong> (${escapeHtml(deal.product)}${deal.quantityMt ? `, ${deal.quantityMt} MT` : ""}).</p><p>Indication on the table: ${escapeHtml(price)}.</p><p>They wrote:</p><blockquote>${escapeHtml(buyerText)}</blockquote><p>The thread is yours until you hand it to the firm offer agent or end it.</p><p><a href="${escapeHtml(link)}">Open Negotiation</a></p>`;
+  await sendEmail({ kind: "negotiation-desk", to, subject, html, text }, settings.delivery);
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function packingHandoff(deal: DeskDeal) {
+  const qty = deal.quantityMt ? `${deal.quantityMt} MT of ` : "";
+  const price = deal.buyerPrice != null ? `${deal.currency} ${deal.buyerPrice.toLocaleString("en-GB")} / MT` : "the price we agreed";
+  return `Good — we can proceed at ${price}. How would you like the ${qty}${deal.product} packed? 25kg bags, jumbo bags, or bulk?`;
+}
+
 export async function sendDeskReply(input: { id: string; text: string; actor: string }): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, input.id);
   if (!deal) return { error: "That shortlist was not found." };
@@ -443,15 +553,59 @@ export async function sendDeskReply(input: { id: string; text: string; actor: st
   if (deal.status === "closed") return { error: "This request is closed." };
   if (deal.status === "firm_interest") return { error: "This deal is already firm interest." };
 
-  const next: DeskDeal = {
+  const outbound = message({ from: "desk", channel: "whatsapp", text, outboundStatus: "queued" });
+  const saved = (await save({
     ...deal,
     status: "negotiating",
+    messages: [...deal.messages, outbound],
+  }))!;
+  return deliverDeskLines(saved, [outbound.id]);
+}
+
+export async function handNegotiationToAgent(input: { id: string; actor: string }): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (!deal.mattThread) return { error: "This thread is not in negotiation." };
+  if (deal.status === "closed") return { error: "This request is closed." };
+  const actor = input.actor || "Desk";
+  const outbound = message({ from: "desk", channel: "whatsapp", text: packingHandoff(deal), outboundStatus: "queued" });
+  const saved = (await save({
+    ...deal,
+    status: "firm_interest",
+    mattThread: false,
+    firmInterestAt: now(),
     messages: [
       ...deal.messages,
-      message({ from: "desk", channel: "whatsapp", text, outboundStatus: "queued" }),
+      message({ from: "system", channel: "app", text: `${actor} handed this conversation to the firm offer agent.` }),
+      outbound,
     ],
-  };
-  return (await save(next))!;
+  }))!;
+  return deliverDeskLines(saved, [outbound.id]);
+}
+
+export async function endNegotiation(input: { id: string; actor: string }): Promise<DeskDeal | { error: string }> {
+  const deal = await getRecord(DESK_DEALS, input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (!deal.mattThread) return { error: "This thread is not in negotiation." };
+  if (deal.status === "closed") return deal;
+  const actor = input.actor || "Desk";
+  const outbound = message({
+    from: "desk",
+    channel: "whatsapp",
+    text: "Thank you. We'll leave this one here. Message us when you want to look at a supply again.",
+    outboundStatus: "queued",
+  });
+  const saved = (await save({
+    ...deal,
+    status: "closed",
+    mattThread: false,
+    messages: [
+      ...deal.messages,
+      outbound,
+      message({ from: "system", channel: "app", text: `${actor} ended the negotiation. The trade id is kept.` }),
+    ],
+  }))!;
+  return deliverDeskLines(saved, [outbound.id]);
 }
 
 export async function queuedWhatsApp() {

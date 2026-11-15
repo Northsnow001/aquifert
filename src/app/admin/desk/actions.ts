@@ -8,8 +8,10 @@ import {
   addFoAttachment,
   closeAllOpenDeals,
   closeDeal,
+  endNegotiation,
   confirmIndication,
   confirmSupplierFo,
+  handNegotiationToAgent,
   issueSupplierPack,
   markFirmOfferSent,
   markPiSent,
@@ -65,6 +67,33 @@ export async function sendDeskReplyAction(input: {
   });
   if ("error" in deal) return { ok: false, message: deal.error };
   revalidatePath("/admin/desk");
+  revalidatePath("/admin/desk/negotiation");
+  revalidatePath(`/admin/desk/${deal.id}`);
+  return { ok: true };
+}
+
+export async function handNegotiationToAgentAction(input: { id: string }): Promise<{ ok: true } | { ok: false; message: string }> {
+  const user = await requireAdmin();
+  const deal = await handNegotiationToAgent({
+    id: String(input.id ?? "").trim(),
+    actor: user.name || user.email,
+  });
+  if ("error" in deal) return { ok: false, message: deal.error };
+  revalidatePath("/admin/desk");
+  revalidatePath("/admin/desk/negotiation");
+  revalidatePath(`/admin/desk/${deal.id}`);
+  return { ok: true };
+}
+
+export async function endNegotiationAction(input: { id: string }): Promise<{ ok: true } | { ok: false; message: string }> {
+  const user = await requireAdmin();
+  const deal = await endNegotiation({
+    id: String(input.id ?? "").trim(),
+    actor: user.name || user.email,
+  });
+  if ("error" in deal) return { ok: false, message: deal.error };
+  revalidatePath("/admin/desk");
+  revalidatePath("/admin/desk/negotiation");
   revalidatePath(`/admin/desk/${deal.id}`);
   return { ok: true };
 }

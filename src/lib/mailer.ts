@@ -20,6 +20,7 @@ export type MailKind =
   | "pi-buyer"
   | "firm-offer-buyer"
   | "sales-contract-buyer"
+  | "negotiation-desk"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string };

@@ -83,6 +83,9 @@ const GROUP_TONE: Record<string, string> = {
 
 export function isAdminActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin/desk") {
+    return pathname === "/admin/desk" || /^\/admin\/desk\/(?!negotiation(?:\/|$))/.test(pathname);
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

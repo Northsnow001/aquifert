@@ -43,6 +43,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
   const nextCallRegistered = nextCall ? registrations.filter((row) => row.callId === nextCall.id && row.status === "registered").length : 0;
   const requestsNew = requests.filter((row) => row.status === "new").length;
   const deskWaiting = deskDeals.filter((row) => row.status === "waiting_desk").length;
+  const negotiating = deskDeals.filter((row) => row.mattThread && row.status === "negotiating").length;
 
   const groups: NavGroup[] = [
     { title: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }] },
@@ -95,6 +96,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       title: "Desk",
       items: [
         { href: "/admin/desk", label: "Desk shortlists", icon: "desk", badge: deskWaiting ? `${deskWaiting} wait` : deskDeals.length },
+        { href: "/admin/desk/negotiation", label: "Negotiation", icon: "desk", badge: negotiating || undefined },
         { href: "/admin/enquiries", label: "Enquiries", icon: "inbox", badge: inbox.length },
         { href: "/admin/zero", label: "Aquifert Zero", icon: "zero", badge: zeroNew ? `${zeroNew} new` : zero.length },
       ],
