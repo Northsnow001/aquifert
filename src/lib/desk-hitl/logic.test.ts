@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, lockedInboundDecision, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, lockedInboundDecision, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -89,6 +89,25 @@ describe("locked request", () => {
     assert.deepEqual(
       lockedInboundDecision({ text: "the invoice", product: "Normal Alkaline", requestId: "rfq#027", draft: "Corkage Fert", piSent: true }),
       { take: "follow_up", phase: "pi_sent", product: "Corkage Fert" },
+    );
+  });
+
+  it("gives a YES on an open indication to that indication, not the old proforma", () => {
+    assert.equal(
+      shouldTakeLocked({ hasOpenIndication: true, collectingTerms: false, acceptingFirmOffer: false, namesDocument: false }),
+      false,
+    );
+    assert.equal(
+      shouldTakeLocked({ hasOpenIndication: false, collectingTerms: true, acceptingFirmOffer: false, namesDocument: false }),
+      false,
+    );
+    assert.equal(
+      shouldTakeLocked({ hasOpenIndication: true, collectingTerms: false, acceptingFirmOffer: false, namesDocument: true }),
+      true,
+    );
+    assert.equal(
+      shouldTakeLocked({ hasOpenIndication: false, collectingTerms: false, acceptingFirmOffer: false, namesDocument: false }),
+      true,
     );
   });
 });

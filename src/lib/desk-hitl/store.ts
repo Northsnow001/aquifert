@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, lockedInboundDecision, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseShortlistBody, selectedOffer, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, lockedInboundDecision, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseShortlistBody, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -279,7 +279,9 @@ export async function recordBuyerInbound(input: {
     (row.status === "indication_sent" || row.status === "negotiating");
   const deal =
     (input.requestId ? deals.find((row) => row.requestId === input.requestId && negotiable(row)) : null) ??
-    deals.find((row) => negotiable(row) && phoneMatches(row, digits)) ??
+    deals
+      .filter((row) => negotiable(row) && phoneMatches(row, digits))
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ??
     null;
   const collecting =
     deals.find(
@@ -311,16 +313,21 @@ export async function recordBuyerInbound(input: {
       .filter((row) => row.status !== "closed" && offerIsLocked(row) && phoneMatches(row, digits))
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ?? null;
   if (locked) {
-    const draftOpen = Boolean(locked.newEnquiry);
     const acceptingFirmOffer =
-      !draftOpen &&
+      !locked.newEnquiry &&
       locked.status === "firm_interest" &&
       locked.firmOffer?.status === "sent" &&
       locked.pi?.status !== "sent" &&
       !looksLikeNewSupply(text, locked.product) &&
       !mentionsLockedRequest(text, locked.requestId) &&
       classifyBuyerReply(text) === "agree";
-    const takeLocked = !acceptingFirmOffer && (draftOpen || !deal || looksLikeNewSupply(text, locked.product) || mentionsLockedRequest(text, locked.requestId));
+    const collectingTerms = Boolean(collecting && !offerIsLocked(collecting));
+    const takeLocked = shouldTakeLocked({
+      hasOpenIndication: Boolean(deal),
+      collectingTerms,
+      acceptingFirmOffer,
+      namesDocument: mentionsLockedRequest(text, locked.requestId),
+    });
     if (takeLocked) {
       const row = inboundEmail.includes("@") ? applyBuyerEmail(locked, inboundEmail) : locked;
       const decision = lockedInboundDecision({
@@ -381,6 +388,10 @@ export async function recordBuyerInbound(input: {
 
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
   if (kind === "agree") {
+    if (locked?.newEnquiry) {
+      const row = inboundEmail.includes("@") ? applyBuyerEmail(locked, inboundEmail) : locked;
+      await save({ ...row, newEnquiry: null });
+    }
     const next: DeskDeal = {
       ...deal,
       status: "firm_interest",

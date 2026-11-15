@@ -101,6 +101,23 @@ export type LockedInbound = {
  * On a locked request: a new product stays a draft, and everything else is a follow-up.
  * An open draft keeps the following messages, including a quantity, off that request.
  */
+/**
+ * The locked proforma only takes the message when no indication is waiting
+ * and no firm-offer terms are being collected. Naming the proforma still
+ * pulls the message back. A YES to Matt's price must not land here.
+ */
+export function shouldTakeLocked(input: {
+  hasOpenIndication: boolean;
+  collectingTerms: boolean;
+  acceptingFirmOffer: boolean;
+  namesDocument: boolean;
+}): boolean {
+  if (input.acceptingFirmOffer) return false;
+  if (input.namesDocument) return true;
+  if (input.hasOpenIndication || input.collectingTerms) return false;
+  return true;
+}
+
 export function lockedInboundDecision(input: {
   text: string;
   product: string;
