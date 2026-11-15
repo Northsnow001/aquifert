@@ -41,8 +41,9 @@ function lineAmount(order: FirmOrderDraft) {
   return Math.round(afterDiscount * 100) / 100;
 }
 
-/** Commercial PDF. PO = supplier cost. Proforma / sales contract = buyer price. Never mix. */
+/** Commercial PDF. PO = supplier cost. Proforma / firm offer / sales contract = buyer price. Never mix. */
 export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Array> {
+  if (order.document === "firm_offer") return buildLegalContractPdf(order, "sales", "FIRM OFFER");
   if (order.document === "sales_contract") return buildSalesContractPdf(order);
   if (order.document === "purchase_contract") return buildPurchaseContractPdf(order);
   if (order.document === "documentary_instructions") return buildDocumentaryInstructionsPdf(order);
@@ -55,7 +56,6 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
   const right = pageW - margin;
   let y = 42;
   const isPi = order.document === "proforma";
-  const isOffer = order.document === "firm_offer";
 
   const color = (rgb: RGB) => doc.setTextColor(...rgb);
   const font = (size: number, style: "normal" | "bold" | "italic" = "normal") => {
@@ -76,11 +76,11 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
   y = 92;
   color(INK);
   font(22, "bold");
-  doc.text(isPi ? "PRO FORMA INVOICE" : isOffer ? "FIRM OFFER" : "PURCHASE ORDER", margin, y);
+  doc.text(isPi ? "PRO FORMA INVOICE" : "PURCHASE ORDER", margin, y);
 
   y = 118;
   font(10, "bold");
-  const partyLines = (isPi || isOffer
+  const partyLines = (isPi
     ? [order.buyer.name, order.buyer.phone ? `WhatsApp: ${order.buyer.phone}` : "", order.buyer.email]
     : [
         order.supplier.name,
@@ -90,7 +90,7 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
         order.supplier.country,
       ]
   ).filter((line): line is string => Boolean(line));
-  if (!partyLines.length) partyLines.push(isPi || isOffer ? "Buyer" : "Supplier to be confirmed");
+  if (!partyLines.length) partyLines.push(isPi ? "Buyer" : "Supplier to be confirmed");
   doc.text(partyLines[0], margin + 18, y);
   font(9);
   color(MUTED);
@@ -102,14 +102,7 @@ export async function buildFirmOrderPdf(order: FirmOrderDraft): Promise<Uint8Arr
 
   const metaX = 318;
   const metaValueX = 430;
-  const meta = isOffer
-    ? [
-        ["Offer Date", displayDate(order.po_date) || displayDate(new Date().toISOString())],
-        ["Offer Number", order.order_ref || "—"],
-        ["Reference", order.reference || "—"],
-        ["VAT Number", order.vat_number || AQUIFERT_PO_ISSUER.vatNumber],
-      ]
-    : isPi
+  const meta = isPi
     ? [
         ["Invoice Date", displayDate(order.po_date) || displayDate(new Date().toISOString())],
         ["Invoice Number", order.order_ref || "—"],
@@ -297,6 +290,7 @@ const LAW_CLAUSE = `This contract shall be governed by and construed in accordan
 async function buildLegalContractPdf(
   order: FirmOrderDraft,
   kind: "sales" | "purchase",
+  title = kind === "sales" ? "SALES CONTRACT" : "PURCHASE CONTRACT",
 ): Promise<Uint8Array> {
   const [{ jsPDF }, logo] = await Promise.all([import("jspdf"), logoDataUrl()]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -321,7 +315,6 @@ async function buildLegalContractPdf(
       : order.supplier.name || "the Seller";
   const destination = order.discharge_port || order.price_basis || "";
   const basis = [order.incoterm, destination].filter(Boolean).join(" ");
-  const title = kind === "sales" ? "SALES CONTRACT" : "PURCHASE CONTRACT";
   const contractDate = displayDate(order.po_date) || displayDate(new Date().toISOString());
   const leading = 13;
 
@@ -404,9 +397,10 @@ async function buildLegalContractPdf(
   doc.text(`DATE: ${contractDate}`, margin, y);
   y += 18;
   font(10, "italic");
+  const instrument = title === "FIRM OFFER" ? "Firm Offer" : kind === "sales" ? "Sales Contract" : "Purchase Contract";
   const preamble =
     kind === "sales"
-      ? `This Sales Contract is entered into between Aquifert Limited (“Seller”) and ${order.buyer.name || "the Buyer"} (“Buyer”) on the terms and conditions set out below.`
+      ? `This ${instrument} is entered into between Aquifert Limited (“Seller”) and ${order.buyer.name || "the Buyer"} (“Buyer”) on the terms and conditions set out below.`
       : `This Purchase Contract is entered into between Aquifert Limited (“Buyer”) and ${order.supplier.name || "the Seller"} (“Seller”) on the terms and conditions set out below.`;
   const preambleLines = doc.splitTextToSize(preamble, contentW) as string[];
   doc.text(preambleLines, margin, y);
