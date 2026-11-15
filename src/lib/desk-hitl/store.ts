@@ -58,6 +58,8 @@ async function save(deal: DeskDeal) {
 const DEFAULT_INDICATION_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/response_from_matt";
 /** n8n WF10 after payment. Override with DESK_SUPPLIER_PACK_WEBHOOK_URL. */
 const DEFAULT_SUPPLIER_PACK_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/supplier_documents";
+/** WhatsApp after Matt emails the firm offer. Override with DESK_FIRM_OFFER_WEBHOOK_URL. */
+const DEFAULT_FIRM_OFFER_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/notify_buyer_on_firm_offer";
 
 function indicationWebhookUrls(callbackUrl?: string | null) {
   const urls = new Set<string>();
@@ -84,6 +86,17 @@ async function notify(url: string | null | undefined, payload: Record<string, un
 
 async function notifyIndication(callbackUrl: string | null | undefined, payload: Record<string, unknown>) {
   await Promise.all(indicationWebhookUrls(callbackUrl).map((url) => notify(url, payload)));
+}
+
+function firmOfferWebhookUrl() {
+  const url = (process.env.DESK_FIRM_OFFER_WEBHOOK_URL || DEFAULT_FIRM_OFFER_WEBHOOK).trim().replace(/\/$/, "");
+  return url.startsWith("https://") || url.startsWith("http://localhost") ? url : "";
+}
+
+function firmOfferWhatsApp(deal: DeskDeal, email: string) {
+  const qty = deal.quantityMt ? `${deal.quantityMt} MT ` : "";
+  const product = deal.product || "your order";
+  return `Aquifert desk — ${product}\nYour firm offer for ${qty}${product} is in your email (${email}). Reply YES on that email to accept.`;
 }
 
 function stripHtml(html: string) {
@@ -813,7 +826,18 @@ export async function markFirmOfferSent(id: string, to: string, actor: string): 
       message({ from: "system", channel: "app", text: `${actor || "Desk"} sent the firm offer to ${to}. Reply YES on that email to accept.` }),
     ],
   };
-  return (await save(next))!;
+  const saved = (await save(next))!;
+  const buyerPhone = saved.buyerPhone?.trim();
+  if (buyerPhone) {
+    await notify(firmOfferWebhookUrl(), {
+      event: "firm_offer_sent",
+      dealId: saved.id,
+      requestId: saved.requestId,
+      buyerPhone,
+      whatsappBody: firmOfferWhatsApp(saved, to),
+    });
+  }
+  return saved;
 }
 
 export async function rejectFirmOffer(id: string, actor: string): Promise<DeskDeal | { error: string }> {
