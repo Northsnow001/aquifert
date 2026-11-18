@@ -237,6 +237,85 @@ export function classifyBuyerReply(text: string): BuyerReplyKind {
   return "chat";
 }
 
+export type MillFirmOfferPayload = {
+  event: "firm_offer_sent_mill";
+  dealId: string;
+  requestId: string;
+  supplierName: string;
+  wechatOpenId: string;
+  product: string;
+  quantityMt: number | null;
+  packing: string;
+  documentation: string;
+  incoterm: string;
+  destination: string;
+  shipping: string;
+  paymentTerms: string;
+  currency: string;
+  supplierUnitPrice: number;
+  millMessage: string;
+};
+
+function millDocsReq(deal: DeskDeal): string {
+  const kinds = new Set((deal.foPack?.attachments ?? []).map((item) => item.kind));
+  const parts: string[] = [];
+  if (kinds.has("coa")) parts.push("COA");
+  if (kinds.has("tds")) parts.push("TDS");
+  if (parts.length) return `${parts.join("/")} req`;
+  return (deal.execution?.documentation || deal.firmOffer?.order.documents || "").trim();
+}
+
+/** WeChat to the chosen mill after Matt emails the FO. Price is mill RFQ quote only. */
+export function millFirmOfferWeChat(deal: DeskDeal): MillFirmOfferPayload | null {
+  const offer = selectedOffer(deal);
+  if (!offer || !(offer.unitPrice > 0)) return null;
+  const fo = deal.firmOffer?.order;
+  const exec = deal.execution;
+  const qty = deal.quantityMt ?? offer.quantityMt;
+  const packing = exec?.packing || fo?.packing || "";
+  const destination = exec?.destinationPort || fo?.discharge_port || deal.destination || offer.destination || "";
+  const incoterm = exec?.incoterm || fo?.incoterm || deal.incoterm || offer.incoterm || "";
+  const shipping = exec?.shipmentWindow || fo?.shipping || "";
+  const payment = (exec?.paymentTerms || fo?.payment_terms || "").trim() || "TBA";
+  const documentation = millDocsReq(deal);
+  const product = deal.product || fo?.product || "";
+  const currency = offer.currency || deal.currency || "USD";
+  const qtyBit = qty ? `${qty}MT` : "";
+  const line2 = [product && qtyBit ? `${product} ${qtyBit}` : product || qtyBit, packing, documentation]
+    .filter(Boolean)
+    .join(" | ");
+  const line3 = [`${incoterm} ${destination}`.trim(), shipping ? `Ship: ${shipping}` : ""].filter(Boolean).join(" | ");
+  const price = `${currency} ${offer.unitPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })} / MT`;
+  const millMessage = [
+    `Firm Offer: AQ Trade ID ${deal.requestId}`,
+    line2,
+    line3,
+    `Payment/Validity: ${payment}`,
+    `Price: ${price}`,
+    "Please check email & reply with best offer.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return {
+    event: "firm_offer_sent_mill",
+    dealId: deal.id,
+    requestId: deal.requestId,
+    supplierName: offer.supplierName,
+    wechatOpenId: offer.wechatOpenId || fo?.supplier.wechat_open_id || "",
+    product,
+    quantityMt: qty,
+    packing,
+    documentation,
+    incoterm,
+    destination,
+    shipping,
+    paymentTerms: payment,
+    currency,
+    supplierUnitPrice: offer.unitPrice,
+    millMessage,
+  };
+}
+
 export function indicationWhatsApp(deal: DeskDeal): string {
   const offer = selectedOffer(deal);
   const qty = deal.quantityMt ? `${deal.quantityMt} MT` : "your volume";

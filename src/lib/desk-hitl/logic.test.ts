@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -181,6 +181,67 @@ describe("parseShortlistBody", () => {
 
   it("rejects a shortlist with no unit prices", () => {
     assert.equal(parseShortlistBody({ requestId: "x", product: "Urea", offers: [{ supplier: "A" }] }), null);
+  });
+});
+
+describe("millFirmOfferWeChat", () => {
+  it("uses the mill RFQ quote and never the buyer price", () => {
+    const deal = {
+      id: "deal-uus908",
+      requestId: "uus908",
+      product: "Urea",
+      quantityMt: 300,
+      destination: "Lagos, Nigeria",
+      incoterm: "CFR",
+      buyerPrice: 221.4,
+      currency: "USD",
+      selectedOfferId: "off-1",
+      offers: [
+        {
+          id: "off-1",
+          supplierName: "Harbour",
+          unitPrice: 205,
+          currency: "USD",
+          incoterm: "CFR",
+          quantityMt: 300,
+          loadPort: "",
+          destination: "Lagos, Nigeria",
+          receivedAt: "",
+          notes: "",
+          wechatOpenId: "oMillHarbour",
+        },
+      ],
+      execution: {
+        packing: "Big bags, no pallets",
+        origin: "",
+        destinationPort: "Lagos, Nigeria",
+        incoterm: "CFR",
+        shipmentWindow: "Dec 2026",
+        paymentTerms: "",
+        inspection: "",
+        documentation: "",
+        specification: "",
+        urgency: "",
+        notes: "",
+        confirmedAt: "",
+      },
+      foPack: {
+        attachments: [
+          { id: "a", kind: "coa", filename: "coa.pdf", contentType: "application/pdf", uploadedAt: "" },
+          { id: "b", kind: "tds", filename: "tds.pdf", contentType: "application/pdf", uploadedAt: "" },
+        ],
+        supplierConfirmedAt: null,
+        supplierConfirmedBy: null,
+      },
+    } as DeskDeal;
+    const mill = millFirmOfferWeChat(deal);
+    assert.ok(mill);
+    assert.equal(mill.supplierUnitPrice, 205);
+    assert.match(mill.millMessage, /Price: USD 205 \/ MT/);
+    assert.doesNotMatch(mill.millMessage, /221/);
+    assert.match(mill.millMessage, /COA\/TDS req/);
+    assert.match(mill.millMessage, /Payment\/Validity: TBA/);
+    assert.equal(mill.wechatOpenId, "oMillHarbour");
   });
 });
 

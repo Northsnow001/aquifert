@@ -1,0 +1,278 @@
+{
+  "name": "12. Firm offer to chosen mill WeChat",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF12 — FO to chosen mill (WeChat text)\nFires when Matt **emails the firm offer** to the buyer. Sends **one** WeChat to the **selected mill only**.\n\n**Price = mill RFQ quote (`supplierUnitPrice`). Never buyer / margin.**\nDo not reuse WF7 (that fans out to every mill).\n\nCopy is a letter, so this uses customer-service **text**, not a template (20-char fields would chop it).\n\nAfter import:\n1. Select **Google Sheets** (same as WF7) and **WeChat** HTTP Query Auth on Get Token\n2. Production URL must be `POST …/webhook/notify_mill_on_firm_offer`\n3. Publish this workflow. Optional Vercel: `DESK_FIRM_OFFER_MILL_WEBHOOK_URL` (already defaults to that path)\n4. Mill must have talked to the OA in the last **48 hours** or WeChat returns 45015\n5. If WeChat ID is blank on the offer, it matches **Company Name** on the Suppliers sheet",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "a12-note-mill-fo",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-640, -160]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notify_mill_on_firm_offer",
+        "options": {}
+      },
+      "id": "a12-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [-160, 80],
+      "webhookId": "notify-mill-on-firm-offer-wf12"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw",
+          "mode": "list",
+          "cachedResultName": "Aquifert Trade Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 691796624,
+          "mode": "list",
+          "cachedResultName": "Suppliers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1U3X34VZ_hXy53MUkwALxNSUvZg5XjHWpVkt6oJ-dNxw/edit#gid=691796624"
+        },
+        "options": {}
+      },
+      "id": "a12-get-suppliers",
+      "name": "Get Suppliers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [64, 80],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "G2UyglLcLdj8jIvK",
+          "name": "Kayode Daniel"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const hookItem = $('Webhook').first().json;\nconst hook = hookItem.body && typeof hookItem.body === 'object' ? hookItem.body : hookItem;\n\nconst millMessage = String(hook.millMessage || '').trim();\nconst supplierUnitPrice = Number(hook.supplierUnitPrice);\nif (!millMessage || !(supplierUnitPrice > 0)) {\n  return [{ json: { skip: true, reason: 'missing_mill_message_or_price' } }];\n}\n\nconst wantOpen = String(hook.wechatOpenId || '').trim();\nconst wantName = String(hook.supplierName || '').trim().toLowerCase();\nconst rows = $input.all().map((item) => item.json);\n\nfunction oid(row) {\n  return String(row['WeChat ID'] || row.wechatOpenId || '').trim();\n}\nfunction company(row) {\n  return String(row['Company Name'] || row.supplierName || '').trim().toLowerCase();\n}\n\nlet row = wantOpen ? rows.find((r) => oid(r) === wantOpen) : null;\nif (!row && wantName) {\n  row = rows.find((r) => {\n    const n = company(r);\n    return n && (n === wantName || n.includes(wantName) || wantName.includes(n));\n  });\n}\n\nconst openid = wantOpen || (row ? oid(row) : '');\nif (!openid) {\n  return [{ json: { skip: true, reason: 'no_wechat_id', supplierName: hook.supplierName || '' } }];\n}\n\nreturn [{\n  json: {\n    skip: false,\n    openid,\n    millMessage,\n    requestId: hook.requestId || '',\n    supplierName: hook.supplierName || (row ? row['Company Name'] : ''),\n    supplierUnitPrice,\n  },\n}];"
+      },
+      "id": "a12-pick-mill",
+      "name": "Pick chosen mill",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [288, 80]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a12-if-openid",
+              "leftValue": "={{ $json.openid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a12-if",
+      "name": "Has WeChat ID",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [512, 80]
+    },
+    {
+      "parameters": {
+        "url": "https://api.weixin.qq.com/cgi-bin/token",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credential"
+            },
+            {
+              "name": "appid",
+              "value": "wxf63aee699e06d1f5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a12-token",
+      "name": "Get Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [736, 0],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "ufsmScsv6y6psAE1",
+          "name": "WeChat"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a12-as-openid",
+              "name": "openid",
+              "value": "={{ $('Pick chosen mill').item.json.openid }}",
+              "type": "string"
+            },
+            {
+              "id": "a12-as-token",
+              "name": "access_token",
+              "value": "={{ $json.access_token }}",
+              "type": "string"
+            },
+            {
+              "id": "a12-as-msg",
+              "name": "millMessage",
+              "value": "={{ $('Pick chosen mill').item.json.millMessage }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a12-edit",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.weixin.qq.com/cgi-bin/message/custom/send",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ touser: $json.openid, msgtype: 'text', text: { content: $json.millMessage } }) }}",
+        "options": {}
+      },
+      "id": "a12-send",
+      "name": "Send WeChat text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [1184, 0]
+    },
+    {
+      "parameters": {},
+      "id": "a12-skip",
+      "name": "No mill WeChat ID",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [736, 192]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Suppliers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Suppliers": {
+      "main": [
+        [
+          {
+            "node": "Pick chosen mill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick chosen mill": {
+      "main": [
+        [
+          {
+            "node": "Has WeChat ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has WeChat ID": {
+      "main": [
+        [
+          {
+            "node": "Get Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No mill WeChat ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Token": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send WeChat text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

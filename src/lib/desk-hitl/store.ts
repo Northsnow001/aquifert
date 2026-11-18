@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, offerIsLocked, parseShortlistBody, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { buyerUnitPrice, classifyBuyerReply, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseShortlistBody, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -61,6 +61,8 @@ const DEFAULT_INDICATION_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/resp
 const DEFAULT_SUPPLIER_PACK_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/supplier_documents";
 /** WhatsApp after Matt emails the firm offer. Override with DESK_FIRM_OFFER_WEBHOOK_URL. */
 const DEFAULT_FIRM_OFFER_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/notify_buyer_on_firm_offer";
+/** Chosen mill WeChat after Matt emails the FO. Override with DESK_FIRM_OFFER_MILL_WEBHOOK_URL. */
+const DEFAULT_FIRM_OFFER_MILL_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/notify_mill_on_firm_offer";
 /** Matt's replies, the opening line, the handoff, and the close. Workflow 13. */
 const DEFAULT_DESK_REPLY_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/desk_to_buyer";
 
@@ -100,6 +102,11 @@ function deskReplyWebhookUrl() {
 
 function firmOfferWebhookUrl() {
   const url = (process.env.DESK_FIRM_OFFER_WEBHOOK_URL || DEFAULT_FIRM_OFFER_WEBHOOK).trim().replace(/\/$/, "");
+  return url.startsWith("https://") || url.startsWith("http://localhost") ? url : "";
+}
+
+function firmOfferMillWebhookUrl() {
+  const url = (process.env.DESK_FIRM_OFFER_MILL_WEBHOOK_URL || DEFAULT_FIRM_OFFER_MILL_WEBHOOK).trim().replace(/\/$/, "");
   return url.startsWith("https://") || url.startsWith("http://localhost") ? url : "";
 }
 
@@ -998,6 +1005,17 @@ export async function markFirmOfferSent(id: string, to: string, actor: string): 
       whatsappBody: firmOfferWhatsApp(saved, to),
     });
   }
+  const mill = millFirmOfferWeChat(saved);
+  await notify(
+    firmOfferMillWebhookUrl(),
+    mill ?? {
+      event: "firm_offer_sent_mill",
+      dealId: saved.id,
+      requestId: saved.requestId,
+      skip: true,
+      reason: "no_selected_mill_quote",
+    },
+  );
   return saved;
 }
 
