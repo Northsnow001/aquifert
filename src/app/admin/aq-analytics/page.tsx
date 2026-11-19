@@ -48,11 +48,7 @@ export default async function AqAnalyticsMapPage({
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="overflow-hidden lg:col-span-2">
           <CardHeader title="Pace choropleth and freight lanes" meta={`As at ${now}`} />
-          <WorldBoard
-            pace={pace}
-            arcs={lanes}
-            hrefFor={(country) => `/admin/aq-analytics/market?country=${encodeURIComponent(country)}`}
-          />
+          <WorldBoard pace={pace} arcs={lanes} hrefBase="/admin/aq-analytics/market" />
         </Card>
         <div className="flex flex-col gap-4">
           <Card>
