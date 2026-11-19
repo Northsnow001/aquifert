@@ -73,7 +73,6 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
     {
       title: "AQ Modules",
       items: [
-        { href: "/admin/aq-analytics", label: "AQ Analytics", icon: "aqAnalytics" },
         { href: "/admin/aq-access", label: "Access & allowances", icon: "access" },
         { href: "/admin/analysis", label: "AQ View notes", icon: "analysis", badge: analysisDrafts ? `${analysisDrafts} draft` : aq.analysis.length },
         { href: "/admin/market-data", label: "Market data", icon: "marketData", badge: marketFreshness(aq.series).badge },
