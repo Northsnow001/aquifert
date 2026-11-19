@@ -67,6 +67,7 @@ export const ADMIN_ICONS = {
   requests: UserPlus,
   nitrogen: FlaskConical,
   website: Globe2,
+  aqAnalytics: Globe2,
 };
 
 export type NavItem = { href: string; label: string; icon: keyof typeof ADMIN_ICONS; badge?: string | number };
