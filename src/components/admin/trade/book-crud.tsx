@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Columns3, Plus, Search, Trash2, X } from "lu
 import { toast } from "sonner";
 import { deleteBookRowAction, deleteBookRowsAction, saveBookRowAction } from "@/app/admin/trade/actions";
 import { TradeGrid, Td, Th } from "@/components/admin/trade/live-table";
-import { EmptyState, btnDanger, btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
+import { EmptyState, btnDanger, btnPrimary, btnSecondary, field, input, label, textarea } from "@/components/admin/ui";
 import { emptyBookRow, type BookField, type BookRow, type BookSpec } from "@/lib/trade/book";
 
 const PAGE_SIZES = [25, 50, 100, 200];
@@ -87,7 +87,18 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
   const [sheet, setSheet] = useState<BookRow | "new" | null>(null);
   const [form, setForm] = useState<Record<string, string>>(emptyBookRow(spec));
   const tableFields = spec.fields;
-  const filterFields = tableFields.filter((field) => field.type === "select" && field.options?.length);
+  const filterFields = useMemo(() => {
+    const rank = (key: string) =>
+      key === "status" ? 0 : key === "kind" ? 1 : key === "source_channel" ? 2 : key === "shipment_type" ? 3 : 8;
+    return tableFields
+      .filter((item) => item.type === "select" && item.options?.length && item.key !== "margin_type")
+      .filter((item) => {
+        const values = new Set(initial.map((row) => String(row[item.key] ?? "")).filter(Boolean));
+        return values.size > 1;
+      })
+      .sort((a, b) => rank(a.key) - rank(b.key))
+      .slice(0, 3);
+  }, [initial, tableFields]);
   const visibleFields = tableFields.filter((field) => !hidden.has(field.key));
   const storageKey = `aq-book-cols:${spec.slug}`;
 
@@ -202,8 +213,8 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
+      <div className="mb-4 flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
+        <div className="relative min-w-[160px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim" />
           <input
             className={`${input} pl-9`}
@@ -215,38 +226,38 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
             }}
           />
         </div>
-        {filterFields.map((field) => (
+        {filterFields.map((item) => (
           <select
-            key={field.key}
-            className={`${input} w-auto min-w-[140px]`}
-            value={filters[field.key] ?? ""}
+            key={item.key}
+            className={`${field} h-9 w-max max-w-[10.5rem] shrink-0`}
+            value={filters[item.key] ?? ""}
             onChange={(e) => {
               const value = e.target.value;
               setFilters((prev) => {
                 const next = { ...prev };
-                if (value) next[field.key] = value;
-                else delete next[field.key];
+                if (value) next[item.key] = value;
+                else delete next[item.key];
                 return next;
               });
               setPage(1);
             }}
-            aria-label={`Filter ${field.label}`}
+            aria-label={`Filter ${item.label}`}
           >
-            <option value="">All {field.label.toLowerCase()}</option>
-            {field.options?.map((opt) => (
+            <option value="">{item.label}</option>
+            {item.options?.map((opt) => (
               <option key={opt} value={opt}>
                 {opt.replaceAll("_", " ")}
               </option>
             ))}
           </select>
         ))}
-        <div className="relative">
+        <div className="relative ml-auto flex shrink-0 items-center gap-2">
           <button type="button" className={btnSecondary} onClick={() => setColsOpen((isOpen) => !isOpen)}>
             <Columns3 className="h-4 w-4" />
             Columns
           </button>
           {colsOpen ? (
-            <div className="absolute right-0 z-30 mt-2 max-h-80 w-72 overflow-y-auto rounded-xl border border-border bg-white p-3 shadow-lg">
+            <div className="absolute right-0 top-full z-30 mt-2 max-h-80 w-72 overflow-y-auto rounded-xl border border-border bg-white p-3 shadow-lg">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-[12px] font-semibold text-mid">Show columns</p>
                 <button type="button" className="text-[12px] font-semibold text-blue" onClick={() => setHidden(new Set())}>
@@ -273,17 +284,17 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
               ))}
             </div>
           ) : null}
-        </div>
-        {selected.size > 0 ? (
-          <button type="button" className={btnDanger} disabled={pending} onClick={removeSelected}>
-            <Trash2 className="h-4 w-4" />
-            Delete {selected.size}
+          {selected.size > 0 ? (
+            <button type="button" className={btnDanger} disabled={pending} onClick={removeSelected}>
+              <Trash2 className="h-4 w-4" />
+              Delete {selected.size}
+            </button>
+          ) : null}
+          <button type="button" className={btnPrimary} onClick={() => open("new")}>
+            <Plus className="h-4 w-4" />
+            Add
           </button>
-        ) : null}
-        <button type="button" className={btnPrimary} onClick={() => open("new")}>
-          <Plus className="h-4 w-4" />
-          Add
-        </button>
+        </div>
       </div>
       <div className="aq-card overflow-hidden">
         {filtered.length === 0 ? (
