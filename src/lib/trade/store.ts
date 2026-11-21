@@ -1,6 +1,6 @@
 import "server-only";
 
-import { dataClient, databaseError } from "@/lib/data/db";
+import { dataClient, databaseError, isMissingTable } from "@/lib/data/db";
 import type {
   OnboardingStatus,
   TradeAgent,
@@ -11,9 +11,12 @@ import type {
   TradeMessage,
   TradeQuote,
   TradeRfq,
+  TradeRfqAsk,
+  TradeRfqDesk,
   TradeSupplier,
   TradeSupplierDraft,
   WechatChatState,
+  type RfqAskStatus,
 } from "@/lib/trade/types";
 import { ONBOARDING_STATUSES } from "@/lib/trade/types";
 
@@ -474,11 +477,13 @@ export async function insertWechatQuote(input: {
     if (existing?.id) {
       const { error } = await db.from("trade_quotes").update(row).eq("id", existing.id);
       if (error) throw databaseError("update WeChat quote", error);
+      await markRfqAskQuoted(rfqId, input.supplierId, Boolean(input.isNoOffer)).catch(() => undefined);
       return;
     }
   }
   const { error } = await db.from("trade_quotes").insert(row);
   if (error) throw databaseError("save WeChat quote", error);
+  if (rfqId) await markRfqAskQuoted(rfqId, input.supplierId, Boolean(input.isNoOffer)).catch(() => undefined);
 }
 
 export async function logTradeMessage(input: {
@@ -486,6 +491,7 @@ export async function logTradeMessage(input: {
   channel: "email" | "whatsapp" | "wechat" | "phone" | "other";
   supplierId?: string;
   buyerId?: string;
+  rfqId?: string;
   fromAddress?: string;
   toAddress?: string;
   body: string;
@@ -502,7 +508,144 @@ export async function logTradeMessage(input: {
     to_address: input.toAddress ?? null,
     body: input.body,
     payload: input.payload ?? {},
+    rfq_id: input.rfqId ?? null,
   });
+}
+
+function askStatus(raw: unknown): RfqAskStatus {
+  const value = text(raw);
+  return value === "skipped" || value === "sent" || value === "failed" || value === "quoted" || value === "no_offer" || value === "queued"
+    ? value
+    : "queued";
+}
+
+export async function upsertRfqAsk(input: {
+  rfqId: string;
+  supplierId: string;
+  status: RfqAskStatus;
+  error?: string;
+  extras?: Record<string, unknown>;
+}) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const now = new Date().toISOString();
+  const { error } = await db.from("trade_rfq_asks").upsert(
+    {
+      rfq_id: input.rfqId,
+      supplier_id: input.supplierId,
+      status: input.status,
+      error: input.error || null,
+      sent_at: input.status === "sent" ? now : undefined,
+      extras: input.extras ?? {},
+      updated_at: now,
+    },
+    { onConflict: "rfq_id,supplier_id" },
+  );
+  if (error) throw databaseError("save RFQ ask", error);
+}
+
+export async function markRfqAskQuoted(rfqId: string, supplierId: string, noOffer: boolean) {
+  const db = dataClient();
+  if (!db) return;
+  const { error } = await db
+    .from("trade_rfq_asks")
+    .update({ status: noOffer ? "no_offer" : "quoted", error: null, updated_at: new Date().toISOString() })
+    .eq("rfq_id", rfqId)
+    .eq("supplier_id", supplierId);
+  if (error && !isMissingTable(error)) throw databaseError("mark RFQ ask quoted", error);
+}
+
+export async function markSupplierLastRfq(id: string, code: string) {
+  const db = dataClient();
+  if (!db) return;
+  const { error } = await db
+    .from("trade_suppliers")
+    .update({
+      last_rfq_code: code,
+      awaiting_reply: "awaiting_previous_quote",
+      last_contact_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+  if (error) throw databaseError("mark supplier last RFQ", error);
+}
+
+export async function getTradeRfqRecord(id: string) {
+  const db = dataClient();
+  if (!db) return null;
+  const { data, error } = await db
+    .from("trade_rfqs")
+    .select(
+      "id, code, status, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, raw_message, extras, buyer_id, created_at, updated_at",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw databaseError("load buyer request", error);
+  return data ? (data as Record<string, unknown>) : null;
+}
+
+export async function getTradeRfqDesk(id: string): Promise<TradeRfqDesk | null> {
+  const db = dataClient();
+  if (!db) return null;
+  const rfq = await getTradeRfqRecord(id);
+  if (!rfq) return null;
+  const buyerId = text(rfq.buyer_id);
+  const [{ data: buyer }, { data: asks, error: askError }, { data: quotes }] = await Promise.all([
+    buyerId ? db.from("trade_buyers").select("company_name, contact_name, email, whatsapp_e164").eq("id", buyerId).maybeSingle() : Promise.resolve({ data: null }),
+    db.from("trade_rfq_asks").select("*").eq("rfq_id", id),
+    db.from("trade_quotes").select("supplier_id, unit_price, incoterm, load_port, is_no_offer, received_at, status").eq("rfq_id", id).eq("kind", "rfq"),
+  ]);
+  if (askError && !isMissingTable(askError)) throw databaseError("list RFQ asks", askError);
+  const supplierIds = [...new Set((asks ?? []).map((row) => text((row as { supplier_id: string }).supplier_id)).filter(Boolean))];
+  const { data: suppliers } = supplierIds.length
+    ? await db.from("trade_suppliers").select("id, company_name, contact_name, wechat_openid").in("id", supplierIds)
+    : { data: [] };
+  const millMap = Object.fromEntries((suppliers ?? []).map((row) => [text(row.id), row as Record<string, unknown>]));
+  const quoteMap = Object.fromEntries(
+    (quotes ?? []).map((row) => [text((row as { supplier_id: string }).supplier_id), row as Record<string, unknown>]),
+  );
+  const deskAsks: TradeRfqAsk[] = (asks ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    const mill = millMap[text(r.supplier_id)] ?? {};
+    const quote = quoteMap[text(r.supplier_id)];
+    return {
+      id: text(r.id),
+      rfqId: id,
+      supplierId: text(r.supplier_id),
+      companyName: text(mill.company_name) || "Supplier",
+      contactName: text(mill.contact_name),
+      wechatOpenid: text(mill.wechat_openid) || null,
+      status: askStatus(r.status),
+      error: text(r.error),
+      sentAt: text(r.sent_at) || null,
+      unitPrice: quote ? num(quote.unit_price) : null,
+      incoterm: quote ? text(quote.incoterm) : "",
+      loadPort: quote ? text(quote.load_port) : "",
+      quoteAt: quote ? text(quote.received_at) : null,
+    };
+  });
+  deskAsks.sort((a, b) => a.companyName.localeCompare(b.companyName));
+  const b = (buyer ?? {}) as Record<string, unknown>;
+  return {
+    id: text(rfq.id),
+    code: text(rfq.code),
+    status: text(rfq.status),
+    productLabel: text(rfq.product_label),
+    specification: text(rfq.specification),
+    quantityMt: num(rfq.quantity_mt),
+    packing: text(rfq.packing),
+    incoterm: text(rfq.incoterm),
+    destinationPort: text(rfq.destination_port),
+    destinationCountry: text(rfq.destination_country),
+    shipmentWindow: text(rfq.shipment_window),
+    rawMessage: text(rfq.raw_message),
+    buyerCompany: text(b.company_name),
+    buyerContact: text(b.contact_name),
+    buyerEmail: text(b.email),
+    buyerPhone: text(b.whatsapp_e164),
+    createdAt: text(rfq.created_at),
+    updatedAt: text(rfq.updated_at),
+    asks: deskAsks,
+  };
 }
 
 const CLOSED_RFQ = new Set(["won", "lost", "expired", "closed"]);

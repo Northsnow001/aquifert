@@ -21,7 +21,7 @@ export function SupplierThread({
 }: {
   supplier: TradeSupplier;
   onClose: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
 }) {
   const [messages, setMessages] = useState<TradeMessage[] | null>(null);
   const [error, setError] = useState("");
@@ -57,10 +57,12 @@ export function SupplierThread({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <button type="button" className={btnSecondary} onClick={onEdit}>
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </button>
+            {onEdit ? (
+              <button type="button" className={btnSecondary} onClick={onEdit}>
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            ) : null}
             <button type="button" className={btnGhost} onClick={onClose} aria-label="Close conversation">
               <X className="h-4 w-4" />
             </button>

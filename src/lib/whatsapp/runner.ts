@@ -233,7 +233,7 @@ function deskUserPrompt(input: {
 
 export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string; messages: TradeMessage[] }) {
   const fallback = `Hi ${input.buyer.contactName || input.buyer.companyName} — what fertiliser are you looking to cover?`;
-  if (!geminiKey()) return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "" };
+  if (!geminiKey()) return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "", rfqId: "", fanout: false };
 
   try {
     const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
@@ -246,6 +246,8 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
     );
     let reply = asString(data.reply) || fallback;
     let rfqCode = asString(draft?.code);
+    let rfqId = asString(draft?.id);
+    let fanout = false;
     const route = asString(data.route);
     const extract = data.rfq_extract && typeof data.rfq_extract === "object" ? (data.rfq_extract as Record<string, unknown>) : null;
     const commercial = data.commercial_extract && typeof data.commercial_extract === "object" ? (data.commercial_extract as Record<string, unknown>) : null;
@@ -259,6 +261,8 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
             }))
           : await insertWhatsAppRfq({ buyerId: input.buyer.id, ...fields, status: "open" });
         rfqCode = saved.code;
+        rfqId = saved.id;
+        fanout = true;
         reply = `Thank you for confirming — we have what we need. Your Trade ID is "${saved.code}", and we’ll come back to you shortly with an indication.`;
       } else if (draft?.id) {
         await patchTradeRfq(asString(draft.id), fields);
@@ -273,9 +277,9 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
       const nextStatus = route === "pi_ready" ? "pi_sent" : route === "firm_offer_ready" ? "firm_interest" : asString(latest.status) || "negotiating";
       await patchTradeRfq(asString(latest.id), { status: nextStatus, extras: { ...extras, commercial } });
     }
-    return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode };
+    return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode, rfqId, fanout };
   } catch {
-    return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "" };
+    return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "", rfqId: "", fanout: false };
   }
 }
 

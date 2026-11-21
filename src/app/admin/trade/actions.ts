@@ -9,6 +9,7 @@ import { deleteBookRow, deleteBookRows, saveBookRow } from "@/lib/trade/book-sto
 import {
   deleteTradeBuyers,
   deleteTradeSuppliers,
+  getTradeRfqDesk,
   insertTradeBuyer,
   insertTradeSupplier,
   listTradeThread,
@@ -16,6 +17,7 @@ import {
   updateTradeBuyer,
   updateTradeSupplier,
 } from "@/lib/trade/store";
+import { fanOutBuyerRfq } from "@/lib/wechat/fanout";
 import type { TradeBuyerDraft, TradeSupplierDraft } from "@/lib/trade/types";
 import { resetTradeAgent, saveTradeAgent } from "@/lib/wechat/agent-store";
 
@@ -245,6 +247,28 @@ export async function deleteSuppliersAction(ids: string[]) {
     return { ok: true as const, deleted };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not delete the suppliers." };
+  }
+}
+
+export async function getRfqDeskAction(id: string) {
+  await requireAdmin();
+  try {
+    const desk = await getTradeRfqDesk(id);
+    if (!desk) return { ok: false as const, error: "Buyer request not found." };
+    return { ok: true as const, desk };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not load this trade." };
+  }
+}
+
+export async function fanOutRfqAction(id: string, resendFailed = false) {
+  await requireAdmin();
+  try {
+    const result = await fanOutBuyerRfq(id, { resendFailed });
+    refresh();
+    return { ok: true as const, ...result };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not send this request to suppliers." };
   }
 }
 

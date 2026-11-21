@@ -12,6 +12,7 @@ import {
 import type { TradeBuyer } from "@/lib/trade/types";
 import { identityFromBuyer } from "@/lib/whatsapp/buyer-identity";
 import { parseInviteHello, parseWhatsAppStart, toE164 } from "@/lib/whatsapp/parse";
+import { fanOutBuyerRfq } from "@/lib/wechat/fanout";
 import { runInvitedBuyerTurn, runKnownBuyerTurn, runUnknownBuyerTurn, whatsappThread } from "@/lib/whatsapp/runner";
 import { sendWhatsAppText } from "@/lib/whatsapp/send";
 
@@ -70,6 +71,11 @@ async function continueKnown(input: {
 
   const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages });
   await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode }, input.deliver);
+  if (turn.fanout && turn.rfqId) {
+    await fanOutBuyerRfq(turn.rfqId).catch((error) => {
+      console.error("[rfq fan-out]", error instanceof Error ? error.message : error);
+    });
+  }
   return { reply: turn.reply, buyerId: buyer.id };
 }
 

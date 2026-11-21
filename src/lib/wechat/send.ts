@@ -3,6 +3,12 @@ import "server-only";
 import { wechatAccessToken, wechatAccessTokenRetry } from "@/lib/wechat/token";
 
 const SEND = "https://api.weixin.qq.com/cgi-bin/message/custom/send";
+const TEMPLATE = "https://api.weixin.qq.com/cgi-bin/message/template/send";
+
+function clip(value: string, max = 20) {
+  const text = value.trim();
+  return text.length <= max ? text : text.slice(0, max);
+}
 
 async function post(token: string, openid: string, text: string) {
   const res = await fetch(`${SEND}?access_token=${encodeURIComponent(token)}`, {
@@ -26,6 +32,53 @@ export async function sendWechatText(openid: string, text: string) {
   }
   if (result?.errcode && result.errcode !== 0) {
     return { ok: false as const, error: result.errmsg || `WeChat send failed (${result.errcode}).` };
+  }
+  return { ok: true as const };
+}
+
+export async function sendWechatTemplate(
+  openid: string,
+  data: {
+    tradeId: string;
+    product: string;
+    quantity: string;
+    packing: string;
+    price: string;
+    shipping: string;
+  },
+) {
+  const to = openid.trim();
+  const templateId = process.env.WECHAT_RFQ_TEMPLATE_ID?.trim() || "thClXM6SdWev7phG0ZrGO2aI_TloWAhEXBmFn9Es-P4";
+  if (!to) return { ok: false as const, error: "Missing OpenID." };
+  const payload = {
+    touser: to,
+    template_id: templateId,
+    data: {
+      trade_id: { value: clip(data.tradeId) },
+      product: { value: clip(data.product) },
+      quantity: { value: clip(data.quantity) },
+      packing: { value: clip(data.packing) },
+      price: { value: clip(data.price) },
+      shipping: { value: clip(data.shipping) },
+    },
+  };
+  const postTemplate = async (token: string) => {
+    const res = await fetch(`${TEMPLATE}?access_token=${encodeURIComponent(token)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(12_000),
+    });
+    return (await res.json().catch(() => null)) as { errcode?: number; errmsg?: string } | null;
+  };
+  let token = await wechatAccessToken();
+  let result = await postTemplate(token.token);
+  if (result?.errcode === 40001 || result?.errcode === 42001) {
+    token = await wechatAccessTokenRetry();
+    result = await postTemplate(token.token);
+  }
+  if (result?.errcode && result.errcode !== 0) {
+    return { ok: false as const, error: result.errmsg || `WeChat template failed (${result.errcode}).` };
   }
   return { ok: true as const };
 }

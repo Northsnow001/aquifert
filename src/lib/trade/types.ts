@@ -170,6 +170,56 @@ export type TradeRfq = {
   updatedAt: string;
 };
 
+export const RFQ_ASK_STATUSES = ["queued", "skipped", "sent", "failed", "quoted", "no_offer"] as const;
+export type RfqAskStatus = (typeof RFQ_ASK_STATUSES)[number];
+
+export const RFQ_ASK_LABEL: Record<RfqAskStatus, string> = {
+  queued: "Queued",
+  skipped: "No WeChat",
+  sent: "Awaiting quote",
+  failed: "Send failed",
+  quoted: "Quoted",
+  no_offer: "No offer",
+};
+
+export type TradeRfqAsk = {
+  id: string;
+  rfqId: string;
+  supplierId: string;
+  companyName: string;
+  contactName: string;
+  wechatOpenid: string | null;
+  status: RfqAskStatus;
+  error: string;
+  sentAt: string | null;
+  unitPrice: number | null;
+  incoterm: string;
+  loadPort: string;
+  quoteAt: string | null;
+};
+
+export type TradeRfqDesk = {
+  id: string;
+  code: string;
+  status: string;
+  productLabel: string;
+  specification: string;
+  quantityMt: number | null;
+  packing: string;
+  incoterm: string;
+  destinationPort: string;
+  destinationCountry: string;
+  shipmentWindow: string;
+  rawMessage: string;
+  buyerCompany: string;
+  buyerContact: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  createdAt: string;
+  updatedAt: string;
+  asks: TradeRfqAsk[];
+};
+
 export type TradeQuote = {
   id: string;
   code: string | null;

@@ -14,6 +14,7 @@ export default async function TradeBookPage() {
   const people = [
     { href: "/admin/trade/suppliers", title: "Suppliers", body: "WeChat invite, OpenID, last RFQ. Click a row to read the conversation.", stat: counts ? `${counts.suppliers} suppliers · ${counts.toInvite} to invite` : "—" },
     { href: "/admin/trade/buyers", title: "Buyers", body: "WhatsApp invite, then the buyer desk. Click a row for the thread.", stat: counts ? `${counts.buyers} buyers` : "—" },
+    { href: "/admin/trade/rfqs", title: "Buyer requests", body: "Send a confirmed enquiry to every WeChat supplier. Track quotes and threads on the trade.", stat: counts ? `${counts.openRfqs} open` : "—" },
     { href: "/admin/trade/agents", title: "Desk agents", body: "Matt, unknown-supplier desk, and buyer WhatsApp agents.", stat: "Named prompts" },
   ];
   const tables = BOOK_SPECS.map((spec) => ({
