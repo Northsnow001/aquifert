@@ -5,6 +5,7 @@ import type {
   OnboardingStatus,
   TradeAgent,
   TradeBuyer,
+  TradeBuyerDraft,
   TradeCounts,
   TradeFreightQuote,
   TradeMessage,
@@ -263,15 +264,27 @@ export async function saveSupplierChatState(id: string, state: WechatChatState) 
 }
 
 export async function listWechatThread(input: { supplierId?: string | null; openid?: string | null }): Promise<TradeMessage[]> {
+  return listTradeThread({ channel: "wechat", supplierId: input.supplierId, address: input.openid });
+}
+
+export async function listTradeThread(input: {
+  channel: "wechat" | "whatsapp";
+  supplierId?: string | null;
+  buyerId?: string | null;
+  address?: string | null;
+}): Promise<TradeMessage[]> {
   const db = dataClient();
   if (!db) return [];
   const supplierId = input.supplierId?.trim() || "";
-  const openid = input.openid?.trim() || "";
-  if (!supplierId && !openid) return [];
-  let query = db.from("trade_messages").select("*").eq("channel", "wechat").order("created_at", { ascending: true }).limit(400);
-  if (supplierId && openid) query = query.or(`supplier_id.eq.${supplierId},from_address.eq.${openid},to_address.eq.${openid}`);
-  else if (supplierId) query = query.eq("supplier_id", supplierId);
-  else query = query.or(`from_address.eq.${openid},to_address.eq.${openid}`);
+  const buyerId = input.buyerId?.trim() || "";
+  const address = input.address?.trim() || "";
+  if (!supplierId && !buyerId && !address) return [];
+  let query = db.from("trade_messages").select("*").eq("channel", input.channel).order("created_at", { ascending: true }).limit(400);
+  const parts: string[] = [];
+  if (supplierId) parts.push(`supplier_id.eq.${supplierId}`);
+  if (buyerId) parts.push(`buyer_id.eq.${buyerId}`);
+  if (address) parts.push(`from_address.eq.${address}`, `to_address.eq.${address}`);
+  if (parts.length) query = query.or(parts.join(","));
   const { data, error } = await query;
   if (error) throw databaseError("list WeChat thread", error);
   return (data ?? []).map((row) => {
@@ -390,22 +403,219 @@ export async function listTradeBuyers(): Promise<TradeBuyer[]> {
   if (!db) return [];
   const { data, error } = await db.from("trade_buyers").select("*").order("updated_at", { ascending: false });
   if (error) throw databaseError("list buyers", error);
-  return (data ?? []).map((row) => {
-    const r = row as Record<string, unknown>;
-    return {
-      id: text(r.id),
-      code: text(r.code),
-      companyName: text(r.company_name),
-      contactName: text(r.contact_name),
-      email: text(r.email),
-      whatsappE164: text(r.whatsapp_e164) || null,
-      country: text(r.country),
-      kycStatus: text(r.kyc_status) || "pending",
-      status: text(r.status) || "active",
-      createdAt: text(r.created_at),
-      updatedAt: text(r.updated_at),
-    };
+  return (data ?? []).map((row) => buyerFrom(row as Record<string, unknown>));
+}
+
+function buyerFrom(row: Record<string, unknown>): TradeBuyer {
+  return {
+    id: text(row.id),
+    code: text(row.code),
+    companyName: text(row.company_name),
+    contactName: text(row.contact_name),
+    email: text(row.email),
+    whatsappE164: text(row.whatsapp_e164) || null,
+    country: text(row.country),
+    address: text(row.address),
+    jobTitle: text(row.job_title),
+    buyerType: text(row.buyer_type),
+    productsOfInterest: text(row.products_of_interest),
+    kycStatus: text(row.kyc_status) || "pending",
+    status: text(row.status) || "active",
+    onboardingStatus: onboarding(row.onboarding_status),
+    invitedAt: text(row.invited_at) || null,
+    lastContactAt: text(row.last_contact_at) || null,
+    notes: text(row.notes),
+    createdAt: text(row.created_at),
+    updatedAt: text(row.updated_at),
+  };
+}
+
+function buyerWrite(input: TradeBuyerDraft) {
+  const phone = e164(input.phone);
+  return {
+    company_name: input.companyName.trim(),
+    contact_name: input.contactName.trim() || null,
+    job_title: input.jobTitle.trim() || null,
+    email: input.email.trim().toLowerCase() || null,
+    whatsapp_e164: phone,
+    country: input.country.trim() || null,
+    address: input.address.trim() || null,
+    buyer_type: input.buyerType.trim() || null,
+    products_of_interest: input.productsOfInterest.trim() || null,
+    notes: input.notes.trim() || null,
+    onboarding_status: phone ? "subscribed" : undefined,
+  };
+}
+
+export async function getTradeBuyer(id: string): Promise<TradeBuyer | null> {
+  const db = dataClient();
+  if (!db) return null;
+  const { data, error } = await db.from("trade_buyers").select("*").eq("id", id).maybeSingle();
+  if (error) throw databaseError("read buyer", error);
+  return data ? buyerFrom(data as Record<string, unknown>) : null;
+}
+
+export async function getTradeBuyerByWhatsApp(phone: string): Promise<TradeBuyer | null> {
+  const db = dataClient();
+  if (!db) return null;
+  const e164Phone = e164(phone);
+  if (!e164Phone) return null;
+  const { data, error } = await db.from("trade_buyers").select("*").eq("whatsapp_e164", e164Phone).maybeSingle();
+  if (error) throw databaseError("read buyer by WhatsApp", error);
+  return data ? buyerFrom(data as Record<string, unknown>) : null;
+}
+
+export async function getTradeBuyerByEmail(email: string): Promise<TradeBuyer | null> {
+  const db = dataClient();
+  if (!db) return null;
+  const key = email.trim().toLowerCase();
+  if (!key) return null;
+  const { data, error } = await db.from("trade_buyers").select("*").eq("email", key).maybeSingle();
+  if (error) throw databaseError("read buyer by email", error);
+  return data ? buyerFrom(data as Record<string, unknown>) : null;
+}
+
+export async function insertTradeBuyer(input: TradeBuyerDraft) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const { data: code, error: codeError } = await db.rpc("trade_next_code", {
+    counter_key: "next_buyer_number",
+    prefix: "B-",
+    pad: 3,
   });
+  if (codeError) throw databaseError("allocate buyer code", codeError);
+  const body = buyerWrite(input);
+  const { data, error } = await db
+    .from("trade_buyers")
+    .insert({
+      code: String(code),
+      ...body,
+      status: "active",
+      kyc_status: "pending",
+      onboarding_status: body.whatsapp_e164 ? "subscribed" : "to_invite",
+    })
+    .select("*")
+    .single();
+  if (error) throw databaseError("create buyer", error);
+  return buyerFrom(data as Record<string, unknown>);
+}
+
+export async function updateTradeBuyer(id: string, input: TradeBuyerDraft) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const body = buyerWrite(input);
+  const patch: Record<string, unknown> = { ...body };
+  if (!body.whatsapp_e164) delete patch.whatsapp_e164;
+  if (!body.onboarding_status) delete patch.onboarding_status;
+  const { data, error } = await db.from("trade_buyers").update(patch).eq("id", id).select("*").single();
+  if (error) throw databaseError("update buyer", error);
+  return buyerFrom(data as Record<string, unknown>);
+}
+
+export async function markBuyerInvited(id: string, email: string) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const now = new Date().toISOString();
+  const { data, error } = await db
+    .from("trade_buyers")
+    .update({
+      onboarding_status: "invited",
+      invited_at: now,
+      invited_email: email,
+      last_contact_at: now,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw databaseError("mark buyer invited", error);
+  return buyerFrom(data as Record<string, unknown>);
+}
+
+export async function linkBuyerWhatsApp(input: { phone: string; email: string }) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const email = input.email.trim().toLowerCase();
+  const phone = e164(input.phone);
+  if (!email || !phone) return { ok: false as const, error: "phone and email are required." };
+  const { data: rows, error: lookupError } = await db
+    .from("trade_buyers")
+    .select("*")
+    .or(`email.eq.${email},invited_email.eq.${email}`)
+    .limit(5);
+  if (lookupError) throw databaseError("find buyer for WhatsApp start", lookupError);
+  const match = (rows ?? []).find((row) => {
+    const r = row as Record<string, unknown>;
+    return [r.email, r.invited_email].some((value) => String(value ?? "").trim().toLowerCase() === email);
+  });
+  if (!match) return { ok: false as const, unmatched: true as const, error: "No buyer with that invite email." };
+  const { data, error } = await db
+    .from("trade_buyers")
+    .update({
+      whatsapp_e164: phone,
+      onboarding_status: "subscribed",
+      last_contact_at: new Date().toISOString(),
+    })
+    .eq("id", String((match as { id: string }).id))
+    .select("*")
+    .single();
+  if (error) throw databaseError("link buyer WhatsApp", error);
+  const buyer = buyerFrom(data as Record<string, unknown>);
+  await logTradeMessage({
+    direction: "in",
+    channel: "whatsapp",
+    buyerId: buyer.id,
+    fromAddress: phone,
+    toAddress: email,
+    body: "WhatsApp START / invite link",
+    payload: { event: "start", phone, email },
+  });
+  return { ok: true as const, buyer };
+}
+
+export async function insertWhatsAppRfq(input: {
+  buyerId: string;
+  productLabel: string;
+  specification?: string;
+  quantityMt?: string;
+  packing?: string;
+  destinationPort?: string;
+  destinationCountry?: string;
+  incoterm?: string;
+  shipmentWindow?: string;
+  rawMessage: string;
+  extras?: Record<string, unknown>;
+}) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const { data: code, error: codeError } = await db.rpc("trade_next_code", {
+    counter_key: "next_rfq_number",
+    prefix: "rfq#",
+    pad: 3,
+  });
+  if (codeError) throw databaseError("allocate RFQ code", codeError);
+  const qty = num(String(input.quantityMt || "").replace(/[^\d.]/g, ""));
+  const { data, error } = await db
+    .from("trade_rfqs")
+    .insert({
+      code: String(code),
+      buyer_id: input.buyerId,
+      product_label: input.productLabel || "",
+      specification: input.specification || null,
+      quantity_mt: qty,
+      packing: input.packing || null,
+      destination_port: input.destinationPort || null,
+      destination_country: input.destinationCountry || null,
+      incoterm: input.incoterm || null,
+      shipment_window: input.shipmentWindow || null,
+      source_channel: "whatsapp",
+      status: "collecting",
+      raw_message: input.rawMessage,
+      extras: input.extras ?? {},
+    })
+    .select("id, code")
+    .single();
+  if (error) throw databaseError("save WhatsApp RFQ", error);
+  return { id: text(data.id), code: text(data.code) };
 }
 
 export async function listTradeRfqs(): Promise<TradeRfq[]> {

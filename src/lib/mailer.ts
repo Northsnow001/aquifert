@@ -22,6 +22,7 @@ export type MailKind =
   | "sales-contract-buyer"
   | "negotiation-desk"
   | "supplier-wechat-invite"
+  | "buyer-whatsapp-invite"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string; cid?: string };

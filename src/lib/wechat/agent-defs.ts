@@ -1,3 +1,6 @@
+import { BUYER_ONBOARDING_PROMPT } from "@/lib/whatsapp/onboard-prompt";
+import { BUYER_RFQ_PROMPT } from "@/lib/whatsapp/rfq-prompt";
+
 export const TRADE_AGENTS = {
   "wechat-supplier-quote": {
     name: "Matt — supplier quotes",
@@ -6,6 +9,14 @@ export const TRADE_AGENTS = {
   "wechat-supplier-unknown": {
     name: "Supplier desk — not on list",
     description: "OpenID is not on trade_suppliers. Collects company, contact name and email, then registers them.",
+  },
+  "whatsapp-buyer-onboard": {
+    name: "Buyer desk — not on list",
+    description: "WhatsApp numbers not on trade_buyers. Collects the seven identity fields from workflow 6, then registers them.",
+  },
+  "whatsapp-buyer-desk": {
+    name: "AQ Buyer Desk — WhatsApp",
+    description: "Verified buyers on WhatsApp. RFQ intake from workflow 6. Indication YES stays on the desk HITL path.",
   },
 } as const;
 
@@ -86,5 +97,12 @@ Return ONLY JSON:
 {"action":"reply"|"register","wa_body":"<English>\\n\\n<Chinese>","supplier":{"company":"","contact_name":"","email":"","country":"","products":"","notes":""},"extract":{"rfq_id":"","product_name":"","unit_price":"","currency":"USD","incoterms":"","quantity":"","packaging":"","load_port":"","validity":"","is_no_offer":false}}`;
 
 export function defaultPrompt(key: TradeAgentKey) {
-  return key === "wechat-supplier-quote" ? MATT_PROMPT : UNKNOWN_PROMPT;
+  if (key === "wechat-supplier-quote") return MATT_PROMPT;
+  if (key === "wechat-supplier-unknown") return UNKNOWN_PROMPT;
+  if (key === "whatsapp-buyer-desk") {
+    return `${BUYER_RFQ_PROMPT}
+
+App note: leave rfq_id empty. The app writes the Trade ID after it saves the buyer request. generate_pdf is always false.`;
+  }
+  return BUYER_ONBOARDING_PROMPT;
 }

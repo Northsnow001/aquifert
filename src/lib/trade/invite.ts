@@ -1,11 +1,20 @@
 import "server-only";
 
 import { getDeskSettings } from "@/lib/desk-settings/store";
-import { supplierWeChatInviteEmail } from "@/lib/email/templates";
+import { buyerWhatsAppInviteEmail, supplierWeChatInviteEmail } from "@/lib/email/templates";
 import { sendEmail } from "@/lib/mailer";
 import { supplierInviteEligible } from "@/lib/trade/invite-rules";
-import { getTradeSupplier, listTradeSuppliers, logTradeMessage, markSupplierInvited } from "@/lib/trade/store";
-import type { InviteResult, TradeSupplier } from "@/lib/trade/types";
+import {
+  getTradeBuyer,
+  getTradeSupplier,
+  listTradeBuyers,
+  listTradeSuppliers,
+  logTradeMessage,
+  markBuyerInvited,
+  markSupplierInvited,
+} from "@/lib/trade/store";
+import type { BuyerInviteResult, InviteResult, TradeBuyer, TradeSupplier } from "@/lib/trade/types";
+import { buyerInviteEligible, buyerWhatsAppLink } from "@/lib/whatsapp/parse";
 import { wechatPermanentQr, wechatQrPng } from "@/lib/wechat/qr";
 
 const BATCH = 20;
@@ -67,5 +76,44 @@ export async function inviteSuppliersWaiting(): Promise<{ results: InviteResult[
   const batch = waiting.slice(0, BATCH);
   const results: InviteResult[] = [];
   for (const row of batch) results.push(await inviteOne(row));
+  return { results, truncated: waiting.length > BATCH };
+}
+
+async function inviteBuyerOne(row: TradeBuyer): Promise<BuyerInviteResult> {
+  const check = buyerInviteEligible(row);
+  if (!check.ok) return { buyerId: row.id, email: row.email, ok: false, error: check.reason };
+  const { delivery } = await getDeskSettings();
+  const link = buyerWhatsAppLink(check.email);
+  const email = buyerWhatsAppInviteEmail({ name: row.contactName, company: row.companyName, link, deskEmail: delivery.replyTo });
+  const mailed = await sendEmail(
+    { kind: "buyer-whatsapp-invite", to: check.email, subject: email.subject, html: email.html, text: email.text },
+    delivery,
+  );
+  if (mailed.status !== "sent") {
+    return { buyerId: row.id, email: check.email, ok: false, error: mailed.error || "Email was not sent (check SMTP on Settings)." };
+  }
+  await markBuyerInvited(row.id, check.email);
+  await logTradeMessage({
+    direction: "out",
+    channel: "email",
+    buyerId: row.id,
+    toAddress: check.email,
+    body: email.subject,
+    payload: { kind: "whatsapp_invite", link },
+  });
+  return { buyerId: row.id, email: check.email, ok: true };
+}
+
+export async function inviteBuyerById(id: string): Promise<BuyerInviteResult> {
+  const row = await getTradeBuyer(id);
+  if (!row) return { buyerId: id, email: "", ok: false, error: "Buyer not found." };
+  return inviteBuyerOne(row);
+}
+
+export async function inviteBuyersWaiting(): Promise<{ results: BuyerInviteResult[]; truncated: boolean }> {
+  const waiting = (await listTradeBuyers()).filter((row) => row.onboardingStatus === "to_invite");
+  const batch = waiting.slice(0, BATCH);
+  const results: BuyerInviteResult[] = [];
+  for (const row of batch) results.push(await inviteBuyerOne(row));
   return { results, truncated: waiting.length > BATCH };
 }

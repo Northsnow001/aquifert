@@ -8,6 +8,13 @@ export const ONBOARDING_LABEL: Record<OnboardingStatus, string> = {
   skipped: "Skipped",
 };
 
+export const BUYER_ONBOARDING_LABEL: Record<OnboardingStatus, string> = {
+  to_invite: "To invite",
+  invited: "Invite sent",
+  subscribed: "On WhatsApp",
+  skipped: "Skipped",
+};
+
 export const RFQ_STATUSES = [
   "collecting",
   "open",
@@ -95,6 +102,20 @@ export type TradeSupplier = {
   updatedAt: string;
 };
 
+export type TradeBuyerDraft = {
+  companyName: string;
+  contactName: string;
+  jobTitle: string;
+  email: string;
+  phone: string;
+  country: string;
+  address: string;
+  buyerType: string;
+  productsOfInterest: string;
+  notes: string;
+  inviteNow?: boolean;
+};
+
 export type TradeBuyer = {
   id: string;
   code: string;
@@ -103,8 +124,16 @@ export type TradeBuyer = {
   email: string;
   whatsappE164: string | null;
   country: string;
+  address: string;
+  jobTitle: string;
+  buyerType: string;
+  productsOfInterest: string;
   kycStatus: string;
   status: string;
+  onboardingStatus: OnboardingStatus;
+  invitedAt: string | null;
+  lastContactAt: string | null;
+  notes: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -177,5 +206,12 @@ export type InviteResult = {
   email: string;
   ok: boolean;
   reusedToken: boolean;
+  error?: string;
+};
+
+export type BuyerInviteResult = {
+  buyerId: string;
+  email: string;
+  ok: boolean;
   error?: string;
 };

@@ -4,9 +4,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { getSession } from "@/lib/session";
-import { inviteSupplierById, inviteSuppliersWaiting } from "@/lib/trade/invite";
-import { insertTradeSupplier, listWechatThread, updateTradeSupplier } from "@/lib/trade/store";
-import type { TradeSupplierDraft } from "@/lib/trade/types";
+import { inviteBuyerById, inviteBuyersWaiting, inviteSupplierById, inviteSuppliersWaiting } from "@/lib/trade/invite";
+import {
+  insertTradeBuyer,
+  insertTradeSupplier,
+  listTradeThread,
+  listWechatThread,
+  updateTradeBuyer,
+  updateTradeSupplier,
+} from "@/lib/trade/store";
+import type { TradeBuyerDraft, TradeSupplierDraft } from "@/lib/trade/types";
 import { saveTradeAgent } from "@/lib/wechat/agent-store";
 
 async function requireAdmin() {
@@ -19,6 +26,7 @@ function refresh() {
   revalidatePath("/admin/trade");
   revalidatePath("/admin/trade/suppliers");
   revalidatePath("/admin/trade/agents");
+  revalidatePath("/admin/trade/buyers");
 }
 
 function parseDraft(input: TradeSupplierDraft) {
@@ -76,6 +84,79 @@ export async function inviteSupplierAction(id: string) {
       reusedToken: false,
       error: error instanceof Error ? error.message : "Invite failed.",
     };
+  }
+}
+
+export async function getBuyerThreadAction(input: { buyerId?: string; phone?: string }) {
+  await requireAdmin();
+  try {
+    const messages = await listTradeThread({ channel: "whatsapp", buyerId: input.buyerId, address: input.phone });
+    return { ok: true as const, messages };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not load the conversation.", messages: [] };
+  }
+}
+
+function parseBuyerDraft(input: TradeBuyerDraft) {
+  const companyName = input.companyName?.trim() ?? "";
+  const email = input.email?.trim() ?? "";
+  if (!companyName) return { ok: false as const, error: "Company name is required." };
+  if (!email || !email.includes("@")) return { ok: false as const, error: "A valid email is required so we can send the WhatsApp invite." };
+  return { ok: true as const, draft: { ...input, companyName, email } };
+}
+
+export async function createBuyerAction(input: TradeBuyerDraft) {
+  await requireAdmin();
+  const parsed = parseBuyerDraft(input);
+  if (!parsed.ok) return parsed;
+  try {
+    const row = await insertTradeBuyer(parsed.draft);
+    let invited = false;
+    let inviteError: string | undefined;
+    if (input.inviteNow && !row.whatsappE164) {
+      const result = await inviteBuyerById(row.id);
+      invited = result.ok;
+      inviteError = result.ok ? undefined : result.error;
+    }
+    refresh();
+    return { ok: true as const, id: row.id, invited, inviteError };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not save the buyer." };
+  }
+}
+
+export async function updateBuyerAction(id: string, input: TradeBuyerDraft) {
+  await requireAdmin();
+  const parsed = parseBuyerDraft(input);
+  if (!parsed.ok) return parsed;
+  try {
+    await updateTradeBuyer(id, parsed.draft);
+    refresh();
+    return { ok: true as const, id };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not update the buyer." };
+  }
+}
+
+export async function inviteBuyerAction(id: string) {
+  await requireAdmin();
+  try {
+    const result = await inviteBuyerById(id);
+    refresh();
+    return result;
+  } catch (error) {
+    return { buyerId: id, email: "", ok: false, error: error instanceof Error ? error.message : "Invite failed." };
+  }
+}
+
+export async function inviteAllBuyersAction() {
+  await requireAdmin();
+  try {
+    const batch = await inviteBuyersWaiting();
+    refresh();
+    return batch;
+  } catch (error) {
+    return { results: [], truncated: false, error: error instanceof Error ? error.message : "Invite failed." };
   }
 }
 

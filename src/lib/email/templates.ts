@@ -6,6 +6,33 @@ const compose = (subject: string, email: BrandedEmail): ComposedEmail => ({ subj
 
 const mailto = (desk: string, subject: string) => `mailto:${desk}?subject=${encodeURIComponent(subject)}`;
 
+export function buyerWhatsAppInviteEmail(input: { name: string; company: string; link: string; deskEmail?: string }): ComposedEmail {
+  const desk = input.deskEmail?.trim() || DESK_EMAIL;
+  const first = firstName(input.name) || firstName(input.company) || "there";
+  return compose("Customer onboarding on WhatsApp", {
+    title: "Message Aquifert on WhatsApp",
+    preheader: "Open the WhatsApp link so we can match this phone to your buyer record.",
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: "Buyer onboarding",
+    heading: `Hello ${first}`,
+    blocks: [
+      {
+        kind: "text",
+        html: inline(
+          "Aquifert Solution sources fertiliser for international buyers. Please open WhatsApp with the button below so we can link **your** number to this buyer record. The first message is pre-filled — send it as it is.",
+        ),
+      },
+      { kind: "button", label: "Open WhatsApp", href: input.link },
+      {
+        kind: "callout",
+        html: inline("This link is personal to your email. After you send START, the desk can take product, quantity and destination on the same chat."),
+      },
+    ],
+    footerNote: "You received this because Aquifert invited you as a fertiliser buyer.",
+    deskEmail: desk,
+  });
+}
+
 export function supplierWeChatInviteEmail(input: { name: string; company: string; deskEmail?: string }): ComposedEmail {
   const desk = input.deskEmail?.trim() || DESK_EMAIL;
   const first = firstName(input.name) || firstName(input.company) || "there";

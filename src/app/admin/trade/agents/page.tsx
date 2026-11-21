@@ -10,8 +10,8 @@ export default async function TradeAgentsPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
-        title="WeChat agents"
-        description="Named prompts for the Official Account inbox. Matt talks to known suppliers. Supplier desk registers people who are not on the list yet. Edits apply to the next WeChat message."
+        title="Desk agents"
+        description="Named prompts. WeChat: Matt and the supplier desk. WhatsApp: buyer onboarding (workflow 6) and AQ Buyer Desk. Edits apply to the next message."
       />
       <AgentsEditor initial={agents} />
     </div>
