@@ -87,6 +87,16 @@ export async function getTradeSupplier(id: string): Promise<TradeSupplier | null
   return data ? supplierFrom(data as Record<string, unknown>) : null;
 }
 
+export async function getTradeSupplierByWechatOpenid(openid: string): Promise<TradeSupplier | null> {
+  const db = dataClient();
+  if (!db) return null;
+  const id = openid.trim();
+  if (!id) return null;
+  const { data, error } = await db.from("trade_suppliers").select("*").eq("wechat_openid", id).maybeSingle();
+  if (error) throw databaseError("read supplier by WeChat OpenID", error);
+  return data ? supplierFrom(data as Record<string, unknown>) : null;
+}
+
 export async function insertTradeSupplier(input: TradeSupplierDraft) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
@@ -121,6 +131,52 @@ export async function updateTradeSupplier(id: string, input: TradeSupplierDraft)
   const { data, error } = await db.from("trade_suppliers").update(patch).eq("id", id).select("*").single();
   if (error) throw databaseError("update supplier", error);
   return supplierFrom(data as Record<string, unknown>);
+}
+
+export async function linkSupplierWechatFollow(input: { openid: string; email: string; joinedAt?: string }) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const email = input.email.trim().toLowerCase();
+  const openid = input.openid.trim();
+  if (!email || !openid) return { ok: false as const, error: "openid and email are required." };
+  if (/[,()]/.test(email)) return { ok: false as const, error: "Invalid invite email." };
+
+  const { data: rows, error: lookupError } = await db
+    .from("trade_suppliers")
+    .select("*")
+    .or(`email.eq.${email},invited_email.eq.${email},qr_scene.eq.${email}`)
+    .limit(5);
+  if (lookupError) throw databaseError("find supplier for WeChat follow", lookupError);
+  const mill = (rows ?? []).find((row) => {
+    const r = row as Record<string, unknown>;
+    return [r.email, r.invited_email, r.qr_scene].some((value) => String(value ?? "").trim().toLowerCase() === email);
+  });
+  if (!mill) return { ok: false as const, unmatched: true as const, error: "No mill with that invite email." };
+  const millId = String((mill as { id: string }).id);
+
+  const now = input.joinedAt || new Date().toISOString();
+  const { data, error } = await db
+    .from("trade_suppliers")
+    .update({
+      wechat_openid: openid,
+      onboarding_status: "subscribed",
+      last_contact_at: now,
+    })
+    .eq("id", millId)
+    .select("*")
+    .single();
+  if (error) throw databaseError("link WeChat OpenID", error);
+  const supplier = supplierFrom(data as Record<string, unknown>);
+  await logTradeMessage({
+    direction: "in",
+    channel: "wechat",
+    supplierId: supplier.id,
+    fromAddress: openid,
+    toAddress: email,
+    body: "WeChat follow / QR scan",
+    payload: { event: "subscribe", openid, email },
+  });
+  return { ok: true as const, supplier };
 }
 
 export async function markSupplierInvited(id: string, fields: { email: string; scene: string; ticket: string }) {

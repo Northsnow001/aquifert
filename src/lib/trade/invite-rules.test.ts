@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { inviteScene, supplierInviteEligible, wechatTokenStillValid, WECHAT_SCENE_MAX_BYTES } from "@/lib/trade/invite-rules";
+import { inviteScene, parseWechatFollow, supplierInviteEligible, wechatTokenStillValid, WECHAT_SCENE_MAX_BYTES } from "@/lib/trade/invite-rules";
 
 describe("inviteScene", () => {
   test("uses lowercase email when it fits", () => {
@@ -39,6 +39,28 @@ describe("supplierInviteEligible", () => {
     });
     assert.equal(result.ok, true);
     if (result.ok) assert.equal(result.scene, "mill@example.com");
+  });
+});
+
+describe("parseWechatFollow", () => {
+  test("strips qrscene_ from a first follow", () => {
+    const parsed = parseWechatFollow({
+      openid: "ovABC",
+      eventKey: "qrscene_deji@mill.com",
+    });
+    assert.equal(parsed.linked, true);
+    assert.equal(parsed.email, "deji@mill.com");
+    assert.equal(parsed.openid, "ovABC");
+  });
+
+  test("accepts a SCAN event with the email as the scene", () => {
+    const parsed = parseWechatFollow({ openid: "ovABC", eventKey: "MILL@AQUIFERT.COM" });
+    assert.equal(parsed.email, "mill@aquifert.com");
+  });
+
+  test("rejects a missing email scene", () => {
+    const parsed = parseWechatFollow({ openid: "ovABC", eventKey: "qrscene_" });
+    assert.equal(parsed.linked, false);
   });
 });
 

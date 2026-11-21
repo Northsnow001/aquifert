@@ -37,3 +37,15 @@ export function supplierInviteEligible(row: {
   if (!scene) return { ok: false as const, reason: "Email is too long for a WeChat QR scene." };
   return { ok: true as const, email, scene };
 }
+
+/** WF2 subscribe / SCAN: scene is email, new follows prefix it with qrscene_. */
+export function parseWechatFollow(input: { openid?: unknown; email?: unknown; eventKey?: unknown; event?: unknown }) {
+  const openid = String(input.openid ?? "").trim();
+  const fromKey = String(input.eventKey ?? input.email ?? "")
+    .replace(/^qrscene_/i, "")
+    .trim()
+    .toLowerCase();
+  const email = inviteEmail(fromKey);
+  const linked = Boolean(openid) && EMAIL.test(email);
+  return { openid, email: linked ? email : "", linked };
+}
