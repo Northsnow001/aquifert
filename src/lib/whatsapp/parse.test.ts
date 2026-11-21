@@ -33,9 +33,16 @@ describe("buyerInviteEligible", () => {
     assert.equal(buyerInviteEligible({ email: "", whatsappE164: null, onboardingStatus: "to_invite" }).ok, false);
   });
 
-  test("skips buyers already on WhatsApp", () => {
+  test("still invites when a contact number is on file", () => {
     assert.equal(
       buyerInviteEligible({ email: "buyer@example.com", whatsappE164: "+447111", onboardingStatus: "to_invite" }).ok,
+      true,
+    );
+  });
+
+  test("skips buyers marked skipped", () => {
+    assert.equal(
+      buyerInviteEligible({ email: "buyer@example.com", whatsappE164: null, onboardingStatus: "skipped" }).ok,
       false,
     );
   });

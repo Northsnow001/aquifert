@@ -101,7 +101,7 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
         render={(rows) => {
           const waiting = rows.filter((row) => row.onboardingStatus === "to_invite").length;
           const invited = rows.filter((row) => row.onboardingStatus === "invited").length;
-          const onWa = rows.filter((row) => row.onboardingStatus === "subscribed" || row.whatsappE164).length;
+          const onWa = rows.filter((row) => row.onboardingStatus === "subscribed").length;
           const needle = query.trim().toLowerCase();
           const visible = rows.filter((row) => {
             if (filter !== "all" && row.onboardingStatus !== filter) return false;
@@ -273,16 +273,17 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                                 </button>
                                 {row.onboardingStatus === "subscribed" ? (
                                   <span className="self-center text-[12px] text-dim">Linked</span>
-                                ) : (
+                                ) : null}
+                                {row.onboardingStatus !== "skipped" ? (
                                   <button
                                     type="button"
                                     className={btnSecondary}
                                     disabled={pending && busyId === row.id}
                                     onClick={(event) => inviteOne(row.id, event)}
                                   >
-                                    {row.onboardingStatus === "invited" ? "Resend" : "Invite"}
+                                    {row.onboardingStatus === "to_invite" ? "Invite" : "Resend"}
                                   </button>
-                                )}
+                                ) : null}
                               </div>
                             </td>
                           </tr>

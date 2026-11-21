@@ -493,7 +493,6 @@ function buyerWrite(input: TradeBuyerDraft) {
     buyer_type: input.buyerType.trim() || null,
     products_of_interest: input.productsOfInterest.trim() || null,
     notes: input.notes.trim() || null,
-    onboarding_status: phone ? "subscribed" : undefined,
   };
 }
 
@@ -542,7 +541,7 @@ export async function insertTradeBuyer(input: TradeBuyerDraft) {
       ...body,
       status: "active",
       kyc_status: "pending",
-      onboarding_status: body.whatsapp_e164 ? "subscribed" : "to_invite",
+      onboarding_status: input.linkedOnWhatsApp ? "subscribed" : "to_invite",
     })
     .select("*")
     .single();
@@ -568,7 +567,6 @@ export async function updateTradeBuyer(id: string, input: TradeBuyerDraft) {
   const body = buyerWrite(input);
   const patch: Record<string, unknown> = { ...body };
   if (!body.whatsapp_e164) delete patch.whatsapp_e164;
-  if (!body.onboarding_status) delete patch.onboarding_status;
   const { data, error } = await db.from("trade_buyers").update(patch).eq("id", id).select("*").single();
   if (error) throw databaseError("update buyer", error);
   return buyerFrom(data as Record<string, unknown>);

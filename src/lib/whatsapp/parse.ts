@@ -32,9 +32,6 @@ export function buyerInviteEligible(row: {
 }) {
   const email = String(row.email ?? "").trim().toLowerCase();
   if (!EMAIL_FULL.test(email)) return { ok: false as const, reason: "Add a valid email before inviting." };
-  if (row.whatsappE164?.trim() || row.onboardingStatus === "subscribed") {
-    return { ok: false as const, reason: "Already on WhatsApp." };
-  }
   if (row.onboardingStatus === "skipped") return { ok: false as const, reason: "Marked skipped." };
   return { ok: true as const, email };
 }

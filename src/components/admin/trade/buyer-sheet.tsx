@@ -152,7 +152,9 @@ export function BuyerSheet({ buyer, onClose }: { buyer: TradeBuyer | null | "new
               <input type="checkbox" className="mt-1" checked={Boolean(draft.inviteNow)} onChange={(event) => set("inviteNow", event.target.checked)} />
               <span>
                 Send the WhatsApp invite email now
-                <span className="mt-0.5 block text-[12.5px] text-mid">Hi — here is our new WhatsApp desk. Send a message to continue.</span>
+                <span className="mt-0.5 block text-[12.5px] text-mid">
+                  They get the desk number by email. A phone on this form is only a contact number until they message us.
+                </span>
               </span>
             </label>
           ) : null}

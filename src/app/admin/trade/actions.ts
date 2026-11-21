@@ -113,7 +113,7 @@ export async function createBuyerAction(input: TradeBuyerDraft) {
     const row = await insertTradeBuyer(parsed.draft);
     let invited = false;
     let inviteError: string | undefined;
-    if (input.inviteNow && !row.whatsappE164) {
+    if (input.inviteNow) {
       const result = await inviteBuyerById(row.id);
       invited = result.ok;
       inviteError = result.ok ? undefined : result.error;

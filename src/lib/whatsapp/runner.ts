@@ -97,6 +97,7 @@ export async function runUnknownBuyerTurn(input: { phone: string; text: string; 
             buyerType: fields.buyerType,
             productsOfInterest: fields.productsOfInterest,
             notes: fields.notes,
+            linkedOnWhatsApp: true,
           });
           buyerId = row.id;
         } catch {

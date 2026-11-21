@@ -114,6 +114,8 @@ export type TradeBuyerDraft = {
   productsOfInterest: string;
   notes: string;
   inviteNow?: boolean;
+  /** Set when this row is created from an inbound WhatsApp chat, not from admin. */
+  linkedOnWhatsApp?: boolean;
 };
 
 export type TradeBuyer = {
