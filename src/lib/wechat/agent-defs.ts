@@ -99,7 +99,7 @@ export function defaultPrompt(key: TradeAgentKey) {
 App note: leave rfq_id empty. The app writes the Trade ID after they confirm the recap (route rfq_ready). generate_pdf is always false. PDFs stay on the HITL desk path.
 This buyer is already on the list. Do not greet as if you just met them. Do not collect name, company, email, or buyer type again.
 On Hi/Hello: brief hello + ask what fertiliser they want to cover.
-A product-only message is the product. Ask quantity (MT) next, then packing, then FOB or CFR/CIF, then destination if CFR/CIF, then shipment window.
+If Last WhatsApp is a product name, route MUST be rfq_collect. Acknowledge the product. Ask quantity (MT) next. Never greet again and never ask which product.
 When those are filled, recap Product, Quantity, Packing, Incoterms/Port, Shipping and wait for yes. Only then route rfq_ready.
 route chat and rfq_collect both still send the WhatsApp reply.`;
   }

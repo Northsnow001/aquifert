@@ -28,9 +28,10 @@ async function askGemini(system: string, user: string) {
   const { text } = await generateText({
     model: EXTRACTION_MODEL,
     json: true,
+    fast: true,
     temperature: 0,
-    timeoutMs: 25_000,
-    maxOutputTokens: 4096,
+    timeoutMs: 45_000,
+    maxOutputTokens: 2048,
     system,
     turns: [{ role: "user", text: user }],
   });
@@ -195,6 +196,30 @@ function fieldsFromExtract(extract: Record<string, unknown>, rawMessage: string)
   };
 }
 
+function firstName(buyer: TradeBuyer) {
+  return (buyer.contactName || buyer.companyName).trim().split(/\s+/)[0] || "there";
+}
+
+function isGreeting(text: string) {
+  return /^(hi+|hello|hey|yo|gm|good\s+(morning|afternoon|evening)|start|thanks|thank you|ok|okay)[\s!.]*$/i.test(text.trim());
+}
+
+function looksLikeProduct(text: string) {
+  const t = text.trim().replace(/^['"`]+|['"`]+$/g, "");
+  if (!t || t.length > 80 || isGreeting(t)) return false;
+  if (/@/.test(t) || /https?:/i.test(t)) return false;
+  if (/^(yes|no|correct|go ahead|proceed)\b/i.test(t)) return false;
+  return true;
+}
+
+function productLabelFrom(text: string) {
+  return text.trim().replace(/^['"`]+|['"`]+$/g, "");
+}
+
+function askingForProductAgain(reply: string) {
+  return /what fertiliser are you looking to cover/i.test(reply) || /which product/i.test(reply);
+}
+
 function deskUserPrompt(input: {
   phase: string;
   buyer: TradeBuyer;
@@ -206,7 +231,7 @@ function deskUserPrompt(input: {
   if (input.phase === "rfq") {
     return [
       "Phase: rfq",
-      "This turn is RFQ intake for a buyer already on the list. Do not greet as if you just met them. Do not collect onboarding identity again.",
+      "This node only runs for RFQ intake. Do not greet as if you just met them.",
       `Buyer (on file — do not say nice to meet you): ${name}`,
       `Company: ${input.buyer.companyName}`,
       `Email: ${input.buyer.email}`,
@@ -215,8 +240,8 @@ function deskUserPrompt(input: {
       rfqContext(input.draft),
       `Chat History:\n${historyBlock(input.messages)}`,
       `Last WhatsApp: ${input.text}`,
-      "Treat the last WhatsApp as the buyer's latest message. If it is a product name (e.g. SplashFert, urea, DAP), that is the product — ask quantity or destination next, do not ask which product.",
-      "Leave rfq_id empty. The app writes the Trade ID only after they confirm the recap.",
+      "Treat the last WhatsApp as the buyer's latest message. If it is a product name (e.g. SplashFert, Merlin Fert, urea, DAP), that is the product — set rfq_extract.product, route rfq_collect, acknowledge it, ask quantity in MT next. Do not ask which product. Do not greet again.",
+      `Phase: ${input.phase}`,
     ].join("\n");
   }
   return [
@@ -227,32 +252,67 @@ function deskUserPrompt(input: {
     `Phone: ${input.buyer.whatsappE164 || ""}`,
     rfqContext(input.draft),
     `Chat History:\n${historyBlock(input.messages)}`,
-    `Message:\n${input.text}`,
+    `Last WhatsApp: ${input.text}`,
   ].join("\n");
 }
 
 export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string; messages: TradeMessage[] }) {
-  const fallback = `Hi ${input.buyer.contactName || input.buyer.companyName} — what fertiliser are you looking to cover?`;
-  if (!geminiKey()) return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "", rfqId: "", fanout: false };
+  const greet = `Hi ${firstName(input.buyer)} — what fertiliser are you looking to cover?`;
+  const product = productLabelFrom(input.text);
+  const productTurn = looksLikeProduct(input.text);
+  const productReply = `${product} — what quantity in MT, and which discharge port or country?`;
+  if (!geminiKey()) {
+    return {
+      reply: productTurn ? productReply : greet,
+      agent: "whatsapp-buyer-desk" as const,
+      rfqCode: "",
+      rfqId: "",
+      fanout: false,
+    };
+  }
+
+  const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
+  const phase = buyerPhase(asString(latest?.status));
+  const draft = phase === "rfq" && asString(latest?.status) === "collecting" ? latest : null;
+  let reply = productTurn ? productReply : greet;
+  let rfqCode = asString(draft?.code);
+  let rfqId = asString(draft?.id);
+  let fanout = false;
+  let route = productTurn ? "rfq_collect" : "chat";
+  let extract: Record<string, unknown> | null = productTurn ? { product } : null;
 
   try {
-    const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
-    const phase = buyerPhase(asString(latest?.status));
-    const draft = phase === "rfq" && asString(latest?.status) === "collecting" ? latest : null;
     const agent = await getTradeAgent("whatsapp-buyer-desk");
     const data = await askGemini(
       agent.systemPrompt,
       deskUserPrompt({ phase, buyer: input.buyer, text: input.text, messages: input.messages, draft }),
     );
-    let reply = asString(data.reply) || fallback;
-    let rfqCode = asString(draft?.code);
-    let rfqId = asString(draft?.id);
-    let fanout = false;
-    const route = asString(data.route);
-    const extract = data.rfq_extract && typeof data.rfq_extract === "object" ? (data.rfq_extract as Record<string, unknown>) : null;
+    reply = asString(data.reply) || reply;
+    route = asString(data.route) || route;
+    extract =
+      data.rfq_extract && typeof data.rfq_extract === "object" ? (data.rfq_extract as Record<string, unknown>) : extract;
     const commercial = data.commercial_extract && typeof data.commercial_extract === "object" ? (data.commercial_extract as Record<string, unknown>) : null;
-    if (phase === "rfq" && extract && asString(extract.product) && (route === "rfq_collect" || route === "rfq_ready")) {
-      const fields = fieldsFromExtract(extract, input.text);
+    if (phase === "rfq" && productTurn && !asString(draft?.product_label)) {
+      if (!asString(extract?.product)) extract = { ...(extract || {}), product };
+      if (route === "chat" || askingForProductAgain(reply)) {
+        route = "rfq_collect";
+        reply = productReply;
+      }
+    }
+    if (latest?.id && commercial && (route === "commercial_collect" || route === "firm_offer_ready" || route === "pi_ready")) {
+      const extras = latest.extras && typeof latest.extras === "object" ? (latest.extras as Record<string, unknown>) : {};
+      const nextStatus = route === "pi_ready" ? "pi_sent" : route === "firm_offer_ready" ? "firm_interest" : asString(latest.status) || "negotiating";
+      await patchTradeRfq(asString(latest.id), { status: nextStatus, extras: { ...extras, commercial } }).catch((error) => {
+        console.error("[rfq commercial save]", error);
+      });
+    }
+  } catch (error) {
+    console.error("[buyer desk]", error instanceof Error ? error.message : error);
+  }
+
+  if (phase === "rfq" && extract && asString(extract.product) && (route === "rfq_collect" || route === "rfq_ready")) {
+    const fields = fieldsFromExtract(extract, input.text);
+    try {
       if (route === "rfq_ready") {
         const saved = draft?.id
           ? await patchTradeRfq(asString(draft.id), { ...fields, status: "open" }).then(() => ({
@@ -270,17 +330,13 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
       } else {
         const saved = await insertWhatsAppRfq({ buyerId: input.buyer.id, ...fields, status: "collecting" });
         rfqCode = saved.code;
+        rfqId = saved.id;
       }
+    } catch (error) {
+      console.error("[rfq save]", error instanceof Error ? error.message : error);
     }
-    if (latest?.id && commercial && (route === "commercial_collect" || route === "firm_offer_ready" || route === "pi_ready")) {
-      const extras = latest.extras && typeof latest.extras === "object" ? (latest.extras as Record<string, unknown>) : {};
-      const nextStatus = route === "pi_ready" ? "pi_sent" : route === "firm_offer_ready" ? "firm_interest" : asString(latest.status) || "negotiating";
-      await patchTradeRfq(asString(latest.id), { status: nextStatus, extras: { ...extras, commercial } });
-    }
-    return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode, rfqId, fanout };
-  } catch {
-    return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "", rfqId: "", fanout: false };
   }
+  return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode, rfqId, fanout };
 }
 
 export async function whatsappThread(phone: string, buyerId?: string | null) {
