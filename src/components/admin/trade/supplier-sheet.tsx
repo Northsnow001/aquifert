@@ -23,6 +23,10 @@ const empty: TradeSupplierDraft = {
   inviteNow: true,
 };
 
+function isExisting(supplier: TradeSupplier | null | "new"): supplier is TradeSupplier {
+  return Boolean(supplier) && supplier !== "new";
+}
+
 function fromRow(row: TradeSupplier): TradeSupplierDraft {
   return {
     companyName: row.companyName,
@@ -73,7 +77,8 @@ export function SupplierSheet({
   onClose: (saved: boolean) => void;
 }) {
   const creating = supplier === "new";
-  const [draft, setDraft] = useState<TradeSupplierDraft>(() => (supplier && supplier !== "new" ? fromRow(supplier) : empty));
+  const existing = isExisting(supplier) ? supplier : null;
+  const [draft, setDraft] = useState<TradeSupplierDraft>(() => (existing ? fromRow(existing) : empty));
   const [pending, start] = useTransition();
   const set = <K extends keyof TradeSupplierDraft>(key: K, value: TradeSupplierDraft[K]) => setDraft((current) => ({ ...current, [key]: value }));
 
@@ -87,7 +92,11 @@ export function SupplierSheet({
 
   const save = () =>
     start(async () => {
-      const result = creating ? await createSupplierAction(draft) : supplier && supplier !== "new" ? await updateSupplierAction(supplier.id, draft) : { ok: false as const, error: "Missing supplier." };
+      const result = creating
+        ? await createSupplierAction(draft)
+        : existing
+          ? await updateSupplierAction(existing.id, draft)
+          : { ok: false as const, error: "Missing supplier." };
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -113,7 +122,7 @@ export function SupplierSheet({
         <div className="border-b border-border px-6 py-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dim">{creating ? "New mill" : supplier && supplier !== "new" ? supplier.code : ""}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dim">{creating ? "New mill" : existing?.code ?? ""}</p>
               <h2 id="supplier-sheet-title" className="mt-1 text-[20px] font-semibold tracking-[-0.02em] text-ink">
                 {creating ? "Add supplier" : "Edit supplier"}
               </h2>
