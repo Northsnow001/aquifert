@@ -105,7 +105,7 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
                   <Th>Onboarding</Th>
                   <Th>Last RFQ</Th>
                   <Th>Updated</Th>
-                  <Th />
+                  <Th className="w-[1%]" />
                 </tr>
               </thead>
               <tbody>

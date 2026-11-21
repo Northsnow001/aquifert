@@ -48,7 +48,7 @@ export function TradeGrid({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
   return <th className={`border-b border-border px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-dim ${className}`}>{children}</th>;
 }
 
