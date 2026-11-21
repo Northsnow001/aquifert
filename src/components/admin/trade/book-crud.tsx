@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Columns3, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -83,6 +83,7 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
   const [pageSize, setPageSize] = useState(25);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [colsOpen, setColsOpen] = useState(false);
+  const colsRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<BookRow | "new" | null>(null);
   const [form, setForm] = useState<Record<string, string>>(emptyBookRow(spec));
@@ -116,6 +117,22 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
   useEffect(() => {
     window.localStorage.setItem(storageKey, JSON.stringify([...hidden]));
   }, [hidden, storageKey]);
+
+  useEffect(() => {
+    if (!colsOpen) return;
+    const onPointer = (event: MouseEvent) => {
+      if (!colsRef.current?.contains(event.target as Node)) setColsOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setColsOpen(false);
+    };
+    window.addEventListener("mousedown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [colsOpen]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -213,7 +230,7 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
 
   return (
     <>
-      <div className="mb-4 flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[160px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim" />
           <input
@@ -251,39 +268,58 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
             ))}
           </select>
         ))}
-        <div className="relative ml-auto flex shrink-0 items-center gap-2">
-          <button type="button" className={btnSecondary} onClick={() => setColsOpen((isOpen) => !isOpen)}>
-            <Columns3 className="h-4 w-4" />
-            Columns
-          </button>
-          {colsOpen ? (
-            <div className="absolute right-0 top-full z-30 mt-2 max-h-80 w-72 overflow-y-auto rounded-xl border border-border bg-white p-3 shadow-lg">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-[12px] font-semibold text-mid">Show columns</p>
-                <button type="button" className="text-[12px] font-semibold text-blue" onClick={() => setHidden(new Set())}>
-                  Show all
-                </button>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="relative" ref={colsRef}>
+            <button
+              type="button"
+              className={btnSecondary}
+              aria-expanded={colsOpen}
+              aria-haspopup="true"
+              onClick={() => setColsOpen((isOpen) => !isOpen)}
+            >
+              <Columns3 className="h-4 w-4" />
+              Columns
+            </button>
+            {colsOpen ? (
+              <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 overflow-hidden rounded-2xl border border-border bg-white shadow-[0_16px_40px_-20px_rgb(16_38_59/0.45)]">
+                <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+                  <p className="text-[12.5px] font-semibold text-ink">Show columns</p>
+                  <div className="flex gap-2">
+                    <button type="button" className="text-[12px] font-semibold text-blue" onClick={() => setHidden(new Set())}>
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      className="text-[12px] font-semibold text-mid"
+                      onClick={() => setHidden(new Set(tableFields.map((item) => item.key)))}
+                    >
+                      None
+                    </button>
+                  </div>
+                </div>
+                <div className="max-h-72 overflow-y-auto p-2">
+                  {tableFields.map((item) => (
+                    <label key={item.key} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink hover:bg-s2">
+                      <input
+                        type="checkbox"
+                        className={checkClass}
+                        checked={!hidden.has(item.key)}
+                        onChange={(e) => {
+                          setHidden((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.delete(item.key);
+                            else next.add(item.key);
+                            return next;
+                          });
+                        }}
+                      />
+                      <span className="truncate">{item.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              {tableFields.map((field) => (
-                <label key={field.key} className="flex cursor-pointer items-center gap-2 py-1 text-[13px] text-ink">
-                  <input
-                    type="checkbox"
-                    className={checkClass}
-                    checked={!hidden.has(field.key)}
-                    onChange={(e) => {
-                      setHidden((prev) => {
-                        const next = new Set(prev);
-                        if (e.target.checked) next.delete(field.key);
-                        else next.add(field.key);
-                        return next;
-                      });
-                    }}
-                  />
-                  {field.label}
-                </label>
-              ))}
-            </div>
-          ) : null}
+            ) : null}
+          </div>
           {selected.size > 0 ? (
             <button type="button" className={btnDanger} disabled={pending} onClick={removeSelected}>
               <Trash2 className="h-4 w-4" />
