@@ -24,6 +24,22 @@ export const RFQ_STATUSES = [
 ] as const;
 export type RfqStatus = (typeof RFQ_STATUSES)[number];
 
+export type TradeSupplierDraft = {
+  companyName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  country: string;
+  address: string;
+  productsSupplied: string;
+  origins: string;
+  loadPorts: string;
+  paymentTerms: string;
+  notes: string;
+  wechatOpenid?: string;
+  inviteNow?: boolean;
+};
+
 export type TradeSupplier = {
   id: string;
   code: string;
@@ -33,6 +49,11 @@ export type TradeSupplier = {
   whatsappE164: string | null;
   wechatOpenid: string | null;
   country: string;
+  address: string;
+  productsSupplied: string;
+  origins: string[];
+  loadPorts: string[];
+  paymentTerms: string;
   status: string;
   onboardingStatus: OnboardingStatus;
   qrTicket: string | null;

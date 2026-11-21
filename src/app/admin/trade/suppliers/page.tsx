@@ -11,7 +11,7 @@ export default async function TradeSuppliersPage() {
       <PageHeader
         crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
         title="Suppliers"
-        description="Invite mills to the WeChat Official Account. Status moves to Invite sent as soon as the email goes out, then On WeChat when they scan (Workflow 2 still stamps the OpenID until that slice is in the app)."
+        description="Mill records for RFQs and WeChat. Add the company first. OpenID is written when they follow — you can paste it later if needed."
       />
       <SuppliersBoard initial={rows} />
     </div>

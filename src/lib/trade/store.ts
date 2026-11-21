@@ -1,7 +1,7 @@
 import "server-only";
 
 import { dataClient, databaseError } from "@/lib/data/db";
-import type { OnboardingStatus, TradeBuyer, TradeCounts, TradeFreightQuote, TradeQuote, TradeRfq, TradeSupplier } from "@/lib/trade/types";
+import type { OnboardingStatus, TradeBuyer, TradeCounts, TradeFreightQuote, TradeQuote, TradeRfq, TradeSupplier, TradeSupplierDraft } from "@/lib/trade/types";
 import { ONBOARDING_STATUSES } from "@/lib/trade/types";
 
 const text = (v: unknown) => (typeof v === "string" ? v : v == null ? "" : String(v));
@@ -13,6 +13,17 @@ const num = (v: unknown) => {
 const onboarding = (v: unknown): OnboardingStatus =>
   ONBOARDING_STATUSES.includes(v as OnboardingStatus) ? (v as OnboardingStatus) : "to_invite";
 
+const list = (v: unknown) => (Array.isArray(v) ? v.map((item) => text(item)).filter(Boolean) : []);
+
+function csvList(raw: string) {
+  return raw.split(/[,;\n]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function e164(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `+${digits.replace(/^00/, "")}` : null;
+}
+
 function supplierFrom(row: Record<string, unknown>): TradeSupplier {
   return {
     id: text(row.id),
@@ -23,6 +34,11 @@ function supplierFrom(row: Record<string, unknown>): TradeSupplier {
     whatsappE164: text(row.whatsapp_e164) || null,
     wechatOpenid: text(row.wechat_openid) || null,
     country: text(row.country),
+    address: text(row.address),
+    productsSupplied: text(row.products_supplied),
+    origins: list(row.origins),
+    loadPorts: list(row.load_ports),
+    paymentTerms: text(row.typical_payment_terms),
     status: text(row.status) || "active",
     onboardingStatus: onboarding(row.onboarding_status),
     qrTicket: text(row.qr_ticket) || null,
@@ -33,6 +49,25 @@ function supplierFrom(row: Record<string, unknown>): TradeSupplier {
     notes: text(row.notes),
     createdAt: text(row.created_at),
     updatedAt: text(row.updated_at),
+  };
+}
+
+function supplierWrite(input: TradeSupplierDraft) {
+  const openid = input.wechatOpenid?.trim() || null;
+  return {
+    company_name: input.companyName.trim(),
+    contact_name: input.contactName.trim() || null,
+    email: input.email.trim().toLowerCase(),
+    whatsapp_e164: e164(input.phone),
+    country: input.country.trim() || null,
+    address: input.address.trim() || null,
+    products_supplied: input.productsSupplied.trim() || null,
+    origins: csvList(input.origins),
+    load_ports: csvList(input.loadPorts),
+    typical_payment_terms: input.paymentTerms.trim() || null,
+    notes: input.notes.trim() || null,
+    wechat_openid: openid,
+    onboarding_status: openid ? "subscribed" : undefined,
   };
 }
 
@@ -52,7 +87,7 @@ export async function getTradeSupplier(id: string): Promise<TradeSupplier | null
   return data ? supplierFrom(data as Record<string, unknown>) : null;
 }
 
-export async function insertTradeSupplier(input: { companyName: string; contactName: string; email: string; country?: string }) {
+export async function insertTradeSupplier(input: TradeSupplierDraft) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
   const { data: code, error: codeError } = await db.rpc("trade_next_code", {
@@ -61,20 +96,30 @@ export async function insertTradeSupplier(input: { companyName: string; contactN
     pad: 3,
   });
   if (codeError) throw databaseError("allocate supplier code", codeError);
+  const body = supplierWrite(input);
   const { data, error } = await db
     .from("trade_suppliers")
     .insert({
       code: String(code),
-      company_name: input.companyName.trim(),
-      contact_name: input.contactName.trim(),
-      email: input.email.trim().toLowerCase(),
-      country: input.country?.trim() || null,
+      ...body,
       status: "active",
-      onboarding_status: "to_invite",
+      onboarding_status: body.wechat_openid ? "subscribed" : "to_invite",
     })
     .select("*")
     .single();
   if (error) throw databaseError("create supplier", error);
+  return supplierFrom(data as Record<string, unknown>);
+}
+
+export async function updateTradeSupplier(id: string, input: TradeSupplierDraft) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const body = supplierWrite(input);
+  const patch: Record<string, unknown> = { ...body };
+  if (!body.wechat_openid) delete patch.wechat_openid;
+  if (!body.onboarding_status) delete patch.onboarding_status;
+  const { data, error } = await db.from("trade_suppliers").update(patch).eq("id", id).select("*").single();
+  if (error) throw databaseError("update supplier", error);
   return supplierFrom(data as Record<string, unknown>);
 }
 
