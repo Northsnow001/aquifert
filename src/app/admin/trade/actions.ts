@@ -5,8 +5,10 @@ import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { getSession } from "@/lib/session";
 import { inviteBuyerById, inviteBuyersWaiting, inviteSupplierById, inviteSuppliersWaiting } from "@/lib/trade/invite";
-import { deleteBookRow, saveBookRow } from "@/lib/trade/book-store";
+import { deleteBookRow, deleteBookRows, saveBookRow } from "@/lib/trade/book-store";
 import {
+  deleteTradeBuyers,
+  deleteTradeSuppliers,
   insertTradeBuyer,
   insertTradeSupplier,
   listTradeThread,
@@ -199,6 +201,39 @@ export async function deleteBookRowAction(slug: string, id: string) {
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not delete the row." };
+  }
+}
+
+export async function deleteBookRowsAction(slug: string, ids: string[]) {
+  await requireAdmin();
+  try {
+    const deleted = await deleteBookRows(slug, ids);
+    refresh();
+    return { ok: true as const, deleted };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not delete the rows." };
+  }
+}
+
+export async function deleteBuyersAction(ids: string[]) {
+  await requireAdmin();
+  try {
+    const deleted = await deleteTradeBuyers(ids);
+    refresh();
+    return { ok: true as const, deleted };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not delete the buyers." };
+  }
+}
+
+export async function deleteSuppliersAction(ids: string[]) {
+  await requireAdmin();
+  try {
+    const deleted = await deleteTradeSuppliers(ids);
+    refresh();
+    return { ok: true as const, deleted };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not delete the suppliers." };
   }
 }
 

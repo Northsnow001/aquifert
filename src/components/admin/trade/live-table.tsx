@@ -43,7 +43,7 @@ export function TradeLive<T extends { id: string }>({ resource, table, initial, 
 export function TradeGrid({ children }: { children: React.ReactNode }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse text-left text-[13px]">{children}</table>
+      <table className="w-max min-w-full border-collapse text-left text-[13px]">{children}</table>
     </div>
   );
 }
@@ -52,6 +52,18 @@ export function Th({ children, className = "" }: { children?: React.ReactNode; c
   return <th className={`border-b border-border px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-dim ${className}`}>{children}</th>;
 }
 
-export function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <td className={`border-b border-border px-4 py-2.5 align-middle text-ink ${className}`}>{children}</td>;
+export function Td({
+  children,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: React.MouseEventHandler<HTMLTableCellElement>;
+}) {
+  return (
+    <td className={`border-b border-border px-4 py-2.5 align-middle text-ink ${className}`} onClick={onClick}>
+      {children}
+    </td>
+  );
 }

@@ -1,20 +1,24 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Columns3, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { deleteBookRowAction, saveBookRowAction } from "@/app/admin/trade/actions";
+import { deleteBookRowAction, deleteBookRowsAction, saveBookRowAction } from "@/app/admin/trade/actions";
 import { TradeGrid, Td, Th } from "@/components/admin/trade/live-table";
 import { EmptyState, btnDanger, btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import { emptyBookRow, type BookField, type BookRow, type BookSpec } from "@/lib/trade/book";
+
+const PAGE_SIZES = [25, 50, 100, 200];
+const checkClass = "h-4 w-4 shrink-0 rounded border-border text-blue";
 
 function cell(row: BookRow, key: string) {
   const v = row[key];
   if (v === true) return "yes";
   if (v === false) return "no";
   if (v == null || v === "") return "—";
-  return String(v);
+  const text = String(v);
+  return text.length > 80 ? `${text.slice(0, 77)}…` : text;
 }
 
 function FieldInput({ field, value, onChange }: { field: BookField; value: string; onChange: (v: string) => void }) {
@@ -74,17 +78,71 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
   const router = useRouter();
   const [pending, start] = useTransition();
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [colsOpen, setColsOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<BookRow | "new" | null>(null);
   const [form, setForm] = useState<Record<string, string>>(emptyBookRow(spec));
-  const listFields = spec.fields.filter((field) => field.list);
+  const tableFields = spec.fields;
+  const filterFields = tableFields.filter((field) => field.type === "select" && field.options?.length);
+  const visibleFields = tableFields.filter((field) => !hidden.has(field.key));
+  const storageKey = `aq-book-cols:${spec.slug}`;
 
-  const visible = useMemo(() => {
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const keys = JSON.parse(raw) as string[];
+      if (Array.isArray(keys)) setHidden(new Set(keys));
+    } catch {
+      /* ignore */
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKey, JSON.stringify([...hidden]));
+  }, [hidden, storageKey]);
+
+  const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return initial;
-    return initial.filter((row) =>
-      spec.fields.some((field) => cell(row, field.key).toLowerCase().includes(needle)),
-    );
-  }, [initial, query, spec.fields]);
+    return initial.filter((row) => {
+      for (const [key, value] of Object.entries(filters)) {
+        if (value && cell(row, key) !== value && String(row[key] ?? "") !== value) return false;
+      }
+      if (!needle) return true;
+      return tableFields.some((field) => cell(row, field.key).toLowerCase().includes(needle));
+    });
+  }, [initial, query, filters, tableFields]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, pageCount);
+  const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  const pageIds = pageRows.map((row) => String(row.id));
+  const selectedOnPage = pageIds.filter((id) => selected.has(id)).length;
+  const allPageSelected = pageIds.length > 0 && selectedOnPage === pageIds.length;
+
+  const toggleOne = (id: string, on: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const togglePage = (on: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const id of pageIds) {
+        if (on) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  };
 
   const open = (row: BookRow | "new") => {
     setSheet(row);
@@ -115,6 +173,28 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
         return;
       }
       toast.success("Deleted");
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(String(sheet.id));
+        return next;
+      });
+      setSheet(null);
+      router.refresh();
+    });
+  };
+
+  const removeSelected = () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    if (!window.confirm(`Delete ${ids.length} row${ids.length === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    start(async () => {
+      const result = await deleteBookRowsAction(spec.slug, ids);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Deleted ${result.deleted} row${result.deleted === 1 ? "" : "s"}`);
+      setSelected(new Set());
       setSheet(null);
       router.refresh();
     });
@@ -127,45 +207,179 @@ export function BookCrud({ spec, initial }: { spec: BookSpec; initial: BookRow[]
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dim" />
           <input
             className={`${input} pl-9`}
-            placeholder="Search this table"
+            placeholder="Search all columns"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
           />
         </div>
+        {filterFields.map((field) => (
+          <select
+            key={field.key}
+            className={`${input} w-auto min-w-[140px]`}
+            value={filters[field.key] ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFilters((prev) => {
+                const next = { ...prev };
+                if (value) next[field.key] = value;
+                else delete next[field.key];
+                return next;
+              });
+              setPage(1);
+            }}
+            aria-label={`Filter ${field.label}`}
+          >
+            <option value="">All {field.label.toLowerCase()}</option>
+            {field.options?.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt.replaceAll("_", " ")}
+              </option>
+            ))}
+          </select>
+        ))}
+        <div className="relative">
+          <button type="button" className={btnSecondary} onClick={() => setColsOpen((isOpen) => !isOpen)}>
+            <Columns3 className="h-4 w-4" />
+            Columns
+          </button>
+          {colsOpen ? (
+            <div className="absolute right-0 z-30 mt-2 max-h-80 w-72 overflow-y-auto rounded-xl border border-border bg-white p-3 shadow-lg">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[12px] font-semibold text-mid">Show columns</p>
+                <button type="button" className="text-[12px] font-semibold text-blue" onClick={() => setHidden(new Set())}>
+                  Show all
+                </button>
+              </div>
+              {tableFields.map((field) => (
+                <label key={field.key} className="flex cursor-pointer items-center gap-2 py-1 text-[13px] text-ink">
+                  <input
+                    type="checkbox"
+                    className={checkClass}
+                    checked={!hidden.has(field.key)}
+                    onChange={(e) => {
+                      setHidden((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.delete(field.key);
+                        else next.add(field.key);
+                        return next;
+                      });
+                    }}
+                  />
+                  {field.label}
+                </label>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        {selected.size > 0 ? (
+          <button type="button" className={btnDanger} disabled={pending} onClick={removeSelected}>
+            <Trash2 className="h-4 w-4" />
+            Delete {selected.size}
+          </button>
+        ) : null}
         <button type="button" className={btnPrimary} onClick={() => open("new")}>
           <Plus className="h-4 w-4" />
           Add
         </button>
       </div>
       <div className="aq-card overflow-hidden">
-        {visible.length === 0 ? (
+        {filtered.length === 0 ? (
           <EmptyState title={`No ${spec.title.toLowerCase()} yet`} body="Add a row, or import the trade workbook." />
         ) : (
           <TradeGrid>
             <thead>
               <tr>
-                {listFields.map((field) => (
-                  <Th key={field.key}>{field.label}</Th>
+                <Th className="sticky left-0 z-10 w-10 bg-[#f7f9fb]">
+                  <input
+                    type="checkbox"
+                    className={checkClass}
+                    checked={allPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = selectedOnPage > 0 && !allPageSelected;
+                    }}
+                    onChange={(e) => togglePage(e.target.checked)}
+                    aria-label="Select all rows on this page"
+                  />
+                </Th>
+                {visibleFields.map((field) => (
+                  <Th key={field.key} className="whitespace-nowrap">
+                    {field.label}
+                  </Th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {visible.map((row) => (
-                <tr
-                  key={String(row.id)}
-                  className="cursor-pointer hover:bg-s2/60"
-                  onClick={() => open(row)}
-                >
-                  {listFields.map((field) => (
-                    <Td key={field.key} className={field.key === listFields[0]?.key ? "font-medium" : ""}>
-                      {cell(row, field.key)}
+              {pageRows.map((row) => {
+                const id = String(row.id);
+                const on = selected.has(id);
+                return (
+                  <tr
+                    key={id}
+                    className={`cursor-pointer hover:bg-s2/60 ${on ? "bg-blue/[.06]" : ""}`}
+                    onClick={() => open(row)}
+                  >
+                    <Td className="sticky left-0 z-10 w-10 bg-white" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className={checkClass}
+                        checked={on}
+                        onChange={(e) => toggleOne(id, e.target.checked)}
+                        aria-label={`Select ${cell(row, visibleFields[0]?.key ?? "id")}`}
+                      />
                     </Td>
-                  ))}
-                </tr>
-              ))}
+                    {visibleFields.map((field) => (
+                      <Td key={field.key} className={`max-w-[240px] truncate ${field.key === visibleFields[0]?.key ? "font-medium" : ""}`}>
+                        {cell(row, field.key)}
+                      </Td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </TradeGrid>
         )}
+        {filtered.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 text-[13px] text-mid">
+            <p>
+              {filtered.length} row{filtered.length === 1 ? "" : "s"}
+              {visibleFields.length ? ` · ${visibleFields.length} columns` : ""}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                className={`${input} h-8 w-auto`}
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                aria-label="Rows per page"
+              >
+                {PAGE_SIZES.map((size) => (
+                  <option key={size} value={size}>
+                    {size} / page
+                  </option>
+                ))}
+              </select>
+              <button type="button" className={btnSecondary} disabled={safePage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span>
+                Page {safePage} of {pageCount}
+              </span>
+              <button
+                type="button"
+                className={btnSecondary}
+                disabled={safePage >= pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
       {sheet ? (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={() => setSheet(null)}>

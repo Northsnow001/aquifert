@@ -22,6 +22,37 @@ function coerce(field: BookField, raw: unknown) {
   return s === "" ? null : s;
 }
 
+function stamp(v: unknown) {
+  const s = text(v);
+  if (!s) return "";
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? s.slice(0, 19).replace("T", " ") : d.toISOString().slice(0, 16).replace("T", " ");
+}
+
+function extrasOf(row: Record<string, unknown>) {
+  const extras = row.extras;
+  return extras && typeof extras === "object" && !Array.isArray(extras) ? (extras as Record<string, unknown>) : {};
+}
+
+function nested(row: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = row[key];
+    if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  }
+  return null;
+}
+
+function missingRfq(row: Record<string, unknown>) {
+  const checks: [string, unknown][] = [
+    ["Product Name", row.product_label],
+    ["Quantity (MT)", row.quantity_mt],
+    ["Destination Port", row.destination_port || row.destination_country],
+    ["Incoterm", row.incoterm],
+    ["Packing", row.packing],
+  ];
+  return checks.filter(([, value]) => value == null || value === "").map(([label]) => label).join(", ");
+}
+
 function fromDb(spec: BookSpec, row: Record<string, unknown>): BookRow {
   if (spec.identity === "lists") {
     return {
@@ -35,7 +66,23 @@ function fromDb(spec: BookSpec, row: Record<string, unknown>): BookRow {
   if (spec.identity === "settings") {
     return { id: text(row.key), key: row.key, value: row.value, updated_at: row.updated_at };
   }
-  return { id: text(row.id), ...row };
+  const extras = extrasOf(row);
+  const buyer = nested(row, "buyer", "trade_buyers");
+  const mill = nested(row, "mill", "trade_suppliers");
+  return {
+    id: text(row.id),
+    ...row,
+    date_received: stamp(row.created_at),
+    last_updated: stamp(row.updated_at),
+    received_at: stamp(row.received_at) || stamp(row.created_at),
+    main_suppliers: text(extras.suppliers),
+    buyer_code: text(extras.sheet_buyer_id || buyer?.code),
+    buyer_company: text(buyer?.company_name),
+    buyer_contact: text(buyer?.contact_name),
+    selected_supplier_name: text(mill?.company_name),
+    core_fields_complete: row.buyer_ready === true ? "yes" : row.buyer_ready === false ? "no" : "",
+    missing_fields: spec.slug === "rfqs" ? missingRfq(row) : "",
+  };
 }
 
 export async function listBookRows(slug: string): Promise<BookRow[]> {
@@ -44,9 +91,16 @@ export async function listBookRows(slug: string): Promise<BookRow[]> {
   if (!spec || !db) return [];
   const order = spec.identity === "lists" ? "list_key" : spec.identity === "settings" ? "key" : "updated_at";
   const ascending = spec.identity !== "uuid";
-  const { data, error } = await db.from(spec.table).select("*").order(order, { ascending }).limit(2000);
-  if (error) throw databaseError(`list ${spec.title}`, error);
-  return (data ?? []).map((row) => fromDb(spec, row as Record<string, unknown>));
+  const select =
+    spec.slug === "rfqs"
+      ? "*, buyer:trade_buyers!buyer_id(code, company_name, contact_name), mill:trade_suppliers!selected_supplier_id(company_name)"
+      : "*";
+  const queried = await db.from(spec.table).select(select).order(order, { ascending }).limit(2000);
+  const result = queried.error && spec.slug === "rfqs"
+    ? await db.from(spec.table).select("*").order(order, { ascending }).limit(2000)
+    : queried;
+  if (result.error) throw databaseError(`list ${spec.title}`, result.error);
+  return (result.data ?? []).map((row) => fromDb(spec, row as Record<string, unknown>));
 }
 
 export async function listAllBookCounts() {
@@ -65,7 +119,8 @@ export async function listAllBookCounts() {
 function valuesFor(spec: BookSpec, input: Record<string, string>) {
   const body: Record<string, unknown> = {};
   for (const field of spec.fields) {
-    if (field.readonly && spec.codeCounter) continue;
+    if (field.persist === false) continue;
+    if (field.readonly && spec.codeCounter && field.key === "code") continue;
     body[field.key] = coerce(field, input[field.key]);
   }
   return body;
@@ -124,20 +179,38 @@ export async function saveBookRow(slug: string, id: string | null, input: Record
 }
 
 export async function deleteBookRow(slug: string, id: string) {
+  await deleteBookRows(slug, [id]);
+}
+
+export async function deleteBookRows(slug: string, ids: string[]) {
   const spec = bookSpec(slug);
   const db = dataClient();
   if (!spec || !db) throw new Error("Supabase is not configured.");
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+  if (!unique.length) return 0;
+
   if (spec.identity === "settings") {
-    const { error } = await db.from(spec.table).delete().eq("key", id);
-    if (error) throw databaseError("delete setting", error);
-    return;
+    for (let i = 0; i < unique.length; i += 80) {
+      const { error } = await db.from(spec.table).delete().in("key", unique.slice(i, i + 80));
+      if (error) throw databaseError("delete setting", error);
+    }
+    return unique.length;
   }
+
   if (spec.identity === "lists") {
-    const [list_key, value] = id.split("::");
-    const { error } = await db.from(spec.table).delete().eq("list_key", list_key).eq("value", value);
-    if (error) throw databaseError("delete list option", error);
-    return;
+    for (const id of unique) {
+      const [list_key, ...rest] = id.split("::");
+      const value = rest.join("::");
+      if (!list_key || !value) continue;
+      const { error } = await db.from(spec.table).delete().eq("list_key", list_key).eq("value", value);
+      if (error) throw databaseError("delete list option", error);
+    }
+    return unique.length;
   }
-  const { error } = await db.from(spec.table).delete().eq("id", id);
-  if (error) throw databaseError(`delete ${spec.title}`, error);
+
+  for (let i = 0; i < unique.length; i += 80) {
+    const { error } = await db.from(spec.table).delete().in("id", unique.slice(i, i + 80));
+    if (error) throw databaseError(`delete ${spec.title}`, error);
+  }
+  return unique.length;
 }

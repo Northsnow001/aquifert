@@ -135,6 +135,18 @@ export async function insertTradeSupplier(input: TradeSupplierDraft) {
   return supplierFrom(data as Record<string, unknown>);
 }
 
+export async function deleteTradeSuppliers(ids: string[]) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (!unique.length) return 0;
+  for (let i = 0; i < unique.length; i += 80) {
+    const { error } = await db.from("trade_suppliers").delete().in("id", unique.slice(i, i + 80));
+    if (error) throw databaseError("delete suppliers", error);
+  }
+  return unique.length;
+}
+
 export async function updateTradeSupplier(id: string, input: TradeSupplierDraft) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
@@ -498,6 +510,18 @@ export async function insertTradeBuyer(input: TradeBuyerDraft) {
     .single();
   if (error) throw databaseError("create buyer", error);
   return buyerFrom(data as Record<string, unknown>);
+}
+
+export async function deleteTradeBuyers(ids: string[]) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (!unique.length) return 0;
+  for (let i = 0; i < unique.length; i += 80) {
+    const { error } = await db.from("trade_buyers").delete().in("id", unique.slice(i, i + 80));
+    if (error) throw databaseError("delete buyers", error);
+  }
+  return unique.length;
 }
 
 export async function updateTradeBuyer(id: string, input: TradeBuyerDraft) {
