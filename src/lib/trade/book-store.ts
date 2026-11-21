@@ -3,6 +3,7 @@ import "server-only";
 import { dataClient, databaseError } from "@/lib/data/db";
 import { BOOK_SPECS, bookSpec, type BookField, type BookRow, type BookSpec } from "@/lib/trade/book";
 import { formatOfferCode, mondayOf } from "@/lib/trade/offer-code";
+import { extractRfqCode } from "@/lib/trade/rfq-code";
 
 function text(v: unknown) {
   return v == null ? "" : String(v);
@@ -38,7 +39,8 @@ function extrasOf(row: Record<string, unknown>) {
 function nested(row: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = row[key];
-    if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+    if (Array.isArray(value) && value[0] && typeof value[0] === "object") return value[0] as Record<string, unknown>;
+    if (value && typeof value === "object") return value as Record<string, unknown>;
   }
   return null;
 }
@@ -88,7 +90,7 @@ function fromDb(spec: BookSpec, row: Record<string, unknown>): BookRow {
     supplier_name: text(supplier?.company_name),
     supplier_contact: text(supplier?.contact_name),
     supplier_email: text(supplier?.email),
-    rfq_code: text(rfq?.code) || text(extras.rfq_code),
+    rfq_code: text(rfq?.code) || text(extras.rfq_code) || extractRfqCode(text(row.raw_message)),
     validity_text: text(extras.validity),
     price_check_flag: text(extras.price_check_flag),
     notes: text(row.notes) || text(extras.notes),
@@ -116,7 +118,34 @@ export async function listBookRows(slug: string): Promise<BookRow[]> {
     ? await db.from(spec.table).select("*").order(order, { ascending }).limit(2000)
     : queried;
   if (result.error) throw databaseError(`list ${spec.title}`, result.error);
-  return (result.data ?? []).map((row) => fromDb(spec, row as Record<string, unknown>));
+  const rows = (result.data ?? []).map((row) => fromDb(spec, row as Record<string, unknown>));
+  if (spec.slug !== "quotes" || !db) return rows;
+  return fillQuoteRfqCodes(db, rows);
+}
+
+async function fillQuoteRfqCodes(
+  db: NonNullable<ReturnType<typeof dataClient>>,
+  rows: BookRow[],
+): Promise<BookRow[]> {
+  const ids = [...new Set(rows.map((row) => text(row.rfq_id)).filter(Boolean))];
+  if (!ids.length) return rows;
+  const map: Record<string, string> = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await db.from("trade_rfqs").select("id, code").in("id", ids.slice(i, i + 200));
+    if (error) break;
+    for (const item of data ?? []) {
+      const id = text((item as { id?: unknown }).id);
+      const code = text((item as { code?: unknown }).code);
+      if (id && code) map[id] = code;
+    }
+  }
+  return rows.map((row) => ({
+    ...row,
+    rfq_code:
+      text(row.rfq_code) ||
+      map[text(row.rfq_id)] ||
+      extractRfqCode(text(row.raw_message) || text(row.supplier_response)),
+  }));
 }
 
 export async function listAllBookCounts() {

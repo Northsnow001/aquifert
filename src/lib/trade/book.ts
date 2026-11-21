@@ -137,6 +137,7 @@ export const BOOK_SPECS: BookSpec[] = [
     identity: "uuid",
     fields: [
       { key: "code", label: "Offer ID", type: "text", list: true, readonly: true },
+      { key: "rfq_code", label: "Linked Request ID", type: "text", list: true, persist: false, readonly: true },
       { key: "date_received", label: "Date Received", type: "text", list: true, persist: false, readonly: true },
       { key: "week_start", label: "Weekstart", type: "date", list: true },
       { key: "supplier_code", label: "Supplier ID", type: "text", list: true, persist: false, readonly: true },
@@ -157,7 +158,6 @@ export const BOOK_SPECS: BookSpec[] = [
       { key: "validity_text", label: "Validity", type: "text", list: true, persist: false },
       { key: "validity_until", label: "Validity Until", type: "date", list: true },
       { key: "status", label: "Offer Status", type: "select", options: QUOTE_STATUS, list: true },
-      { key: "rfq_code", label: "Linked Request ID", type: "text", list: true, persist: false, readonly: true },
       { key: "payment_terms", label: "Payment Terms", type: "text", list: true },
       { key: "prepayment_pct", label: "Prepayment %", type: "number", list: true },
       { key: "loading_rate", label: "Loading Rate", type: "text", list: true },
