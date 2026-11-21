@@ -15,6 +15,22 @@ export function emailInMessage(text: string) {
   return text.match(EMAIL)?.[0].trim().toLowerCase() ?? "";
 }
 
+/** Invite wa.me prefills this line. We match name + company to the buyer row. */
+export function buyerInviteHello(who?: { name?: string; company?: string }) {
+  const name = who?.name?.trim();
+  const company = who?.company?.trim();
+  if (name && company) return `Hi, this is ${name} from ${company}.`;
+  if (name) return `Hi, this is ${name}.`;
+  return "Hi.";
+}
+
+export function parseInviteHello(text: string) {
+  const raw = text.replace(/\s+/g, " ").trim();
+  const match = raw.match(/^hi,?\s+this is\s+(.+?)\s+from\s+(.+?)\.?\s*$/i);
+  if (!match) return null;
+  return { name: match[1].trim(), company: match[2].trim() };
+}
+
 /** Invite wa.me prefills a hello plus START email so we can match the buyer row. */
 export function parseWhatsAppStart(text: string) {
   const raw = text.trim();
@@ -41,11 +57,7 @@ export function deskWhatsAppE164() {
   return toE164(from) || "+447427829952";
 }
 
-export function buyerWhatsAppLink(email: string, who?: { name?: string; company?: string }) {
+export function buyerWhatsAppLink(_email: string, who?: { name?: string; company?: string }) {
   const number = digitsOnly(deskWhatsAppE164());
-  const name = who?.name?.trim();
-  const company = who?.company?.trim();
-  const intro = name && company ? `Hi, this is ${name} from ${company}.` : name ? `Hi, this is ${name}.` : "Hi.";
-  const text = encodeURIComponent(`${intro} START ${email.trim().toLowerCase()}`);
-  return `https://wa.me/${number}?text=${text}`;
+  return `https://wa.me/${number}?text=${encodeURIComponent(buyerInviteHello(who))}`;
 }

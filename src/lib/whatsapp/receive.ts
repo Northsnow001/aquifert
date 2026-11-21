@@ -1,10 +1,16 @@
 import "server-only";
 
 import { recordBuyerInbound } from "@/lib/desk-hitl/store";
-import { getTradeBuyerByWhatsApp, linkBuyerWhatsApp, logTradeMessage } from "@/lib/trade/store";
+import {
+  getTradeBuyerByWhatsApp,
+  linkBuyerWhatsApp,
+  linkBuyerWhatsAppFromHello,
+  logTradeMessage,
+  markBuyerOnWhatsApp,
+} from "@/lib/trade/store";
 import type { TradeBuyer } from "@/lib/trade/types";
 import { identityFromBuyer } from "@/lib/whatsapp/buyer-identity";
-import { parseWhatsAppStart, toE164 } from "@/lib/whatsapp/parse";
+import { parseInviteHello, parseWhatsAppStart, toE164 } from "@/lib/whatsapp/parse";
 import { runInvitedBuyerTurn, runKnownBuyerTurn, runUnknownBuyerTurn, whatsappThread } from "@/lib/whatsapp/runner";
 import { sendWhatsAppText } from "@/lib/whatsapp/send";
 
@@ -34,11 +40,15 @@ async function continueKnown(input: {
   deliver: boolean;
   justLinked?: boolean;
 }) {
-  const messages = await whatsappThread(input.phone, input.buyer.id);
-  const gaps = identityFromBuyer(input.buyer);
+  const buyer =
+    input.buyer.onboardingStatus === "subscribed" && input.buyer.whatsappE164 === input.phone
+      ? input.buyer
+      : await markBuyerOnWhatsApp(input.buyer.id, input.phone).catch(() => input.buyer);
+  const messages = await whatsappThread(input.phone, buyer.id);
+  const gaps = identityFromBuyer(buyer);
   if (gaps.missing.length) {
     const turn = await runInvitedBuyerTurn({
-      buyer: input.buyer,
+      buyer,
       text: input.text,
       name: input.name,
       messages,
@@ -48,18 +58,18 @@ async function continueKnown(input: {
   }
 
   if (input.justLinked) {
-    const reply = `Hi ${input.buyer.contactName || input.buyer.companyName} — good to continue here. What fertiliser are you looking to cover?`;
-    await outbound(input.phone, input.buyer.id, reply, { event: "start", agent: "whatsapp-buyer-desk" }, input.deliver);
-    return { reply, buyerId: input.buyer.id };
+    const reply = `Hi ${buyer.contactName || buyer.companyName} — good to continue here. What fertiliser are you looking to cover?`;
+    await outbound(input.phone, buyer.id, reply, { event: "start", agent: "whatsapp-buyer-desk" }, input.deliver);
+    return { reply, buyerId: buyer.id };
   }
 
-  const desk = await recordBuyerInbound({ phone: input.phone, text: input.text, email: input.buyer.email }).catch(() => ({ event: "chat" as const }));
-  if (desk && "status" in desk) return { reply: "", buyerId: input.buyer.id, desk: true };
-  if (desk && "event" in desk && desk.event !== "chat") return { reply: "", buyerId: input.buyer.id, desk: true };
+  const desk = await recordBuyerInbound({ phone: input.phone, text: input.text, email: buyer.email }).catch(() => ({ event: "chat" as const }));
+  if (desk && "status" in desk) return { reply: "", buyerId: buyer.id, desk: true };
+  if (desk && "event" in desk && desk.event !== "chat") return { reply: "", buyerId: buyer.id, desk: true };
 
-  const turn = await runKnownBuyerTurn({ buyer: input.buyer, text: input.text, messages });
-  await outbound(input.phone, input.buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode }, input.deliver);
-  return { reply: turn.reply, buyerId: input.buyer.id };
+  const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages });
+  await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode }, input.deliver);
+  return { reply: turn.reply, buyerId: buyer.id };
 }
 
 export async function handleWhatsAppInbound(input: { from: string; body: string; name?: string; deliver: boolean }) {
@@ -71,7 +81,13 @@ export async function handleWhatsAppInbound(input: { from: string; body: string;
   let buyer = await getTradeBuyerByWhatsApp(phone);
   let justLinked = false;
   if (!buyer) {
-    const linked = await tryLink(phone, start.linkedEmail || start.email);
+    const byEmail = await tryLink(phone, start.linkedEmail || start.email);
+    const hello = parseInviteHello(text);
+    const byHello =
+      !byEmail && hello
+        ? await linkBuyerWhatsAppFromHello({ phone, name: hello.name, company: hello.company }).catch(() => null)
+        : null;
+    const linked = byEmail ?? (byHello && byHello.ok ? byHello.buyer : null);
     if (linked) {
       buyer = linked;
       justLinked = true;

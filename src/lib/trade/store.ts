@@ -572,14 +572,34 @@ export async function updateTradeBuyer(id: string, input: TradeBuyerDraft) {
   return buyerFrom(data as Record<string, unknown>);
 }
 
+export async function markBuyerOnWhatsApp(id: string, phone: string) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const e164Phone = e164(phone);
+  if (!e164Phone) throw new Error("A WhatsApp number is required.");
+  const { data, error } = await db
+    .from("trade_buyers")
+    .update({
+      whatsapp_e164: e164Phone,
+      onboarding_status: "subscribed",
+      last_contact_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw databaseError("mark buyer on WhatsApp", error);
+  return buyerFrom(data as Record<string, unknown>);
+}
+
 export async function markBuyerInvited(id: string, email: string) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
   const now = new Date().toISOString();
+  const current = await getTradeBuyer(id);
   const { data, error } = await db
     .from("trade_buyers")
     .update({
-      onboarding_status: "invited",
+      onboarding_status: current?.onboardingStatus === "subscribed" ? "subscribed" : "invited",
       invited_at: now,
       invited_email: email,
       last_contact_at: now,
@@ -626,8 +646,56 @@ export async function linkBuyerWhatsApp(input: { phone: string; email: string })
     buyerId: buyer.id,
     fromAddress: phone,
     toAddress: email,
-    body: "WhatsApp START / invite link",
+    body: "WhatsApp invite",
     payload: { event: "start", phone, email },
+  });
+  return { ok: true as const, buyer };
+}
+
+function sameName(left: string, right: string) {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
+export async function linkBuyerWhatsAppFromHello(input: { phone: string; name: string; company: string }) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const phone = e164(input.phone);
+  const company = input.company.trim();
+  const name = input.name.trim();
+  if (!phone || !company || !name) return { ok: false as const, unmatched: true as const, error: "name and company are required." };
+  const { data: rows, error: lookupError } = await db
+    .from("trade_buyers")
+    .select("*")
+    .ilike("company_name", company)
+    .in("onboarding_status", ["to_invite", "invited", "subscribed"])
+    .limit(20);
+  if (lookupError) throw databaseError("find buyer for WhatsApp hello", lookupError);
+  const matches = (rows ?? []).filter((row) => {
+    const r = row as Record<string, unknown>;
+    return sameName(text(r.contact_name), name) && sameName(text(r.company_name), company);
+  });
+  const match = matches.length === 1 ? matches[0] : null;
+  if (!match) return { ok: false as const, unmatched: true as const, error: "No invited buyer matches that name and company." };
+  const { data, error } = await db
+    .from("trade_buyers")
+    .update({
+      whatsapp_e164: phone,
+      onboarding_status: "subscribed",
+      last_contact_at: new Date().toISOString(),
+    })
+    .eq("id", String((match as { id: string }).id))
+    .select("*")
+    .single();
+  if (error) throw databaseError("link buyer WhatsApp", error);
+  const buyer = buyerFrom(data as Record<string, unknown>);
+  await logTradeMessage({
+    direction: "in",
+    channel: "whatsapp",
+    buyerId: buyer.id,
+    fromAddress: phone,
+    toAddress: buyer.email,
+    body: "WhatsApp invite",
+    payload: { event: "start", phone, name, company },
   });
   return { ok: true as const, buyer };
 }

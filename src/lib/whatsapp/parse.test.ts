@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { buyerInviteEligible, parseWhatsAppStart, toE164 } from "@/lib/whatsapp/parse";
+import { buyerInviteEligible, buyerInviteHello, parseInviteHello, parseWhatsAppStart, toE164 } from "@/lib/whatsapp/parse";
 
 describe("parseWhatsAppStart", () => {
   test("reads START plus email from the 1b wa.me prefill", () => {
@@ -19,6 +19,17 @@ describe("parseWhatsAppStart", () => {
     const parsed = parseWhatsAppStart("Hello");
     assert.equal(parsed.isStart, false);
     assert.equal(parsed.linkedEmail, "");
+  });
+});
+
+describe("parseInviteHello", () => {
+  test("reads the invite prefill without START", () => {
+    const parsed = parseInviteHello("Hi, this is Kayode Daniel from Nexora.");
+    assert.deepEqual(parsed, { name: "Kayode Daniel", company: "Nexora" });
+  });
+
+  test("builds the same prefill the email link uses", () => {
+    assert.equal(buyerInviteHello({ name: "Kayode Daniel", company: "Nexora" }), "Hi, this is Kayode Daniel from Nexora.");
   });
 });
 
