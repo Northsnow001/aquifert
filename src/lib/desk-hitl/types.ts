@@ -25,7 +25,7 @@ export type DeskFoAttachment = {
 
 export type DeskFoPack = {
   attachments: DeskFoAttachment[];
-  /** Matt confirmed the mill OK’d this FO (WeChat until WF2 is wired). */
+  /** Matt confirmed the supplier OK’d this FO (WeChat until WF2 is wired). */
   supplierConfirmedAt: string | null;
   supplierConfirmedBy: string | null;
 };

@@ -788,7 +788,7 @@ export async function saveFirmTerms(body: unknown): Promise<DeskDeal | { error: 
       message({
         from: "system",
         channel: "app",
-        text: `Firm offer ${parked.firmOffer.order.order_ref || parked.requestId} is on the desk. Edit it, attach COA/TDS/photos, confirm the mill, then send.`,
+        text: `Firm offer ${parked.firmOffer.order.order_ref || parked.requestId} is on the desk. Edit it, attach COA/TDS/photos, confirm the supplier, then send.`,
       }),
     ];
   }
@@ -947,7 +947,7 @@ export async function confirmSupplierFo(id: string, actor: string): Promise<Desk
       message({
         from: "system",
         channel: "app",
-        text: `${actor || "Desk"} confirmed the mill signed off this firm offer (WeChat).`,
+        text: `${actor || "Desk"} confirmed the supplier signed off this firm offer (WeChat).`,
       }),
     ],
   };

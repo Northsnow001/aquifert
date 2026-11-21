@@ -93,7 +93,7 @@ export function QuotesBoard({ initial }: { initial: TradeQuote[] }) {
     <TradeLive resource="quotes" table="trade_quotes" initial={initial} render={(rows) => (
       <div className="aq-card overflow-hidden">
         {rows.length === 0 ? (
-          <EmptyState title="No mill quotes yet" body="RFQ replies and weekly rates share this table. Incomplete mill quotes stay off the shortlist." />
+          <EmptyState title="No supplier quotes yet" body="RFQ replies and weekly rates share this table. Incomplete supplier quotes stay off the shortlist." />
         ) : (
           <TradeGrid>
             <thead>
@@ -101,7 +101,7 @@ export function QuotesBoard({ initial }: { initial: TradeQuote[] }) {
                 <Th>When</Th>
                 <Th>Kind</Th>
                 <Th>RFQ</Th>
-                <Th>Mill</Th>
+                <Th>Supplier</Th>
                 <Th>Product</Th>
                 <Th>Price</Th>
                 <Th>Qty</Th>

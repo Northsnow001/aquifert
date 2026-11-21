@@ -20,7 +20,7 @@ describe("supplierInviteEligible", () => {
     assert.equal(result.ok, false);
   });
 
-  test("skips mills already on WeChat", () => {
+  test("skips suppliers already on WeChat", () => {
     const result = supplierInviteEligible({
       email: "mill@example.com",
       code: "S-001",

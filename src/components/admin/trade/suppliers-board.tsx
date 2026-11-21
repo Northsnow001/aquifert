@@ -87,7 +87,7 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
-                  { label: "Mills on file", value: rows.length },
+                  { label: "Suppliers on file", value: rows.length },
                   { label: "Waiting invite", value: waiting },
                   { label: "Invite sent", value: invited },
                   { label: "On WeChat", value: onWechat },
@@ -148,7 +148,7 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-s2 text-ink">
                       <Warehouse className="h-5 w-5" />
                     </span>
-                    <p className="mt-4 text-[16px] font-semibold text-ink">{rows.length === 0 ? "No mills on the book yet" : "Nothing matches"}</p>
+                    <p className="mt-4 text-[16px] font-semibold text-ink">{rows.length === 0 ? "No suppliers on the book yet" : "Nothing matches"}</p>
                     <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-mid">
                       {rows.length === 0
                         ? "Add the company, contact and email. WeChat OpenID is written later, when they scan their invite and follow Aquifert."

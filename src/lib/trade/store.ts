@@ -151,7 +151,7 @@ export async function linkSupplierWechatFollow(input: { openid: string; email: s
     const r = row as Record<string, unknown>;
     return [r.email, r.invited_email, r.qr_scene].some((value) => String(value ?? "").trim().toLowerCase() === email);
   });
-  if (!mill) return { ok: false as const, unmatched: true as const, error: "No mill with that invite email." };
+  if (!mill) return { ok: false as const, unmatched: true as const, error: "No supplier with that invite email." };
   const millId = String((mill as { id: string }).id);
 
   const now = input.joinedAt || new Date().toISOString();

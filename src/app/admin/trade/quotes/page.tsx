@@ -8,7 +8,7 @@ export default async function TradeQuotesPage() {
   const rows = await listTradeQuotes().catch(() => []);
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader crumbs={[{ href: "/admin/trade", label: "Trade book" }]} title="Mill quotes" description="RFQ replies and weekly rates. Ready means price, product, quantity and load port are present." />
+      <PageHeader crumbs={[{ href: "/admin/trade", label: "Trade book" }]} title="Supplier quotes" description="RFQ replies and weekly rates. Ready means price, product, quantity and load port are present." />
       <QuotesBoard initial={rows} />
     </div>
   );

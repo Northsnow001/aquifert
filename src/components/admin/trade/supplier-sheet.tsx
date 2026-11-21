@@ -122,7 +122,7 @@ export function SupplierSheet({
         <div className="border-b border-border px-6 py-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dim">{creating ? "New mill" : existing?.code ?? ""}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dim">{creating ? "New supplier" : existing?.code ?? ""}</p>
               <h2 id="supplier-sheet-title" className="mt-1 text-[20px] font-semibold tracking-[-0.02em] text-ink">
                 {creating ? "Add supplier" : "Edit supplier"}
               </h2>
@@ -150,7 +150,7 @@ export function SupplierSheet({
                 <input id="sup-products" value={draft.productsSupplied} onChange={(event) => set("productsSupplied", event.target.value)} className={`${field} h-10 w-full`} placeholder="Urea 46, DAP, AS" />
               </Field>
             </div>
-            <Field id="sup-address" title="Address" hint="Mill or office, optional.">
+            <Field id="sup-address" title="Address" hint="Office or plant, optional.">
               <textarea id="sup-address" value={draft.address} onChange={(event) => set("address", event.target.value)} className={textarea} rows={2} />
             </Field>
           </section>

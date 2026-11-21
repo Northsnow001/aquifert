@@ -31,7 +31,7 @@ describe("parseWechatXml", () => {
     assert.equal(wechatFollowEvent(event), true);
   });
 
-  test("reads a mill text message", () => {
+  test("reads a supplier text message", () => {
     const xml = `<xml>
 <FromUserName><![CDATA[ovABC]]></FromUserName>
 <MsgType><![CDATA[text]]></MsgType>
