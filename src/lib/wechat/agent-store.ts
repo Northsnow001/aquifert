@@ -35,7 +35,9 @@ export async function listTradeAgents(): Promise<TradeAgent[]> {
     return (
       !stored.trim() ||
       (next.length > stored.length * 2 && stored.length < 12_000) ||
-      (key === "whatsapp-buyer-onboard" && !stored.includes("Do not assume they are a buyer"))
+      (key === "whatsapp-buyer-onboard" && !stored.includes("Do not assume they are a buyer")) ||
+      ((key === "whatsapp-buyer-onboard" || key === "whatsapp-buyer-complete") &&
+        stored.toLowerCase().includes("end user"))
     );
   });
   if (toSeed.length) {

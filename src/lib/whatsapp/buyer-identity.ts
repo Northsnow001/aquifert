@@ -7,7 +7,7 @@ export const BUYER_TYPE_LABELS: Record<string, string> = {
   "government buyer": "Government Buyer",
   government: "Government Buyer",
   cooperative: "Cooperative",
-  "end user": "End User",
+  "end user": "Other",
   other: "Other",
 };
 
