@@ -23,11 +23,12 @@ const candidates = [
   path.join(process.env.USERPROFILE || "", "Downloads", "Aquifert Trade Database.xlsx"),
 ].filter(Boolean);
 
-const workbookPath = candidates.find((file) => existsSync(file));
-if (!workbookPath) {
+const foundWorkbook = candidates.find((file) => existsSync(file));
+if (!foundWorkbook) {
   console.error("Workbook not found. Pass --file <xlsx> or copy it to tmp/trade-workbook.xlsx");
   process.exit(1);
 }
+const workbookPath: string = foundWorkbook;
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -220,14 +221,14 @@ function mapDocStatus(raw: string) {
 function sheetRows(wb: XLSX.WorkBook, name: string) {
   const sheet = wb.Sheets[name];
   if (!sheet) return [] as Record<string, unknown>[];
-  return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "", raw: true, cellDates: true });
+  return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "", raw: true });
 }
 
 async function loadMap(table: string, columns: string) {
   if (!db) return [] as Record<string, unknown>[];
   const { data, error } = await db.from(table).select(columns).limit(5000);
   if (error) throw new Error(`${table}: ${error.message}`);
-  return (data ?? []) as Record<string, unknown>[];
+  return (data ?? []) as unknown as Record<string, unknown>[];
 }
 
 async function upsertBy(
@@ -284,7 +285,7 @@ async function main() {
         const value = str(row[headerName]);
         if (!value) continue;
         order += 1;
-        if (apply) {
+        if (apply && db) {
           const { error } = await db.from("trade_list_options").upsert(
             { list_key: key, value, sort_order: order, active: true },
             { onConflict: "list_key,value" },
@@ -300,7 +301,7 @@ async function main() {
   for (const row of sheetRows(wb, "Settings")) {
     const key = str(get(row, "Key"));
     if (!key) continue;
-    if (apply) {
+    if (apply && db) {
       const { error } = await db.from("trade_settings").upsert({ key, value: str(get(row, "Value")) }, { onConflict: "key" });
       if (error) throw new Error(`settings: ${error.message}`);
     }
