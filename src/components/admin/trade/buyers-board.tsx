@@ -179,7 +179,7 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                     </span>
                     <p className="mt-4 text-[16px] font-semibold text-ink">{rows.length === 0 ? "No buyers on the book yet" : "Nothing matches"}</p>
                     <p className="mt-1.5 max-w-md text-[13.5px] leading-relaxed text-mid">
-                      {rows.length === 0 ? "Add the company and email, then send the WhatsApp START invite." : "Try another search or filter."}
+                      {rows.length === 0 ? "Add the company and email, then send the WhatsApp desk invite." : "Try another search or filter."}
                     </p>
                     {rows.length === 0 ? (
                       <button type="button" className={`${btnPrimary} mt-5`} onClick={() => setSheet("new")}>
@@ -258,7 +258,7 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                               <p className="text-[13.5px] text-ink">{row.contactName || "—"}</p>
                               <p className="text-[12.5px] text-mid">{row.email || "No email"}</p>
                             </td>
-                            <td className="px-5 py-3.5 font-mono text-[12px] text-mid">{row.whatsappE164 || "Pending START"}</td>
+                            <td className="px-5 py-3.5 font-mono text-[12px] text-mid">{row.whatsappE164 || "Pending invite"}</td>
                             <td className="px-5 py-3.5">
                               <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TONE[row.onboardingStatus]}`}>
                                 {BUYER_ONBOARDING_LABEL[row.onboardingStatus]}

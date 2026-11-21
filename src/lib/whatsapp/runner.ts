@@ -3,14 +3,17 @@ import "server-only";
 import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
 import {
   getLatestBuyerRfq,
+  getTradeBuyer,
   getTradeBuyerByWhatsApp,
   insertTradeBuyer,
   insertWhatsAppRfq,
   linkBuyerWhatsApp,
   listTradeThread,
   patchTradeRfq,
+  updateTradeBuyer,
 } from "@/lib/trade/store";
 import type { TradeBuyer, TradeMessage } from "@/lib/trade/types";
+import { identityFromParts, mergeIdentity } from "@/lib/whatsapp/buyer-identity";
 import { asString, parseJsonObject } from "@/lib/wechat/agent-parse";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 
@@ -37,48 +40,25 @@ async function askGemini(system: string, user: string) {
 const FALLBACK_ONBOARD =
   "Hello, this is Aquifert. Please send your company name, your name, job title, email, country, city or address, and whether you are a distributor, importer, wholesaler, government buyer, cooperative, or end user.";
 
-function onboardFields(buyer: Record<string, unknown>, phone: string, whatsappName: string, emailHint: string) {
-  const name = asString(buyer.name).trim() || whatsappName.trim();
-  const jobTitle = asString(buyer.job_title).trim();
-  const company = asString(buyer.company).trim();
-  const email = (asString(buyer.email).trim() || emailHint.trim()).toLowerCase();
-  const country = asString(buyer.country).trim();
-  const address = asString(buyer.address).trim();
-  const rawType = asString(buyer.buyer_type).trim().toLowerCase();
-  const canonicalType =
-    (
-      {
-        distributor: "Distributor",
-        importer: "Importer",
-        wholesaler: "Wholesaler",
-        "government buyer": "Government Buyer",
-        government: "Government Buyer",
-        cooperative: "Cooperative",
-        "end user": "End User",
-        other: "Other",
-      } as Record<string, string>
-    )[rawType] || "";
-  const missing: string[] = [];
-  if (!name) missing.push("your name");
-  if (!jobTitle) missing.push("job title");
-  if (!company) missing.push("company name");
-  if (!email.includes("@")) missing.push("email");
-  if (!country) missing.push("country");
-  if (!address) missing.push("city or address");
-  if (!canonicalType) missing.push("buyer type");
-  return {
-    name,
-    jobTitle,
-    company,
-    email,
-    country,
-    address,
-    buyerType: canonicalType,
-    productsOfInterest: asString(buyer.products_of_interest),
-    notes: asString(buyer.notes),
-    phone,
-    missing,
-  };
+function extractIdentity(
+  buyer: Record<string, unknown>,
+  phone: string,
+  whatsappName: string,
+  emailHint: string,
+  known?: TradeBuyer,
+) {
+  return identityFromParts({
+    name: asString(buyer.name) || known?.contactName || whatsappName,
+    jobTitle: asString(buyer.job_title) || known?.jobTitle || "",
+    company: asString(buyer.company) || known?.companyName || "",
+    email: asString(buyer.email) || known?.email || emailHint,
+    country: asString(buyer.country) || known?.country || "",
+    address: asString(buyer.address) || known?.address || "",
+    buyerType: asString(buyer.buyer_type) || known?.buyerType || "",
+    productsOfInterest: asString(buyer.products_of_interest) || known?.productsOfInterest || "",
+    notes: asString(buyer.notes) || known?.notes || "",
+    phone: known?.whatsappE164 || phone,
+  });
 }
 
 export async function runUnknownBuyerTurn(input: { phone: string; text: string; email?: string; name?: string; messages: TradeMessage[] }) {
@@ -98,7 +78,7 @@ export async function runUnknownBuyerTurn(input: { phone: string; text: string; 
       ].join("\n"),
     );
     const buyer = data.buyer && typeof data.buyer === "object" ? (data.buyer as Record<string, unknown>) : {};
-    const fields = onboardFields(buyer, input.phone, input.name || "", input.email || "");
+    const fields = extractIdentity(buyer, input.phone, input.name || "", input.email || "");
     let reply = asString(data.wa_body) || asString(data.reply) || FALLBACK_ONBOARD;
     let buyerId: string | null = null;
     if (asString(data.action) === "register" && !fields.missing.length) {
@@ -129,6 +109,50 @@ export async function runUnknownBuyerTurn(input: { phone: string; text: string; 
     return { reply, buyerId, agent: "whatsapp-buyer-onboard" as const };
   } catch {
     return { reply: FALLBACK_ONBOARD, buyerId: null, agent: "whatsapp-buyer-onboard" as const };
+  }
+}
+
+export async function runInvitedBuyerTurn(input: {
+  buyer: TradeBuyer;
+  text: string;
+  name?: string;
+  messages: TradeMessage[];
+}) {
+  const known = extractIdentity({}, input.buyer.whatsappE164 || "", input.name || "", input.buyer.email, input.buyer);
+  const fallback = known.missing.length
+    ? `Hi ${known.name || input.buyer.companyName} — welcome back on WhatsApp. I still need ${known.missing.join(" and ")} on file.`
+    : `Hi ${known.name || input.buyer.companyName} — good to continue here. What fertiliser are you looking to cover?`;
+  if (!known.missing.length) {
+    return { reply: fallback, buyer: input.buyer, agent: "whatsapp-buyer-complete" as const, complete: true };
+  }
+  if (!geminiKey()) return { reply: fallback, buyer: input.buyer, agent: "whatsapp-buyer-complete" as const, complete: false };
+
+  try {
+    const agent = await getTradeAgent("whatsapp-buyer-complete");
+    const data = await askGemini(
+      agent.systemPrompt,
+      [
+        `Phone: ${input.buyer.whatsappE164 || ""}`,
+        `WhatsApp name: ${input.name || ""}`,
+        `Message: ${input.text}`,
+        "Buyer lookup: on list, profile incomplete",
+        `Known buyer fields: name=${known.name}; job_title=${known.jobTitle}; company=${known.company}; email=${known.email}; country=${known.country}; address=${known.address}; buyer_type=${known.buyerType}`,
+        `Missing fields: ${known.missing.join(", ")}`,
+        `Chat History:\n${historyBlock(input.messages)}`,
+      ].join("\n"),
+    );
+    const extract = data.buyer && typeof data.buyer === "object" ? (data.buyer as Record<string, unknown>) : {};
+    const fields = extractIdentity(extract, input.buyer.whatsappE164 || "", input.name || "", input.buyer.email, input.buyer);
+    const saved = await updateTradeBuyer(input.buyer.id, mergeIdentity(input.buyer, fields)).catch(() => input.buyer);
+    const latest = (await getTradeBuyer(input.buyer.id).catch(() => null)) ?? saved;
+    let reply = asString(data.wa_body) || asString(data.reply) || fallback;
+    const complete = !fields.missing.length;
+    if (asString(data.action) === "complete" && fields.missing.length) {
+      reply = `Thanks — I still need ${fields.missing.join(" and ")} before we continue.`;
+    }
+    return { reply, buyer: latest, agent: "whatsapp-buyer-complete" as const, complete };
+  } catch {
+    return { reply: fallback, buyer: input.buyer, agent: "whatsapp-buyer-complete" as const, complete: false };
   }
 }
 

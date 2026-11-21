@@ -6,26 +6,35 @@ const compose = (subject: string, email: BrandedEmail): ComposedEmail => ({ subj
 
 const mailto = (desk: string, subject: string) => `mailto:${desk}?subject=${encodeURIComponent(subject)}`;
 
-export function buyerWhatsAppInviteEmail(input: { name: string; company: string; link: string; deskEmail?: string }): ComposedEmail {
+export function buyerWhatsAppInviteEmail(input: {
+  name: string;
+  company: string;
+  link: string;
+  deskNumber?: string;
+  deskEmail?: string;
+}): ComposedEmail {
   const desk = input.deskEmail?.trim() || DESK_EMAIL;
   const first = firstName(input.name) || firstName(input.company) || "there";
-  return compose("Customer onboarding on WhatsApp", {
-    title: "Message Aquifert on WhatsApp",
-    preheader: "Open the WhatsApp link so we can match this phone to your buyer record.",
+  const number = input.deskNumber?.trim();
+  return compose("Continue with Aquifert on WhatsApp", {
+    title: "Our WhatsApp desk",
+    preheader: "Here is our new WhatsApp desk — send a message to continue our conversation.",
     tagline: "Transparent Global Fertiliser Access",
-    eyebrow: "Buyer onboarding",
-    heading: `Hello ${first}`,
+    eyebrow: "WhatsApp desk",
+    heading: `Hi ${first}`,
     blocks: [
       {
         kind: "text",
         html: inline(
-          "Aquifert Solution sources fertiliser for international buyers. Please open WhatsApp with the button below so we can link **your** number to this buyer record. The first message is pre-filled — send it as it is.",
+          number
+            ? `Here is our new WhatsApp desk number (${escapeHtml(number)}). Kindly send us a message to continue our conversation.`
+            : "Here is our new WhatsApp desk. Kindly send us a message to continue our conversation.",
         ),
       },
-      { kind: "button", label: "Open WhatsApp", href: input.link },
+      { kind: "button", label: "Continue on WhatsApp", href: input.link },
       {
         kind: "callout",
-        html: inline("This link is personal to your email. After you send START, the desk can take product, quantity and destination on the same chat."),
+        html: inline("Tap the button, send the pre-filled message, and we will pick up from there on this chat."),
       },
     ],
     footerNote: "You received this because Aquifert invited you as a fertiliser buyer.",

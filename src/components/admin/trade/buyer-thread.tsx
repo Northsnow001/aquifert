@@ -11,7 +11,8 @@ function agentLabel(payload: Record<string, unknown>) {
   const key = String(payload.agent ?? "");
   if (key === "whatsapp-buyer-desk") return "Buyer desk";
   if (key === "whatsapp-buyer-onboard") return "Onboarding";
-  if (payload.event === "start") return "WhatsApp START";
+  if (key === "whatsapp-buyer-complete") return "Complete file";
+  if (payload.event === "start") return "WhatsApp invite";
   return "WhatsApp";
 }
 
@@ -78,7 +79,7 @@ export function BuyerThread({
               <p className="mt-1.5 max-w-sm text-[13.5px] leading-relaxed text-mid">
                 {buyer.whatsappE164
                   ? "When this buyer writes on WhatsApp, the full thread will appear here."
-                  : "Invite them by email. They tap the WhatsApp link, send START, and the chat starts here."}
+                  : "Invite them by email. They tap the WhatsApp link, send a message, and the chat continues here."}
               </p>
             </div>
           ) : (

@@ -90,7 +90,7 @@ export function BuyerSheet({ buyer, onClose }: { buyer: TradeBuyer | null | "new
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dim">{creating ? "New buyer" : existing?.code ?? ""}</p>
               <h2 className="mt-1 text-[20px] font-semibold tracking-[-0.02em] text-ink">{creating ? "Add buyer" : "Edit buyer"}</h2>
               <p className="mt-1.5 text-[13px] leading-relaxed text-mid">
-                Invite by email. They open WhatsApp with START plus their email so we can link the number.
+                Invite by email. They open WhatsApp and send a message so we can continue the conversation on this number.
               </p>
             </div>
             <button type="button" aria-label="Close" onClick={() => onClose(false)} className="rounded-full p-2 text-dim hover:bg-s2 hover:text-ink">
@@ -152,7 +152,7 @@ export function BuyerSheet({ buyer, onClose }: { buyer: TradeBuyer | null | "new
               <input type="checkbox" className="mt-1" checked={Boolean(draft.inviteNow)} onChange={(event) => set("inviteNow", event.target.checked)} />
               <span>
                 Send the WhatsApp invite email now
-                <span className="mt-0.5 block text-[12.5px] text-mid">Same START + email link as workflow 1b.</span>
+                <span className="mt-0.5 block text-[12.5px] text-mid">Hi — here is our new WhatsApp desk. Send a message to continue.</span>
               </span>
             </label>
           ) : null}

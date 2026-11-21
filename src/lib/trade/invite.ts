@@ -14,7 +14,7 @@ import {
   markSupplierInvited,
 } from "@/lib/trade/store";
 import type { BuyerInviteResult, InviteResult, TradeBuyer, TradeSupplier } from "@/lib/trade/types";
-import { buyerInviteEligible, buyerWhatsAppLink } from "@/lib/whatsapp/parse";
+import { buyerInviteEligible, buyerWhatsAppLink, deskWhatsAppE164 } from "@/lib/whatsapp/parse";
 import { wechatPermanentQr, wechatQrPng } from "@/lib/wechat/qr";
 
 const BATCH = 20;
@@ -83,8 +83,14 @@ async function inviteBuyerOne(row: TradeBuyer): Promise<BuyerInviteResult> {
   const check = buyerInviteEligible(row);
   if (!check.ok) return { buyerId: row.id, email: row.email, ok: false, error: check.reason };
   const { delivery } = await getDeskSettings();
-  const link = buyerWhatsAppLink(check.email);
-  const email = buyerWhatsAppInviteEmail({ name: row.contactName, company: row.companyName, link, deskEmail: delivery.replyTo });
+  const link = buyerWhatsAppLink(check.email, { name: row.contactName, company: row.companyName });
+  const email = buyerWhatsAppInviteEmail({
+    name: row.contactName,
+    company: row.companyName,
+    link,
+    deskNumber: deskWhatsAppE164(),
+    deskEmail: delivery.replyTo,
+  });
   const mailed = await sendEmail(
     { kind: "buyer-whatsapp-invite", to: check.email, subject: email.subject, html: email.html, text: email.text },
     delivery,

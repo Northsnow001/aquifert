@@ -9,6 +9,12 @@ describe("parseWhatsAppStart", () => {
     assert.equal(parsed.linkedEmail, "kaytoba49@gmail.com");
   });
 
+  test("reads START email after a hello from the invite link", () => {
+    const parsed = parseWhatsAppStart("Hi, this is Kayode from Nexora. START kaytoba49@gmail.com");
+    assert.equal(parsed.isStart, true);
+    assert.equal(parsed.linkedEmail, "kaytoba49@gmail.com");
+  });
+
   test("ignores a plain hello", () => {
     const parsed = parseWhatsAppStart("Hello");
     assert.equal(parsed.isStart, false);

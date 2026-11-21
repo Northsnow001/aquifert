@@ -11,7 +11,7 @@ export default async function TradeBuyersPage() {
       <PageHeader
         crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
         title="Buyers"
-        description="Click a buyer to read the WhatsApp thread. Invite by email — they send START plus that email so we can link the number."
+        description="Invite known buyers by email to the WhatsApp desk. Unknown numbers go through full onboarding; invited buyers only fill any blanks."
       />
       <BuyersBoard initial={rows} />
     </div>
