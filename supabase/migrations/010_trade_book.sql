@@ -355,8 +355,13 @@ create table if not exists public.trade_quotes (
   updated_at timestamptz not null default now()
 );
 
--- Mill RFQ quotes: price, product, qty, load port required before the row is "ready"
+-- Supplier RFQ quotes: price, product, qty, load port required before the row is "ready"
 -- (same rule as WF2 merge_rfq_offer). Weekly rates skip load_port.
+-- Drop dependents first so this file can be re-run.
+drop trigger if exists trade_quotes_touch_supplier on public.trade_quotes;
+drop trigger if exists trade_quotes_enforce_ready on public.trade_quotes;
+drop view if exists public.trade_rfq_board;
+drop index if exists public.trade_quotes_ready_idx;
 alter table public.trade_quotes drop column if exists ready;
 alter table public.trade_quotes
   add column if not exists ready boolean generated always as (
