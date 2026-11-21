@@ -16,7 +16,7 @@ import type {
   TradeSupplier,
   TradeSupplierDraft,
   WechatChatState,
-  type RfqAskStatus,
+  RfqAskStatus,
 } from "@/lib/trade/types";
 import { ONBOARDING_STATUSES } from "@/lib/trade/types";
 
