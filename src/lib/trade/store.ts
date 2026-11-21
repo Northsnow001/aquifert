@@ -448,12 +448,33 @@ export async function logTradeMessage(input: {
   });
 }
 
+const CLOSED_RFQ = new Set(["won", "lost", "expired", "closed"]);
+
 export async function listTradeBuyers(): Promise<TradeBuyer[]> {
   const db = dataClient();
   if (!db) return [];
-  const { data, error } = await db.from("trade_buyers").select("*").order("updated_at", { ascending: false });
+  const [{ data, error }, rfqs] = await Promise.all([
+    db.from("trade_buyers").select("*").order("updated_at", { ascending: false }),
+    db.from("trade_rfqs").select("buyer_id, status, created_at, updated_at"),
+  ]);
   if (error) throw databaseError("list buyers", error);
-  return (data ?? []).map((row) => buyerFrom(row as Record<string, unknown>));
+  const stats = new Map<string, { enquiryCount: number; openTrades: number; lastEnquiryAt: string | null }>();
+  for (const item of rfqs.error ? [] : rfqs.data ?? []) {
+    const row = item as Record<string, unknown>;
+    const id = text(row.buyer_id);
+    if (!id) continue;
+    const current = stats.get(id) ?? { enquiryCount: 0, openTrades: 0, lastEnquiryAt: null as string | null };
+    current.enquiryCount += 1;
+    if (!CLOSED_RFQ.has(text(row.status))) current.openTrades += 1;
+    const at = text(row.updated_at) || text(row.created_at);
+    if (at && (!current.lastEnquiryAt || at > current.lastEnquiryAt)) current.lastEnquiryAt = at;
+    stats.set(id, current);
+  }
+  return (data ?? []).map((row) => {
+    const buyer = buyerFrom(row as Record<string, unknown>);
+    const extra = stats.get(buyer.id);
+    return extra ? { ...buyer, ...extra } : buyer;
+  });
 }
 
 function buyerFrom(row: Record<string, unknown>): TradeBuyer {
@@ -464,6 +485,7 @@ function buyerFrom(row: Record<string, unknown>): TradeBuyer {
     contactName: text(row.contact_name),
     email: text(row.email),
     whatsappE164: text(row.whatsapp_e164) || null,
+    wechatId: text(row.wechat_id),
     country: text(row.country),
     address: text(row.address),
     jobTitle: text(row.job_title),
@@ -471,12 +493,17 @@ function buyerFrom(row: Record<string, unknown>): TradeBuyer {
     productsOfInterest: text(row.products_of_interest),
     kycStatus: text(row.kyc_status) || "pending",
     status: text(row.status) || "active",
+    partnerName: text(row.partner_name),
+    partnerEmail: text(row.partner_email),
     onboardingStatus: onboarding(row.onboarding_status),
     invitedAt: text(row.invited_at) || null,
     lastContactAt: text(row.last_contact_at) || null,
     notes: text(row.notes),
     createdAt: text(row.created_at),
     updatedAt: text(row.updated_at),
+    enquiryCount: 0,
+    openTrades: 0,
+    lastEnquiryAt: null,
   };
 }
 
@@ -488,11 +515,14 @@ function buyerWrite(input: TradeBuyerDraft) {
     job_title: input.jobTitle.trim() || null,
     email: input.email.trim().toLowerCase() || null,
     whatsapp_e164: phone,
+    wechat_id: input.wechatId?.trim() || null,
     country: input.country.trim() || null,
     address: input.address.trim() || null,
     buyer_type: input.buyerType.trim() || null,
     products_of_interest: input.productsOfInterest.trim() || null,
     notes: input.notes.trim() || null,
+    partner_name: input.partnerName?.trim() || null,
+    partner_email: input.partnerEmail?.trim().toLowerCase() || null,
   };
 }
 

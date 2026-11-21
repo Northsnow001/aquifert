@@ -93,5 +93,8 @@ export function mergeIdentity(row: TradeBuyer, next: IdentityFields): TradeBuyer
     buyerType: next.buyerType || row.buyerType,
     productsOfInterest: next.productsOfInterest || row.productsOfInterest,
     notes: next.notes || row.notes,
+    wechatId: row.wechatId,
+    partnerName: row.partnerName,
+    partnerEmail: row.partnerEmail,
   };
 }

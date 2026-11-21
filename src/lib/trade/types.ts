@@ -113,6 +113,9 @@ export type TradeBuyerDraft = {
   buyerType: string;
   productsOfInterest: string;
   notes: string;
+  wechatId?: string;
+  partnerName?: string;
+  partnerEmail?: string;
   inviteNow?: boolean;
   /** Set when this row is created from an inbound WhatsApp chat, not from admin. */
   linkedOnWhatsApp?: boolean;
@@ -125,6 +128,7 @@ export type TradeBuyer = {
   contactName: string;
   email: string;
   whatsappE164: string | null;
+  wechatId: string;
   country: string;
   address: string;
   jobTitle: string;
@@ -132,12 +136,17 @@ export type TradeBuyer = {
   productsOfInterest: string;
   kycStatus: string;
   status: string;
+  partnerName: string;
+  partnerEmail: string;
   onboardingStatus: OnboardingStatus;
   invitedAt: string | null;
   lastContactAt: string | null;
   notes: string;
   createdAt: string;
   updatedAt: string;
+  enquiryCount: number;
+  openTrades: number;
+  lastEnquiryAt: string | null;
 };
 
 export type TradeRfq = {

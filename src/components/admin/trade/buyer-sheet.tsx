@@ -18,6 +18,9 @@ const empty: TradeBuyerDraft = {
   buyerType: "",
   productsOfInterest: "",
   notes: "",
+  wechatId: "",
+  partnerName: "",
+  partnerEmail: "",
   inviteNow: true,
 };
 
@@ -37,6 +40,9 @@ function fromRow(row: TradeBuyer): TradeBuyerDraft {
     buyerType: row.buyerType,
     productsOfInterest: row.productsOfInterest,
     notes: row.notes,
+    wechatId: row.wechatId,
+    partnerName: row.partnerName,
+    partnerEmail: row.partnerEmail,
     inviteNow: false,
   };
 }
@@ -143,6 +149,28 @@ export function BuyerSheet({ buyer, onClose }: { buyer: TradeBuyer | null | "new
             Address
           </label>
           <textarea id="buy-addr" className={textarea} rows={2} value={draft.address} onChange={(event) => set("address", event.target.value)} />
+          <label className={label} htmlFor="buy-products">
+            Products of interest
+          </label>
+          <input id="buy-products" className={`${field} h-10 w-full`} value={draft.productsOfInterest} onChange={(event) => set("productsOfInterest", event.target.value)} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className={label} htmlFor="buy-wechat">
+                WeChat ID
+              </label>
+              <input id="buy-wechat" className={`${field} mt-1.5 h-10 w-full`} value={draft.wechatId ?? ""} onChange={(event) => set("wechatId", event.target.value)} />
+            </div>
+            <div>
+              <label className={label} htmlFor="buy-partner">
+                Partner
+              </label>
+              <input id="buy-partner" className={`${field} mt-1.5 h-10 w-full`} value={draft.partnerName ?? ""} onChange={(event) => set("partnerName", event.target.value)} />
+            </div>
+          </div>
+          <label className={label} htmlFor="buy-partner-email">
+            Partner email
+          </label>
+          <input id="buy-partner-email" className={`${field} h-10 w-full`} value={draft.partnerEmail ?? ""} onChange={(event) => set("partnerEmail", event.target.value)} />
           <label className={label} htmlFor="buy-notes">
             Notes
           </label>

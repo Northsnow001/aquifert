@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function TradeBuyersPage() {
   const rows = await listTradeBuyers().catch(() => []);
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-[1600px]">
       <PageHeader
         crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
         title="Buyers"

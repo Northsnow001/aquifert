@@ -1,16 +1,53 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Plus, Search, Trash2, Users } from "lucide-react";
+import { Columns3, MessageCircle, Plus, Search, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { deleteBuyersAction, inviteAllBuyersAction, inviteBuyerAction } from "@/app/admin/trade/actions";
 import { BuyerSheet } from "@/components/admin/trade/buyer-sheet";
 import { BuyerThread } from "@/components/admin/trade/buyer-thread";
 import { TradeLive } from "@/components/admin/trade/live-table";
-import { btnDanger, btnPrimary, btnSecondary } from "@/components/admin/ui";
+import { btnDanger, btnGhost, btnPrimary, btnSecondary } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
 import { BUYER_ONBOARDING_LABEL, type OnboardingStatus, type TradeBuyer } from "@/lib/trade/types";
+
+const COLUMNS: { key: keyof TradeBuyer; label: string }[] = [
+  { key: "code", label: "Buyer ID" },
+  { key: "companyName", label: "Company Name" },
+  { key: "contactName", label: "Contact Name" },
+  { key: "email", label: "Email" },
+  { key: "whatsappE164", label: "Phone/WhatsApp" },
+  { key: "wechatId", label: "WeChat ID" },
+  { key: "country", label: "Country" },
+  { key: "kycStatus", label: "KYC Status" },
+  { key: "productsOfInterest", label: "Products of Interest" },
+  { key: "notes", label: "Notes" },
+  { key: "createdAt", label: "Date Added" },
+  { key: "updatedAt", label: "Last Updated" },
+  { key: "status", label: "Status" },
+  { key: "partnerName", label: "Partner" },
+  { key: "partnerEmail", label: "Partner Email" },
+  { key: "address", label: "Address" },
+  { key: "enquiryCount", label: "Enquiries" },
+  { key: "openTrades", label: "Open Trades" },
+  { key: "lastEnquiryAt", label: "Last Enquiry" },
+  { key: "jobTitle", label: "Job Title" },
+  { key: "buyerType", label: "Buyer Type" },
+  { key: "onboardingStatus", label: "WhatsApp" },
+];
+
+function cell(row: TradeBuyer, key: keyof TradeBuyer) {
+  if (key === "onboardingStatus") return BUYER_ONBOARDING_LABEL[row.onboardingStatus];
+  if (key === "createdAt" || key === "updatedAt" || key === "lastEnquiryAt" || key === "invitedAt" || key === "lastContactAt") {
+    return row[key] ? formatStamp(String(row[key])) : "—";
+  }
+  if (key === "enquiryCount" || key === "openTrades") return String(row[key] ?? 0);
+  const value = row[key];
+  if (value == null || value === "") return "—";
+  const text = String(value);
+  return text.length > 80 ? `${text.slice(0, 77)}…` : text;
+}
 
 const TONE: Record<OnboardingStatus, string> = {
   to_invite: "bg-[#fff6e5] text-[#9a5b00]",
@@ -21,13 +58,6 @@ const TONE: Record<OnboardingStatus, string> = {
 
 type Filter = "all" | OnboardingStatus;
 
-function initials(row: TradeBuyer) {
-  const source = row.companyName || row.contactName || row.code;
-  const parts = source.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  return source.slice(0, 2).toUpperCase() || "B";
-}
-
 export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -37,6 +67,38 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [colsOpen, setColsOpen] = useState(false);
+  const colsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("aq-book-cols:buyers");
+      if (!raw) return;
+      const keys = JSON.parse(raw) as string[];
+      if (Array.isArray(keys)) setHidden(new Set(keys));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  useEffect(() => {
+    window.localStorage.setItem("aq-book-cols:buyers", JSON.stringify([...hidden]));
+  }, [hidden]);
+  useEffect(() => {
+    if (!colsOpen) return;
+    const onPointer = (event: MouseEvent) => {
+      if (!colsRef.current?.contains(event.target as Node)) setColsOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setColsOpen(false);
+    };
+    window.addEventListener("mousedown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [colsOpen]);
 
   const toggleOne = (id: string, on: boolean) => {
     setSelected((prev) => {
@@ -106,8 +168,9 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
           const visible = rows.filter((row) => {
             if (filter !== "all" && row.onboardingStatus !== filter) return false;
             if (!needle) return true;
-            return [row.companyName, row.contactName, row.email, row.code, row.country].join(" ").toLowerCase().includes(needle);
+            return COLUMNS.some((col) => cell(row, col.key).toLowerCase().includes(needle));
           });
+          const shown = COLUMNS.filter((col) => !hidden.has(col.key));
 
           return (
             <div className="space-y-5">
@@ -131,7 +194,7 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                     <input
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Search company, email…"
+                      placeholder="Search all buyer columns…"
                       className="h-11 w-full rounded-full border border-border bg-white pl-10 pr-4 text-[13.5px] text-ink outline-none placeholder:text-dim focus:border-blue/40"
                     />
                   </label>
@@ -156,6 +219,44 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
+                  <div className="relative" ref={colsRef}>
+                    <button type="button" className={btnSecondary} onClick={() => setColsOpen((open) => !open)}>
+                      <Columns3 className="h-3.5 w-3.5" />
+                      Columns
+                    </button>
+                    {colsOpen ? (
+                      <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-border bg-white p-3 shadow-[0_18px_50px_-24px_rgb(16_38_59/0.45)]">
+                        <div className="mb-2 flex gap-2">
+                          <button type="button" className={btnGhost} onClick={() => setHidden(new Set())}>
+                            All
+                          </button>
+                          <button type="button" className={btnGhost} onClick={() => setHidden(new Set(COLUMNS.map((col) => col.key)))}>
+                            None
+                          </button>
+                        </div>
+                        <div className="max-h-72 space-y-1 overflow-y-auto">
+                          {COLUMNS.map((col) => (
+                            <label key={col.key} className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] text-ink hover:bg-[#f7f9fb]">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-border text-blue"
+                                checked={!hidden.has(col.key)}
+                                onChange={(event) => {
+                                  setHidden((prev) => {
+                                    const next = new Set(prev);
+                                    if (event.target.checked) next.delete(col.key);
+                                    else next.add(col.key);
+                                    return next;
+                                  });
+                                }}
+                              />
+                              {col.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                   {selected.size > 0 ? (
                     <button type="button" className={btnDanger} disabled={pending} onClick={removeSelected}>
                       <Trash2 className="h-3.5 w-3.5" />
@@ -190,7 +291,7 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[880px] border-collapse text-left">
+                    <table className="w-full min-w-[1600px] border-collapse text-left">
                       <thead>
                         <tr className="border-b border-border bg-[#f7f9fb]">
                           <th className="w-10 px-5 py-3">
@@ -217,11 +318,14 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                               aria-label="Select all visible buyers"
                             />
                           </th>
-                          {["Buyer", "Contact", "WhatsApp", "Status", ""].map((head) => (
-                            <th key={head || "actions"} className="px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
-                              {head}
+                          {shown.map((col) => (
+                            <th key={col.key} className="whitespace-nowrap px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
+                              {col.label}
                             </th>
                           ))}
+                          <th className="sticky right-0 bg-[#f7f9fb] px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-dim">
+                            Actions
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -240,32 +344,18 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
                                 aria-label={`Select ${row.companyName}`}
                               />
                             </td>
-                            <td className="px-5 py-3.5">
-                              <div className="flex items-center gap-3">
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-semibold text-white">
-                                  {initials(row)}
-                                </span>
-                                <div className="min-w-0">
-                                  <p className="truncate text-[14px] font-semibold text-ink">{row.companyName}</p>
-                                  <p className="truncate text-[12px] text-dim">
-                                    {row.code}
-                                    {row.country ? ` · ${row.country}` : ""}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <p className="text-[13.5px] text-ink">{row.contactName || "—"}</p>
-                              <p className="text-[12.5px] text-mid">{row.email || "No email"}</p>
-                            </td>
-                            <td className="px-5 py-3.5 font-mono text-[12px] text-mid">{row.whatsappE164 || "Pending invite"}</td>
-                            <td className="px-5 py-3.5">
-                              <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TONE[row.onboardingStatus]}`}>
-                                {BUYER_ONBOARDING_LABEL[row.onboardingStatus]}
-                              </span>
-                              {row.invitedAt ? <p className="mt-1 text-[11px] text-dim">{formatStamp(row.invitedAt)}</p> : null}
-                            </td>
-                            <td className="px-5 py-3.5 text-right" onClick={(event) => event.stopPropagation()}>
+                            {shown.map((col) => (
+                              <td key={col.key} className="max-w-[220px] truncate whitespace-nowrap px-3 py-3.5 text-[13px] text-ink">
+                                {col.key === "onboardingStatus" ? (
+                                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${TONE[row.onboardingStatus]}`}>
+                                    {BUYER_ONBOARDING_LABEL[row.onboardingStatus]}
+                                  </span>
+                                ) : (
+                                  cell(row, col.key)
+                                )}
+                              </td>
+                            ))}
+                            <td className="sticky right-0 bg-white px-3 py-3.5 text-right" onClick={(event) => event.stopPropagation()}>
                               <div className="flex justify-end gap-2">
                                 <button type="button" className={btnSecondary} onClick={() => setThread(row)}>
                                   <MessageCircle className="h-3.5 w-3.5" />
