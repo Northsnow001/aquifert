@@ -21,9 +21,10 @@ export type MailKind =
   | "firm-offer-buyer"
   | "sales-contract-buyer"
   | "negotiation-desk"
+  | "supplier-wechat-invite"
   | "test";
 
-export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string };
+export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string; cid?: string };
 
 type Message = { to: string; subject: string; html: string; text: string; attachments?: MailAttachment[] };
 
@@ -87,6 +88,7 @@ async function sendWithSmtp(message: Message, delivery: DeliverySettings, from: 
             filename: file.filename,
             content: Buffer.from(file.content),
             contentType: file.contentType,
+            ...(file.cid ? { cid: file.cid } : {}),
           })),
         }
       : {}),

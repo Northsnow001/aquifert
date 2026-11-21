@@ -6,6 +6,45 @@ const compose = (subject: string, email: BrandedEmail): ComposedEmail => ({ subj
 
 const mailto = (desk: string, subject: string) => `mailto:${desk}?subject=${encodeURIComponent(subject)}`;
 
+export function supplierWeChatInviteEmail(input: { name: string; company: string; deskEmail?: string }): ComposedEmail {
+  const desk = input.deskEmail?.trim() || DESK_EMAIL;
+  const first = firstName(input.name) || firstName(input.company) || "there";
+  return compose("Join the Aquifert supplier network on WeChat", {
+    title: "Join the Aquifert supplier network",
+    preheader: "Scan your personal QR code to follow Aquifert on WeChat and receive RFQs.",
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: "Supplier onboarding",
+    heading: `Hello ${first}`,
+    blocks: [
+      {
+        kind: "text",
+        html: inline(
+          "Aquifert Solution sources fertiliser for international buyers. We would like to add **you** to our supplier network so we can send weekly price requests and RFQs on WeChat.",
+        ),
+      },
+      {
+        kind: "steps",
+        title: "Registration takes less than a minute",
+        items: [
+          "Open WeChat and tap **Scan**.",
+          "Scan the QR code in this email (or the attached image).",
+          "Tap **Follow**. You will receive a welcome message from Aquifert.",
+        ].map(inline),
+      },
+      {
+        kind: "text",
+        html: `<img src="cid:wechat-qr" alt="Your personal Aquifert WeChat QR code" width="200" height="200" style="display:block;margin:0 auto;border:1px solid #E4EAEF;border-radius:12px;" />`,
+      },
+      {
+        kind: "callout",
+        html: inline("This QR code is personal to you. Please do not forward it. Reading this on your phone? Take a screenshot, open WeChat, tap Scan, then choose the screenshot from your photos."),
+      },
+    ],
+    footerNote: "You received this because Aquifert invited you as a fertiliser supplier.",
+    deskEmail: desk,
+  });
+}
+
 export function analyticsWaitlistEmail(input: { name: string; deskEmail?: string }): ComposedEmail {
   const desk = input.deskEmail?.trim() || DESK_EMAIL;
   const first = firstName(input.name);

@@ -15,10 +15,11 @@ import { listBans } from "@/lib/member-access";
 import { getNetbackDesk } from "@/lib/netback-desk/store";
 import { liveOrigins } from "@/lib/netback-desk/types";
 import type { SessionUser } from "@/lib/session-shared";
+import { tradeCounts } from "@/lib/trade/store";
 import { listZeroRegistrations } from "@/lib/zero-interest";
 
 export async function AdminShell({ user, children }: { user: SessionUser; children: React.ReactNode }) {
-  const [content, inbox, desk, netback, zero, banList, aq, requests, registrations, nitrogenReports, deskDeals] = await Promise.all([
+  const [content, inbox, desk, netback, zero, banList, aq, requests, registrations, nitrogenReports, deskDeals, trade] = await Promise.all([
     getHubContent(),
     listInbox(),
     getFreightDesk(),
@@ -30,6 +31,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
     listRegistrations().catch(() => []),
     countRecords(NITROGEN_REPORTS).catch(() => 0),
     listDeskDeals().catch(() => []),
+    tradeCounts().catch(() => null),
   ]);
   const drafts = content.telex.filter((item) => item.status === "draft").length;
   const portIssues = auditPorts(desk.ports).size;
@@ -97,6 +99,9 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       items: [
         { href: "/admin/desk", label: "Desk shortlists", icon: "desk", badge: deskWaiting ? `${deskWaiting} wait` : deskDeals.length },
         { href: "/admin/desk/negotiation", label: "Negotiation", icon: "desk", badge: negotiating || undefined },
+        { href: "/admin/trade", label: "Trade book", icon: "trade", badge: trade?.toInvite ? `${trade.toInvite} invite` : trade?.suppliers || undefined },
+        { href: "/admin/trade/suppliers", label: "Suppliers", icon: "trade", badge: trade?.toInvite || undefined },
+        { href: "/admin/trade/rfqs", label: "Buyer requests", icon: "trade", badge: trade?.openRfqs || undefined },
         { href: "/admin/enquiries", label: "Enquiries", icon: "inbox", badge: inbox.length },
         { href: "/admin/zero", label: "Aquifert Zero", icon: "zero", badge: zeroNew ? `${zeroNew} new` : zero.length },
       ],

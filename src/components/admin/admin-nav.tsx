@@ -33,6 +33,7 @@ import {
   Table2,
   UserPlus,
   Users,
+  Warehouse,
   Zap,
 } from "lucide-react";
 import { AquibotAvatar } from "@/components/app/aquibot-avatar";
@@ -58,6 +59,7 @@ export const ADMIN_ICONS = {
   collections: FolderTree,
   inbox: Inbox,
   desk: Handshake,
+  trade: Warehouse,
   access: KeyRound,
   analysis: NotebookPen,
   marketData: ChartLine,
@@ -86,6 +88,9 @@ export function isAdminActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
   if (href === "/admin/desk") {
     return pathname === "/admin/desk" || /^\/admin\/desk\/(?!negotiation(?:\/|$))/.test(pathname);
+  }
+  if (href === "/admin/trade") {
+    return pathname === "/admin/trade" || pathname.startsWith("/admin/trade/");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
