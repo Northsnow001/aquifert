@@ -37,8 +37,7 @@ async function askGemini(system: string, user: string) {
   return parseJsonObject(text);
 }
 
-const FALLBACK_ONBOARD =
-  "Hello, this is Aquifert. Please send your company name, your name, job title, email, country, city or address, and whether you are a distributor, importer, wholesaler, government buyer, cooperative, or end user.";
+const FALLBACK_ONBOARD = "Hello, this is Aquifert. How can we help you today?";
 
 function extractIdentity(
   buyer: Record<string, unknown>,
@@ -46,9 +45,10 @@ function extractIdentity(
   whatsappName: string,
   emailHint: string,
   known?: TradeBuyer,
+  useProfileName = Boolean(known),
 ) {
   return identityFromParts({
-    name: asString(buyer.name) || known?.contactName || whatsappName,
+    name: asString(buyer.name) || known?.contactName || (useProfileName ? whatsappName : ""),
     jobTitle: asString(buyer.job_title) || known?.jobTitle || "",
     company: asString(buyer.company) || known?.companyName || "",
     email: asString(buyer.email) || known?.email || emailHint,
@@ -78,7 +78,7 @@ export async function runUnknownBuyerTurn(input: { phone: string; text: string; 
       ].join("\n"),
     );
     const buyer = data.buyer && typeof data.buyer === "object" ? (data.buyer as Record<string, unknown>) : {};
-    const fields = extractIdentity(buyer, input.phone, input.name || "", input.email || "");
+    const fields = extractIdentity(buyer, input.phone, input.name || "", input.email || "", undefined, false);
     let reply = asString(data.wa_body) || asString(data.reply) || FALLBACK_ONBOARD;
     let buyerId: string | null = null;
     if (asString(data.action) === "register" && !fields.missing.length) {

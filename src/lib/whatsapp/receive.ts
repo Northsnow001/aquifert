@@ -5,6 +5,7 @@ import {
   getTradeBuyerByWhatsApp,
   linkBuyerWhatsApp,
   linkBuyerWhatsAppFromHello,
+  listOrphanWhatsAppThread,
   logTradeMessage,
   markBuyerOnWhatsApp,
 } from "@/lib/trade/store";
@@ -81,7 +82,7 @@ export async function handleWhatsAppInbound(input: { from: string; body: string;
   let buyer = await getTradeBuyerByWhatsApp(phone);
   let justLinked = false;
   if (!buyer) {
-    const byEmail = await tryLink(phone, start.linkedEmail || start.email);
+    const byEmail = await tryLink(phone, start.linkedEmail);
     const hello = parseInviteHello(text);
     const byHello =
       !byEmail && hello
@@ -106,8 +107,8 @@ export async function handleWhatsAppInbound(input: { from: string; body: string;
   }
 
   if (!buyer) {
-    const messages = await whatsappThread(phone, null);
-    const turn = await runUnknownBuyerTurn({ phone, text, email: start.email, name: input.name, messages });
+    const messages = await listOrphanWhatsAppThread(phone).catch(() => []);
+    const turn = await runUnknownBuyerTurn({ phone, text, name: input.name, messages });
     await outbound(phone, turn.buyerId, turn.reply, { agent: turn.agent }, input.deliver);
     return { reply: turn.reply, buyerId: turn.buyerId };
   }

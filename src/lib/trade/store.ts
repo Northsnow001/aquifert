@@ -279,6 +279,36 @@ export async function listWechatThread(input: { supplierId?: string | null; open
   return listTradeThread({ channel: "wechat", supplierId: input.supplierId, address: input.openid });
 }
 
+/** Messages on this number that are not yet tied to a buyer row — a fresh unknown chat. */
+export async function listOrphanWhatsAppThread(phone: string): Promise<TradeMessage[]> {
+  const db = dataClient();
+  if (!db) return [];
+  const address = e164(phone) || phone.trim();
+  if (!address) return [];
+  const { data, error } = await db
+    .from("trade_messages")
+    .select("*")
+    .eq("channel", "whatsapp")
+    .is("buyer_id", null)
+    .or(`from_address.eq.${address},to_address.eq.${address}`)
+    .order("created_at", { ascending: true })
+    .limit(40);
+  if (error) throw databaseError("list unknown WhatsApp thread", error);
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: text(r.id),
+      direction: text(r.direction) === "out" ? "out" : "in",
+      channel: text(r.channel),
+      body: text(r.body),
+      fromAddress: text(r.from_address),
+      toAddress: text(r.to_address),
+      createdAt: text(r.created_at),
+      payload: (r.payload && typeof r.payload === "object" ? (r.payload as Record<string, unknown>) : {}) as Record<string, unknown>,
+    };
+  });
+}
+
 export async function listTradeThread(input: {
   channel: "wechat" | "whatsapp";
   supplierId?: string | null;

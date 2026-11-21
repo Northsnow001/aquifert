@@ -32,7 +32,11 @@ export async function listTradeAgents(): Promise<TradeAgent[]> {
   const toSeed = keys.filter((key) => {
     const stored = byKey[key]?.systemPrompt ?? "";
     const next = defaultPrompt(key);
-    return !stored.trim() || (next.length > stored.length * 2 && stored.length < 12_000);
+    return (
+      !stored.trim() ||
+      (next.length > stored.length * 2 && stored.length < 12_000) ||
+      (key === "whatsapp-buyer-onboard" && !stored.includes("Do not assume they are a buyer"))
+    );
   });
   if (toSeed.length) {
     await db.from("trade_agents").upsert(
