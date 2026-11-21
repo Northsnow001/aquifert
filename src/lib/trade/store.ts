@@ -18,6 +18,7 @@ import type {
   WechatChatState,
   RfqAskStatus,
 } from "@/lib/trade/types";
+import { rfqLookupKeys } from "@/lib/trade/rfq-code";
 import { ONBOARDING_STATUSES } from "@/lib/trade/types";
 
 const text = (v: unknown) => (typeof v === "string" ? v : v == null ? "" : String(v));
@@ -350,25 +351,31 @@ export async function listTradeThread(input: {
 export async function findRfqIdByCode(code: string) {
   const db = dataClient();
   if (!db) return null;
-  const key = code.trim();
-  if (!key) return null;
-  const { data, error } = await db.from("trade_rfqs").select("id").eq("code", key).maybeSingle();
-  if (error) throw databaseError("find RFQ by code", error);
-  return data?.id ? text(data.id) : null;
+  const keys = rfqLookupKeys(code);
+  if (!keys.length) return null;
+  for (const key of keys) {
+    const { data, error } = await db.from("trade_rfqs").select("id").eq("code", key).maybeSingle();
+    if (error) throw databaseError("find RFQ by code", error);
+    if (data?.id) return text(data.id);
+  }
+  return null;
 }
 
 export async function getTradeRfqByCode(code: string) {
   const db = dataClient();
   if (!db) return null;
-  const key = code.trim();
-  if (!key) return null;
-  const { data, error } = await db
-    .from("trade_rfqs")
-    .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, extras")
-    .eq("code", key)
-    .maybeSingle();
-  if (error) throw databaseError("load RFQ by code", error);
-  return data ? (data as Record<string, unknown>) : null;
+  const keys = rfqLookupKeys(code);
+  if (!keys.length) return null;
+  for (const key of keys) {
+    const { data, error } = await db
+      .from("trade_rfqs")
+      .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, extras")
+      .eq("code", key)
+      .maybeSingle();
+    if (error) throw databaseError("load RFQ by code", error);
+    if (data) return data as Record<string, unknown>;
+  }
+  return null;
 }
 
 export async function getLatestBuyerRfq(buyerId: string) {

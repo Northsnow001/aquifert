@@ -34,7 +34,8 @@ export const MATT_GUARD = `Highest priority (overrides the rest of this prompt):
 - Use the no-quote text (3.6) ONLY when they clearly refuse a quote now: no, no offer, not now, 暂时没有, 无报价, 没有.
 - If they say yes, or they will wait for our weekly broadcast / RFQ, that is NOT a refusal. Thank them, say we will send the weekly update, do not ask for a quote now, do not use 3.6. route=chat, next_stage="", is_no_offer=false.
 - "Yes, I have a weekly broadcast but I will wait till you send me the weekly broadcast update" → wait-for-weekly, never 3.6.
-- A sentence that contains "yes" is not a no.`;
+- A sentence that contains "yes" is not a no.
+- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 400 USD/MT FOB) is a quote for that Trade ID. Extract only what they typed (price, incoterm, port). Leave product, quantity, packing, destination, shipment blank for the desk. Never ask for Buyer Request Fields. route=log_price.`;
 
 export const MATT_PROMPT = WORKFLOW_MATT_PROMPT;
 export const UNKNOWN_PROMPT = WORKFLOW_UNKNOWN_SUPPLIER_PROMPT;

@@ -15,7 +15,15 @@ import type { TradeMessage, TradeSupplier, WechatChatState } from "@/lib/trade/t
 import { MATT_GUARD } from "@/lib/wechat/agent-defs";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 import { asBool, asString, parseJsonObject } from "@/lib/wechat/agent-parse";
-import { WAIT_WEEKLY, nextSupplierChat, waitingForWeekly } from "@/lib/wechat/chat";
+import { THANKS_QUOTE, WAIT_WEEKLY, looksLikeQuote, nextSupplierChat, waitingForWeekly } from "@/lib/wechat/chat";
+import {
+  buyerRequestFieldNames,
+  filterMissingFields,
+  mergeOfferWithRfq,
+  parseBareOffer,
+  resolveQuoteRfqCode,
+  type OfferSlice,
+} from "@/lib/wechat/quote-merge";
 
 function historyBlock(messages: TradeMessage[]) {
   return messages
@@ -37,75 +45,95 @@ async function askGemini(system: string, user: string) {
   return parseJsonObject(text);
 }
 
-function offerFields(offer: Record<string, unknown>) {
+function offerSlice(offer: Record<string, unknown>, fallbackRfq: string, text: string): OfferSlice {
   return {
-    productLabel: asString(offer.product_name),
+    rfq_id: asString(offer.rfq_id) || fallbackRfq,
+    product_name: asString(offer.product_name),
     specification: asString(offer.specification),
-    unitPrice: asString(offer.unit_price),
-    currency: asString(offer.currency) || "USD",
-    quantityMt: asString(offer.quantity),
-    packing: asString(offer.packaging),
-    loadPort: asString(offer.load_port),
-    destinationPort: asString(offer.destination),
-    incoterm: asString(offer.incoterms),
-    deliveryWindow: asString(offer.delivery_turnaround),
-    rawMessage: asString(offer.raw_body),
+    unit_price: asString(offer.unit_price),
+    currency: asString(offer.currency),
+    quantity: asString(offer.quantity),
+    packaging: asString(offer.packaging),
+    destination: asString(offer.destination),
+    load_port: asString(offer.load_port),
+    delivery_turnaround: asString(offer.delivery_turnaround),
+    incoterms: asString(offer.incoterms),
     validity: asString(offer.validity),
+    raw_body: asString(offer.raw_body) || text,
   };
 }
 
-function buyerRequestFields(rfq: Record<string, unknown> | null) {
-  if (!rfq) return "";
-  const parts = [
-    ["product_name", rfq.product_label],
-    ["specification", rfq.specification],
-    ["quantity", rfq.quantity_mt],
-    ["packaging", rfq.packing],
-    ["incoterms", rfq.incoterm],
-    ["destination", rfq.destination_port || rfq.destination_country],
-    ["delivery_turnaround", rfq.shipment_window],
-  ]
-    .filter(([, value]) => value != null && String(value).trim() !== "")
-    .map(([name]) => name);
-  return parts.join(", ");
+async function writeQuote(supplier: TradeSupplier, offer: OfferSlice, weekly: boolean, noOffer: boolean, rfq: Record<string, unknown> | null) {
+  const merged = weekly ? offer : mergeOfferWithRfq(offer, rfq, offer.rfq_id);
+  await insertWechatQuote({
+    supplierId: supplier.id,
+    kind: weekly ? "weekly" : "rfq",
+    rfqCode: weekly ? asString(merged.rfq_id) || undefined : merged.rfq_id || undefined,
+    productLabel: merged.product_name,
+    specification: merged.specification,
+    unitPrice: merged.unit_price,
+    currency: merged.currency || (merged.unit_price ? "USD" : "USD"),
+    quantityMt: merged.quantity,
+    packing: merged.packaging,
+    loadPort: merged.load_port,
+    destinationPort: merged.destination,
+    incoterm: merged.incoterms,
+    deliveryWindow: merged.delivery_turnaround,
+    isNoOffer: noOffer,
+    rawMessage: merged.raw_body,
+    extras: {
+      validity: merged.validity,
+      filled_from_rfq: Boolean(!weekly && rfq),
+      rfq_code: merged.rfq_id,
+    },
+  });
+  return merged;
 }
 
-async function saveOffers(supplier: TradeSupplier, data: Record<string, unknown>, text: string, weekly: boolean) {
+function backfillPrice(slice: OfferSlice, text: string) {
+  if (!looksLikeQuote(text)) return slice;
+  const bare = parseBareOffer(text);
+  return {
+    ...slice,
+    unit_price: slice.unit_price || bare.unit_price,
+    currency: slice.currency || bare.currency,
+    incoterms: slice.incoterms || bare.incoterms,
+    load_port: slice.load_port || bare.load_port,
+    destination: slice.destination || bare.destination,
+    rfq_id: slice.rfq_id || bare.rfq_id,
+  };
+}
+
+async function saveOffers(
+  supplier: TradeSupplier,
+  data: Record<string, unknown>,
+  text: string,
+  weekly: boolean,
+  rfq: Record<string, unknown> | null,
+  defaultRfqCode: string,
+) {
   const offers = Array.isArray(data.offers) ? data.offers.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object") : [];
   const extract = data.extract && typeof data.extract === "object" ? (data.extract as Record<string, unknown>) : null;
   const rows = offers.length ? offers : extract ? [extract] : [];
+  const rfqCode = asString(data.rfq_id) || defaultRfqCode;
   if (!rows.length && asBool(data.is_no_offer)) {
-    await insertWechatQuote({
-      supplierId: supplier.id,
-      kind: weekly ? "weekly" : "rfq",
-      rfqCode: asString(data.rfq_id) || undefined,
-      productLabel: "",
-      isNoOffer: true,
-      rawMessage: text,
-    });
-    return;
+    await writeQuote(supplier, { ...parseBareOffer(text), rfq_id: rfqCode, raw_body: text }, weekly, true, rfq);
+    return null;
   }
+  if (!rows.length && looksLikeQuote(text)) {
+    return writeQuote(supplier, { ...parseBareOffer(text), rfq_id: rfqCode }, weekly, false, rfq);
+  }
+  let last: OfferSlice | null = null;
   for (const offer of rows) {
-    const fields = offerFields(offer);
-    await insertWechatQuote({
-      supplierId: supplier.id,
-      kind: weekly ? "weekly" : "rfq",
-      rfqCode: asString(offer.rfq_id) || asString(data.rfq_id) || undefined,
-      productLabel: fields.productLabel,
-      specification: fields.specification,
-      unitPrice: fields.unitPrice,
-      currency: fields.currency,
-      quantityMt: fields.quantityMt,
-      packing: fields.packing,
-      loadPort: fields.loadPort,
-      destinationPort: fields.destinationPort,
-      incoterm: fields.incoterm,
-      deliveryWindow: fields.deliveryWindow,
-      isNoOffer: asBool(data.is_no_offer) || asBool(offer.is_no_offer),
-      rawMessage: fields.rawMessage || text,
-      extras: { validity: fields.validity },
-    });
+    last = await writeQuote(
+      supplier,
+      backfillPrice(offerSlice(offer, rfqCode, text), text),
+      weekly,
+      asBool(data.is_no_offer) || asBool(offer.is_no_offer),
+      rfq,
+    );
   }
+  return last;
 }
 
 export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; text: string; messages: TradeMessage[] }) {
@@ -117,24 +145,59 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     followUpCount: 0,
     captured: {},
   } satisfies WechatChatState));
+  const weekly = state.stage === "weekly" || input.supplier.awaitingReply === "weekly";
   const fallback = nextSupplierChat({ stage: state.stage, text: input.text });
   if (waitingForWeekly(input.text)) {
     await saveSupplierChatState(input.supplier.id, { ...state, stage: "", followUpCount: 0 });
     return { reply: WAIT_WEEKLY, nextStage: "", agent: "wechat-supplier-quote" as const, usedGemini: false };
   }
-  if (!geminiKey()) return { reply: fallback.reply, nextStage: fallback.nextStage, agent: "wechat-supplier-quote" as const, usedGemini: false };
+
+  const rfqCode = resolveQuoteRfqCode({
+    text: input.text,
+    quoteType: state.quoteType,
+    confirmedRfqId: state.rfqId,
+    stage: state.stage,
+    lastRfqCode: input.supplier.lastRfqCode,
+    weekly,
+  });
+  const rfq = rfqCode && !weekly ? await getTradeRfqByCode(rfqCode).catch(() => null) : null;
+
+  const persistBareQuote = async () => {
+    try {
+      if (weekly || !looksLikeQuote(input.text)) return null;
+      return await saveOffers(input.supplier, { rfq_id: rfqCode }, input.text, weekly, rfq, rfqCode);
+    } catch {
+      return null;
+    }
+  };
+
+  if (!geminiKey()) {
+    const saved = await persistBareQuote();
+    const nextStage = saved ? "" : fallback.nextStage;
+    await saveSupplierChatState(input.supplier.id, {
+      ...state,
+      stage: nextStage,
+      rfqId: rfqCode || state.rfqId,
+      followUpCount: saved ? 0 : state.followUpCount,
+      captured: saved ? {} : state.captured,
+    });
+    return {
+      reply: saved ? THANKS_QUOTE : fallback.reply,
+      nextStage,
+      agent: "wechat-supplier-quote" as const,
+      usedGemini: false,
+    };
+  }
 
   try {
     const agent = await getTradeAgent("wechat-supplier-quote");
-    const confirmedId = asString(state.rfqId);
-    const rfq = confirmedId && state.quoteType === "previous" ? await getTradeRfqByCode(confirmedId).catch(() => null) : null;
     const data = await askGemini(
       `${MATT_GUARD}\n\n${agent.systemPrompt}`,
       [
         `Conversation Stage: ${state.stage || ""}`,
         `Confirmed RFQ ID: ${state.rfqId || ""}`,
         `Quote Type: ${state.quoteType || ""}`,
-        `Buyer Request Fields: ${buyerRequestFields(rfq)}`,
+        `Buyer Request Fields: ${buyerRequestFieldNames(rfq).join(", ")}`,
         `Missing Fields: ${state.missingFields.join(", ")}`,
         `Follow Up Count: ${state.followUpCount}`,
         `Captured So Far: ${JSON.stringify(state.captured && Object.keys(state.captured).length ? state.captured : {})}`,
@@ -143,24 +206,50 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
         `WeChat Text:\n${input.text}`,
       ].join("\n"),
     );
-    const reply = asString(data.reply) || fallback.reply;
-    const nextStage = asString(data.next_stage);
-    const captured = Array.isArray(data.offers) && data.offers[0] && typeof data.offers[0] === "object" ? (data.offers[0] as Record<string, unknown>) : state.captured;
+    data.rfq_id = asString(data.rfq_id) || rfqCode;
+    const captured =
+      Array.isArray(data.offers) && data.offers[0] && typeof data.offers[0] === "object"
+        ? (data.offers[0] as Record<string, unknown>)
+        : state.captured;
+    const preview = weekly
+      ? offerSlice(captured, asString(data.rfq_id), input.text)
+      : mergeOfferWithRfq(backfillPrice(offerSlice(captured, asString(data.rfq_id), input.text), input.text), rfq, asString(data.rfq_id));
+    const missing = filterMissingFields(
+      Array.isArray(data.missing_fields) ? data.missing_fields.map((item) => asString(item)).filter(Boolean) : [],
+      weekly ? null : rfq,
+      preview,
+    );
+    let nextStage = asString(data.next_stage);
+    if (looksLikeQuote(input.text) && missing.length === 0) nextStage = "";
+    const shouldSave = asString(data.route) === "log_price" || looksLikeQuote(input.text);
+    if (shouldSave) {
+      await saveOffers(input.supplier, data, input.text, weekly, rfq, rfqCode).catch(() => null);
+    }
     await saveSupplierChatState(input.supplier.id, {
       stage: nextStage,
       quoteType: asString(data.quote_type) || state.quoteType,
       rfqId: asString(data.rfq_id) || state.rfqId,
-      missingFields: Array.isArray(data.missing_fields) ? data.missing_fields.map((item) => asString(item)).filter(Boolean) : [],
+      missingFields: missing,
       followUpCount: nextStage === "rfq_followup" ? Math.max(1, state.followUpCount + (state.stage === "rfq_followup" ? 0 : 1)) : nextStage ? state.followUpCount : 0,
       captured: nextStage ? captured : {},
     });
-    if (asString(data.route) === "log_price") {
-      await saveOffers(input.supplier, data, input.text, state.stage === "weekly" || input.supplier.awaitingReply === "weekly");
-    }
-    return { reply, nextStage, agent: "wechat-supplier-quote" as const, usedGemini: true };
+    return { reply: asString(data.reply) || fallback.reply, nextStage, agent: "wechat-supplier-quote" as const, usedGemini: true };
   } catch {
-    await saveSupplierChatState(input.supplier.id, { ...state, stage: fallback.nextStage });
-    return { reply: fallback.reply, nextStage: fallback.nextStage, agent: "wechat-supplier-quote" as const, usedGemini: false };
+    const saved = await persistBareQuote();
+    const nextStage = saved ? "" : fallback.nextStage;
+    await saveSupplierChatState(input.supplier.id, {
+      ...state,
+      stage: nextStage,
+      rfqId: rfqCode || state.rfqId,
+      followUpCount: saved ? 0 : state.followUpCount,
+      captured: saved ? {} : state.captured,
+    });
+    return {
+      reply: saved ? THANKS_QUOTE : fallback.reply,
+      nextStage,
+      agent: "wechat-supplier-quote" as const,
+      usedGemini: false,
+    };
   }
 }
 
@@ -212,7 +301,7 @@ export async function runUnknownSupplierTurn(input: { openid: string; text: stri
         }
         const saved = millId ? await getTradeSupplierByWechatOpenid(input.openid) : null;
         if (saved && data.extract && typeof data.extract === "object") {
-          await saveOffers(saved, data, input.text, false);
+          await saveOffers(saved, data, input.text, false, null, asString((data.extract as Record<string, unknown>).rfq_id));
         }
       }
     }

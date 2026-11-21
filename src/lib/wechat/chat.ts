@@ -24,7 +24,7 @@ const HI = new Set(["hi", "hello", "hey", "yo", "你好", "您好", "在吗", "�
 const NEW = new Set(["new", "new one", "new quote", "fresh", "新", "新的", "新报价"]);
 const PREV = new Set(["previous", "old", "existing", "update", "follow up", "last one", "之前", "以前", "旧的", "上次", "更新", "跟进"]);
 
-function looksLikeQuote(text: string) {
+export function looksLikeQuote(text: string) {
   return /rfq#?\s*\d+/i.test(text) || /(\d+(?:\.\d+)?)\s*(usd|\$|美元|\/mt|\/t)/i.test(text);
 }
 
