@@ -45,6 +45,7 @@ function supplierFrom(row: Record<string, unknown>): TradeSupplier {
     qrScene: text(row.qr_scene) || null,
     invitedAt: text(row.invited_at) || null,
     lastRfqCode: text(row.last_rfq_code) || null,
+    awaitingReply: text(row.awaiting_reply) || null,
     lastContactAt: text(row.last_contact_at) || null,
     notes: text(row.notes),
     createdAt: text(row.created_at),
@@ -198,6 +199,16 @@ export async function markSupplierInvited(id: string, fields: { email: string; s
     .single();
   if (error) throw databaseError("mark supplier invited", error);
   return supplierFrom(data as Record<string, unknown>);
+}
+
+export async function setSupplierAwaitingReply(id: string, stage: string) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const { error } = await db
+    .from("trade_suppliers")
+    .update({ awaiting_reply: stage || null, last_contact_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw databaseError("save supplier chat stage", error);
 }
 
 export async function logTradeMessage(input: {

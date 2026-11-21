@@ -60,6 +60,7 @@ export type TradeSupplier = {
   qrScene: string | null;
   invitedAt: string | null;
   lastRfqCode: string | null;
+  awaitingReply: string | null;
   lastContactAt: string | null;
   notes: string;
   createdAt: string;
