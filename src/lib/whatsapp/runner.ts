@@ -2,11 +2,13 @@ import "server-only";
 
 import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
 import {
+  getLatestBuyerRfq,
   getTradeBuyerByWhatsApp,
   insertTradeBuyer,
   insertWhatsAppRfq,
   linkBuyerWhatsApp,
   listTradeThread,
+  patchTradeRfq,
 } from "@/lib/trade/store";
 import type { TradeBuyer, TradeMessage } from "@/lib/trade/types";
 import { asString, parseJsonObject } from "@/lib/wechat/agent-parse";
@@ -86,29 +88,56 @@ export async function runUnknownBuyerTurn(input: { phone: string; text: string; 
   }
 }
 
+function buyerPhase(status: string) {
+  if (status === "pi_sent" || status === "won") return "pi_sent";
+  if (status === "firm_offer_sent") return "offer_review";
+  if (status === "indication_sent" || status === "firm_interest" || status === "negotiating") return "post_yes";
+  return "rfq";
+}
+
+function rfqContext(rfq: Record<string, unknown> | null) {
+  if (!rfq) return "Known RFQ: none";
+  return [
+    `Known RFQ: ${asString(rfq.code)}`,
+    `RFQ status: ${asString(rfq.status)}`,
+    `Product: ${asString(rfq.product_label)}`,
+    `Specification: ${asString(rfq.specification)}`,
+    `Quantity MT: ${asString(rfq.quantity_mt)}`,
+    `Packing: ${asString(rfq.packing)}`,
+    `Incoterm: ${asString(rfq.incoterm)}`,
+    `Destination: ${asString(rfq.destination_port)} ${asString(rfq.destination_country)}`.trim(),
+    `Shipment: ${asString(rfq.shipment_window)}`,
+    `Extras: ${JSON.stringify(rfq.extras ?? {})}`,
+  ].join("\n");
+}
+
 export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string; messages: TradeMessage[] }) {
   const fallback = `Hi ${input.buyer.contactName || input.buyer.companyName} — what fertiliser are you looking to cover?`;
   if (!geminiKey()) return { reply: fallback, agent: "whatsapp-buyer-desk" as const, rfqCode: "" };
 
   try {
+    const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
+    const phase = buyerPhase(asString(latest?.status));
     const agent = await getTradeAgent("whatsapp-buyer-desk");
     const data = await askGemini(
       agent.systemPrompt,
       [
-        "Phase: rfq",
+        `Phase: ${phase}`,
         `Buyer name: ${input.buyer.contactName}`,
         `Company: ${input.buyer.companyName}`,
         `Email: ${input.buyer.email}`,
         `Phone: ${input.buyer.whatsappE164 || ""}`,
+        rfqContext(latest),
         `Chat History:\n${historyBlock(input.messages)}`,
         `Message:\n${input.text}`,
       ].join("\n"),
     );
     let reply = asString(data.reply) || fallback;
-    let rfqCode = "";
+    let rfqCode = asString(latest?.code);
     const route = asString(data.route);
     const extract = data.rfq_extract && typeof data.rfq_extract === "object" ? (data.rfq_extract as Record<string, unknown>) : null;
-    if (route === "rfq_ready" && extract) {
+    const commercial = data.commercial_extract && typeof data.commercial_extract === "object" ? (data.commercial_extract as Record<string, unknown>) : null;
+    if (phase === "rfq" && route === "rfq_ready" && extract) {
       const saved = await insertWhatsAppRfq({
         buyerId: input.buyer.id,
         productLabel: asString(extract.product),
@@ -124,6 +153,11 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
       });
       rfqCode = saved.code;
       reply = `Thank you for confirming — we have what we need. Your Trade ID is "${saved.code}", and we’ll come back to you shortly with an indication.`;
+    }
+    if (latest?.id && commercial && (route === "commercial_collect" || route === "firm_offer_ready" || route === "pi_ready")) {
+      const extras = latest.extras && typeof latest.extras === "object" ? (latest.extras as Record<string, unknown>) : {};
+      const nextStatus = route === "pi_ready" ? "pi_sent" : route === "firm_offer_ready" ? "firm_interest" : asString(latest.status) || "negotiating";
+      await patchTradeRfq(asString(latest.id), { status: nextStatus, extras: { ...extras, commercial } });
     }
     return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode };
   } catch {

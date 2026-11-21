@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { saveTradeAgentAction } from "@/app/admin/trade/actions";
+import { resetTradeAgentAction, saveTradeAgentAction } from "@/app/admin/trade/actions";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import type { TradeAgent } from "@/lib/trade/types";
 
@@ -88,13 +88,31 @@ export function AgentsEditor({ initial }: { initial: TradeAgent[] }) {
               onChange={(event) => setDrafts((prev) => ({ ...prev, [agent.key]: { ...agent, systemPrompt: event.target.value } }))}
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
               className={btnSecondary}
               onClick={() => setDrafts((prev) => ({ ...prev, [agent.key]: initial.find((row) => row.key === agent.key)! }))}
             >
               Revert
+            </button>
+            <button
+              type="button"
+              className={btnSecondary}
+              disabled={pending}
+              onClick={() => {
+                start(async () => {
+                  const result = await resetTradeAgentAction(agent.key);
+                  if (!result.ok) {
+                    toast.error(result.error);
+                    return;
+                  }
+                  setDrafts((prev) => ({ ...prev, [agent.key]: result.agent }));
+                  toast.success(`Restored ${result.agent.name} to the workflow default`);
+                });
+              }}
+            >
+              Restore workflow default
             </button>
             <button type="button" className={btnPrimary} disabled={pending} onClick={save}>
               Save prompt

@@ -324,6 +324,44 @@ export async function findRfqIdByCode(code: string) {
   return data?.id ? text(data.id) : null;
 }
 
+export async function getTradeRfqByCode(code: string) {
+  const db = dataClient();
+  if (!db) return null;
+  const key = code.trim();
+  if (!key) return null;
+  const { data, error } = await db
+    .from("trade_rfqs")
+    .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, extras")
+    .eq("code", key)
+    .maybeSingle();
+  if (error) throw databaseError("load RFQ by code", error);
+  return data ? (data as Record<string, unknown>) : null;
+}
+
+export async function getLatestBuyerRfq(buyerId: string) {
+  const db = dataClient();
+  if (!db) return null;
+  const { data, error } = await db
+    .from("trade_rfqs")
+    .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, extras")
+    .eq("buyer_id", buyerId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw databaseError("load latest buyer RFQ", error);
+  return data ? (data as Record<string, unknown>) : null;
+}
+
+export async function patchTradeRfq(id: string, patch: { status?: string; extras?: Record<string, unknown> }) {
+  const db = dataClient();
+  if (!db) throw new Error("Supabase is not configured.");
+  const body: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (patch.status) body.status = patch.status;
+  if (patch.extras) body.extras = patch.extras;
+  const { error } = await db.from("trade_rfqs").update(body).eq("id", id);
+  if (error) throw databaseError("update RFQ", error);
+}
+
 export async function insertWechatQuote(input: {
   supplierId: string;
   kind: "rfq" | "weekly";

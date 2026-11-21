@@ -29,19 +29,34 @@ export async function listTradeAgents(): Promise<TradeAgent[]> {
     throw databaseError("list trade agents", error);
   }
   const byKey = Object.fromEntries((data ?? []).map((row) => [String((row as { key: string }).key), rowFrom(row as Record<string, unknown>)]));
-  const missing = keys.filter((key) => !byKey[key]);
-  if (missing.length) {
+  const toSeed = keys.filter((key) => {
+    const stored = byKey[key]?.systemPrompt ?? "";
+    const next = defaultPrompt(key);
+    return !stored.trim() || (next.length > stored.length * 2 && stored.length < 12_000);
+  });
+  if (toSeed.length) {
     await db.from("trade_agents").upsert(
-      missing.map((key) => ({
+      toSeed.map((key) => ({
         key,
         name: TRADE_AGENTS[key].name,
         description: TRADE_AGENTS[key].description,
         system_prompt: defaultPrompt(key),
+        updated_at: new Date().toISOString(),
       })),
       { onConflict: "key" },
     );
+    for (const key of toSeed) byKey[key] = seed(key);
   }
   return keys.map((key) => byKey[key] ?? seed(key));
+}
+
+export async function resetTradeAgent(key: string) {
+  if (!(key in TRADE_AGENTS)) throw new Error("Unknown agent.");
+  const typed = key as TradeAgentKey;
+  const def = TRADE_AGENTS[typed];
+  const prompt = defaultPrompt(typed);
+  await saveTradeAgent(typed, { name: def.name, description: def.description, systemPrompt: prompt });
+  return seed(typed);
 }
 
 export async function getTradeAgent(key: TradeAgentKey): Promise<TradeAgent> {

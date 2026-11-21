@@ -3,6 +3,7 @@ import "server-only";
 import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
 import {
   getSupplierChatState,
+  getTradeRfqByCode,
   getTradeSupplierByWechatOpenid,
   insertTradeSupplier,
   insertWechatQuote,
@@ -51,6 +52,22 @@ function offerFields(offer: Record<string, unknown>) {
     rawMessage: asString(offer.raw_body),
     validity: asString(offer.validity),
   };
+}
+
+function buyerRequestFields(rfq: Record<string, unknown> | null) {
+  if (!rfq) return "";
+  const parts = [
+    ["product_name", rfq.product_label],
+    ["specification", rfq.specification],
+    ["quantity", rfq.quantity_mt],
+    ["packaging", rfq.packing],
+    ["incoterms", rfq.incoterm],
+    ["destination", rfq.destination_port || rfq.destination_country],
+    ["delivery_turnaround", rfq.shipment_window],
+  ]
+    .filter(([, value]) => value != null && String(value).trim() !== "")
+    .map(([name]) => name);
+  return parts.join(", ");
 }
 
 async function saveOffers(supplier: TradeSupplier, data: Record<string, unknown>, text: string, weekly: boolean) {
@@ -109,13 +126,15 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
 
   try {
     const agent = await getTradeAgent("wechat-supplier-quote");
+    const confirmedId = asString(state.rfqId);
+    const rfq = confirmedId && state.quoteType === "previous" ? await getTradeRfqByCode(confirmedId).catch(() => null) : null;
     const data = await askGemini(
       `${MATT_GUARD}\n\n${agent.systemPrompt}`,
       [
         `Conversation Stage: ${state.stage || ""}`,
         `Confirmed RFQ ID: ${state.rfqId || ""}`,
         `Quote Type: ${state.quoteType || ""}`,
-        `Buyer Request Fields:`,
+        `Buyer Request Fields: ${buyerRequestFields(rfq)}`,
         `Missing Fields: ${state.missingFields.join(", ")}`,
         `Follow Up Count: ${state.followUpCount}`,
         `Captured So Far: ${JSON.stringify(state.captured && Object.keys(state.captured).length ? state.captured : {})}`,

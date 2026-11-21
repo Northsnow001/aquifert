@@ -17,7 +17,7 @@ import {
   updateTradeSupplier,
 } from "@/lib/trade/store";
 import type { TradeBuyerDraft, TradeSupplierDraft } from "@/lib/trade/types";
-import { saveTradeAgent } from "@/lib/wechat/agent-store";
+import { resetTradeAgent, saveTradeAgent } from "@/lib/wechat/agent-store";
 
 async function requireAdmin() {
   const user = await getSession();
@@ -179,6 +179,17 @@ export async function saveTradeAgentAction(input: { key: string; name: string; d
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not save the agent." };
+  }
+}
+
+export async function resetTradeAgentAction(key: string) {
+  await requireAdmin();
+  try {
+    const agent = await resetTradeAgent(key);
+    refresh();
+    return { ok: true as const, agent };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not restore the workflow prompt." };
   }
 }
 
