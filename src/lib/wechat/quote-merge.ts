@@ -12,6 +12,7 @@ export type OfferSlice = {
   packaging: string;
   destination: string;
   load_port: string;
+  origin: string;
   delivery_turnaround: string;
   incoterms: string;
   validity: string;
@@ -82,6 +83,7 @@ export function parseBareOffer(text: string): OfferSlice {
     packaging: "",
     destination: destTerm ? port : "",
     load_port: destTerm ? "" : port,
+    origin: "",
     delivery_turnaround: "",
     incoterms,
     validity: "",
@@ -100,6 +102,7 @@ export function buyerRequestFieldNames(rfq: Record<string, unknown> | null) {
       ["incoterms", rfq.incoterm],
       ["destination", rfq.destination_port || rfq.destination_country],
       ["delivery_turnaround", rfq.shipment_window],
+      ["origin", rfq.origin_preference],
     ] as const
   )
     .filter(([, value]) => Boolean(blank(value)))
@@ -120,6 +123,7 @@ export function mergeOfferWithRfq(offer: OfferSlice, rfq: Record<string, unknown
     incoterms: fill(offer.incoterms, rfq?.incoterm),
     destination: fill(offer.destination, dest),
     load_port: offer.load_port,
+    origin: fill(offer.origin, rfq?.origin_preference),
     delivery_turnaround: fill(offer.delivery_turnaround, rfq?.shipment_window),
     validity: offer.validity,
     raw_body: offer.raw_body,

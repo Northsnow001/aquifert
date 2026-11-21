@@ -2,6 +2,7 @@ import "server-only";
 
 import { dataClient, databaseError } from "@/lib/data/db";
 import { BOOK_SPECS, bookSpec, type BookField, type BookRow, type BookSpec } from "@/lib/trade/book";
+import { formatOfferCode, mondayOf } from "@/lib/trade/offer-code";
 
 function text(v: unknown) {
   return v == null ? "" : String(v);
@@ -69,10 +70,13 @@ function fromDb(spec: BookSpec, row: Record<string, unknown>): BookRow {
   const extras = extrasOf(row);
   const buyer = nested(row, "buyer", "trade_buyers");
   const mill = nested(row, "mill", "trade_suppliers");
+  const supplier = nested(row, "supplier", "trade_suppliers") || mill;
+  const rfq = nested(row, "rfq", "trade_rfqs");
+  const weekly = text(row.kind) === "weekly" || text(row.kind) === "broadcast";
   return {
     id: text(row.id),
     ...row,
-    date_received: stamp(row.created_at),
+    date_received: stamp(row.created_at || row.received_at),
     last_updated: stamp(row.updated_at),
     received_at: stamp(row.received_at) || stamp(row.created_at),
     main_suppliers: text(extras.suppliers),
@@ -80,6 +84,16 @@ function fromDb(spec: BookSpec, row: Record<string, unknown>): BookRow {
     buyer_company: text(buyer?.company_name),
     buyer_contact: text(buyer?.contact_name),
     selected_supplier_name: text(mill?.company_name),
+    supplier_code: text(supplier?.code),
+    supplier_name: text(supplier?.company_name),
+    supplier_contact: text(supplier?.contact_name),
+    supplier_email: text(supplier?.email),
+    rfq_code: text(rfq?.code) || text(extras.rfq_code),
+    validity_text: text(extras.validity),
+    price_check_flag: text(extras.price_check_flag),
+    notes: text(row.notes) || text(extras.notes),
+    response_type: weekly ? "WEEKLY_RESPONSE" : "RFQ_RESPONSE",
+    supplier_response: text(row.raw_message),
     core_fields_complete: row.buyer_ready === true ? "yes" : row.buyer_ready === false ? "no" : "",
     missing_fields: spec.slug === "rfqs" ? missingRfq(row) : "",
   };
@@ -94,9 +108,11 @@ export async function listBookRows(slug: string): Promise<BookRow[]> {
   const select =
     spec.slug === "rfqs"
       ? "*, buyer:trade_buyers!buyer_id(code, company_name, contact_name), mill:trade_suppliers!selected_supplier_id(company_name)"
-      : "*";
+      : spec.slug === "quotes"
+        ? "*, supplier:trade_suppliers!supplier_id(code, company_name, contact_name, email), rfq:trade_rfqs!rfq_id(code)"
+        : "*";
   const queried = await db.from(spec.table).select(select).order(order, { ascending }).limit(2000);
-  const result = queried.error && spec.slug === "rfqs"
+  const result = queried.error && (spec.slug === "rfqs" || spec.slug === "quotes")
     ? await db.from(spec.table).select("*").order(order, { ascending }).limit(2000)
     : queried;
   if (result.error) throw databaseError(`list ${spec.title}`, result.error);
@@ -171,6 +187,19 @@ export async function saveBookRow(slug: string, id: string | null, input: Record
     });
     if (codeError) throw databaseError("allocate code", codeError);
     body.code = code;
+  }
+
+  if (spec.slug === "quotes" && !text(body.code)) {
+    const now = new Date();
+    for (let line = 0; line < 40; line++) {
+      const code = formatOfferCode(now, line);
+      const { data } = await db.from("trade_quotes").select("id").eq("code", code).maybeSingle();
+      if (!data) {
+        body.code = code;
+        break;
+      }
+    }
+    if (!text(body.week_start)) body.week_start = mondayOf(now);
   }
 
   const { data, error } = await db.from(spec.table).insert(body).select("id").single();

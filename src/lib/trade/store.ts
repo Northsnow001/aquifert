@@ -18,6 +18,7 @@ import type {
   WechatChatState,
   RfqAskStatus,
 } from "@/lib/trade/types";
+import { formatOfferCode, mondayOf } from "@/lib/trade/offer-code";
 import { rfqLookupKeys } from "@/lib/trade/rfq-code";
 import { ONBOARDING_STATUSES } from "@/lib/trade/types";
 
@@ -369,7 +370,7 @@ export async function getTradeRfqByCode(code: string) {
   for (const key of keys) {
     const { data, error } = await db
       .from("trade_rfqs")
-      .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, extras")
+      .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, origin_preference, shipment_window, status, extras")
       .eq("code", key)
       .maybeSingle();
     if (error) throw databaseError("load RFQ by code", error);
@@ -429,6 +430,17 @@ export async function patchTradeRfq(
   if (error) throw databaseError("update RFQ", error);
 }
 
+async function nextOfferCode(at: Date) {
+  const db = dataClient();
+  if (!db) return formatOfferCode(at, 0);
+  for (let line = 0; line < 40; line++) {
+    const code = formatOfferCode(at, line);
+    const { data } = await db.from("trade_quotes").select("id").eq("code", code).maybeSingle();
+    if (!data) return code;
+  }
+  return formatOfferCode(at, Date.now() % 10_000);
+}
+
 export async function insertWechatQuote(input: {
   supplierId: string;
   kind: "rfq" | "weekly";
@@ -439,6 +451,7 @@ export async function insertWechatQuote(input: {
   currency?: string;
   quantityMt?: string;
   packing?: string;
+  origin?: string;
   loadPort?: string;
   destinationPort?: string;
   incoterm?: string;
@@ -449,10 +462,12 @@ export async function insertWechatQuote(input: {
 }) {
   const db = dataClient();
   if (!db) return;
+  const now = new Date();
   const rfqId = input.rfqCode ? await findRfqIdByCode(input.rfqCode) : null;
   const unitPrice = num(String(input.unitPrice || "").replace(/[^\d.]/g, ""));
   const quantityMt = num(String(input.quantityMt || "").replace(/[^\d.]/g, ""));
-  const row = {
+  const extras = { ...(input.extras ?? {}), rfq_code: input.rfqCode || (input.extras ?? {}).rfq_code || "" };
+  const row: Record<string, unknown> = {
     kind: input.kind,
     rfq_id: rfqId,
     supplier_id: input.supplierId,
@@ -462,6 +477,7 @@ export async function insertWechatQuote(input: {
     currency: input.currency || (unitPrice ? "USD" : "USD"),
     quantity_mt: quantityMt,
     packing: input.packing || null,
+    origin: input.origin || null,
     load_port: input.loadPort || null,
     destination_port: input.destinationPort || null,
     incoterm: input.incoterm || null,
@@ -469,25 +485,34 @@ export async function insertWechatQuote(input: {
     status: input.isNoOffer ? "no_offer" : "received",
     source_channel: "wechat",
     is_no_offer: Boolean(input.isNoOffer),
+    week_start: mondayOf(now),
     raw_message: input.rawMessage,
-    extras: input.extras ?? {},
+    extras,
   };
   if (rfqId) {
     const { data: existing } = await db
       .from("trade_quotes")
-      .select("id")
+      .select("id, code, extras, week_start")
       .eq("supplier_id", input.supplierId)
       .eq("rfq_id", rfqId)
       .eq("kind", "rfq")
       .not("status", "in", "(superseded,no_offer)")
       .maybeSingle();
     if (existing?.id) {
+      const prior =
+        existing.extras && typeof existing.extras === "object" && !Array.isArray(existing.extras)
+          ? (existing.extras as Record<string, unknown>)
+          : {};
+      row.extras = { ...prior, ...extras };
+      if (existing.week_start) row.week_start = existing.week_start;
+      if (!text(existing.code)) row.code = await nextOfferCode(now);
       const { error } = await db.from("trade_quotes").update(row).eq("id", existing.id);
       if (error) throw databaseError("update WeChat quote", error);
       await markRfqAskQuoted(rfqId, input.supplierId, Boolean(input.isNoOffer)).catch(() => undefined);
       return;
     }
   }
+  row.code = await nextOfferCode(now);
   const { error } = await db.from("trade_quotes").insert(row);
   if (error) throw databaseError("save WeChat quote", error);
   if (rfqId) await markRfqAskQuoted(rfqId, input.supplierId, Boolean(input.isNoOffer)).catch(() => undefined);

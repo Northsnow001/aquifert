@@ -19,6 +19,7 @@ const rfq = {
   destination_port: "Lagos",
   destination_country: "Nigeria",
   shipment_window: "December",
+  origin_preference: "China",
 };
 
 describe("parseBareOffer", () => {
@@ -99,6 +100,7 @@ describe("mergeOfferWithRfq", () => {
     assert.equal(merged.incoterms, "FOB");
     assert.equal(merged.destination, "Lagos");
     assert.equal(merged.delivery_turnaround, "December");
+    assert.equal(merged.origin, "China");
   });
 
   test("does not overwrite mill quantity or product", () => {
