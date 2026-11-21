@@ -157,7 +157,7 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     quoteType: state.quoteType,
     confirmedRfqId: state.rfqId,
     stage: state.stage,
-    lastRfqCode: input.supplier.lastRfqCode,
+    lastRfqCode: input.supplier.lastRfqCode ?? undefined,
     weekly,
   });
   const rfq = rfqCode && !weekly ? await getTradeRfqByCode(rfqCode).catch(() => null) : null;

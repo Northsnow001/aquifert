@@ -127,7 +127,7 @@ export function mergeOfferWithRfq(offer: OfferSlice, rfq: Record<string, unknown
 }
 
 export function filterMissingFields(missing: string[], rfq: Record<string, unknown> | null, offer: OfferSlice) {
-  const known = new Set(buyerRequestFieldNames(rfq));
+  const known = new Set<string>(buyerRequestFieldNames(rfq));
   const filled: Record<string, string> = {
     product_name: offer.product_name,
     specification: offer.specification,
