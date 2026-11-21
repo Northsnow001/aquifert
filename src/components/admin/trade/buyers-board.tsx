@@ -112,7 +112,12 @@ export function BuyersBoard({ initial }: { initial: TradeBuyer[] }) {
   const removeSelected = () => {
     const ids = [...selected];
     if (!ids.length) return;
-    if (!window.confirm(`Delete ${ids.length} buyer${ids.length === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Delete ${ids.length} buyer${ids.length === 1 ? "" : "s"}? Their WhatsApp chat history is deleted too. This cannot be undone.`,
+      )
+    )
+      return;
     start(async () => {
       const result = await deleteBuyersAction(ids);
       if (!result.ok) {

@@ -609,11 +609,36 @@ export async function insertTradeBuyer(input: TradeBuyerDraft) {
   return buyerFrom(data as Record<string, unknown>);
 }
 
+async function deleteBuyerWhatsAppMemory(db: NonNullable<ReturnType<typeof dataClient>>, buyerIds: string[], phones: string[]) {
+  for (let i = 0; i < buyerIds.length; i += 80) {
+    const { error } = await db.from("trade_messages").delete().in("buyer_id", buyerIds.slice(i, i + 80));
+    if (error) throw databaseError("delete buyer chat history", error);
+  }
+  for (const phone of phones) {
+    const { error } = await db
+      .from("trade_messages")
+      .delete()
+      .eq("channel", "whatsapp")
+      .or(`from_address.eq.${phone},to_address.eq.${phone}`);
+    if (error) throw databaseError("delete WhatsApp thread for number", error);
+  }
+}
+
 export async function deleteTradeBuyers(ids: string[]) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return 0;
+  const { data: rows, error: readError } = await db.from("trade_buyers").select("id, whatsapp_e164").in("id", unique);
+  if (readError) throw databaseError("read buyers before delete", readError);
+  const phones = [
+    ...new Set(
+      (rows ?? [])
+        .map((row) => e164(text((row as Record<string, unknown>).whatsapp_e164)))
+        .filter((phone): phone is string => Boolean(phone)),
+    ),
+  ];
+  await deleteBuyerWhatsAppMemory(db, unique, phones);
   for (let i = 0; i < unique.length; i += 80) {
     const { error } = await db.from("trade_buyers").delete().in("id", unique.slice(i, i + 80));
     if (error) throw databaseError("delete buyers", error);
