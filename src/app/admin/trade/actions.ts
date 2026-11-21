@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { getSession } from "@/lib/session";
 import { inviteBuyerById, inviteBuyersWaiting, inviteSupplierById, inviteSuppliersWaiting } from "@/lib/trade/invite";
+import { deleteBookRow, saveBookRow } from "@/lib/trade/book-store";
 import {
   insertTradeBuyer,
   insertTradeSupplier,
@@ -23,10 +24,7 @@ async function requireAdmin() {
 }
 
 function refresh() {
-  revalidatePath("/admin/trade");
-  revalidatePath("/admin/trade/suppliers");
-  revalidatePath("/admin/trade/agents");
-  revalidatePath("/admin/trade/buyers");
+  revalidatePath("/admin/trade", "layout");
 }
 
 function parseDraft(input: TradeSupplierDraft) {
@@ -179,6 +177,28 @@ export async function saveTradeAgentAction(input: { key: string; name: string; d
     return { ok: true as const };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not save the agent." };
+  }
+}
+
+export async function saveBookRowAction(slug: string, id: string | null, input: Record<string, string>) {
+  await requireAdmin();
+  try {
+    const row = await saveBookRow(slug, id, input);
+    refresh();
+    return { ok: true as const, id: row.id };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not save the row." };
+  }
+}
+
+export async function deleteBookRowAction(slug: string, id: string) {
+  await requireAdmin();
+  try {
+    await deleteBookRow(slug, id);
+    refresh();
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not delete the row." };
   }
 }
 

@@ -81,6 +81,7 @@ const GROUP_TONE: Record<string, string> = {
   "AQ Modules": "aq-chip-blue",
   Calculators: "aq-chip-blue",
   Desk: "aq-chip-amber",
+  "Trade book": "aq-chip-amber",
   Members: "aq-chip-rose",
 };
 
@@ -89,9 +90,7 @@ export function isAdminActive(pathname: string, href: string) {
   if (href === "/admin/desk") {
     return pathname === "/admin/desk" || /^\/admin\/desk\/(?!negotiation(?:\/|$))/.test(pathname);
   }
-  if (href === "/admin/trade") {
-    return pathname === "/admin/trade" || pathname.startsWith("/admin/trade/");
-  }
+  if (href === "/admin/trade") return pathname === "/admin/trade";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

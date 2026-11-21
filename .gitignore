@@ -40,6 +40,9 @@ yarn-error.log*
 # admin content store and inbox written at runtime
 /data/
 
+# local workbook dumps used for trade import
+/tmp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
