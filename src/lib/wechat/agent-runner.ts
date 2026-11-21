@@ -11,9 +11,10 @@ import {
   saveSupplierChatState,
 } from "@/lib/trade/store";
 import type { TradeMessage, TradeSupplier, WechatChatState } from "@/lib/trade/types";
+import { MATT_GUARD } from "@/lib/wechat/agent-defs";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 import { asBool, asString, parseJsonObject } from "@/lib/wechat/agent-parse";
-import { nextSupplierChat } from "@/lib/wechat/chat";
+import { WAIT_WEEKLY, nextSupplierChat, waitingForWeekly } from "@/lib/wechat/chat";
 
 function historyBlock(messages: TradeMessage[]) {
   return messages
@@ -100,12 +101,16 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     captured: {},
   } satisfies WechatChatState));
   const fallback = nextSupplierChat({ stage: state.stage, text: input.text });
+  if (waitingForWeekly(input.text)) {
+    await saveSupplierChatState(input.supplier.id, { ...state, stage: "", followUpCount: 0 });
+    return { reply: WAIT_WEEKLY, nextStage: "", agent: "wechat-supplier-quote" as const, usedGemini: false };
+  }
   if (!geminiKey()) return { reply: fallback.reply, nextStage: fallback.nextStage, agent: "wechat-supplier-quote" as const, usedGemini: false };
 
   try {
     const agent = await getTradeAgent("wechat-supplier-quote");
     const data = await askGemini(
-      agent.systemPrompt,
+      `${MATT_GUARD}\n\n${agent.systemPrompt}`,
       [
         `Conversation Stage: ${state.stage || ""}`,
         `Confirmed RFQ ID: ${state.rfqId || ""}`,

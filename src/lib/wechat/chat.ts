@@ -13,6 +13,9 @@ export const NO_QUOTE =
 export const THANKS_QUOTE =
   "Thank you — we've received your message and recorded it. Our team will follow up if anything else is needed.\n\n谢谢，我们已收到并记录您的消息。如需其他信息，我们的团队会再联系。";
 
+export const WAIT_WEEKLY =
+  "Thank you — we'll send the weekly broadcast when it goes out. No need to quote until then.\n\n谢谢，我们会在每周广播发出时发给您。在此之前无需报价。";
+
 const compact = (raw: string) => raw.trim().toLowerCase().replace(/[!?。．、，,\s]+$/g, "");
 
 const YES = new Set(["yes", "ok", "okay", "sure", "yeah", "y", "have", "是", "好", "好的", "可以", "有", "要", "嗯", "对"]);
@@ -25,12 +28,17 @@ function looksLikeQuote(text: string) {
   return /rfq#?\s*\d+/i.test(text) || /(\d+(?:\.\d+)?)\s*(usd|\$|美元|\/mt|\/t)/i.test(text);
 }
 
+export function waitingForWeekly(text: string) {
+  return /weekly\s+broadcast|wait(?:ing)?\s+(?:till|until|for).{0,40}(broadcast|weekly|rfq)|until you send/i.test(text);
+}
+
 export function nextSupplierChat(input: { stage?: string | null; text: string }) {
   const stage = String(input.stage ?? "").trim();
   const raw = input.text.trim();
   const key = compact(raw);
 
   if (looksLikeQuote(raw)) return { reply: THANKS_QUOTE, nextStage: "" };
+  if (waitingForWeekly(raw)) return { reply: WAIT_WEEKLY, nextStage: "" };
   if (NO.has(key)) return { reply: NO_QUOTE, nextStage: "" };
 
   if (stage === "ask_quote_intent") {
