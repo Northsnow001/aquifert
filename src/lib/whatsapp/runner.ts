@@ -19,7 +19,7 @@ import { getTradeAgent } from "@/lib/wechat/agent-store";
 
 function historyBlock(messages: TradeMessage[]) {
   return messages
-    .slice(-12)
+    .slice(-20)
     .map((row) => `${row.direction === "in" ? "Buyer" : "Desk"}: ${row.body}`)
     .join("\n");
 }
@@ -30,7 +30,7 @@ async function askGemini(system: string, user: string) {
     json: true,
     temperature: 0,
     timeoutMs: 25_000,
-    maxOutputTokens: 2048,
+    maxOutputTokens: 4096,
     system,
     turns: [{ role: "user", text: user }],
   });
@@ -165,9 +165,9 @@ function buyerPhase(status: string) {
 }
 
 function rfqContext(rfq: Record<string, unknown> | null) {
-  if (!rfq) return "Known RFQ: none";
+  if (!rfq) return "Known RFQ: none — this is a new enquiry. Do not invent a Trade ID. Leave rfq_id empty.";
   return [
-    `Known RFQ: ${asString(rfq.code)}`,
+    "Known RFQ: in progress, not confirmed. Do not give a Trade ID yet. Leave rfq_id empty.",
     `RFQ status: ${asString(rfq.status)}`,
     `Product: ${asString(rfq.product_label)}`,
     `Specification: ${asString(rfq.specification)}`,
@@ -176,7 +176,58 @@ function rfqContext(rfq: Record<string, unknown> | null) {
     `Incoterm: ${asString(rfq.incoterm)}`,
     `Destination: ${asString(rfq.destination_port)} ${asString(rfq.destination_country)}`.trim(),
     `Shipment: ${asString(rfq.shipment_window)}`,
-    `Extras: ${JSON.stringify(rfq.extras ?? {})}`,
+    `Captured extract: ${JSON.stringify(rfq.extras ?? {})}`,
+  ].join("\n");
+}
+
+function fieldsFromExtract(extract: Record<string, unknown>, rawMessage: string) {
+  return {
+    productLabel: asString(extract.product),
+    specification: asString(extract.form_grade) || asString(extract.specs_notes),
+    quantityMt: asString(extract.quantity_mt),
+    packing: asString(extract.packing),
+    destinationPort: asString(extract.discharge_port) || asString(extract.destination),
+    destinationCountry: asString(extract.destination),
+    incoterm: asString(extract.incoterm_pref),
+    shipmentWindow: asString(extract.timing_notes) || [asString(extract.laycan_from), asString(extract.laycan_to)].filter(Boolean).join(" – "),
+    rawMessage,
+    extras: extract,
+  };
+}
+
+function deskUserPrompt(input: {
+  phase: string;
+  buyer: TradeBuyer;
+  text: string;
+  messages: TradeMessage[];
+  draft: Record<string, unknown> | null;
+}) {
+  const name = input.buyer.contactName || input.buyer.companyName;
+  if (input.phase === "rfq") {
+    return [
+      "Phase: rfq",
+      "This turn is RFQ intake for a buyer already on the list. Do not greet as if you just met them. Do not collect onboarding identity again.",
+      `Buyer (on file — do not say nice to meet you): ${name}`,
+      `Company: ${input.buyer.companyName}`,
+      `Email: ${input.buyer.email}`,
+      `Phone: ${input.buyer.whatsappE164 || ""}`,
+      `Country: ${input.buyer.country}`,
+      rfqContext(input.draft),
+      `Chat History:\n${historyBlock(input.messages)}`,
+      `Last WhatsApp: ${input.text}`,
+      "Treat the last WhatsApp as the buyer's latest message. If it is a product name (e.g. SplashFert, urea, DAP), that is the product — ask quantity or destination next, do not ask which product.",
+      "Leave rfq_id empty. The app writes the Trade ID only after they confirm the recap.",
+    ].join("\n");
+  }
+  return [
+    `Phase: ${input.phase}`,
+    `Buyer name: ${name}`,
+    `Company: ${input.buyer.companyName}`,
+    `Email: ${input.buyer.email}`,
+    `Phone: ${input.buyer.whatsappE164 || ""}`,
+    rfqContext(input.draft),
+    `Chat History:\n${historyBlock(input.messages)}`,
+    `Message:\n${input.text}`,
   ].join("\n");
 }
 
@@ -187,41 +238,35 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
   try {
     const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
     const phase = buyerPhase(asString(latest?.status));
+    const draft = phase === "rfq" && asString(latest?.status) === "collecting" ? latest : null;
     const agent = await getTradeAgent("whatsapp-buyer-desk");
     const data = await askGemini(
       agent.systemPrompt,
-      [
-        `Phase: ${phase}`,
-        `Buyer name: ${input.buyer.contactName}`,
-        `Company: ${input.buyer.companyName}`,
-        `Email: ${input.buyer.email}`,
-        `Phone: ${input.buyer.whatsappE164 || ""}`,
-        rfqContext(latest),
-        `Chat History:\n${historyBlock(input.messages)}`,
-        `Message:\n${input.text}`,
-      ].join("\n"),
+      deskUserPrompt({ phase, buyer: input.buyer, text: input.text, messages: input.messages, draft }),
     );
     let reply = asString(data.reply) || fallback;
-    let rfqCode = asString(latest?.code);
+    let rfqCode = asString(draft?.code);
     const route = asString(data.route);
     const extract = data.rfq_extract && typeof data.rfq_extract === "object" ? (data.rfq_extract as Record<string, unknown>) : null;
     const commercial = data.commercial_extract && typeof data.commercial_extract === "object" ? (data.commercial_extract as Record<string, unknown>) : null;
-    if (phase === "rfq" && route === "rfq_ready" && extract) {
-      const saved = await insertWhatsAppRfq({
-        buyerId: input.buyer.id,
-        productLabel: asString(extract.product),
-        specification: asString(extract.form_grade) || asString(extract.specs_notes),
-        quantityMt: asString(extract.quantity_mt),
-        packing: asString(extract.packing),
-        destinationPort: asString(extract.discharge_port) || asString(extract.destination),
-        destinationCountry: asString(extract.destination),
-        incoterm: asString(extract.incoterm_pref),
-        shipmentWindow: asString(extract.timing_notes) || [asString(extract.laycan_from), asString(extract.laycan_to)].filter(Boolean).join(" – "),
-        rawMessage: input.text,
-        extras: extract,
-      });
-      rfqCode = saved.code;
-      reply = `Thank you for confirming — we have what we need. Your Trade ID is "${saved.code}", and we’ll come back to you shortly with an indication.`;
+    if (phase === "rfq" && extract && asString(extract.product) && (route === "rfq_collect" || route === "rfq_ready")) {
+      const fields = fieldsFromExtract(extract, input.text);
+      if (route === "rfq_ready") {
+        const saved = draft?.id
+          ? await patchTradeRfq(asString(draft.id), { ...fields, status: "open" }).then(() => ({
+              id: asString(draft.id),
+              code: asString(draft.code),
+            }))
+          : await insertWhatsAppRfq({ buyerId: input.buyer.id, ...fields, status: "open" });
+        rfqCode = saved.code;
+        reply = `Thank you for confirming — we have what we need. Your Trade ID is "${saved.code}", and we’ll come back to you shortly with an indication.`;
+      } else if (draft?.id) {
+        await patchTradeRfq(asString(draft.id), fields);
+        rfqCode = asString(draft.code);
+      } else {
+        const saved = await insertWhatsAppRfq({ buyerId: input.buyer.id, ...fields, status: "collecting" });
+        rfqCode = saved.code;
+      }
     }
     if (latest?.id && commercial && (route === "commercial_collect" || route === "firm_offer_ready" || route === "pi_ready")) {
       const extras = latest.extras && typeof latest.extras === "object" ? (latest.extras as Record<string, unknown>) : {};

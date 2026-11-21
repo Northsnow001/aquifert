@@ -382,12 +382,39 @@ export async function getLatestBuyerRfq(buyerId: string) {
   return data ? (data as Record<string, unknown>) : null;
 }
 
-export async function patchTradeRfq(id: string, patch: { status?: string; extras?: Record<string, unknown> }) {
+export async function patchTradeRfq(
+  id: string,
+  patch: {
+    status?: string;
+    extras?: Record<string, unknown>;
+    productLabel?: string;
+    specification?: string;
+    quantityMt?: string;
+    packing?: string;
+    destinationPort?: string;
+    destinationCountry?: string;
+    incoterm?: string;
+    shipmentWindow?: string;
+    rawMessage?: string;
+  },
+) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
   const body: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.status) body.status = patch.status;
   if (patch.extras) body.extras = patch.extras;
+  if (patch.productLabel != null) body.product_label = patch.productLabel;
+  if (patch.specification != null) body.specification = patch.specification || null;
+  if (patch.quantityMt != null) {
+    const qty = num(String(patch.quantityMt).replace(/[^\d.]/g, ""));
+    if (qty && qty > 0) body.quantity_mt = qty;
+  }
+  if (patch.packing != null) body.packing = patch.packing || null;
+  if (patch.destinationPort != null) body.destination_port = patch.destinationPort || null;
+  if (patch.destinationCountry != null) body.destination_country = patch.destinationCountry || null;
+  if (patch.incoterm != null) body.incoterm = patch.incoterm || null;
+  if (patch.shipmentWindow != null) body.shipment_window = patch.shipmentWindow || null;
+  if (patch.rawMessage != null) body.raw_message = patch.rawMessage;
   const { error } = await db.from("trade_rfqs").update(body).eq("id", id);
   if (error) throw databaseError("update RFQ", error);
 }
@@ -797,6 +824,7 @@ export async function insertWhatsAppRfq(input: {
   shipmentWindow?: string;
   rawMessage: string;
   extras?: Record<string, unknown>;
+  status?: "collecting" | "open";
 }) {
   const db = dataClient();
   if (!db) throw new Error("Supabase is not configured.");
@@ -821,7 +849,7 @@ export async function insertWhatsAppRfq(input: {
       incoterm: input.incoterm || null,
       shipment_window: input.shipmentWindow || null,
       source_channel: "whatsapp",
-      status: "collecting",
+      status: input.status === "open" ? "open" : "collecting",
       raw_message: input.rawMessage,
       extras: input.extras ?? {},
     })
