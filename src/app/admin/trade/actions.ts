@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { isAdminUser } from "@/lib/admin-access";
 import { getSession } from "@/lib/session";
 import { inviteSupplierById, inviteSuppliersWaiting } from "@/lib/trade/invite";
-import { insertTradeSupplier, updateTradeSupplier } from "@/lib/trade/store";
+import { insertTradeSupplier, listWechatThread, updateTradeSupplier } from "@/lib/trade/store";
 import type { TradeSupplierDraft } from "@/lib/trade/types";
+import { saveTradeAgent } from "@/lib/wechat/agent-store";
 
 async function requireAdmin() {
   const user = await getSession();
@@ -17,6 +18,7 @@ async function requireAdmin() {
 function refresh() {
   revalidatePath("/admin/trade");
   revalidatePath("/admin/trade/suppliers");
+  revalidatePath("/admin/trade/agents");
 }
 
 function parseDraft(input: TradeSupplierDraft) {
@@ -74,6 +76,28 @@ export async function inviteSupplierAction(id: string) {
       reusedToken: false,
       error: error instanceof Error ? error.message : "Invite failed.",
     };
+  }
+}
+
+export async function getSupplierThreadAction(input: { supplierId?: string; openid?: string }) {
+  await requireAdmin();
+  try {
+    const messages = await listWechatThread({ supplierId: input.supplierId, openid: input.openid });
+    return { ok: true as const, messages };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not load the conversation.", messages: [] };
+  }
+}
+
+export async function saveTradeAgentAction(input: { key: string; name: string; description: string; systemPrompt: string }) {
+  await requireAdmin();
+  if (!input.systemPrompt.trim()) return { ok: false as const, error: "The prompt cannot be empty." };
+  try {
+    await saveTradeAgent(input.key, input);
+    refresh();
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not save the agent." };
   }
 }
 

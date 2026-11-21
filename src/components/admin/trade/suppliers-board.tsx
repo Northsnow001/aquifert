@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, QrCode, Search, Warehouse } from "lucide-react";
+import { MessageCircle, Plus, QrCode, Search, Warehouse } from "lucide-react";
 import { toast } from "sonner";
 import { inviteAllWaitingAction, inviteSupplierAction } from "@/app/admin/trade/actions";
 import { SupplierSheet } from "@/components/admin/trade/supplier-sheet";
+import { SupplierThread } from "@/components/admin/trade/supplier-thread";
 import { TradeLive } from "@/components/admin/trade/live-table";
 import { btnPrimary, btnSecondary } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
@@ -36,6 +37,7 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
   const [pending, start] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<TradeSupplier | "new" | null>(null);
+  const [thread, setThread] = useState<TradeSupplier | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -178,7 +180,7 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
                           <tr
                             key={row.id}
                             className="cursor-pointer border-b border-border last:border-0 hover:bg-[#fbfcfd]"
-                            onClick={() => setSheet(row)}
+                            onClick={() => setThread(row)}
                           >
                             <td className="px-5 py-3.5">
                               <div className="flex items-center gap-3">
@@ -214,18 +216,24 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
                               {row.invitedAt ? <p className="mt-1 text-[11px] text-dim">{formatStamp(row.invitedAt)}</p> : null}
                             </td>
                             <td className="px-5 py-3.5 text-right" onClick={(event) => event.stopPropagation()}>
-                              {row.onboardingStatus === "subscribed" ? (
-                                <span className="text-[12px] text-dim">Linked</span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className={btnSecondary}
-                                  disabled={pending && busyId === row.id}
-                                  onClick={(event) => inviteOne(row.id, event)}
-                                >
-                                  {row.onboardingStatus === "invited" ? "Resend QR" : "Invite"}
+                              <div className="flex justify-end gap-2">
+                                <button type="button" className={btnSecondary} onClick={() => setThread(row)}>
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                  Chat
                                 </button>
-                              )}
+                                {row.onboardingStatus === "subscribed" ? (
+                                  <span className="self-center text-[12px] text-dim">Linked</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className={btnSecondary}
+                                    disabled={pending && busyId === row.id}
+                                    onClick={(event) => inviteOne(row.id, event)}
+                                  >
+                                    {row.onboardingStatus === "invited" ? "Resend QR" : "Invite"}
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -238,6 +246,16 @@ export function SuppliersBoard({ initial }: { initial: TradeSupplier[] }) {
           );
         }}
       />
+      {thread ? (
+        <SupplierThread
+          supplier={thread}
+          onClose={() => setThread(null)}
+          onEdit={() => {
+            setSheet(thread);
+            setThread(null);
+          }}
+        />
+      ) : null}
       {sheet ? (
         <SupplierSheet
           supplier={sheet}

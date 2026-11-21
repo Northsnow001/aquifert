@@ -11,7 +11,7 @@ export default async function TradeSuppliersPage() {
       <PageHeader
         crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
         title="Suppliers"
-        description="Supplier records for RFQs and WeChat. Add the company first. OpenID is written when they follow — you can paste it later if needed."
+        description="Click a supplier to read every WeChat message. Add the company first. OpenID is written when they follow."
       />
       <SuppliersBoard initial={rows} />
     </div>

@@ -1,7 +1,19 @@
 import "server-only";
 
 import { dataClient, databaseError } from "@/lib/data/db";
-import type { OnboardingStatus, TradeBuyer, TradeCounts, TradeFreightQuote, TradeQuote, TradeRfq, TradeSupplier, TradeSupplierDraft } from "@/lib/trade/types";
+import type {
+  OnboardingStatus,
+  TradeAgent,
+  TradeBuyer,
+  TradeCounts,
+  TradeFreightQuote,
+  TradeMessage,
+  TradeQuote,
+  TradeRfq,
+  TradeSupplier,
+  TradeSupplierDraft,
+  WechatChatState,
+} from "@/lib/trade/types";
 import { ONBOARDING_STATUSES } from "@/lib/trade/types";
 
 const text = (v: unknown) => (typeof v === "string" ? v : v == null ? "" : String(v));
@@ -209,6 +221,144 @@ export async function setSupplierAwaitingReply(id: string, stage: string) {
     .update({ awaiting_reply: stage || null, last_contact_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw databaseError("save supplier chat stage", error);
+}
+
+const emptyChat = (): WechatChatState => ({
+  stage: "",
+  quoteType: "",
+  rfqId: "",
+  missingFields: [],
+  followUpCount: 0,
+  captured: {},
+});
+
+export async function getSupplierChatState(id: string): Promise<WechatChatState> {
+  const db = dataClient();
+  if (!db) return emptyChat();
+  const { data, error } = await db.from("trade_suppliers").select("awaiting_reply, extras").eq("id", id).maybeSingle();
+  if (error) throw databaseError("read supplier chat state", error);
+  const extras = (data?.extras as Record<string, unknown> | null) ?? {};
+  const chat = (extras.wechat_chat as Record<string, unknown> | undefined) ?? {};
+  return {
+    stage: text(chat.stage) || text(data?.awaiting_reply),
+    quoteType: text(chat.quoteType),
+    rfqId: text(chat.rfqId),
+    missingFields: Array.isArray(chat.missingFields) ? chat.missingFields.map((item) => text(item)).filter(Boolean) : [],
+    followUpCount: Number(chat.followUpCount) || 0,
+    captured: chat.captured && typeof chat.captured === "object" ? (chat.captured as Record<string, unknown>) : {},
+  };
+}
+
+export async function saveSupplierChatState(id: string, state: WechatChatState) {
+  const db = dataClient();
+  if (!db) return;
+  const { data, error: readError } = await db.from("trade_suppliers").select("extras").eq("id", id).maybeSingle();
+  if (readError) throw databaseError("read supplier extras", readError);
+  const extras = { ...((data?.extras as Record<string, unknown> | null) ?? {}), wechat_chat: state };
+  const { error } = await db
+    .from("trade_suppliers")
+    .update({ extras, awaiting_reply: state.stage || null, last_contact_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw databaseError("save supplier chat state", error);
+}
+
+export async function listWechatThread(input: { supplierId?: string | null; openid?: string | null }): Promise<TradeMessage[]> {
+  const db = dataClient();
+  if (!db) return [];
+  const supplierId = input.supplierId?.trim() || "";
+  const openid = input.openid?.trim() || "";
+  if (!supplierId && !openid) return [];
+  let query = db.from("trade_messages").select("*").eq("channel", "wechat").order("created_at", { ascending: true }).limit(400);
+  if (supplierId && openid) query = query.or(`supplier_id.eq.${supplierId},from_address.eq.${openid},to_address.eq.${openid}`);
+  else if (supplierId) query = query.eq("supplier_id", supplierId);
+  else query = query.or(`from_address.eq.${openid},to_address.eq.${openid}`);
+  const { data, error } = await query;
+  if (error) throw databaseError("list WeChat thread", error);
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: text(r.id),
+      direction: text(r.direction) === "out" ? "out" : "in",
+      channel: text(r.channel),
+      body: text(r.body),
+      fromAddress: text(r.from_address),
+      toAddress: text(r.to_address),
+      createdAt: text(r.created_at),
+      payload: (r.payload && typeof r.payload === "object" ? (r.payload as Record<string, unknown>) : {}) as Record<string, unknown>,
+    };
+  });
+}
+
+export async function findRfqIdByCode(code: string) {
+  const db = dataClient();
+  if (!db) return null;
+  const key = code.trim();
+  if (!key) return null;
+  const { data, error } = await db.from("trade_rfqs").select("id").eq("code", key).maybeSingle();
+  if (error) throw databaseError("find RFQ by code", error);
+  return data?.id ? text(data.id) : null;
+}
+
+export async function insertWechatQuote(input: {
+  supplierId: string;
+  kind: "rfq" | "weekly";
+  rfqCode?: string;
+  productLabel: string;
+  specification?: string;
+  unitPrice?: string;
+  currency?: string;
+  quantityMt?: string;
+  packing?: string;
+  loadPort?: string;
+  destinationPort?: string;
+  incoterm?: string;
+  deliveryWindow?: string;
+  isNoOffer?: boolean;
+  rawMessage: string;
+  extras?: Record<string, unknown>;
+}) {
+  const db = dataClient();
+  if (!db) return;
+  const rfqId = input.rfqCode ? await findRfqIdByCode(input.rfqCode) : null;
+  const unitPrice = num(String(input.unitPrice || "").replace(/[^\d.]/g, ""));
+  const quantityMt = num(String(input.quantityMt || "").replace(/[^\d.]/g, ""));
+  const row = {
+    kind: input.kind,
+    rfq_id: rfqId,
+    supplier_id: input.supplierId,
+    product_label: input.productLabel || "",
+    specification: input.specification || null,
+    unit_price: unitPrice,
+    currency: input.currency || (unitPrice ? "USD" : "USD"),
+    quantity_mt: quantityMt,
+    packing: input.packing || null,
+    load_port: input.loadPort || null,
+    destination_port: input.destinationPort || null,
+    incoterm: input.incoterm || null,
+    delivery_window: input.deliveryWindow || null,
+    status: input.isNoOffer ? "no_offer" : "received",
+    source_channel: "wechat",
+    is_no_offer: Boolean(input.isNoOffer),
+    raw_message: input.rawMessage,
+    extras: input.extras ?? {},
+  };
+  if (rfqId) {
+    const { data: existing } = await db
+      .from("trade_quotes")
+      .select("id")
+      .eq("supplier_id", input.supplierId)
+      .eq("rfq_id", rfqId)
+      .eq("kind", "rfq")
+      .not("status", "in", "(superseded,no_offer)")
+      .maybeSingle();
+    if (existing?.id) {
+      const { error } = await db.from("trade_quotes").update(row).eq("id", existing.id);
+      if (error) throw databaseError("update WeChat quote", error);
+      return;
+    }
+  }
+  const { error } = await db.from("trade_quotes").insert(row);
+  if (error) throw databaseError("save WeChat quote", error);
 }
 
 export async function logTradeMessage(input: {

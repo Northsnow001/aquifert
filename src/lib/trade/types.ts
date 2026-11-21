@@ -40,6 +40,34 @@ export type TradeSupplierDraft = {
   inviteNow?: boolean;
 };
 
+export type TradeMessage = {
+  id: string;
+  direction: "in" | "out";
+  channel: string;
+  body: string;
+  fromAddress: string;
+  toAddress: string;
+  createdAt: string;
+  payload: Record<string, unknown>;
+};
+
+export type TradeAgent = {
+  key: string;
+  name: string;
+  description: string;
+  systemPrompt: string;
+  updatedAt: string;
+};
+
+export type WechatChatState = {
+  stage: string;
+  quoteType: string;
+  rfqId: string;
+  missingFields: string[];
+  followUpCount: number;
+  captured: Record<string, unknown>;
+};
+
 export type TradeSupplier = {
   id: string;
   code: string;

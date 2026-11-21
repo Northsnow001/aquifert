@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { wechatSignatureMatches } from "@/lib/wechat/inbound";
 import { handleWechatXml } from "@/lib/wechat/receive";
 
@@ -31,10 +31,12 @@ export async function POST(req: NextRequest) {
   if (!serverToken()) return plain("success");
   if (!signed(req)) return plain("invalid signature", 403);
   const xml = await req.text();
-  try {
-    await handleWechatXml(xml);
-  } catch {
-    // Always ack so WeChat does not retry the same event.
-  }
+  after(async () => {
+    try {
+      await handleWechatXml(xml);
+    } catch {
+      // Always ack so WeChat does not retry the same event.
+    }
+  });
   return plain("success");
 }
