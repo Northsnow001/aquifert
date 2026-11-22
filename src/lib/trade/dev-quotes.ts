@@ -46,11 +46,11 @@ function nextPort(used: Set<string>, index: number) {
   return port;
 }
 
-export async function generateDevSupplierQuotes(rfqId: string, targetCount = DESK_QUOTE_TARGET) {
+export async function generateDevSupplierQuotes(rfqId: string, addCount = DESK_QUOTE_TARGET) {
   if (!tradeDevToolsEnabled()) throw new Error("Dev quote tools are off.");
-  const target = Math.min(8, Math.max(1, Math.floor(Number(targetCount) || DESK_QUOTE_TARGET)));
+  const need = Math.min(8, Math.max(1, Math.floor(Number(addCount) || DESK_QUOTE_TARGET)));
   const rfq = await getTradeRfqRecord(rfqId);
-  if (!rfq) throw new Error("Buyer request not found.");
+  if (!rfq) throw new Error("Buyer request not found. Pick an RFQ such as rfq#078.");
   const live = await listLiveRfqQuoteKeys(rfqId);
   const quoted = new Set(live.supplierIds);
   const usedPrices = new Set(live.prices.map((price) => Math.round(price)));
@@ -59,10 +59,6 @@ export async function generateDevSupplierQuotes(rfqId: string, targetCount = DES
     if (row.supplierId) set.add(row.supplierId);
     return set;
   }, new Set<string>());
-  const need = Math.max(0, target - uniqueNow.size);
-  if (need === 0) {
-    return { created: 0, target, unique: uniqueNow.size, reusedSuppliers: 0, mintedSuppliers: 0 };
-  }
 
   const product = text(rfq.product_label) || "Urea";
   const qty = num(rfq.quantity_mt) || 300;
@@ -152,5 +148,12 @@ export async function generateDevSupplierQuotes(rfqId: string, targetCount = DES
   }
 
   const unique = uniqueNow.size + created;
-  return { created, target, unique, reusedSuppliers, mintedSuppliers };
+  return {
+    created,
+    unique,
+    rfqId,
+    rfqCode: code,
+    reusedSuppliers,
+    mintedSuppliers,
+  };
 }

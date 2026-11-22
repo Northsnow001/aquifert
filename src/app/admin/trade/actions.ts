@@ -9,9 +9,11 @@ import { deleteBookRow, deleteBookRows, saveBookRow } from "@/lib/trade/book-sto
 import {
   deleteTradeBuyers,
   deleteTradeSuppliers,
+  findRfqIdByCode,
   getTradeRfqDesk,
   insertTradeBuyer,
   insertTradeSupplier,
+  listTradeRfqs,
   listTradeThread,
   listWechatThread,
   updateTradeBuyer,
@@ -274,12 +276,39 @@ export async function fanOutRfqAction(id: string, resendFailed = false) {
   }
 }
 
-export async function generateDevQuotesAction(id: string, targetCount: number) {
+export async function listDevQuoteRfqsAction() {
+  await requireAdmin();
+  if (!tradeDevToolsEnabled()) return { ok: true as const, enabled: false as const, rfqs: [] };
+  try {
+    const rows = await listTradeRfqs();
+    return {
+      ok: true as const,
+      enabled: true as const,
+      rfqs: rows.slice(0, 80).map((row) => ({
+        id: row.id,
+        code: row.code,
+        productLabel: row.productLabel,
+        readyQuoteCount: row.readyQuoteCount,
+        status: row.status,
+      })),
+    };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not load buyer requests." };
+  }
+}
+
+export async function generateDevQuotesAction(rfqRef: string, addCount: number) {
   await requireAdmin();
   if (!tradeDevToolsEnabled()) return { ok: false as const, error: "Dev quote tools are off. Unset TRADE_DEV_TOOLS or set it to 1." };
+  const raw = rfqRef.trim();
+  if (!raw) return { ok: false as const, error: "Pick a buyer request (for example rfq#078) so the dummy quotes can be tied to it." };
   try {
-    const result = await generateDevSupplierQuotes(id, targetCount);
+    const rfqId = /^[0-9a-f-]{36}$/i.test(raw) ? raw : (await findRfqIdByCode(raw));
+    if (!rfqId) return { ok: false as const, error: `No buyer request matches ${raw}.` };
+    const result = await generateDevSupplierQuotes(rfqId, addCount);
     refresh();
+    revalidatePath("/admin/trade/quotes");
+    revalidatePath("/admin/desk");
     return { ok: true as const, ...result };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not generate supplier quotes." };

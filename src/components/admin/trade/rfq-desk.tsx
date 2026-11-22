@@ -97,13 +97,9 @@ export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void
         toast.error(result.error);
         return;
       }
-      if (!result.created) {
-        toast.message(`Already have ${result.unique} unique quote${result.unique === 1 ? "" : "s"}.`);
-      } else {
-        toast.success(
-          `Generated ${result.created} unique quote${result.created === 1 ? "" : "s"} · ${result.unique} ready for this RFQ`,
-        );
-      }
+      toast.success(
+        `Linked ${result.created} dummy quote${result.created === 1 ? "" : "s"} to ${result.rfqCode || "this request"} · ${result.unique} unique so far`,
+      );
       load();
     });
   };
@@ -182,7 +178,7 @@ export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void
                 <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-[#e2c48a] bg-[#fffaf0] px-3 py-2.5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9a5b00]">Dev only</p>
                   <label htmlFor="dev-quote-target" className="flex items-center gap-1.5 text-[12.5px] text-mid">
-                    Unique quotes
+                    How many dummy quotes
                     <input
                       id="dev-quote-target"
                       type="number"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ClipboardList } from "lucide-react";
+import { DevQuoteBar } from "@/components/admin/trade/dev-quote-bar";
 import { RfqDesk } from "@/components/admin/trade/rfq-desk";
 import { TradeLive } from "@/components/admin/trade/live-table";
 import { formatStamp } from "@/lib/content-types";
@@ -20,6 +21,7 @@ export function RfqBoard({ initial }: { initial: TradeRfq[] }) {
   return (
     <TradeLive resource="rfqs" table="trade_rfqs" initial={initial} render={(rows) => (
       <div>
+        <DevQuoteBar />
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Requests", value: rows.length },
