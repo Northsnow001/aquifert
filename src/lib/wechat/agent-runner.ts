@@ -220,7 +220,11 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
   const armed = !weekly && rfqQuoteArmed(state.stage, pendingRfq);
   if (!weekly && looksLikePriceOnly(input.text) && pendingRfq) {
     const saved = (await persistBareQuote()) || mergeOfferWithRfq(parseBareOffer(input.text), rfq, pendingRfq);
-    const gaps = millOriginPortGaps(saved);
+    const typed = parseMillOriginPort(input.text);
+    const gaps = millOriginPortGaps({
+      origin: typed.origin,
+      load_port: typed.load_port || parseBareOffer(input.text).load_port,
+    });
     await saveSupplierChatState(input.supplier.id, {
       ...state,
       stage: gaps.length ? "awaiting_origin_port" : "",

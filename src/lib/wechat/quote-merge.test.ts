@@ -29,6 +29,7 @@ describe("looksLikePriceOnly", () => {
   test("treats 1000 and 1000USD as a mill unit price", () => {
     assert.equal(looksLikePriceOnly("1000"), true);
     assert.equal(looksLikePriceOnly("1000USD"), true);
+    assert.equal(looksLikePriceOnly("4600usd"), true);
     assert.equal(looksLikePriceOnly("400 MT"), false);
     assert.equal(looksLikePriceOnly("Hi"), false);
   });

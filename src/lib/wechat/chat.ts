@@ -15,12 +15,14 @@ export const NO_QUOTE =
 export const THANKS_QUOTE =
   "Thank you — we've received your message and recorded it. Our team will follow up if anything else is needed.\n\n谢谢，我们已收到并记录您的消息。如需其他信息，我们的团队会再联系。";
 
-export function thanksForPrice(rfqId: string, price: string) {
+export function thanksForPrice(rfqId: string, price: string, missing: Array<"origin" | "load_port"> = ["origin", "load_port"]) {
   const id = rfqId.trim() || "this RFQ";
   const usd = price.trim() || "";
   const line = usd ? `Thank you — recorded USD ${usd}/MT for ${id}.` : `Thank you — we've recorded your price for ${id}.`;
   const zh = usd ? `谢谢，已记录 ${id} 的价格为 ${usd} 美元/吨。` : `谢谢，已记录您对 ${id} 的报价。`;
-  return `${line}\n\n${zh}`;
+  const recorded = `${line}\n\n${zh}`;
+  const gaps = missing.length ? missing : (["origin", "load_port"] as Array<"origin" | "load_port">);
+  return `${recorded}\n\n${askMillOriginPort(id, gaps)}`;
 }
 
 export function askRfqPrice(rfqId: string) {
@@ -42,8 +44,7 @@ export function askMillOriginPort(rfqId: string, missing: Array<"origin" | "load
 }
 
 export function thanksForPriceAndAskOriginPort(rfqId: string, price: string, missing: Array<"origin" | "load_port">) {
-  if (!missing.length) return thanksForPrice(rfqId, price);
-  return `${thanksForPrice(rfqId, price)}\n\n${askMillOriginPort(rfqId, missing)}`;
+  return thanksForPrice(rfqId, price, missing.length ? missing : ["origin", "load_port"]);
 }
 
 export const WAIT_WEEKLY =
