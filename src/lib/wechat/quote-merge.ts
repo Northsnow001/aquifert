@@ -177,7 +177,7 @@ export function millOriginPortGaps(offer: { origin?: string; load_port?: string 
   return missing;
 }
 
-export function buyerRequestFieldNames(rfq: Record<string, unknown> | null) {
+export function buyerRequestFieldNames(rfq: Record<string, unknown> | null): string[] {
   if (!rfq) return [];
   return (
     [
