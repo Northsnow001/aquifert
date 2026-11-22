@@ -1,7 +1,7 @@
 import "server-only";
 
 import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
-import { notifyTradeOpened } from "@/lib/trade/admin-alerts";
+import { notifyRfqSubmitted, notifyTradeOpened } from "@/lib/trade/admin-alerts";
 import {
   getLatestBuyerRfq,
   getTradeBuyer,
@@ -388,6 +388,13 @@ export async function runKnownBuyerTurn(input: {
         rfqId = saved.id;
         fanout = true;
         reply = `Thank you for confirming — we have what we need. Your Trade ID is "${saved.code}", and we’ll come back to you shortly with an indication.`;
+        await notifyRfqSubmitted({
+          requestId: saved.code,
+          product: fields.productLabel,
+          buyer: input.buyer.contactName || input.buyer.companyName,
+          quantityMt: fields.quantityMt ? `${fields.quantityMt} MT` : "",
+          destination: fields.destinationPort || fields.destinationCountry || "",
+        }).catch(() => undefined);
       } else if (draft?.id) {
         await patchTradeRfq(asString(draft.id), fields);
         rfqCode = asString(draft.code);

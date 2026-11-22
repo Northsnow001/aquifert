@@ -5,6 +5,7 @@ import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
 import { formEmail, type FormEmailData } from "@/lib/desk-settings/forms";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import type { TemplateKind } from "@/lib/desk-settings/types";
+import { allowlistedAdminEmails } from "@/lib/admin-access";
 import { sendEmail, type OutboxEntry } from "@/lib/mailer";
 
 export async function siteOrigin() {
@@ -27,9 +28,14 @@ export async function notifySubmission(kind: TemplateKind, input: { data: FormEm
     const email = formEmail({ ...base, audience: "applicant", template: form.applicant });
     sent.push(await sendEmail({ kind: `${kind}-applicant`, to: input.applicantEmail, ...email }, settings.delivery));
   }
-  if (form.sendAdmin && EMAIL_PATTERN.test(form.recipient.trim())) {
+  if (form.sendAdmin) {
+    const extra = form.recipient.trim().toLowerCase();
+    const skipExtra = !EMAIL_PATTERN.test(extra) || extra.split("@")[0] === "noreply" || extra.split("@")[0] === "no-reply";
+    const admins = [...new Set([...allowlistedAdminEmails(), ...(skipExtra ? [] : [extra])])];
     const email = formEmail({ ...base, audience: "admin", template: form.admin });
-    sent.push(await sendEmail({ kind: `${kind}-admin`, to: form.recipient.trim(), ...email }, settings.delivery));
+    for (const addr of admins) {
+      sent.push(await sendEmail({ kind: `${kind}-admin`, to: addr, ...email }, settings.delivery));
+    }
   }
   return { settings, sent };
 }

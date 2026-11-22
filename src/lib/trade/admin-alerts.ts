@@ -204,6 +204,143 @@ export async function notifyFirmOfferOnDesk(input: {
   });
 }
 
+export async function notifySupplierQuote(input: {
+  requestId: string;
+  supplier: string;
+  product: string;
+  unitPrice: string;
+  incoterm: string;
+  noOffer?: boolean;
+}) {
+  await mailAdmins({
+    kind: "supplier-quote-admin",
+    subject: input.noOffer
+      ? `No offer — ${input.requestId} — ${input.supplier}`
+      : `Supplier quote — ${input.requestId} — ${input.supplier}`,
+    heading: input.noOffer ? "Supplier sent no offer" : "Supplier quote received",
+    preheader: input.noOffer
+      ? `${input.supplier} has no offer on ${input.requestId}.`
+      : `${input.supplier} quoted ${input.unitPrice} on ${input.requestId}.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Supplier", input.supplier],
+      ["Product", input.product],
+      ["Quote", input.noOffer ? "NO OFFER" : input.unitPrice],
+      ["Incoterm", input.incoterm],
+      ["Open tracker", `${origin()}/admin/trade/rfqs`],
+    ],
+  });
+}
+
+export async function notifyIndicationSent(input: {
+  requestId: string;
+  product: string;
+  buyer: string;
+  price: string;
+  dealId: string;
+}) {
+  await mailAdmins({
+    kind: "indication-sent-admin",
+    subject: `Indication sent — ${input.requestId} — ${input.product}`,
+    heading: "Indication sent to the buyer",
+    preheader: `${input.requestId} went to ${input.buyer} at ${input.price}.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Buyer", input.buyer],
+      ["Product", input.product],
+      ["Indication", input.price],
+      ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
+    ],
+  });
+}
+
+export async function notifyFirmOfferSent(input: {
+  requestId: string;
+  product: string;
+  buyer: string;
+  to: string;
+  dealId: string;
+}) {
+  await mailAdmins({
+    kind: "firm-offer-sent-admin",
+    subject: `Firm offer sent — ${input.requestId} — ${input.product}`,
+    heading: "Firm offer emailed to the buyer",
+    preheader: `${input.requestId} FO went to ${input.to}.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Buyer", input.buyer],
+      ["Product", input.product],
+      ["Sent to", input.to],
+      ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
+    ],
+  });
+}
+
+export async function notifyPiSent(input: {
+  requestId: string;
+  product: string;
+  buyer: string;
+  to: string;
+  dealId: string;
+}) {
+  await mailAdmins({
+    kind: "pi-sent-admin",
+    subject: `Proforma sent — ${input.requestId} — ${input.product}`,
+    heading: "Proforma invoice emailed",
+    preheader: `${input.requestId} PI went to ${input.to}.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Buyer", input.buyer],
+      ["Product", input.product],
+      ["Sent to", input.to],
+      ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
+    ],
+  });
+}
+
+export async function notifySupplierPackIssued(input: {
+  requestId: string;
+  product: string;
+  supplier: string;
+  dealId: string;
+}) {
+  await mailAdmins({
+    kind: "supplier-pack-admin",
+    subject: `Supplier pack issued — ${input.requestId} — ${input.supplier}`,
+    heading: "Supplier documents issued",
+    preheader: `${input.requestId} pack went to ${input.supplier}.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Supplier", input.supplier],
+      ["Product", input.product],
+      ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
+    ],
+  });
+}
+
+export async function notifyRfqSubmitted(input: {
+  requestId: string;
+  product: string;
+  buyer: string;
+  quantityMt: string;
+  destination: string;
+}) {
+  await mailAdmins({
+    kind: "rfq-submitted-admin",
+    subject: `RFQ submitted ${input.requestId} — ${input.product}`,
+    heading: "Buyer confirmed the enquiry",
+    preheader: `${input.buyer} confirmed ${input.requestId}. Fan-out to suppliers follows.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Buyer", input.buyer],
+      ["Product", input.product],
+      ["Quantity", input.quantityMt],
+      ["Destination", input.destination],
+      ["Open RFQ", `${origin()}/admin/trade/rfqs`],
+    ],
+  });
+}
+
 export async function notifyBuyerAgreedIndication(input: {
   requestId: string;
   product: string;

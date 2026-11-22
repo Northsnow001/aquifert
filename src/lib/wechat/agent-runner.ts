@@ -89,6 +89,20 @@ async function writeQuote(supplier: TradeSupplier, offer: OfferSlice, weekly: bo
       rfq_code: merged.rfq_id,
     },
   });
+  if (!weekly && (merged.unit_price || noOffer)) {
+    await import("@/lib/trade/admin-alerts")
+      .then(({ notifySupplierQuote }) =>
+        notifySupplierQuote({
+          requestId: merged.rfq_id || asString(rfq?.code),
+          supplier: supplier.companyName,
+          product: merged.product_name || asString(rfq?.product_label),
+          unitPrice: merged.unit_price ? `${merged.currency || "USD"} ${merged.unit_price} / MT` : "",
+          incoterm: merged.incoterms,
+          noOffer,
+        }),
+      )
+      .catch(() => undefined);
+  }
   return merged;
 }
 

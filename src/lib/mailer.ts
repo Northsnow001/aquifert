@@ -29,6 +29,12 @@ export type MailKind =
   | "rfq-fanout-admin"
   | "buyer-yes-admin"
   | "firm-offer-desk-admin"
+  | "supplier-quote-admin"
+  | "indication-sent-admin"
+  | "firm-offer-sent-admin"
+  | "pi-sent-admin"
+  | "supplier-pack-admin"
+  | "rfq-submitted-admin"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string; cid?: string };

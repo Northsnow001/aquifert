@@ -281,6 +281,20 @@ export async function confirmIndication(input: {
     incoterm: offer.incoterm || saved.incoterm,
     adminUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com").replace(/\/$/, "")}/admin/desk/${saved.id}`,
   });
+  await import("@/lib/trade/admin-alerts")
+    .then(({ notifyIndicationSent }) =>
+      notifyIndicationSent({
+        requestId: saved.requestId,
+        product: saved.product,
+        buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
+        price:
+          saved.buyerPrice != null
+            ? `${saved.currency} ${saved.buyerPrice.toLocaleString("en-GB")} / MT`
+            : "",
+        dealId: saved.id,
+      }),
+    )
+    .catch(() => undefined);
   return saved;
 }
 
@@ -853,6 +867,16 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
     ],
   };
   const saved = (await save(next))!;
+  await import("@/lib/trade/admin-alerts")
+    .then(({ notifySupplierPackIssued }) =>
+      notifySupplierPackIssued({
+        requestId: saved.requestId,
+        product: saved.product,
+        supplier: offer.supplierName,
+        dealId: saved.id,
+      }),
+    )
+    .catch(() => undefined);
   const urls = new Set<string>();
   for (const raw of [process.env.DESK_SUPPLIER_PACK_WEBHOOK_URL, DEFAULT_SUPPLIER_PACK_WEBHOOK]) {
     const url = raw?.trim().replace(/\/$/, "");
@@ -1303,6 +1327,17 @@ export async function markFirmOfferSent(id: string, to: string, actor: string): 
   const saved = (await save({ ...next, messages: [...next.messages, wa] }))!;
   await deliverDeskLines(saved, [wa.id], firmOfferWebhookUrl());
   await notifyChosenSupplier(saved);
+  await import("@/lib/trade/admin-alerts")
+    .then(({ notifyFirmOfferSent }) =>
+      notifyFirmOfferSent({
+        requestId: saved.requestId,
+        product: saved.product,
+        buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
+        to,
+        dealId: saved.id,
+      }),
+    )
+    .catch(() => undefined);
   return (await getRecord(DESK_DEALS, saved.id)) ?? saved;
 }
 
@@ -1395,7 +1430,19 @@ export async function markPiSent(id: string, to: string, actor: string): Promise
       message({ from: "system", channel: "app", text: `${actor || "Desk"} emailed the proforma invoice to ${to}.` }),
     ],
   };
-  return (await save(next))!;
+  const saved = (await save(next))!;
+  await import("@/lib/trade/admin-alerts")
+    .then(({ notifyPiSent }) =>
+      notifyPiSent({
+        requestId: saved.requestId,
+        product: saved.product,
+        buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
+        to,
+        dealId: saved.id,
+      }),
+    )
+    .catch(() => undefined);
+  return saved;
 }
 
 export async function markWhatsAppSent(dealId: string, messageId: string): Promise<DeskDeal | { error: string }> {

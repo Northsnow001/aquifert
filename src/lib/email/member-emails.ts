@@ -1,5 +1,6 @@
 import "server-only";
 
+import { allowlistedAdminEmails } from "@/lib/admin-access";
 import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { DESK_EMAIL } from "@/lib/email/brand";
@@ -12,12 +13,16 @@ export function deskInbox(replyTo: string | undefined) {
   return EMAIL_PATTERN.test(value) ? value : DESK_EMAIL;
 }
 
-/** Tells the desk inbox that something happened. Never throws. */
+/** Tells every allowlisted admin that something happened. Never throws. */
 export async function sendDeskAlert(input: { kind: MailKind; subject: string; heading: string; preheader: string; rows: Array<[string, string]> }) {
   try {
     const { delivery } = await getDeskSettings();
     const email = deskAlertEmail(input);
-    return await sendEmail({ kind: input.kind, to: deskInbox(delivery.replyTo), ...email }, delivery);
+    const extra = deskInbox(delivery.replyTo).toLowerCase();
+    const skip = extra.split("@")[0] === "noreply" || extra.split("@")[0] === "no-reply";
+    const to = [...new Set([...allowlistedAdminEmails(), ...(skip ? [] : [extra])])];
+    const sent = await Promise.all(to.map((addr) => sendEmail({ kind: input.kind, to: addr, ...email }, delivery)));
+    return sent[0] ?? null;
   } catch (error) {
     console.error("[member-emails] desk alert failed", error);
     return null;
