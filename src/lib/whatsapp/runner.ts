@@ -513,7 +513,7 @@ export async function runKnownBuyerTurn(input: {
     const fields = fieldsFromExtract(extract, input.text);
     const previousProduct = asString(draft?.product_label);
     const alreadyNotified = Boolean(extrasOf(draft).trade_intent_notified);
-    const sendIntent = shouldNotifyTradeOpened(previousProduct, fields.productLabel, alreadyNotified);
+    const sendIntent = !draft?.id || shouldNotifyTradeOpened(previousProduct, fields.productLabel, alreadyNotified);
     if (sendIntent) fields.extras = { ...fields.extras, trade_intent_notified: true };
     const alertOpened = async (requestId: string) => {
       if (!sendIntent) return;

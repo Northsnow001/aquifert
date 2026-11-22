@@ -1,6 +1,8 @@
 import "server-only";
 
+import { after } from "next/server";
 import { allowlistedAdminEmails } from "@/lib/admin-access";
+import { DEFAULT_DESK_SETTINGS } from "@/lib/desk-settings/types";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { SITE_URL } from "@/lib/email/brand";
 import { deskAlertEmail } from "@/lib/email/templates";
@@ -18,27 +20,43 @@ function routableInbox(addr: string) {
   return isAlertInbox(email) ? email : "";
 }
 
-async function mailAdmins(input: { kind: MailKind; subject: string; heading: string; preheader: string; rows: Array<[string, string]> }) {
+async function deliverAdmins(input: { kind: MailKind; subject: string; heading: string; preheader: string; rows: Array<[string, string]> }) {
+  let delivery = DEFAULT_DESK_SETTINGS.delivery;
   try {
-    const settings = await getDeskSettings();
-    const { delivery } = settings;
-    const email = deskAlertEmail(input);
-    const to = [
-      ...new Set(
-        [
-          process.env.DESK_ALERT_EMAIL,
-          deskInbox(delivery.replyTo),
-          settings.orderDesk.recipient,
-          ...allowlistedAdminEmails(),
-        ]
-          .map((addr) => routableInbox(String(addr || "")))
-          .filter(Boolean),
-      ),
-    ];
-    if (!to.length) return;
-    await Promise.all(to.map((addr) => sendEmail({ kind: input.kind, to: addr, ...email }, delivery)));
+    delivery = (await getDeskSettings()).delivery;
   } catch (error) {
-    console.error("[trade-admin-alert]", error);
+    console.error("[trade-admin-alert] desk settings", error);
+  }
+  const email = deskAlertEmail(input);
+  const to = [
+    ...new Set(
+      [
+        process.env.DESK_ALERT_EMAIL,
+        deskInbox(delivery.replyTo),
+        ...allowlistedAdminEmails(),
+      ]
+        .map((addr) => routableInbox(String(addr || "")))
+        .filter(Boolean),
+    ),
+  ];
+  if (!to.length) {
+    console.error("[trade-admin-alert] no recipients", input.kind, input.subject);
+    return;
+  }
+  const results = await Promise.all(to.map((addr) => sendEmail({ kind: input.kind, to: addr, ...email }, delivery)));
+  for (const row of results) {
+    if (row.status !== "sent") {
+      console.error("[trade-admin-alert]", row.status, row.to, row.subject, row.error || "not delivered");
+    }
+  }
+}
+
+async function mailAdmins(input: { kind: MailKind; subject: string; heading: string; preheader: string; rows: Array<[string, string]> }) {
+  const run = () => deliverAdmins(input).catch((error) => console.error("[trade-admin-alert]", error));
+  try {
+    after(run);
+  } catch {
+    await run();
   }
 }
 

@@ -62,6 +62,15 @@ async function continueKnown(input: {
     latestProduct: latest ? String(latest.product_label || "") : "",
   });
   const startingNew = bind.startNew;
+  if (startingNew) {
+    await notifyBuyerConversationStarted({
+      buyer: buyer.contactName || buyer.companyName,
+      company: buyer.companyName,
+      phone: input.phone,
+      message: input.text,
+      buyerId: buyer.id,
+    }).catch(() => undefined);
+  }
   if (isRfqRecapMessage(lastAgentText(messages)) && !startingNew) {
     const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages, phase: "rfq" });
     await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode, route: turn.route }, input.deliver);
