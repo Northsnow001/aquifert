@@ -26,6 +26,7 @@ import {
   coerceRfqPhaseTurn,
   hasNewTradeIntent,
   isolateExtractToTrade,
+  isCommercialFollowUp,
   isCourtesyMessage,
   isRfqRecapConfirm,
   isRfqRecapConfirmTurn,
@@ -280,7 +281,7 @@ function firstName(buyer: TradeBuyer) {
 
 function looksLikeProduct(text: string) {
   const t = text.trim().replace(/^['"`]+|['"`]+$/g, "");
-  if (!t || t.length > 80 || isCourtesyMessage(t) || hasNewTradeIntent(t) || isRfqRecapConfirm(t)) return false;
+  if (!t || t.length > 80 || isCourtesyMessage(t) || hasNewTradeIntent(t) || isRfqRecapConfirm(t) || isCommercialFollowUp(t)) return false;
   if (/@/.test(t) || /https?:/i.test(t)) return false;
   if (/^(yes|no|correct|go ahead|proceed|thanks|thank you|ok|okay)\b/i.test(t)) return false;
   return true;
@@ -393,6 +394,7 @@ export async function runKnownBuyerTurn(input: {
     recentInbound,
     latestStatus: asString(latest?.status),
     latestProduct: asString(latest?.product_label),
+    lastAgent: recap,
     geminiKind,
   });
   const forceNew = recapYes ? false : bind.startNew;

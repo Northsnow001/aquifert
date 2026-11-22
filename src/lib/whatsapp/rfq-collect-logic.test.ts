@@ -64,7 +64,7 @@ describe("bindInboundToTrade", () => {
     );
     assert.equal(
       bindInboundToTrade({
-        text: "Uranium XL",
+        text: "DAP",
         latestStatus: "firm_interest",
         latestProduct: "Noni44",
       }).startNew,
@@ -83,13 +83,24 @@ describe("bindInboundToTrade", () => {
 
   it("does not let Gemini call a product name courtesy", () => {
     const bind = bindInboundToTrade({
-      text: "Uranium XL",
+      text: "Merlin Fert",
       latestStatus: "rfq_sent",
       latestProduct: "Noni44",
       geminiKind: "courtesy",
     });
     assert.equal(bind.startNew, true);
     assert.equal(bind.kind, "new_trade");
+  });
+
+  it("keeps origin preference on the firm-offer thread", () => {
+    const bind = bindInboundToTrade({
+      text: "Any origin is good",
+      latestStatus: "firm_interest",
+      latestProduct: "Noxide M",
+      lastAgent: "Any origin preference, or origins you cannot take?",
+    });
+    assert.equal(bind.startNew, false);
+    assert.equal(bind.phase, "post_yes");
   });
 
   it("starts a new collecting RFQ when they ask for a new request on a leftover draft", () => {
@@ -183,7 +194,7 @@ describe("shouldStartNewRfq", () => {
   it("starts a new trade when the product is not the live one", () => {
     assert.equal(
       shouldStartNewRfq({
-        text: "Uranium XL",
+        text: "DAP",
         latestStatus: "firm_interest",
         latestProduct: "Cursor IV",
       }),

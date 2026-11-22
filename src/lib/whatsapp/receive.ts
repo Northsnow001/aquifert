@@ -60,6 +60,7 @@ async function continueKnown(input: {
     recentInbound,
     latestStatus: latest ? String(latest.status || "") : "",
     latestProduct: latest ? String(latest.product_label || "") : "",
+    lastAgent: lastAgentText(messages),
   });
   const startingNew = bind.startNew;
   if (startingNew) {

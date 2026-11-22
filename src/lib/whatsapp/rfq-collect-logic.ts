@@ -62,12 +62,32 @@ export function productsDiffer(a: string, b: string) {
   return left !== right && !left.includes(right) && !right.includes(left);
 }
 
+const FERTILISER_SKU =
+  /\b(urea|dap|mop|map|npk|sop|kcl|tsp|ssp|uan|ammonium|nitrate|phosphate|sulphate|sulfate|potash|compound|fertilisers?|fertilizers?)\b|[a-z0-9]*fert\b/i;
+
+const COMMERCIAL_ANSWER =
+  /\b(cad|tt\b|lc\b|sblc|origin|any origin|no preference|inspection|sgs|intertek|packing|bulk|jumbo|bags?)\b/i;
+
+export function looksLikeFertiliserSku(text: string) {
+  const t = text.trim();
+  if (!t || t.length > 80 || isCourtesyMessage(t) || isRfqRecapConfirm(t) || NEW_TRADE_PHRASE.test(t)) return false;
+  return FERTILISER_SKU.test(t);
+}
+
+export function isCommercialFollowUp(text: string, lastAgent = "") {
+  const t = text.trim();
+  if (!t) return false;
+  if (/origin preference|how would you like to pay|prepare the firm offer|inspection/i.test(lastAgent)) return true;
+  return COMMERCIAL_ANSWER.test(t) && !looksLikeFertiliserSku(t);
+}
+
 function standaloneProductName(text: string) {
   const t = text.trim();
   if (!t || t.length > 80 || NEW_TRADE_PHRASE.test(t)) return "";
-  if (isCourtesyMessage(t) || isRfqRecapConfirm(t)) return "";
+  if (isCourtesyMessage(t) || isRfqRecapConfirm(t) || isCommercialFollowUp(t)) return "";
   if (/^(yes|no|ok|okay|cad|lc|sblc|sgs|bulk|cif|cfr|fob|thanks|thank you)\b/i.test(t)) return "";
   if (/@|https?:/i.test(t)) return "";
+  if (!looksLikeFertiliserSku(t)) return "";
   if (t.split(/\s+/).filter(Boolean).length > 12) return "";
   return t;
 }
@@ -77,6 +97,7 @@ export function bindInboundToTrade(input: {
   recentInbound?: string[];
   latestStatus?: string;
   latestProduct?: string;
+  lastAgent?: string;
   geminiKind?: TradeBindKind | null;
 }) {
   const status = (input.latestStatus || "").trim();
@@ -88,6 +109,9 @@ export function bindInboundToTrade(input: {
     }
     return { kind: "same_trade" as const, startNew: false, phase: "rfq" as const };
   }
+  if (isCommercialFollowUp(input.text, input.lastAgent || "") && !NEW_TRADE_PHRASE.test(input.text.trim())) {
+    return { kind: "same_trade" as const, startNew: false, phase };
+  }
   if (isCourtesyMessage(input.text) || (input.geminiKind === "courtesy" && !named)) {
     return { kind: "courtesy" as const, startNew: false, phase };
   }
@@ -97,7 +121,7 @@ export function bindInboundToTrade(input: {
   if (named && productsDiffer(named, input.latestProduct || "")) {
     return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
   }
-  if (input.geminiKind === "new_trade") {
+  if (input.geminiKind === "new_trade" && (looksLikeFertiliserSku(input.text) || NEW_TRADE_PHRASE.test(input.text.trim()))) {
     return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
   }
   return { kind: "same_trade" as const, startNew: false, phase };
@@ -106,10 +130,10 @@ export function bindInboundToTrade(input: {
 export const TRADE_BIND_PROMPT = `You classify one WhatsApp line against the buyer's LIVE trade.
 Return JSON only: {"kind":"courtesy"|"same_trade"|"new_trade"|"unclear"}
 - courtesy: thanks, okay, hi, noted, acknowledgements. Never new_trade. Never a product.
-- same_trade: follow-up on the live product, destination, price, status, or Trade ID.
+- same_trade: follow-up on the live product, destination, price, status, Trade ID, payment, origin preference, packing, or inspection.
 - new_trade: they clearly want a different enquiry (new order/request, or a fertiliser that is not the live product).
 - unclear: if unsure. Prefer same_trade over new_trade when a live Trade ID exists.
-Never treat thanks or okay as a product name.`;
+Never treat thanks, okay, CAD, or "any origin is good" as a product name or a new trade.`;
 
 export type RecapReplyKind = "confirm" | "change" | "other";
 
