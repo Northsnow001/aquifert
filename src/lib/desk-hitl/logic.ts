@@ -1,5 +1,67 @@
 import type { BuyerReplyKind, DeskDeal, DeskExecution, DeskOffer } from "@/lib/desk-hitl/types";
 
+export function rfqKey(value: unknown): string {
+  const n = Number(String(value ?? "").replace(/\D/g, ""));
+  return Number.isFinite(n) && n > 0 ? String(n) : "";
+}
+
+export function fromEmailAddress(raw: unknown): string {
+  if (raw && typeof raw === "object") {
+    const row = raw as Record<string, unknown>;
+    const nested = row.value;
+    const first = Array.isArray(nested) && nested[0] && typeof nested[0] === "object" ? (nested[0] as Record<string, unknown>) : null;
+    return fromEmailAddress(first?.address || row.address || row.text || row.from);
+  }
+  const s = String(raw ?? "").trim();
+  const m = s.match(/<([^>]+@[^>]+)>/) || s.match(/([^\s<>]+@[^\s<>]+)/);
+  return (m ? m[1] : s).toLowerCase();
+}
+
+export function rfqKeysFromText(value: string): string[] {
+  const decoded = String(value ?? "")
+    .replace(/rfq=23/gi, "rfq#")
+    .replace(/_/g, " ");
+  const keys: string[] = [];
+  const re = /(?:rfq\s*#?\s*|fo\s*[-–]?\s*|deal-)(\d+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(decoded))) keys.push(String(Number(m[1])));
+  return [...new Set(keys)];
+}
+
+export type BuyerEmailReply = {
+  from: string;
+  subject: string;
+  text: string;
+  requestId: string;
+  kind: BuyerReplyKind;
+};
+
+/** Gmail / n8n WF11 envelope. Not a generated proforma JSON. */
+export function parseBuyerEmailReply(body: unknown): BuyerEmailReply | { ignore: true } | null {
+  if (!body || typeof body !== "object") return null;
+  const raw = body as Record<string, unknown>;
+  if (String(raw.document ?? "").toLowerCase() === "proforma") return null;
+  const nested = raw.body && typeof raw.body === "object" && !Array.isArray(raw.body) ? (raw.body as Record<string, unknown>) : raw;
+  const subject = String(nested.subject ?? nested.Subject ?? raw.subject ?? "").trim();
+  const text = String(nested.text ?? nested.snippet ?? nested.html ?? raw.text ?? raw.snippet ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const from = fromEmailAddress(nested.from ?? nested.From ?? nested.headers ?? raw.from);
+  const looksLikeMail = Boolean(subject || from.includes("@") || nested.snippet);
+  if (!looksLikeMail) return null;
+  if (/proforma invoice/i.test(subject) && !/^\s*re\s*:/i.test(subject)) return { ignore: true };
+  const requestId = rfqKeysFromText(subject)[0] || rfqKeysFromText(text)[0] || rfqKey(nested.requestId ?? nested.reference ?? raw.requestId);
+  if (!from.includes("@") && !requestId) return { ignore: true };
+  return {
+    from,
+    subject,
+    text: text.slice(0, 4000),
+    requestId,
+    kind: classifyBuyerReply(text || subject),
+  };
+}
+
 export function buyerUnitPrice(unitPrice: number, marginPct: number): number {
   const price = unitPrice * (1 + marginPct / 100);
   return Math.round(price * 100) / 100;

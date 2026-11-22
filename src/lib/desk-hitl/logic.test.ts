@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -260,6 +260,40 @@ describe("indicationWhatsApp", () => {
     const text = indicationWhatsApp(deal);
     assert.match(text, /Indication: USD 432 \/ MT/);
     assert.match(text, /Reply YES/);
+  });
+});
+
+describe("parseBuyerEmailReply", () => {
+  it("reads a Gmail YES on the firm offer", () => {
+    const parsed = parseBuyerEmailReply({
+      from: "Deji <deji@buyer.test>",
+      subject: "Re: Aquifert firm offer rfq#079 — Urea",
+      text: "YES",
+    });
+    assert.ok(parsed && !("ignore" in parsed));
+    assert.equal(parsed.from, "deji@buyer.test");
+    assert.equal(parsed.requestId, "79");
+    assert.equal(parsed.kind, "agree");
+  });
+
+  it("skips outbound proforma mail", () => {
+    assert.deepEqual(
+      parseBuyerEmailReply({
+        from: "noreply@aquifert.com",
+        subject: "Aquifert proforma invoice rfq#079 — Urea",
+        text: "Please find attached",
+      }),
+      { ignore: true },
+    );
+  });
+
+  it("does not treat a proforma JSON payload as mail", () => {
+    assert.equal(parseBuyerEmailReply({ document: "proforma", product: "Urea", reference: "rfq#079" }), null);
+  });
+
+  it("normalises rfq keys", () => {
+    assert.equal(rfqKey("rfq#079"), "79");
+    assert.equal(rfqKey("deal-rfq-079"), "79");
   });
 });
 

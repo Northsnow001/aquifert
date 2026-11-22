@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseShortlistBody, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, rfqKey, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -396,14 +396,7 @@ export async function recordBuyerInbound(input: {
     }
   }
   if (!deal && awaitingFo && kind === "agree") {
-    return (await save({
-      ...awaitingFo,
-      messages: [
-        ...awaitingFo.messages,
-        message({ from: "buyer", channel: "whatsapp", text }),
-        message({ from: "system", channel: "app", text: "Buyer accepted the firm offer on WhatsApp." }),
-      ],
-    }))!;
+    return parkProformaForReview(awaitingFo, text, inboundEmail, "whatsapp");
   }
   if (!deal && awaitingFo && kind === "negotiate" && !offerIsLocked(awaitingFo)) {
     return (await save({
@@ -511,6 +504,19 @@ async function supplierEmailFor(name: string) {
   }
 }
 
+async function supplierWechatFor(name: string) {
+  try {
+    const { listTradeSuppliers } = await import("@/lib/trade/store");
+    const want = name.trim().toLowerCase();
+    if (!want) return "";
+    const rows = await listTradeSuppliers();
+    const hit = rows.find((row) => row.companyName.trim().toLowerCase() === want);
+    return hit?.wechatOpenid || "";
+  } catch {
+    return "";
+  }
+}
+
 async function syncRfqStatus(requestId: string, status: string, extras: Record<string, unknown> = {}) {
   try {
     const { findRfqIdByCode, getTradeRfqRecord, patchTradeRfq } = await import("@/lib/trade/store");
@@ -525,7 +531,7 @@ async function syncRfqStatus(requestId: string, status: string, extras: Record<s
   }
 }
 
-async function deliverDeskLines(deal: DeskDeal, messageIds: string[]) {
+async function deliverDeskLines(deal: DeskDeal, messageIds: string[], fallbackUrl?: string) {
   const phone = deal.buyerPhone?.trim();
   const pending = new Set(messageIds);
   if (!phone || pending.size === 0) return deal;
@@ -541,8 +547,8 @@ async function deliverDeskLines(deal: DeskDeal, messageIds: string[]) {
       ok = false;
     }
     if (!ok) {
-      ok = await notify(deskReplyWebhookUrl(), {
-        event: "desk_reply",
+      ok = await notify(fallbackUrl || deskReplyWebhookUrl(), {
+        event: fallbackUrl ? "firm_offer_sent" : "desk_reply",
         dealId: current.id,
         requestId: current.requestId,
         buyerPhone: phone,
@@ -777,17 +783,63 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
   return saved;
 }
 
-function findDealForPi(deals: DeskDeal[], requestId: string, phone: string) {
+function findDealForPi(deals: DeskDeal[], requestId: string, phone: string, email = "") {
   const ref = requestId.trim().toLowerCase();
+  const key = rfqKey(requestId);
   const digits = phone.replace(/\D/g, "");
+  const mail = email.trim().toLowerCase();
+  const open = deals.filter((row) => row.status !== "closed");
   return (
-    deals.find((row) => row.requestId.trim().toLowerCase() === ref) ??
-    deals.find((row) => {
+    open.find((row) => row.requestId.trim().toLowerCase() === ref) ??
+    open.find((row) => key && rfqKey(row.requestId) === key) ??
+    open.find((row) => {
       const theirs = row.buyerPhone.replace(/\D/g, "");
       return Boolean(theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs)));
     }) ??
+    open.find((row) => mail && row.buyerEmail?.trim().toLowerCase() === mail) ??
     null
   );
+}
+
+async function parkProformaForReview(
+  deal: DeskDeal,
+  buyerText: string,
+  email: string,
+  channel: "email" | "whatsapp",
+): Promise<DeskDeal | { error: string }> {
+  const generated = buyerDocumentFromDeal(deal, "proforma");
+  if (!generated) return { error: "Need a buyer price on this deal before the proforma." };
+  const withMail = email.includes("@") ? applyBuyerEmail(deal, email) : deal;
+  const order = applyExecutionToOrder(withMail, {
+    ...generated,
+    buyer: {
+      ...generated.buyer,
+      email: (email.includes("@") ? email : generated.buyer.email) || generated.buyer.email,
+    },
+  });
+  const next: DeskDeal = {
+    ...withMail,
+    pi: {
+      status: "review",
+      updatedAt: now(),
+      sentAt: withMail.pi?.sentAt ?? null,
+      sentTo: withMail.pi?.sentTo ?? null,
+      order,
+    },
+    messages: [
+      ...withMail.messages,
+      message({ from: "buyer", channel, text: buyerText }),
+      message({
+        from: "system",
+        channel: "app",
+        text:
+          channel === "email"
+            ? "Buyer accepted the firm offer by email. Proforma is on the desk for review — do not email it until Matt sends it."
+            : "Buyer accepted the firm offer on WhatsApp. Proforma is on the desk for review.",
+      }),
+    ],
+  };
+  return (await save(next))!;
 }
 
 function textField(value: unknown, max = 500) {
@@ -894,7 +946,7 @@ export async function submitPiForReview(body: unknown): Promise<DeskDeal | { err
   const order = proformaFromN8n(body);
   if (!order) return { error: "Need a proforma payload (document: proforma, product, buyer unit price)." };
   const deals = await listRecords(DESK_DEALS);
-  const deal = findDealForPi(deals, order.reference, order.buyer.phone || "");
+  const deal = findDealForPi(deals, order.reference, order.buyer.phone || "", order.buyer.email || "");
   if (!deal) return { error: `No desk deal for ${order.reference || "that buyer"}.` };
   const filled = applyExecutionToOrder(deal, order);
 
@@ -917,6 +969,47 @@ export async function submitPiForReview(body: unknown): Promise<DeskDeal | { err
     ],
   };
   return (await save(next))!;
+}
+
+export async function ingestDeskPiInbound(
+  body: unknown,
+): Promise<DeskDeal | { error: string } | { event: "ignored" | "negotiating"; dealId?: string; requestId?: string }> {
+  const mail = parseBuyerEmailReply(body);
+  if (mail && "ignore" in mail) return { event: "ignored" };
+  if (!mail) return submitPiForReview(body);
+
+  const deals = await listRecords(DESK_DEALS);
+  const deal = findDealForPi(deals, mail.requestId, "", mail.from);
+  if (!deal) return { error: `No desk deal for ${mail.requestId || mail.from}.` };
+
+  const foSent = deal.firmOffer?.status === "sent" && deal.pi?.status !== "sent";
+  if (mail.kind === "agree" && foSent) {
+    return parkProformaForReview(deal, mail.text || mail.subject, mail.from, "email");
+  }
+  if (mail.kind === "negotiate") {
+    const saved = (await save({
+      ...applyBuyerEmail(deal, mail.from),
+      status: "negotiating",
+      mattThread: true,
+      mattNotifiedAt: now(),
+      messages: [
+        ...deal.messages,
+        message({ from: "buyer", channel: "email", text: mail.text || mail.subject }),
+        message({ from: "system", channel: "app", text: "Buyer replied on email. Matt has the thread." }),
+      ],
+    }))!;
+    await emailMattAboutNegotiation(saved, mail.text || mail.subject);
+    await syncRfqStatus(saved.requestId, "negotiating");
+    return { event: "negotiating", dealId: saved.id, requestId: saved.requestId };
+  }
+  if (foSent) {
+    const saved = (await save({
+      ...applyBuyerEmail(deal, mail.from),
+      messages: [...deal.messages, message({ from: "buyer", channel: "email", text: mail.text || mail.subject })],
+    }))!;
+    return saved;
+  }
+  return { event: "ignored" };
 }
 
 export async function savePiDraft(
@@ -1088,29 +1181,43 @@ export async function markFirmOfferSent(id: string, to: string, actor: string): 
       message({ from: "system", channel: "app", text: `${actor || "Desk"} sent the firm offer to ${to}. Reply YES on that email to accept.` }),
     ],
   };
-  const saved = (await save(next))!;
-  const buyerPhone = saved.buyerPhone?.trim();
-  if (buyerPhone) {
-    await notify(firmOfferWebhookUrl(), {
-      event: "firm_offer_sent",
-      dealId: saved.id,
-      requestId: saved.requestId,
-      buyerPhone,
-      whatsappBody: firmOfferWhatsApp(saved, to),
-    });
-  }
-  const mill = millFirmOfferWeChat(saved);
-  await notify(
-    firmOfferMillWebhookUrl(),
-    mill ?? {
+  const wa = message({
+    from: "desk",
+    channel: "whatsapp",
+    text: firmOfferWhatsApp(next, to),
+    outboundStatus: "queued",
+  });
+  const saved = (await save({ ...next, messages: [...next.messages, wa] }))!;
+  await deliverDeskLines(saved, [wa.id], firmOfferWebhookUrl());
+  await notifyChosenSupplier(saved);
+  return (await getRecord(DESK_DEALS, saved.id)) ?? saved;
+}
+
+async function notifyChosenSupplier(deal: DeskDeal) {
+  const mill = millFirmOfferWeChat(deal);
+  if (!mill) {
+    await notify(firmOfferMillWebhookUrl(), {
       event: "firm_offer_sent_mill",
-      dealId: saved.id,
-      requestId: saved.requestId,
+      dealId: deal.id,
+      requestId: deal.requestId,
       skip: true,
       reason: "no_selected_mill_quote",
-    },
-  );
-  return saved;
+    });
+    return;
+  }
+  const openid = mill.wechatOpenId || (await supplierWechatFor(mill.supplierName));
+  let ok = false;
+  if (openid) {
+    try {
+      const { sendWechatText } = await import("@/lib/wechat/send");
+      const sent = await sendWechatText(openid, mill.millMessage);
+      ok = sent.ok;
+    } catch {
+      ok = false;
+    }
+  }
+  if (ok) return;
+  await notify(firmOfferMillWebhookUrl(), { ...mill, wechatOpenId: openid });
 }
 
 export async function rejectFirmOffer(id: string, actor: string): Promise<DeskDeal | { error: string }> {

@@ -82,7 +82,7 @@ export type DeskMessage = {
   at: string;
   from: "desk" | "buyer" | "system";
   text: string;
-  channel: "app" | "whatsapp";
+  channel: "app" | "whatsapp" | "email";
   outboundStatus?: "queued" | "sent" | "failed";
 };
 
