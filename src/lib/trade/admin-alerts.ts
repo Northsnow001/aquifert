@@ -257,6 +257,9 @@ export async function notifyFirmOfferSent(input: {
   buyer: string;
   to: string;
   dealId: string;
+  millName?: string;
+  millEmail?: string;
+  millEmailStatus?: string;
 }) {
   await mailAdmins({
     kind: "firm-offer-sent-admin",
@@ -267,7 +270,10 @@ export async function notifyFirmOfferSent(input: {
       ["Request", input.requestId],
       ["Buyer", input.buyer],
       ["Product", input.product],
-      ["Sent to", input.to],
+      ["Buyer email", input.to],
+      ["Supplier", input.millName || ""],
+      ["Supplier email", input.millEmail || "not on file"],
+      ["Supplier email status", input.millEmailStatus || ""],
       ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
     ],
   });

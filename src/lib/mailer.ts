@@ -19,6 +19,7 @@ export type MailKind =
   | "membership-admin"
   | "pi-buyer"
   | "firm-offer-buyer"
+  | "firm-offer-mill"
   | "sales-contract-buyer"
   | "negotiation-desk"
   | "supplier-wechat-invite"

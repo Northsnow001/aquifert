@@ -9,6 +9,7 @@ import {
   removeFoAttachmentAction,
   saveFirmOfferDraftAction,
   sendFirmOfferToBuyerAction,
+  sendMillFirmOfferAction,
   uploadFoAttachmentAction,
 } from "@/app/admin/desk/actions";
 import { btnDanger, btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
@@ -98,7 +99,19 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
         toast.error(result.message);
         return;
       }
-      toast.success(`Firm offer emailed to ${values.buyerEmail}.`);
+      toast.success(`Firm offer emailed to ${values.buyerEmail} and the selected supplier.`);
+      router.refresh();
+    });
+  };
+
+  const sendMill = () => {
+    start(async () => {
+      const result = await sendMillFirmOfferAction({ id: deal.id });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(`Firm offer emailed to ${result.millEmail} at mill unit price.`);
       router.refresh();
     });
   };
@@ -309,6 +322,11 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
             >
               {pending ? "Sending…" : "Send FO pack to buyer"}
             </button>
+            {fo?.status === "sent" ? (
+              <button type="button" disabled={pending || closed} onClick={sendMill} className={btnSecondary}>
+                {pending ? "Sending…" : "Email supplier FO"}
+              </button>
+            ) : null}
             <button type="button" disabled={pending || closed} onClick={reject} className={btnSecondary}>
               Back to negotiate
             </button>

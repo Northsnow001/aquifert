@@ -22,6 +22,7 @@ import {
   savePiDraft,
   saveSalesContractDraft,
   sendDeskReply,
+  sendMillFirmOfferNow,
 } from "@/lib/desk-hitl/store";
 import { parseFoUpload, readFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { FO_ATTACHMENT_LABEL } from "@/lib/desk-hitl/types";
@@ -170,6 +171,22 @@ export async function sendFirmOfferToBuyerAction(input: {
   revalidatePath("/admin/desk");
   revalidatePath(`/admin/desk/${id}`);
   return { ok: true };
+}
+
+export async function sendMillFirmOfferAction(input: {
+  id: string;
+}): Promise<{ ok: true; millEmail: string; millEmailStatus: string } | { ok: false; message: string }> {
+  await requireAdmin();
+  const id = String(input.id ?? "").trim();
+  const sent = await sendMillFirmOfferNow(id);
+  if ("error" in sent) return { ok: false, message: sent.error };
+  revalidatePath("/admin/desk");
+  revalidatePath(`/admin/desk/${id}`);
+  if (!sent.millEmail) return { ok: false, message: "No supplier email on file. Add it on the supplier record, then send again." };
+  if (sent.millEmailStatus !== "sent") {
+    return { ok: false, message: `Supplier email was ${sent.millEmailStatus}.` };
+  }
+  return { ok: true, millEmail: sent.millEmail, millEmailStatus: sent.millEmailStatus };
 }
 
 export async function uploadFoAttachmentAction(formData: FormData): Promise<{ ok: true } | { ok: false; message: string }> {

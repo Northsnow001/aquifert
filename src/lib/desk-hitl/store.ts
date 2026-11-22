@@ -1326,7 +1326,7 @@ export async function markFirmOfferSent(id: string, to: string, actor: string): 
   });
   const saved = (await save({ ...next, messages: [...next.messages, wa] }))!;
   await deliverDeskLines(saved, [wa.id], firmOfferWebhookUrl());
-  await notifyChosenSupplier(saved);
+  const millNotify = await notifyChosenSupplier(saved);
   await import("@/lib/trade/admin-alerts")
     .then(({ notifyFirmOfferSent }) =>
       notifyFirmOfferSent({
@@ -1335,13 +1335,33 @@ export async function markFirmOfferSent(id: string, to: string, actor: string): 
         buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
         to,
         dealId: saved.id,
+        millName: millNotify.millName,
+        millEmail: millNotify.millEmail,
+        millEmailStatus: millNotify.millEmailStatus,
       }),
     )
     .catch(() => undefined);
   return (await getRecord(DESK_DEALS, saved.id)) ?? saved;
 }
 
-async function notifyChosenSupplier(deal: DeskDeal) {
+async function millSupplierEmail(mill: { supplierName: string; wechatOpenId: string }) {
+  try {
+    const { getTradeSupplierByWechatOpenid, listTradeSuppliers } = await import("@/lib/trade/store");
+    if (mill.wechatOpenId) {
+      const byOpen = await getTradeSupplierByWechatOpenid(mill.wechatOpenId);
+      const mail = byOpen?.email.trim().toLowerCase() || "";
+      if (mail.includes("@")) return mail;
+    }
+    const want = mill.supplierName.trim().toLowerCase();
+    if (!want) return "";
+    const rows = await listTradeSuppliers();
+    return rows.find((row) => row.companyName.trim().toLowerCase() === want)?.email.trim().toLowerCase() || "";
+  } catch {
+    return "";
+  }
+}
+
+async function notifyChosenSupplier(deal: DeskDeal): Promise<{ millName: string; millEmail: string; millEmailStatus: string }> {
   const mill = millFirmOfferWeChat(deal);
   if (!mill) {
     await notify(firmOfferMillWebhookUrl(), {
@@ -1351,21 +1371,94 @@ async function notifyChosenSupplier(deal: DeskDeal) {
       skip: true,
       reason: "no_selected_mill_quote",
     });
-    return;
+    return { millName: "", millEmail: "", millEmailStatus: "no_selected_mill_quote" };
   }
+  const millEmail = await millSupplierEmail(mill);
+  let millEmailStatus = millEmail ? "failed" : "missing_supplier_email";
+  const notes: DeskMessage[] = [];
+  if (millEmail) {
+    try {
+      const [{ getDeskSettings }, { millFirmOfferEmail }, { sendEmail }] = await Promise.all([
+        import("@/lib/desk-settings/store"),
+        import("@/lib/email/templates"),
+        import("@/lib/mailer"),
+      ]);
+      const settings = await getDeskSettings();
+      const priceLine = `${mill.currency} ${mill.supplierUnitPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })} / MT`;
+      const copy = millFirmOfferEmail({
+        requestId: mill.requestId,
+        supplierName: mill.supplierName,
+        product: mill.product,
+        quantityMt: mill.quantityMt,
+        packing: mill.packing,
+        documentation: mill.documentation,
+        incoterm: mill.incoterm,
+        destination: mill.destination,
+        shipping: mill.shipping,
+        paymentTerms: mill.paymentTerms,
+        priceLine,
+      });
+      const mailed = await sendEmail(
+        { kind: "firm-offer-mill", to: millEmail, subject: copy.subject, html: copy.html, text: copy.text },
+        settings.delivery,
+      );
+      millEmailStatus = mailed.status;
+      notes.push(
+        message({
+          from: "system",
+          channel: "email",
+          text:
+            mailed.status === "sent"
+              ? `Firm offer emailed to ${mill.supplierName} <${millEmail}> at ${priceLine}.`
+              : `Firm offer email to ${mill.supplierName} <${millEmail}> was ${mailed.status}${mailed.error ? `: ${mailed.error}` : ""}.`,
+        }),
+      );
+    } catch (error) {
+      millEmailStatus = "failed";
+      notes.push(
+        message({
+          from: "system",
+          channel: "email",
+          text: `Firm offer email to ${mill.supplierName} failed: ${error instanceof Error ? error.message : "send error"}.`,
+        }),
+      );
+    }
+  } else {
+    notes.push(
+      message({
+        from: "system",
+        channel: "email",
+        text: `No email on file for ${mill.supplierName}. Firm offer went on WeChat only.`,
+      }),
+    );
+  }
+
   const openid = mill.wechatOpenId || (await supplierWechatFor(mill.supplierName));
-  let ok = false;
+  let wechatOk = false;
   if (openid) {
     try {
       const { sendWechatText } = await import("@/lib/wechat/send");
       const sent = await sendWechatText(openid, mill.millMessage);
-      ok = sent.ok;
+      wechatOk = sent.ok;
     } catch {
-      ok = false;
+      wechatOk = false;
     }
   }
-  if (ok) return;
-  await notify(firmOfferMillWebhookUrl(), { ...mill, wechatOpenId: openid });
+  if (!wechatOk) {
+    await notify(firmOfferMillWebhookUrl(), { ...mill, wechatOpenId: openid, millEmail, millEmailStatus });
+  }
+  if (notes.length) {
+    const latest = (await getRecord(DESK_DEALS, deal.id)) ?? deal;
+    await save({ ...latest, messages: [...latest.messages, ...notes] });
+  }
+  return { millName: mill.supplierName, millEmail, millEmailStatus };
+}
+
+export async function sendMillFirmOfferNow(id: string) {
+  const deal = await getRecord(DESK_DEALS, id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.firmOffer?.status !== "sent") return { error: "Send the firm offer to the buyer first." };
+  return notifyChosenSupplier(deal);
 }
 
 export async function rejectFirmOffer(id: string, actor: string): Promise<DeskDeal | { error: string }> {

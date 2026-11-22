@@ -242,6 +242,7 @@ describe("millFirmOfferWeChat", () => {
     assert.match(mill.millMessage, /COA\/TDS req/);
     assert.match(mill.millMessage, /Payment\/Validity: TBA/);
     assert.equal(mill.wechatOpenId, "oMillHarbour");
+    assert.match(mill.millMessage, /check email/i);
   });
 });
 

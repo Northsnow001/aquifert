@@ -210,6 +210,62 @@ export function splitTopic(message: string, fallback = "General enquiry") {
   return match ? { topic: match[1].trim(), body: match[2].trim() } : { topic: fallback, body: message.trim() };
 }
 
+/** Mill mailbox only. Price is their RFQ quote — never the buyer indication. */
+export function millFirmOfferEmail(input: {
+  requestId: string;
+  supplierName: string;
+  product: string;
+  quantityMt: number | null;
+  packing: string;
+  documentation: string;
+  incoterm: string;
+  destination: string;
+  shipping: string;
+  paymentTerms: string;
+  priceLine: string;
+}): ComposedEmail {
+  const first = firstName(input.supplierName) || "there";
+  const qty = input.quantityMt ? `${input.quantityMt} MT ` : "";
+  return compose(`Aquifert firm offer ${input.requestId} — ${input.product}`, {
+    title: `Firm offer ${input.requestId}`,
+    preheader: `${qty}${input.product} at ${input.priceLine}. Reply if you can improve this offer.`,
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: "Firm offer",
+    heading: `Hello ${first}`,
+    blocks: [
+      {
+        kind: "text",
+        html: inline(
+          `Please confirm this firm offer at **your quoted unit price**. Reply to this email if you can improve the offer.`,
+        ),
+      },
+      {
+        kind: "details",
+        title: "Offer",
+        sections: [
+          {
+            title: "Offer",
+            rows: [
+              ["Trade ID", input.requestId],
+              ["Product", input.product],
+              ["Quantity", input.quantityMt ? `${input.quantityMt} MT` : ""],
+              ["Packing", input.packing],
+              ["Documents", input.documentation],
+              ["Incoterm", input.incoterm],
+              ["Destination", input.destination],
+              ["Shipping", input.shipping],
+              ["Payment / validity", input.paymentTerms],
+              ["Price", input.priceLine],
+            ],
+          },
+        ],
+      },
+    ],
+    footerNote: "You received this because Aquifert selected your quote for this trade.",
+    deskEmail: DESK_EMAIL,
+  });
+}
+
 /** Short alert for the desk inbox. Rows are label, value. */
 export function deskAlertEmail(input: { subject: string; heading: string; preheader: string; rows: Array<[string, string]> }): ComposedEmail {
   const rows = input.rows.filter(([, value]) => value.trim());
