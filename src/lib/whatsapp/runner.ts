@@ -1,6 +1,7 @@
 import "server-only";
 
 import { EXTRACTION_MODEL, generateText, geminiKey } from "@/lib/aquibot-engine/gemini";
+import { notifyTradeOpened } from "@/lib/trade/admin-alerts";
 import {
   getLatestBuyerRfq,
   getTradeBuyer,
@@ -165,10 +166,19 @@ function buyerPhase(status: string) {
   return "rfq";
 }
 
-function rfqContext(rfq: Record<string, unknown> | null) {
+function extrasOf(rfq: Record<string, unknown> | null) {
+  const extras = rfq?.extras;
+  return extras && typeof extras === "object" && !Array.isArray(extras) ? (extras as Record<string, unknown>) : {};
+}
+
+function rfqContext(rfq: Record<string, unknown> | null, phase: string) {
   if (!rfq) return "Known RFQ: none — this is a new enquiry. Do not invent a Trade ID. Leave rfq_id empty.";
-  return [
-    "Known RFQ: in progress, not confirmed. Do not give a Trade ID yet. Leave rfq_id empty.",
+  const extras = extrasOf(rfq);
+  const indication = asString(extras.buyer_unit_price);
+  const lines = [
+    phase === "rfq"
+      ? "Known RFQ: in progress, not confirmed. Do not give a Trade ID yet. Leave rfq_id empty."
+      : `Known RFQ: ${asString(rfq.code)}. Do not start a new enquiry.`,
     `RFQ status: ${asString(rfq.status)}`,
     `Product: ${asString(rfq.product_label)}`,
     `Specification: ${asString(rfq.specification)}`,
@@ -177,8 +187,13 @@ function rfqContext(rfq: Record<string, unknown> | null) {
     `Incoterm: ${asString(rfq.incoterm)}`,
     `Destination: ${asString(rfq.destination_port)} ${asString(rfq.destination_country)}`.trim(),
     `Shipment: ${asString(rfq.shipment_window)}`,
-    `Captured extract: ${JSON.stringify(rfq.extras ?? {})}`,
-  ].join("\n");
+  ];
+  if (phase === "post_yes" || phase === "offer_review" || phase === "pi_sent") {
+    lines.push(`Indication price: ${indication ? `USD ${indication} / MT` : "on the indication already sent"}`);
+    lines.push("They confirmed the indication. Collect commercial terms for the firm offer. Do not start an RFQ. Do not ask which product.");
+  }
+  lines.push(`Captured extract: ${JSON.stringify(extras)}`);
+  return lines.join("\n");
 }
 
 function fieldsFromExtract(extract: Record<string, unknown>, rawMessage: string) {
@@ -237,7 +252,7 @@ function deskUserPrompt(input: {
       `Email: ${input.buyer.email}`,
       `Phone: ${input.buyer.whatsappE164 || ""}`,
       `Country: ${input.buyer.country}`,
-      rfqContext(input.draft),
+      rfqContext(input.draft, input.phase),
       `Chat History:\n${historyBlock(input.messages)}`,
       `Last WhatsApp: ${input.text}`,
       "Treat the last WhatsApp as the buyer's latest message. If it is a product name (e.g. SplashFert, Merlin Fert, urea, DAP), that is the product — set rfq_extract.product, route rfq_collect, acknowledge it, ask quantity in MT next. Do not ask which product. Do not greet again.",
@@ -250,10 +265,20 @@ function deskUserPrompt(input: {
     `Company: ${input.buyer.companyName}`,
     `Email: ${input.buyer.email}`,
     `Phone: ${input.buyer.whatsappE164 || ""}`,
-    rfqContext(input.draft),
+    rfqContext(input.draft, input.phase),
     `Chat History:\n${historyBlock(input.messages)}`,
     `Last WhatsApp: ${input.text}`,
   ].join("\n");
+}
+
+function postYesPackingAsk(rfq: Record<string, unknown> | null) {
+  const product = asString(rfq?.product_label) || "the product";
+  const qty = asString(rfq?.quantity_mt);
+  const extras = extrasOf(rfq);
+  const price = asString(extras.buyer_unit_price);
+  const priceBit = price ? ` at USD ${price} / MT` : "";
+  const qtyBit = qty ? `${qty} MT of ` : "";
+  return `Good — we can proceed${priceBit}. How would you like the ${qtyBit}${product} packed? 25kg bags, jumbo bags, or bulk?`;
 }
 
 export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string; messages: TradeMessage[] }) {
@@ -261,25 +286,26 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
   const product = productLabelFrom(input.text);
   const productTurn = looksLikeProduct(input.text);
   const productReply = `${product} — what quantity in MT, and which discharge port or country?`;
+  const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
+  const phase = buyerPhase(asString(latest?.status));
   if (!geminiKey()) {
     return {
-      reply: productTurn ? productReply : greet,
+      reply: phase === "post_yes" ? postYesPackingAsk(latest) : productTurn ? productReply : greet,
       agent: "whatsapp-buyer-desk" as const,
-      rfqCode: "",
-      rfqId: "",
+      rfqCode: asString(latest?.code),
+      rfqId: asString(latest?.id),
       fanout: false,
+      route: phase === "post_yes" ? "commercial_collect" : productTurn ? "rfq_collect" : "chat",
     };
   }
 
-  const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
-  const phase = buyerPhase(asString(latest?.status));
-  const draft = phase === "rfq" && asString(latest?.status) === "collecting" ? latest : null;
-  let reply = productTurn ? productReply : greet;
+  const draft = latest;
+  let reply = phase === "post_yes" ? postYesPackingAsk(latest) : productTurn ? productReply : greet;
   let rfqCode = asString(draft?.code);
   let rfqId = asString(draft?.id);
   let fanout = false;
-  let route = productTurn ? "rfq_collect" : "chat";
-  let extract: Record<string, unknown> | null = productTurn ? { product } : null;
+  let route = phase === "post_yes" ? "commercial_collect" : productTurn ? "rfq_collect" : "chat";
+  let extract: Record<string, unknown> | null = phase === "rfq" && productTurn ? { product } : null;
 
   try {
     const agent = await getTradeAgent("whatsapp-buyer-desk");
@@ -299,12 +325,27 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
         reply = productReply;
       }
     }
+    if (phase === "post_yes" && (route === "rfq_collect" || route === "rfq_ready" || askingForProductAgain(reply))) {
+      route = "commercial_collect";
+      if (askingForProductAgain(reply) || !asString(data.reply)) reply = postYesPackingAsk(latest);
+    }
     if (latest?.id && commercial && (route === "commercial_collect" || route === "firm_offer_ready" || route === "pi_ready")) {
-      const extras = latest.extras && typeof latest.extras === "object" ? (latest.extras as Record<string, unknown>) : {};
-      const nextStatus = route === "pi_ready" ? "pi_sent" : route === "firm_offer_ready" ? "firm_interest" : asString(latest.status) || "negotiating";
+      const extras = extrasOf(latest);
+      const nextStatus = route === "pi_ready" ? "pi_sent" : "firm_interest";
       await patchTradeRfq(asString(latest.id), { status: nextStatus, extras: { ...extras, commercial } }).catch((error) => {
         console.error("[rfq commercial save]", error);
       });
+      if (route === "firm_offer_ready") {
+        const { saveFirmTerms } = await import("@/lib/desk-hitl/store");
+        await saveFirmTerms({
+          requestId: asString(latest.code),
+          phone: input.buyer.whatsappE164,
+          email: input.buyer.email,
+          ...commercial,
+        }).catch((error) => {
+          console.error("[firm offer park]", error);
+        });
+      }
     }
   } catch (error) {
     console.error("[buyer desk]", error instanceof Error ? error.message : error);
@@ -331,12 +372,19 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
         const saved = await insertWhatsAppRfq({ buyerId: input.buyer.id, ...fields, status: "collecting" });
         rfqCode = saved.code;
         rfqId = saved.id;
+        await notifyTradeOpened({
+          requestId: saved.code,
+          product: fields.productLabel,
+          buyer: input.buyer.contactName || input.buyer.companyName,
+          quantityMt: fields.quantityMt ? `${fields.quantityMt} MT` : "",
+          destination: fields.destinationPort || fields.destinationCountry || "",
+        }).catch(() => undefined);
       }
     } catch (error) {
       console.error("[rfq save]", error instanceof Error ? error.message : error);
     }
   }
-  return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode, rfqId, fanout };
+  return { reply, agent: "whatsapp-buyer-desk" as const, rfqCode, rfqId, fanout, route };
 }
 
 export async function whatsappThread(phone: string, buyerId?: string | null) {

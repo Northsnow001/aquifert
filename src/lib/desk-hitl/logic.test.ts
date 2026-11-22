@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -242,6 +242,14 @@ describe("millFirmOfferWeChat", () => {
     assert.match(mill.millMessage, /COA\/TDS req/);
     assert.match(mill.millMessage, /Payment\/Validity: TBA/);
     assert.equal(mill.wechatOpenId, "oMillHarbour");
+  });
+});
+
+describe("hideBuyerPriceFromSupplier", () => {
+  it("strips the indication and keeps the supplier quote", () => {
+    const text = hideBuyerPriceFromSupplier("Buyer 221.4 mill 205", 221.4, 205);
+    assert.doesNotMatch(text, /221/);
+    assert.match(text, /205/);
   });
 });
 

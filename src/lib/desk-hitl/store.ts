@@ -7,8 +7,7 @@ import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecutio
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
-import { getDeskSettings } from "@/lib/desk-settings/store";
-import { listOutbox, sendEmail } from "@/lib/mailer";
+import { listOutbox } from "@/lib/mailer";
 import { buyerDocumentFromDeal, firmOfferDraftFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
@@ -283,6 +282,14 @@ function phoneMatches(deal: DeskDeal, digits: string) {
   return Boolean(theirs && digits && (theirs.endsWith(digits) || digits.endsWith(theirs)));
 }
 
+export async function buyerHasLiveDeskThread(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return false;
+  const { isLiveDeskStatus } = await import("@/lib/trade/admin-alert-logic");
+  const deals = await listRecords(DESK_DEALS);
+  return deals.some((row) => isLiveDeskStatus(row.status) && phoneMatches(row, digits));
+}
+
 function applyBuyerEmail(deal: DeskDeal, email: string): DeskDeal {
   const nextEmail = email.includes("@") ? email : deal.buyerEmail || "";
   const order = deal.firmOffer?.order;
@@ -301,7 +308,7 @@ export async function recordBuyerInbound(input: {
   requestId?: string;
   text: string;
   email?: string;
-}): Promise<DeskDeal | { error: string } | { event: "chat" | "negotiating"; phase?: DeskPhase; dealId?: string; requestId?: string }> {
+}): Promise<DeskDeal | { error: string } | { event: "chat" | "negotiating" | "firm_interest"; phase?: DeskPhase; dealId?: string; requestId?: string }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
   const inboundEmail = String(input.email || "").trim();
@@ -313,10 +320,20 @@ export async function recordBuyerInbound(input: {
     row.status !== "closed" &&
     !offerIsLocked(row) &&
     (row.status === "indication_sent" || row.status === "negotiating");
+  const mail = inboundEmail.toLowerCase();
   const deal =
-    (input.requestId ? deals.find((row) => row.requestId === input.requestId && negotiable(row)) : null) ??
+    (input.requestId
+      ? deals.find(
+          (row) =>
+            negotiable(row) &&
+            (row.requestId === input.requestId || (rfqKey(input.requestId) !== "" && rfqKey(row.requestId) === rfqKey(input.requestId))),
+        )
+      : null) ??
     deals
       .filter((row) => negotiable(row) && phoneMatches(row, digits))
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ??
+    deals
+      .filter((row) => negotiable(row) && mail && row.buyerEmail?.trim().toLowerCase() === mail)
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))[0] ??
     null;
   const collecting =
@@ -388,11 +405,16 @@ export async function recordBuyerInbound(input: {
       return { event: "chat", phase: "rfq", dealId: saved.id, requestId: saved.requestId };
     }
   }
-  // Packing is the live thread. Do not let a leftover indication or Gemini send this to RFQ Agent.
   if (collecting && !offerIsLocked(collecting)) {
     const follow = await resolveFirmFollowUp(text, collecting.product);
     if (follow === "firm_order") {
-      return continueFirmInterest(collecting, text, inboundEmail);
+      const row = inboundEmail.includes("@") ? applyBuyerEmail(collecting, inboundEmail) : collecting;
+      const saved = (await save({
+        ...row,
+        buyerPhone: phone || row.buyerPhone,
+        messages: [...row.messages, message({ from: "buyer", channel: "whatsapp", text })],
+      }))!;
+      return { event: "firm_interest" as const, phase: "post_yes" as const, dealId: saved.id, requestId: saved.requestId };
     }
   }
   if (!deal && awaitingFo && kind === "agree") {
@@ -446,7 +468,7 @@ export async function recordBuyerInbound(input: {
     }))!;
     await emailMattAboutNegotiation(saved, text);
     await syncRfqStatus(saved.requestId, "negotiating");
-    const delivered = await deliverDeskLines(saved, [ack.id]);
+    const delivered = await deliverDeskLines(saved, [ack.id], undefined, phone || saved.buyerPhone);
     return delivered;
   }
 
@@ -458,30 +480,32 @@ export async function recordBuyerInbound(input: {
       const row = inboundEmail.includes("@") ? applyBuyerEmail(locked, inboundEmail) : locked;
       await save({ ...row, newEnquiry: null });
     }
-    const next: DeskDeal = {
+    const saved = (await save({
       ...deal,
       status: "firm_interest",
       firmInterestAt: now(),
-      messages: [...deal.messages, inbound, message({ from: "system", channel: "app", text: "Buyer agreed. Firm interest created." })],
-    };
-    const outbound = message({ from: "desk", channel: "whatsapp", text: packingHandoff(next), outboundStatus: "queued" });
-    const saved = (await save({ ...next, messages: [...next.messages, outbound] }))!;
+      buyerPhone: phone || deal.buyerPhone,
+      messages: [...deal.messages, inbound, message({ from: "system", channel: "app", text: "Buyer agreed. Firm offer agent is collecting terms." })],
+    }))!;
     await syncRfqStatus(saved.requestId, "firm_interest", {
       buyer_unit_price: saved.buyerPrice,
       selected_supplier: selectedOffer(saved)?.supplierName || "",
-    });
-    await notify(saved.callbackUrl, {
-      event: "firm_interest",
-      dealId: saved.id,
-      requestId: saved.requestId,
-      buyerPhone: saved.buyerPhone,
-      buyerPrice: saved.buyerPrice,
-      buyer_documents: {
-        proforma: buyerDocumentFromDeal(saved, "proforma"),
-        sales_contract: buyerDocumentFromDeal(saved, "sales_contract"),
-      },
-    });
-    return deliverDeskLines(saved, [outbound.id]);
+    }).catch(() => undefined);
+    await import("@/lib/trade/admin-alerts")
+      .then(({ notifyBuyerAgreedIndication }) =>
+        notifyBuyerAgreedIndication({
+          requestId: saved.requestId,
+          product: saved.product,
+          buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
+          price:
+            saved.buyerPrice != null
+              ? `${saved.currency} ${saved.buyerPrice.toLocaleString("en-GB")} / MT`
+              : "",
+          dealId: saved.id,
+        }),
+      )
+      .catch(() => undefined);
+    return { event: "firm_interest" as const, phase: "post_yes" as const, dealId: saved.id, requestId: saved.requestId };
   }
 
   const next: DeskDeal = {
@@ -531,8 +555,8 @@ async function syncRfqStatus(requestId: string, status: string, extras: Record<s
   }
 }
 
-async function deliverDeskLines(deal: DeskDeal, messageIds: string[], fallbackUrl?: string) {
-  const phone = deal.buyerPhone?.trim();
+async function deliverDeskLines(deal: DeskDeal, messageIds: string[], fallbackUrl?: string, phoneOverride?: string) {
+  const phone = (phoneOverride || deal.buyerPhone || "").trim();
   const pending = new Set(messageIds);
   if (!phone || pending.size === 0) return deal;
   let current = deal;
@@ -565,34 +589,18 @@ async function deliverDeskLines(deal: DeskDeal, messageIds: string[], fallbackUr
 }
 
 async function emailMattAboutNegotiation(deal: DeskDeal, buyerText: string) {
-  const settings = await getDeskSettings();
-  const to = (process.env.DESK_ALERT_EMAIL || settings.delivery.replyTo || settings.orderDesk.recipient || "").trim();
-  if (!to.includes("@")) return;
-  const site = (process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com").replace(/\/$/, "");
   const who = deal.buyerName || deal.buyerCompany || deal.buyerPhone || "The buyer";
   const price = deal.buyerPrice != null ? `${deal.currency} ${deal.buyerPrice} / MT` : "the indication";
-  const subject = `Negotiation — ${deal.requestId} — ${deal.product}`;
-  const link = `${site}/admin/desk/negotiation`;
-  const text = [
-    `${who} wants to change the indication on ${deal.requestId} (${deal.product}${deal.quantityMt ? `, ${deal.quantityMt} MT` : ""}).`,
-    `Indication on the table: ${price}.`,
-    "",
-    `They wrote:`,
-    buyerText,
-    "",
-    `The thread is yours until you hand it to the firm offer agent or end it.`,
-    link,
-  ].join("\n");
-  const html = `<p>${escapeHtml(who)} wants to change the indication on <strong>${escapeHtml(deal.requestId)}</strong> (${escapeHtml(deal.product)}${deal.quantityMt ? `, ${deal.quantityMt} MT` : ""}).</p><p>Indication on the table: ${escapeHtml(price)}.</p><p>They wrote:</p><blockquote>${escapeHtml(buyerText)}</blockquote><p>The thread is yours until you hand it to the firm offer agent or end it.</p><p><a href="${escapeHtml(link)}">Open Negotiation</a></p>`;
-  await sendEmail({ kind: "negotiation-desk", to, subject, html, text }, settings.delivery);
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  await import("@/lib/trade/admin-alerts").then(({ notifyNegotiationAwaitingMatt }) =>
+    notifyNegotiationAwaitingMatt({
+      requestId: deal.requestId,
+      product: deal.product,
+      buyer: who,
+      price,
+      buyerText,
+      dealId: deal.id,
+    }),
+  );
 }
 
 function packingHandoff(deal: DeskDeal) {

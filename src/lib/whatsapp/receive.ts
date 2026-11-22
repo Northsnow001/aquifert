@@ -1,8 +1,10 @@
 import "server-only";
 
-import { recordBuyerInbound } from "@/lib/desk-hitl/store";
+import { buyerHasLiveDeskThread, recordBuyerInbound } from "@/lib/desk-hitl/store";
+import { isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
 import { notifyBuyerConversationStarted } from "@/lib/trade/admin-alerts";
 import {
+  getLatestBuyerRfq,
   getTradeBuyerByWhatsApp,
   linkBuyerWhatsApp,
   linkBuyerWhatsAppFromHello,
@@ -49,6 +51,34 @@ async function continueKnown(input: {
       ? input.buyer
       : await markBuyerOnWhatsApp(input.buyer.id, input.phone).catch(() => input.buyer);
   const messages = await whatsappThread(input.phone, buyer.id);
+  const latest = await getLatestBuyerRfq(buyer.id).catch(() => null);
+  const desk = await recordBuyerInbound({
+    phone: input.phone,
+    text: input.text,
+    email: buyer.email,
+    requestId: latest?.code ? String(latest.code) : undefined,
+  }).catch(() => ({ event: "chat" as const }));
+  if (desk && "messages" in desk) {
+    const queued = desk.messages.filter((row) => row.from === "desk" && row.outboundStatus === "queued");
+    for (const msg of queued) {
+      await outbound(input.phone, buyer.id, msg.text, { event: "desk", dealId: desk.id }, input.deliver);
+    }
+    if (queued.length || (desk.status === "negotiating" && desk.mattThread)) {
+      return { reply: queued.at(-1)?.text || "", buyerId: buyer.id, desk: true };
+    }
+  }
+  const fo =
+    (desk && "event" in desk && desk.event === "firm_interest") ||
+    (desk && "status" in desk && desk.status === "firm_interest" && !desk.mattThread);
+  const rfqPhase = String(latest?.status || "");
+  const liveFo = rfqPhase === "indication_sent" || rfqPhase === "firm_interest";
+  if (fo || (liveFo && !(desk && "mattThread" in desk && desk.mattThread))) {
+    const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages });
+    await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, route: turn.route, rfqCode: turn.rfqCode }, input.deliver);
+    return { reply: turn.reply, buyerId: buyer.id, desk: true };
+  }
+  if (desk && "event" in desk && desk.event !== "chat") return { reply: "", buyerId: buyer.id, desk: true };
+
   const gaps = identityFromBuyer(buyer);
   if (gaps.missing.length) {
     const turn = await runInvitedBuyerTurn({
@@ -66,10 +96,6 @@ async function continueKnown(input: {
     await outbound(input.phone, buyer.id, reply, { event: "start", agent: "whatsapp-buyer-desk" }, input.deliver);
     return { reply, buyerId: buyer.id };
   }
-
-  const desk = await recordBuyerInbound({ phone: input.phone, text: input.text, email: buyer.email }).catch(() => ({ event: "chat" as const }));
-  if (desk && "status" in desk) return { reply: "", buyerId: buyer.id, desk: true };
-  if (desk && "event" in desk && desk.event !== "chat") return { reply: "", buyerId: buyer.id, desk: true };
 
   const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages });
   await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode }, input.deliver);
@@ -117,9 +143,8 @@ export async function handleWhatsAppInbound(input: { from: string; body: string;
   const thread = buyer
     ? await listTradeThread({ channel: "whatsapp", buyerId: buyer.id, address: phone }).catch(() => [])
     : await listOrphanWhatsAppThread(phone).catch(() => []);
-  const inboundSoFar = thread.filter((row) => row.direction === "in").length;
-  const firstInbound = (!justLinked && inboundSoFar === 1) || (justLinked && inboundSoFar === 0);
-  if (firstInbound) {
+  const liveDesk = await buyerHasLiveDeskThread(phone).catch(() => false);
+  if (!liveDesk && isNewBuyerConversation(thread)) {
     await notifyBuyerConversationStarted({
       buyer: buyer?.contactName || input.name || phone,
       company: buyer?.companyName,

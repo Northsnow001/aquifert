@@ -327,6 +327,19 @@ function millDocsReq(deal: DeskDeal): string {
   return (deal.execution?.documentation || deal.firmOffer?.order.documents || "").trim();
 }
 
+/** Supplier-facing text may only show their quote. Never indication, margin, or buyer unit. */
+export function hideBuyerPriceFromSupplier(text: string, buyerPrice: number | null | undefined, supplierUnit: number) {
+  if (buyerPrice == null || !(buyerPrice > 0) || Math.abs(buyerPrice - supplierUnit) < 0.001) return text;
+  const tokens = new Set(
+    [String(buyerPrice), buyerPrice.toFixed(2), buyerPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })].filter(
+      (token) => token && token !== String(supplierUnit),
+    ),
+  );
+  let next = text;
+  for (const token of tokens) next = next.split(token).join("");
+  return next;
+}
+
 /** WeChat to the chosen mill after Matt emails the FO. Price is mill RFQ quote only. */
 export function millFirmOfferWeChat(deal: DeskDeal): MillFirmOfferPayload | null {
   const offer = selectedOffer(deal);
@@ -348,7 +361,7 @@ export function millFirmOfferWeChat(deal: DeskDeal): MillFirmOfferPayload | null
     .join(" | ");
   const line3 = [`${incoterm} ${destination}`.trim(), shipping ? `Ship: ${shipping}` : ""].filter(Boolean).join(" | ");
   const price = `${currency} ${offer.unitPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })} / MT`;
-  const millMessage = [
+  let millMessage = [
     `Firm Offer: AQ Trade ID ${deal.requestId}`,
     line2,
     line3,
@@ -358,6 +371,7 @@ export function millFirmOfferWeChat(deal: DeskDeal): MillFirmOfferPayload | null
   ]
     .filter(Boolean)
     .join("\n");
+  millMessage = hideBuyerPriceFromSupplier(millMessage, deal.buyerPrice, offer.unitPrice);
   return {
     event: "firm_offer_sent_mill",
     dealId: deal.id,

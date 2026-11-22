@@ -122,14 +122,31 @@ export async function fanOutBuyerRfq(rfqId: string, input?: { resendFailed?: boo
     } else failed += 1;
     await sleep(80);
   }
+  const extras = rfq.extras && typeof rfq.extras === "object" && !Array.isArray(rfq.extras)
+    ? (rfq.extras as Record<string, unknown>)
+    : {};
+  const firstFanout = !asText(extras.fanout_at);
   if (sent > 0 || asText(rfq.status) === "open" || asText(rfq.status) === "collecting") {
-    const extras = rfq.extras && typeof rfq.extras === "object" && !Array.isArray(rfq.extras)
-      ? (rfq.extras as Record<string, unknown>)
-      : {};
     await patchTradeRfq(rfqId, {
       status: "rfq_sent",
       extras: { ...extras, fanout_at: extras.fanout_at || new Date().toISOString() },
     });
+  }
+  if (firstFanout && (sent > 0 || failed > 0)) {
+    const desk = await getTradeRfqDesk(rfqId).catch(() => null);
+    await import("@/lib/trade/admin-alerts")
+      .then(({ notifyRfqSentToSuppliers }) =>
+        notifyRfqSentToSuppliers({
+          requestId: copy.tradeId,
+          product: copy.product,
+          buyer: [desk?.buyerContact, desk?.buyerCompany].filter(Boolean).join(" · "),
+          sent,
+          failed,
+          skipped,
+          total: suppliers.length,
+        }),
+      )
+      .catch(() => undefined);
   }
   return { sent, failed, skipped, total: suppliers.length, code: copy.tradeId };
 }

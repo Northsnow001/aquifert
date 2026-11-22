@@ -25,6 +25,9 @@ export type MailKind =
   | "buyer-whatsapp-invite"
   | "desk-shortlist-admin"
   | "buyer-chat-admin"
+  | "rfq-opened-admin"
+  | "rfq-fanout-admin"
+  | "buyer-yes-admin"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string; cid?: string };
