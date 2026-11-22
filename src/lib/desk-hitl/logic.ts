@@ -1,4 +1,4 @@
-import type { BuyerReplyKind, DeskDeal, DeskOffer } from "@/lib/desk-hitl/types";
+import type { BuyerReplyKind, DeskDeal, DeskExecution, DeskOffer } from "@/lib/desk-hitl/types";
 
 export function buyerUnitPrice(unitPrice: number, marginPct: number): number {
   const price = unitPrice * (1 + marginPct / 100);
@@ -331,6 +331,61 @@ export function indicationWhatsApp(deal: DeskDeal): string {
     "Reply YES to confirm firm interest, or tell us what you need changed.",
   ];
   return lines.join("\n");
+}
+
+export function emptyExecution(partial?: Partial<DeskExecution>): DeskExecution {
+  return {
+    packing: "",
+    origin: "",
+    destinationPort: "",
+    incoterm: "",
+    shipmentWindow: "",
+    paymentTerms: "",
+    inspection: "",
+    documentation: "",
+    specification: "",
+    urgency: "",
+    notes: "",
+    confirmedAt: "",
+    ...partial,
+  };
+}
+
+/** Fill the next blank commercial field from the buyer's WhatsApp answer. */
+export function applyBuyerTermAnswer(exec: DeskExecution, text: string): DeskExecution {
+  const value = text.trim().slice(0, 500);
+  if (!value) return exec;
+  if (!exec.packing) return { ...exec, packing: value };
+  if (!exec.paymentTerms) return { ...exec, paymentTerms: value };
+  if (!exec.origin) return { ...exec, origin: value };
+  if (!exec.inspection) return { ...exec, inspection: value };
+  return { ...exec, notes: [exec.notes, value].filter(Boolean).join(" · ") };
+}
+
+export function firmTermsRecap(exec: DeskExecution) {
+  return [
+    "Please confirm so we can prepare the firm offer:",
+    exec.packing ? `Packing: ${exec.packing}` : "",
+    exec.paymentTerms ? `Payment: ${exec.paymentTerms}` : "",
+    exec.origin ? `Origin: ${exec.origin}` : "",
+    exec.inspection ? `Inspection: ${exec.inspection}` : "",
+    "Reply YES if that is correct, or tell us what to change.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function nextFirmAsk(exec: DeskExecution): { kind: "question"; text: string } | { kind: "recap"; text: string } | { kind: "ready" } {
+  if (!exec.packing) {
+    return { kind: "question", text: "How would you like it packed — 25kg bags, jumbo bags, or bulk?" };
+  }
+  if (!exec.paymentTerms) {
+    return { kind: "question", text: "How would you like to pay — LC at sight, SBLC, CAD, or TT?" };
+  }
+  if (!exec.origin) {
+    return { kind: "question", text: "Any origin preference, or origins you cannot take?" };
+  }
+  return { kind: "recap", text: firmTermsRecap(exec) };
 }
 
 const num = (value: unknown) => {

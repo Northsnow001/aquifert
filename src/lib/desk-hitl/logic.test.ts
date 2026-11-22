@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -260,5 +260,19 @@ describe("indicationWhatsApp", () => {
     const text = indicationWhatsApp(deal);
     assert.match(text, /Indication: USD 432 \/ MT/);
     assert.match(text, /Reply YES/);
+  });
+});
+
+describe("firm terms after YES", () => {
+  it("asks packing, then payment, then a recap", () => {
+    let exec = emptyExecution();
+    assert.equal(nextFirmAsk(exec).kind, "question");
+    exec = applyBuyerTermAnswer(exec, "jumbo bags");
+    assert.equal(exec.packing, "jumbo bags");
+    assert.match(nextFirmAsk(exec).kind === "question" ? nextFirmAsk(exec).text : "", /pay/i);
+    exec = applyBuyerTermAnswer(exec, "LC at sight");
+    assert.equal(exec.paymentTerms, "LC at sight");
+    exec = applyBuyerTermAnswer(exec, "China ok");
+    assert.equal(nextFirmAsk(exec).kind, "recap");
   });
 });
