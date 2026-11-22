@@ -139,7 +139,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Tools",
     icon: Wrench,
     section: "AQ ONE",
-    tip: "Interactive references: a world map of terminals and producers, a production cost calculator driven by gas, rock and sulphur prices, how each fertiliser is made, and a glossary.",
+    tip: "World map, cost calculator, how fertilisers are made and a glossary, plus the freight intelligence map, your markets, producers, enquiries, lane calculator, reports, alerts and plans.",
   },
   {
     key: "order",
@@ -148,7 +148,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Buy",
     icon: ShoppingCart,
     section: "AQ ONE",
-    tip: "Register for Aquifert Zero, or tell the trading desk what you need, product, quantity, destination and target price, and get a quote back.",
+    tip: "Register for Aquifert Zero, follow your trades and documents, or tell the trading desk what you need and get a quote back.",
   },
   {
     key: "call",

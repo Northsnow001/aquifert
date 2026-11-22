@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, type MouseEvent } from "react";
+import { Suspense, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Crown, Lock, MessageCircle } from "lucide-react";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
+import { ToolsHeading, ToolsTabs } from "@/components/hub/tools-tabs";
 import markers from "@/data/tools-markers.json";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import type { Plan } from "@/lib/session-shared";
@@ -21,13 +22,6 @@ import {
 type Tab = "map" | "calc" | "how" | "glossary";
 type Layer = "nh3" | "urea" | "phos" | "mop";
 
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: "map", label: "World Map" },
-  { id: "calc", label: "Cost Calculator" },
-  { id: "how", label: "How It's Made" },
-  { id: "glossary", label: "Glossary" },
-];
-
 const LAYERS: Array<{ id: Layer; label: string; dot: string }> = [
   { id: "nh3", label: "NH₃ Terminals", dot: "bg-[#2e6da4]" },
   { id: "urea", label: "Urea Exporters", dot: "bg-[#6baa8e]" },
@@ -35,8 +29,18 @@ const LAYERS: Array<{ id: Layer; label: string; dot: string }> = [
   { id: "mop", label: "MOP / Potash Mines", dot: "bg-[#dc2626]" },
 ];
 
-export function ToolsBoard({ commentaryHtml, mapLocked = false, plan }: { commentaryHtml: string; mapLocked?: boolean; plan: Plan }) {
-  const [tab, setTab] = useState<Tab>("map");
+export function ToolsBoard({
+  commentaryHtml,
+  mapLocked = false,
+  plan,
+  view = "map",
+}: {
+  commentaryHtml: string;
+  mapLocked?: boolean;
+  plan: Plan;
+  view?: string;
+}) {
+  const tab: Tab = view === "calc" || view === "how" || view === "glossary" ? view : "map";
   const [layers, setLayers] = useState<Record<Layer, boolean>>({
     nh3: true,
     urea: true,
@@ -58,37 +62,10 @@ export function ToolsBoard({ commentaryHtml, mapLocked = false, plan }: { commen
 
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-5">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">AQ Trader Tools</h1>
-        <span className="rounded-full border border-border bg-s2 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-mid">
-          Beta
-        </span>
-      </div>
-
-      <div className="flex items-end border-b border-border">
-        {TABS.map((item) => {
-          const locked = mapLocked && item.id === "map";
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTab(item.id)}
-              title={locked ? `Included in ${PLAN_LABEL.growth} and ${PLAN_LABEL.enterprise}` : undefined}
-              className={`inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium ${
-                tab === item.id ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
-              }`}
-            >
-              {item.label}
-              {locked ? (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-navy-700 text-white">
-                  <Lock className="h-2.5 w-2.5" strokeWidth={2.6} aria-label="locked" />
-                </span>
-              ) : null}
-            </button>
-          );
-        })}
-        <span className="mb-2.5 ml-auto hidden text-[10px] text-dim md:block">Global fertiliser trade · interactive guide</span>
-      </div>
+      <ToolsHeading />
+      <Suspense fallback={<div className="h-10 border-b border-border" />}>
+        <ToolsTabs />
+      </Suspense>
 
       {tab === "map" && mapLocked ? <LockedMap plan={plan} urea={urea} /> : null}
 

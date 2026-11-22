@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { estimateLaneAction } from "@/app/admin/aq-analytics/actions";
-import { PRODUCTS, fmtUsd, vesselBand, type LaneEstimate } from "@/lib/aq-analytics/contracts";
+import { PRODUCTS, fmtUsd, vesselBand, type LaneEstimate, type LaneEstimateInput } from "@/lib/aq-analytics/contracts";
 import { btnPrimary, input, label } from "@/components/admin/ui";
 
 type Market = "normal" | "tight" | "soft";
@@ -12,10 +12,12 @@ export function CalculatorForm({
   loadPorts,
   dischPorts,
   initial,
+  estimate = estimateLaneAction,
 }: {
   loadPorts: PortOpt[];
   dischPorts: PortOpt[];
   initial: { load?: string; disch?: string; qty?: number; product?: string };
+  estimate?: (input: LaneEstimateInput) => Promise<{ ok: true; data: LaneEstimate } | { ok: false; message: string }>;
 }) {
   const [loadPort, setLoadPort] = useState(initial.load || loadPorts[0]?.port || "");
   const [dischPort, setDischPort] = useState(initial.disch || dischPorts[0]?.port || "");
@@ -35,7 +37,7 @@ export function CalculatorForm({
   async function run() {
     setPending(true);
     setError("");
-    const out = await estimateLaneAction({
+    const out = await estimate({
       loadPort,
       dischPort,
       product,

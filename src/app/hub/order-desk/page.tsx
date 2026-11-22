@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { OrderDeskBoard } from "@/components/hub/order-desk-board";
+import { OrderSectionNav } from "@/components/hub/order-section-nav";
 import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { ZeroPanel } from "@/components/hub/zero-panel";
@@ -31,26 +31,7 @@ export default async function OrderDeskPage({ searchParams }: { searchParams: Pr
         </p>
       </div>
 
-      {showZero ? (
-        <nav className="flex gap-1 rounded-full bg-black/[.05] p-1" aria-label="Order Desk sections">
-          {[
-            { href: "/hub/order-desk?tab=zero", label: "Aquifert Zero", active: zero, badge: "Soon" },
-            { href: "/hub/order-desk?tab=desk", label: "Trading Desk", active: !zero },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={item.active ? "page" : undefined}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-[15px] font-semibold no-underline transition ${
-                item.active ? "bg-white text-ink shadow-[0_1px_3px_rgb(16_38_59/0.12)]" : "text-mid hover:text-ink"
-              }`}
-            >
-              {item.label}
-              {item.badge ? <span className="rounded-full bg-[#fff4de] px-1.5 py-px font-mono text-[11px] uppercase tracking-wide text-[#9a5b00]">{item.badge}</span> : null}
-            </Link>
-          ))}
-        </nav>
-      ) : null}
+      <OrderSectionNav current={zero ? "zero" : "desk"} />
 
       {zero ? (
         <ZeroPanel
