@@ -272,7 +272,11 @@ export function isRfqRecapConfirm(text: string, geminiKind: RecapReplyKind | nul
 export function isRfqRecapMessage(text: string) {
   const t = text.trim();
   if (!t || /prepare the firm offer/i.test(t)) return false;
-  return /please confirm if .{0,160}details/i.test(t) && /product\s*:/i.test(t);
+  if (!/product\s*:/i.test(t)) return false;
+  if (/to recap your enquiry/i.test(t)) return true;
+  if (/please confirm if .{0,200}correct/i.test(t)) return true;
+  if (/please confirm if .{0,160}details/i.test(t)) return true;
+  return false;
 }
 
 export function lastAgentText(messages: Array<{ direction?: string; from?: string; body?: string; text?: string }>) {

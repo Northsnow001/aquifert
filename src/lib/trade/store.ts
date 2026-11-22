@@ -382,16 +382,12 @@ export async function getTradeRfqByCode(code: string) {
 const RFQ_LATEST_COLS =
   "id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, extras";
 
-export async function getLatestBuyerRfq(buyerId: string) {
+export async function getLatestBuyerRfq(buyerId: string, onlyStatus?: string) {
   const db = dataClient();
   if (!db) return null;
-  const { data, error } = await db
-    .from("trade_rfqs")
-    .select(RFQ_LATEST_COLS)
-    .eq("buyer_id", buyerId)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  let query = db.from("trade_rfqs").select(RFQ_LATEST_COLS).eq("buyer_id", buyerId);
+  if (onlyStatus) query = query.eq("status", onlyStatus);
+  const { data, error } = await query.order("updated_at", { ascending: false }).limit(1).maybeSingle();
   if (error) throw databaseError("load latest buyer RFQ", error);
   return data ? (data as Record<string, unknown>) : null;
 }

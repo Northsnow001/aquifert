@@ -9,6 +9,7 @@ import {
   isCourtesyMessage,
   isRfqRecapConfirm,
   isRfqRecapConfirmTurn,
+  isRfqRecapMessage,
   parseRecapReplyKind,
   nextMissingRfqField,
   parseRfqRecap,
@@ -347,6 +348,18 @@ describe("RFQ recap confirm", () => {
       false,
     );
     assert.equal(isRfqRecapConfirm("let's do it", "change"), false);
+    const millie = [
+      "Thank you. To recap your enquiry:",
+      "• Product: Millie IV (High spec)",
+      "• Quantity: 300 MT",
+      "• Packing: 50kg bags",
+      "• Incoterms / Port: CIF Delhi, India",
+      "• Shipping: Within 2 weeks",
+      "Please confirm if this is correct.",
+    ].join("\n");
+    assert.equal(isRfqRecapMessage(millie), true);
+    assert.equal(isRfqRecapConfirmTurn([{ direction: "out", body: millie }], "Yes correct"), true);
+    assert.equal(isRfqRecapMessage("Please confirm so we can prepare the firm offer:\nPacking: bulk"), false);
   });
 });
 

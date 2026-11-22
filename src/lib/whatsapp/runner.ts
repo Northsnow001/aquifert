@@ -372,10 +372,13 @@ export async function runKnownBuyerTurn(input: {
 }) {
   const greet = `Hi ${firstName(input.buyer)} — what fertiliser are you looking to cover?`;
   const product = productLabelFrom(input.text);
-  const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
-  const recentInbound = input.messages.filter((row) => row.direction === "in").slice(-8).map((row) => row.body);
   const recap = lastAgentText(input.messages);
   const recapShown = isRfqRecapMessage(recap);
+  let latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
+  if (recapShown && asString(latest?.status) !== "collecting") {
+    latest = (await getLatestBuyerRfq(input.buyer.id, "collecting").catch(() => null)) || latest;
+  }
+  const recentInbound = input.messages.filter((row) => row.direction === "in").slice(-8).map((row) => row.body);
   const recapKind =
     recapShown && !isRfqRecapConfirmTurn(input.messages, input.text)
       ? await classifyRecapReply({ recap, text: input.text })
@@ -398,11 +401,12 @@ export async function runKnownBuyerTurn(input: {
     geminiKind,
   });
   const forceNew = recapYes ? false : bind.startNew;
-  const phase = recapYes || forceNew ? "rfq" : bind.phase;
+  const phase = recapShown || recapYes || forceNew ? "rfq" : bind.phase;
   const collecting = phase === "rfq";
   const productTurn = collecting && looksLikeProduct(input.text);
   const productReply = `${product} — what quantity in MT, and which discharge port or country?`;
-  const draft = forceNew ? null : latest;
+  const intake = !asString(latest?.status) || asString(latest?.status) === "collecting";
+  const draft = forceNew || (recapYes && !intake) ? null : latest;
   const waitReply = waitingIndicationReply(asString(latest?.code), asString(latest?.product_label));
   const promptMessages = forceNew || collecting ? threadSinceNewTrade(input.messages, input.text) : input.messages;
   if (phase === "waiting_indication" && (bind.kind === "courtesy" || isCourtesyMessage(input.text))) {
