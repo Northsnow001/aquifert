@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferPackingAsk, indicationWhatsApp, isBareConfirm, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, rfqKey, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferPackingAsk, indicationWhatsApp, isBareConfirm, isIndicationAsk, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -485,12 +485,12 @@ export async function recordBuyerInbound(input: {
       status: "firm_interest",
       firmInterestAt: now(),
       buyerPhone: phone || deal.buyerPhone,
-      messages: [
+      messages: retireQueuedIndicationAsks([
         ...deal.messages,
         inbound,
         message({ from: "system", channel: "app", text: "Buyer agreed. Collecting packing and payment for the firm offer." }),
         packing,
-      ],
+      ]),
     }))!;
     await syncRfqStatus(saved.requestId, "firm_interest", {
       buyer_unit_price: saved.buyerPrice,
@@ -640,7 +640,7 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
     const saved = (await save({
       ...row,
       buyerPhone: phone || row.buyerPhone,
-      messages: [...row.messages, inbound, outbound],
+      messages: retireQueuedIndicationAsks([...row.messages, inbound, outbound]),
     }))!;
     return deliverDeskLines(saved, [outbound.id], undefined, phone || saved.buyerPhone);
   }
@@ -661,7 +661,11 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
       text: "Thanks — the firm offer is with the desk to review. We will send it when it is ready. No need to pay until you have the proforma.",
       outboundStatus: "queued",
     });
-    const saved = (await save({ ...parked, buyerPhone: phone || parked.buyerPhone, messages: [...parked.messages, thanks] }))!;
+    const saved = (await save({
+      ...parked,
+      buyerPhone: phone || parked.buyerPhone,
+      messages: retireQueuedIndicationAsks([...parked.messages, thanks]),
+    }))!;
     return deliverDeskLines(saved, [thanks.id], undefined, phone || saved.buyerPhone);
   }
   const merged = recapPending ? { ...exec, notes: [exec.notes, text.trim()].filter(Boolean).join(" · ") } : applyBuyerTermAnswer(exec, text);
@@ -676,7 +680,7 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
     ...row,
     buyerPhone: phone || row.buyerPhone,
     execution: merged,
-    messages: [...row.messages, inbound, outbound],
+    messages: retireQueuedIndicationAsks([...row.messages, inbound, outbound]),
   }))!;
   return deliverDeskLines(saved, [outbound.id], undefined, phone || saved.buyerPhone);
 }
@@ -758,6 +762,7 @@ export async function queuedWhatsApp() {
   for (const deal of deals) {
     for (const msg of deal.messages) {
       if (msg.from === "desk" && msg.channel === "whatsapp" && msg.outboundStatus === "queued") {
+        if (deal.status === "firm_interest" && isIndicationAsk(msg.text)) continue;
         out.push({ dealId: deal.id, messageId: msg.id, phone: deal.buyerPhone, text: msg.text, requestId: deal.requestId });
       }
     }

@@ -392,6 +392,21 @@ export function millFirmOfferWeChat(deal: DeskDeal): MillFirmOfferPayload | null
   };
 }
 
+export function isIndicationAsk(text: string): boolean {
+  return /reply yes to confirm firm interest/i.test(text);
+}
+
+/** Once they have said YES, never resend the indication WhatsApp. */
+export function retireQueuedIndicationAsks<T extends { from: string; text: string; outboundStatus?: "queued" | "sent" | "failed" }>(
+  messages: T[],
+): T[] {
+  return messages.map((msg) =>
+    msg.from === "desk" && msg.outboundStatus === "queued" && isIndicationAsk(msg.text)
+      ? { ...msg, outboundStatus: "sent" as const }
+      : msg,
+  );
+}
+
 export function indicationWhatsApp(deal: DeskDeal): string {
   const offer = selectedOffer(deal);
   const qty = deal.quantityMt ? `${deal.quantityMt} MT` : "your volume";

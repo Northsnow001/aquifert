@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, firmOfferPackingAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, firmOfferPackingAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -254,6 +254,15 @@ describe("hideBuyerPriceFromSupplier", () => {
 });
 
 describe("indicationWhatsApp", () => {
+  it("retires a queued indication after YES so it cannot resend", () => {
+    const retired = retireQueuedIndicationAsks([
+      { from: "desk", text: "Reply YES to confirm firm interest, or tell us what you need changed.", outboundStatus: "queued" as const },
+      { from: "desk", text: "How would you like it packed?", outboundStatus: "queued" as const },
+    ]);
+    assert.equal(retired[0].outboundStatus, "sent");
+    assert.equal(retired[1].outboundStatus, "queued");
+  });
+
   it("asks the buyer to reply YES", () => {
     const deal = {
       product: "DAP",

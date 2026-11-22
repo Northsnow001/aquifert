@@ -1,6 +1,7 @@
 import "server-only";
 
-import { buyerHasLiveDeskThread, recordBuyerInbound } from "@/lib/desk-hitl/store";
+import { isIndicationAsk } from "@/lib/desk-hitl/logic";
+import { buyerHasLiveDeskThread, markWhatsAppSent, recordBuyerInbound } from "@/lib/desk-hitl/store";
 import { isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
 import { notifyBuyerConversationStarted } from "@/lib/trade/admin-alerts";
 import {
@@ -59,9 +60,14 @@ async function continueKnown(input: {
     requestId: latest?.code ? String(latest.code) : undefined,
   }).catch(() => ({ event: "chat" as const }));
   if (desk && "messages" in desk) {
-    const queued = desk.messages.filter((row) => row.from === "desk" && row.outboundStatus === "queued");
+    const queued = desk.messages.filter((row) => {
+      if (row.from !== "desk" || row.outboundStatus !== "queued") return false;
+      if (desk.status === "firm_interest" && isIndicationAsk(row.text)) return false;
+      return true;
+    });
     for (const msg of queued) {
       await outbound(input.phone, buyer.id, msg.text, { event: "desk", dealId: desk.id }, input.deliver);
+      await markWhatsAppSent(desk.id, msg.id).catch(() => null);
     }
     if (queued.length || (desk.status === "negotiating" && desk.mattThread) || desk.status === "firm_interest") {
       const lastDesk = [...desk.messages].reverse().find((row) => row.from === "desk");
