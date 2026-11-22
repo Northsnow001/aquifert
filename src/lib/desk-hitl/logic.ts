@@ -13,8 +13,29 @@ export function fromEmailAddress(raw: unknown): string {
     return fromEmailAddress(first?.address || row.address || row.text || row.from);
   }
   const s = String(raw ?? "").trim();
+  if ((s.startsWith("{") || s.startsWith("[")) && s.includes("@")) {
+    try {
+      return fromEmailAddress(JSON.parse(s) as unknown);
+    } catch {
+      /* fall through */
+    }
+  }
   const m = s.match(/<([^>]+@[^>]+)>/) || s.match(/([^\s<>]+@[^\s<>]+)/);
   return (m ? m[1] : s).toLowerCase();
+}
+
+function decodeMimeHeader(value: string) {
+  const raw = String(value ?? "").trim();
+  const encoded = raw.match(/^=\?utf-8\?q\?([\s\S]*)\?=$/i);
+  const decoded = encoded
+    ? encoded[1].replace(/_/g, " ").replace(/=([0-9A-Fa-f]{2})/g, (_, h) => String.fromCharCode(Number.parseInt(h, 16)))
+    : raw;
+  return decoded.replace(/rfq=23/gi, "rfq#");
+}
+
+function isAquifertNoReply(email: string) {
+  const [local, domain] = email.split("@");
+  return domain === "aquifert.com" && (local === "noreply" || local === "no-reply");
 }
 
 export function rfqKeysFromText(value: string): string[] {
@@ -42,7 +63,7 @@ export function parseBuyerEmailReply(body: unknown): BuyerEmailReply | { ignore:
   const raw = body as Record<string, unknown>;
   if (String(raw.document ?? "").toLowerCase() === "proforma") return null;
   const nested = raw.body && typeof raw.body === "object" && !Array.isArray(raw.body) ? (raw.body as Record<string, unknown>) : raw;
-  const subject = String(nested.subject ?? nested.Subject ?? raw.subject ?? "").trim();
+  const subject = decodeMimeHeader(String(nested.subject ?? nested.Subject ?? raw.subject ?? "").trim());
   const text = String(nested.text ?? nested.snippet ?? nested.html ?? raw.text ?? raw.snippet ?? "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
@@ -50,7 +71,10 @@ export function parseBuyerEmailReply(body: unknown): BuyerEmailReply | { ignore:
   const from = fromEmailAddress(nested.from ?? nested.From ?? nested.headers ?? raw.from);
   const looksLikeMail = Boolean(subject || from.includes("@") || nested.snippet);
   if (!looksLikeMail) return null;
-  if (/proforma invoice/i.test(subject) && !/^\s*re\s*:/i.test(subject)) return { ignore: true };
+  if (isAquifertNoReply(from)) return { ignore: true };
+  const isReply = /^\s*(re|fw|fwd)\s*:/i.test(subject);
+  if (/proforma invoice/i.test(subject) && !isReply) return { ignore: true };
+  if (/\bfirm offer\b/i.test(subject) && !isReply) return { ignore: true };
   const requestId = rfqKeysFromText(subject)[0] || rfqKeysFromText(text)[0] || rfqKey(nested.requestId ?? nested.reference ?? raw.requestId);
   if (!from.includes("@") && !requestId) return { ignore: true };
   return {

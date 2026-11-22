@@ -961,7 +961,19 @@ async function parkProformaForReview(
       }),
     ],
   };
-  return (await save(next))!;
+  const saved = (await save(next))!;
+  await import("@/lib/trade/admin-alerts")
+    .then(({ notifyPiOnDesk }) =>
+      notifyPiOnDesk({
+        requestId: saved.requestId,
+        product: saved.product,
+        buyer: saved.buyerName || saved.buyerCompany || saved.buyerEmail || saved.buyerPhone,
+        channel,
+        dealId: saved.id,
+      }),
+    )
+    .catch(() => undefined);
+  return saved;
 }
 
 function textField(value: unknown, max = 500) {

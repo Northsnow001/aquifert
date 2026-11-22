@@ -30,6 +30,7 @@ export type MailKind =
   | "rfq-fanout-admin"
   | "buyer-yes-admin"
   | "firm-offer-desk-admin"
+  | "pi-desk-admin"
   | "supplier-quote-admin"
   | "indication-sent-admin"
   | "firm-offer-sent-admin"

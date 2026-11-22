@@ -294,6 +294,29 @@ describe("parseBuyerEmailReply", () => {
     assert.equal(parsed.kind, "agree");
   });
 
+  it("reads the Gmail trigger from-object and an FO- number", () => {
+    const parsed = parseBuyerEmailReply({
+      from: { value: [{ address: "deji@buyer.test", name: "Deji" }], text: "Deji <deji@buyer.test>" },
+      subject: "Re: Aquifert firm offer FO-0081 — Cursor IV",
+      text: "YES\n\nOn Sun, Aquifert wrote: Reply YES to this email to accept.",
+    });
+    assert.ok(parsed && !("ignore" in parsed));
+    assert.equal(parsed.from, "deji@buyer.test");
+    assert.equal(parsed.requestId, "81");
+    assert.equal(parsed.kind, "agree");
+  });
+
+  it("ignores the outbound firm-offer copy in the same inbox", () => {
+    assert.deepEqual(
+      parseBuyerEmailReply({
+        from: "Aquifert <noreply@aquifert.com>",
+        subject: "Aquifert firm offer FO-0081 — Cursor IV",
+        text: "Reply YES to this email to accept.",
+      }),
+      { ignore: true },
+    );
+  });
+
   it("skips outbound proforma mail", () => {
     assert.deepEqual(
       parseBuyerEmailReply({

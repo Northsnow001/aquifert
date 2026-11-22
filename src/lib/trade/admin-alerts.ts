@@ -279,6 +279,28 @@ export async function notifyFirmOfferSent(input: {
   });
 }
 
+export async function notifyPiOnDesk(input: {
+  requestId: string;
+  product: string;
+  buyer: string;
+  channel: string;
+  dealId: string;
+}) {
+  await mailAdmins({
+    kind: "pi-desk-admin",
+    subject: `Proforma on desk — ${input.requestId} — ${input.product}`,
+    heading: "Buyer accepted the firm offer",
+    preheader: `${input.requestId} PI is on the desk to review and send.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Buyer", input.buyer],
+      ["Product", input.product],
+      ["Accepted via", input.channel],
+      ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
+    ],
+  });
+}
+
 export async function notifyPiSent(input: {
   requestId: string;
   product: string;
