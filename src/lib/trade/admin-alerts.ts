@@ -180,6 +180,30 @@ export async function notifyNegotiationAwaitingMatt(input: {
   });
 }
 
+export async function notifyFirmOfferOnDesk(input: {
+  requestId: string;
+  product: string;
+  buyer: string;
+  packing: string;
+  payment: string;
+  dealId: string;
+}) {
+  await mailAdmins({
+    kind: "firm-offer-desk-admin",
+    subject: `Firm offer on desk — ${input.requestId} — ${input.product}`,
+    heading: "Firm offer ready for Matt",
+    preheader: `${input.requestId} is on the desk to review and send.`,
+    rows: [
+      ["Request", input.requestId],
+      ["Buyer", input.buyer],
+      ["Product", input.product],
+      ["Packing", input.packing],
+      ["Payment", input.payment],
+      ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
+    ],
+  });
+}
+
 export async function notifyBuyerAgreedIndication(input: {
   requestId: string;
   product: string;

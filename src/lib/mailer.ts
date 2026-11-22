@@ -28,6 +28,7 @@ export type MailKind =
   | "rfq-opened-admin"
   | "rfq-fanout-admin"
   | "buyer-yes-admin"
+  | "firm-offer-desk-admin"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string; cid?: string };

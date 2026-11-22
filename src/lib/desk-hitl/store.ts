@@ -705,7 +705,7 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
     const thanks = message({
       from: "desk",
       channel: "whatsapp",
-      text: "Thanks — the firm offer is with the desk to review. We will send it when it is ready. No need to pay until you have the proforma.",
+      text: "Thanks — the firm offer is with the desk to review. We will send it when it is ready.",
       outboundStatus: "queued",
     });
     const saved = (await save({
@@ -713,6 +713,18 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
       buyerPhone: phone || parked.buyerPhone,
       messages: retireQueuedIndicationAsks([...parked.messages, thanks]),
     }))!;
+    await import("@/lib/trade/admin-alerts")
+      .then(({ notifyFirmOfferOnDesk }) =>
+        notifyFirmOfferOnDesk({
+          requestId: saved.requestId,
+          product: saved.product,
+          buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
+          packing: confirmed.packing,
+          payment: confirmed.paymentTerms,
+          dealId: saved.id,
+        }),
+      )
+      .catch(() => undefined);
     return deliverDeskLines(saved, [thanks.id], undefined, phone || saved.buyerPhone);
   }
   const merged = recapPending ? { ...exec, notes: [exec.notes, text.trim()].filter(Boolean).join(" · ") } : applyBuyerTermAnswer(exec, text);
@@ -1024,7 +1036,22 @@ export async function saveFirmTerms(body: unknown): Promise<DeskDeal | { error: 
       }),
     ];
   }
-  return (await save(parked))!;
+  const saved = (await save(parked))!;
+  if (saved.firmOffer && next.firmOffer?.status !== "sent") {
+    await import("@/lib/trade/admin-alerts")
+      .then(({ notifyFirmOfferOnDesk }) =>
+        notifyFirmOfferOnDesk({
+          requestId: saved.requestId,
+          product: saved.product,
+          buyer: saved.buyerName || saved.buyerCompany || saved.buyerPhone,
+          packing: parsed.execution.packing,
+          payment: parsed.execution.paymentTerms,
+          dealId: saved.id,
+        }),
+      )
+      .catch(() => undefined);
+  }
+  return saved;
 }
 
 /** n8n WF11: park a proforma on the desk deal. Does not email the buyer. */
