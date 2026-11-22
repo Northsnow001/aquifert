@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isIndicationAsk } from "@/lib/desk-hitl/logic";
-import { bindInboundToTrade, isRfqRecapConfirmTurn } from "@/lib/whatsapp/rfq-collect-logic";
+import { bindInboundToTrade, isRfqRecapMessage, lastAgentText } from "@/lib/whatsapp/rfq-collect-logic";
 import { buyerHasLiveDeskThread, markWhatsAppSent, recordBuyerInbound } from "@/lib/desk-hitl/store";
 import { isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
 import { notifyBuyerConversationStarted } from "@/lib/trade/admin-alerts";
@@ -62,7 +62,7 @@ async function continueKnown(input: {
     latestProduct: latest ? String(latest.product_label || "") : "",
   });
   const startingNew = bind.startNew;
-  if (isRfqRecapConfirmTurn(messages, input.text)) {
+  if (isRfqRecapMessage(lastAgentText(messages)) && !startingNew) {
     const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages, phase: "rfq" });
     await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode, route: turn.route }, input.deliver);
     if (turn.fanout && turn.rfqId) {

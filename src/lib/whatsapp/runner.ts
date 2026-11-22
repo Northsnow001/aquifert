@@ -19,6 +19,7 @@ import { identityFromParts, mergeIdentity } from "@/lib/whatsapp/buyer-identity"
 import { asString, parseJsonObject } from "@/lib/wechat/agent-parse";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 import {
+  RECAP_REPLY_PROMPT,
   TRADE_BIND_PROMPT,
   bindInboundToTrade,
   buyerPhaseFromStatus,
@@ -26,12 +27,16 @@ import {
   hasNewTradeIntent,
   isolateExtractToTrade,
   isCourtesyMessage,
+  isRfqRecapConfirm,
   isRfqRecapConfirmTurn,
+  isRfqRecapMessage,
   lastAgentText,
+  parseRecapReplyKind,
   parseRfqRecap,
   shouldNotifyTradeOpened,
   threadSinceNewTrade,
   waitingIndicationReply,
+  type RecapReplyKind,
   type TradeBindKind,
 } from "@/lib/whatsapp/rfq-collect-logic";
 
@@ -203,6 +208,20 @@ async function classifyTradeBind(input: {
   return null;
 }
 
+async function classifyRecapReply(input: { recap: string; text: string }): Promise<RecapReplyKind | null> {
+  if (!geminiKey()) return null;
+  try {
+    const data = await askGemini(
+      RECAP_REPLY_PROMPT,
+      [`Last recap:\n${input.recap.slice(0, 1200)}`, `Reply: ${input.text}`].join("\n\n"),
+    );
+    return parseRecapReplyKind(data.kind);
+  } catch (error) {
+    console.error("[recap-reply]", error instanceof Error ? error.message : error);
+  }
+  return null;
+}
+
 function extrasOf(rfq: Record<string, unknown> | null) {
   const extras = rfq?.extras;
   return extras && typeof extras === "object" && !Array.isArray(extras) ? (extras as Record<string, unknown>) : {};
@@ -261,7 +280,7 @@ function firstName(buyer: TradeBuyer) {
 
 function looksLikeProduct(text: string) {
   const t = text.trim().replace(/^['"`]+|['"`]+$/g, "");
-  if (!t || t.length > 80 || isCourtesyMessage(t) || hasNewTradeIntent(t)) return false;
+  if (!t || t.length > 80 || isCourtesyMessage(t) || hasNewTradeIntent(t) || isRfqRecapConfirm(t)) return false;
   if (/@/.test(t) || /https?:/i.test(t)) return false;
   if (/^(yes|no|correct|go ahead|proceed|thanks|thank you|ok|okay)\b/i.test(t)) return false;
   return true;
@@ -354,7 +373,13 @@ export async function runKnownBuyerTurn(input: {
   const product = productLabelFrom(input.text);
   const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
   const recentInbound = input.messages.filter((row) => row.direction === "in").slice(-8).map((row) => row.body);
-  const recapYes = isRfqRecapConfirmTurn(input.messages, input.text);
+  const recap = lastAgentText(input.messages);
+  const recapShown = isRfqRecapMessage(recap);
+  const recapKind =
+    recapShown && !isRfqRecapConfirmTurn(input.messages, input.text)
+      ? await classifyRecapReply({ recap, text: input.text })
+      : null;
+  const recapYes = recapShown && isRfqRecapConfirmTurn(input.messages, input.text, recapKind);
   const geminiKind = recapYes
     ? null
     : await classifyTradeBind({
@@ -433,7 +458,7 @@ export async function runKnownBuyerTurn(input: {
       }
     }
     if (collecting) {
-      const coerced = coerceRfqPhaseTurn({ route, reply, extract, text: input.text });
+      const coerced = coerceRfqPhaseTurn({ route, reply, extract, text: input.text, recapKind });
       route = coerced.route;
       reply = coerced.reply;
       extract = coerced.extract;

@@ -9,6 +9,7 @@ import {
   isCourtesyMessage,
   isRfqRecapConfirm,
   isRfqRecapConfirmTurn,
+  parseRecapReplyKind,
   nextMissingRfqField,
   parseRfqRecap,
   productsDiffer,
@@ -323,6 +324,18 @@ describe("RFQ recap confirm", () => {
       true,
     );
     assert.equal(isRfqRecapConfirm("yes I need a new request"), false);
+    assert.equal(isRfqRecapConfirm("good to go"), true);
+    assert.equal(parseRecapReplyKind("confirm"), "confirm");
+    assert.equal(parseRecapReplyKind("yes"), "confirm");
+    assert.equal(
+      isRfqRecapConfirmTurn([{ direction: "out", body: recap }], "let's do it", "confirm"),
+      true,
+    );
+    assert.equal(
+      isRfqRecapConfirmTurn([{ direction: "out", body: recap }], "let's do it"),
+      false,
+    );
+    assert.equal(isRfqRecapConfirm("let's do it", "change"), false);
   });
 });
 

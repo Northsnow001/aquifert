@@ -15,6 +15,7 @@ import type { TradeMessage, TradeSupplier, WechatChatState } from "@/lib/trade/t
 import { MATT_GUARD } from "@/lib/wechat/agent-defs";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 import { asBool, asString, parseJsonObject } from "@/lib/wechat/agent-parse";
+import { RECAP_REPLY_PROMPT, parseRecapReplyKind } from "@/lib/whatsapp/rfq-collect-logic";
 import {
   THANKS_QUOTE,
   WAIT_WEEKLY,
@@ -46,6 +47,17 @@ function historyBlock(messages: TradeMessage[]) {
     .slice(-12)
     .map((row) => `${row.direction === "in" ? "Supplier" : "Matt"}: ${row.body}`)
     .join("\n");
+}
+
+async function classifyMillRecapReply(recap: string, text: string) {
+  if (!geminiKey()) return false;
+  try {
+    const data = await askGemini(RECAP_REPLY_PROMPT, [`Last recap:\n${recap.slice(0, 1200)}`, `Reply: ${text}`].join("\n\n"));
+    return parseRecapReplyKind(data.kind) === "confirm";
+  } catch (error) {
+    console.error("[mill-recap-reply]", error instanceof Error ? error.message : error);
+    return false;
+  }
 }
 
 async function askGemini(system: string, user: string) {
@@ -239,8 +251,19 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     }
   };
   const armed = !weekly && rfqQuoteArmed(state.stage, pendingRfq);
-  if (!weekly && pendingRfq && state.stage === "awaiting_quote_confirm" && isMillQuoteConfirm(input.text)) {
-    const draft = mergeOfferWithRfq(offerSlice(state.captured, pendingRfq, input.text), rfq, pendingRfq);
+  const millRecapDraft =
+    !weekly && pendingRfq
+      ? mergeOfferWithRfq(offerSlice(state.captured, pendingRfq, input.text), rfq, pendingRfq)
+      : null;
+  const millConfirm =
+    Boolean(pendingRfq && state.stage === "awaiting_quote_confirm" && millRecapDraft) &&
+    (isMillQuoteConfirm(input.text) ||
+      (!looksLikePriceOnly(input.text) &&
+        !looksLikeQuote(input.text) &&
+        !looksLikeMillOriginPort(input.text) &&
+        (await classifyMillRecapReply(millQuoteRecap(millRecapDraft!, pendingRfq), input.text))));
+  if (!weekly && pendingRfq && millConfirm && millRecapDraft) {
+    const draft = millRecapDraft;
     if (draft.unit_price) {
       await writeQuote(input.supplier, draft, false, false, rfq);
       const gaps = millOriginPortGaps({ origin: draft.origin, load_port: draft.load_port });
@@ -318,7 +341,7 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     state.stage !== "awaiting_quote_confirm" &&
     !looksLikeQuote(input.text) &&
     !waitingForWeekly(input.text) &&
-    !isMillQuoteConfirm(input.text) &&
+    !millConfirm &&
     !/^(no|not now|nothing|no offer|不|不用|没有|暂时没有|暂无|无报价)([\s!.]*)$/i.test(input.text.trim())
   ) {
     await saveSupplierChatState(input.supplier.id, { ...state, stage: "rfq_followup", rfqId: pendingRfq });

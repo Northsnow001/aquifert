@@ -111,6 +111,23 @@ Return JSON only: {"kind":"courtesy"|"same_trade"|"new_trade"|"unclear"}
 - unclear: if unsure. Prefer same_trade over new_trade when a live Trade ID exists.
 Never treat thanks or okay as a product name.`;
 
+export type RecapReplyKind = "confirm" | "change" | "other";
+
+export const RECAP_REPLY_PROMPT = `You classify a reply that came immediately after a recap (buyer RFQ or mill quote).
+Return JSON only: {"kind":"confirm"|"change"|"other"}
+- confirm: they accept the recap as written. Any natural yes: yes, yes correct, good to go, that's right, proceed, looks good, sounds good, 确认, 好的, 没问题.
+- change: they want a field changed, or they say no / not quite / make packing bulk / 6000 MT.
+- other: greeting, new enquiry, thanks-only with no accept, or not a decision on this recap.
+Never treat a new product name as confirm. Never invent a Trade ID.`;
+
+export function parseRecapReplyKind(value: unknown): RecapReplyKind | null {
+  const kind = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (kind === "confirm" || kind === "yes" || kind === "agree") return "confirm";
+  if (kind === "change" || kind === "no" || kind === "reject") return "change";
+  if (kind === "other" || kind === "chat") return "other";
+  return null;
+}
+
 /** Open a new collecting RFQ instead of writing onto a live or confirmed request. */
 export function shouldStartNewRfq(input: {
   text: string;
@@ -216,13 +233,16 @@ export function rfqCollectComplete(extract: RfqExtract) {
   return !nextMissingRfqField(extract);
 }
 
-export function isRfqRecapConfirm(text: string) {
+export function isRfqRecapConfirm(text: string, geminiKind: RecapReplyKind | null = null) {
   const t = text.trim();
-  if (!t || t.length > 80 || NEW_TRADE_PHRASE.test(t)) return false;
+  if (!t || NEW_TRADE_PHRASE.test(t)) return false;
+  if (geminiKind === "confirm") return true;
+  if (geminiKind === "change") return false;
+  if (t.length > 120) return false;
   if (/^(yes|yep|yeah|ok|okay|sure|correct|confirmed|go ahead|proceed)([\s!.]*)$/i.test(t)) return true;
   if (/^(yes|yep|yeah|ok|okay|sure)[\s,!.-]+(that'?s\s+|it'?s\s+)?(correct|right|confirmed|fine|good|ok|okay)\b[\s!.]*$/i.test(t)) return true;
-  if (/^(all\s+)?(correct|confirmed|looks\s+good|sounds\s+good)[\s!.]*$/i.test(t)) return true;
-  return false;
+  if (/^(all\s+)?(correct|confirmed|looks\s+good|sounds\s+good|good to go)[\s!.]*$/i.test(t)) return true;
+  return geminiKind === "confirm";
 }
 
 export function isRfqRecapMessage(text: string) {
@@ -242,8 +262,9 @@ export function lastAgentText(messages: Array<{ direction?: string; from?: strin
 export function isRfqRecapConfirmTurn(
   messages: Array<{ direction?: string; from?: string; body?: string; text?: string }>,
   text: string,
+  geminiKind: RecapReplyKind | null = null,
 ) {
-  return isRfqRecapConfirm(text) && isRfqRecapMessage(lastAgentText(messages));
+  return isRfqRecapMessage(lastAgentText(messages)) && isRfqRecapConfirm(text, geminiKind);
 }
 
 export function parseRfqRecap(text: string) {
@@ -300,16 +321,18 @@ export function coerceRfqPhaseTurn(input: {
   reply: string;
   extract: RfqExtract;
   text: string;
+  recapKind?: RecapReplyKind | null;
 }) {
   let route = input.route;
   let reply = input.reply;
   const extract = input.extract;
-  if (isRfqRecapConfirm(input.text) && rfqCollectComplete(extract)) {
+  const confirmed = isRfqRecapConfirm(input.text, input.recapKind ?? null);
+  if (confirmed && rfqCollectComplete(extract)) {
     return { route: "rfq_ready", reply, extract };
   }
   const jumped = looksLikeCommercialJump(reply, route);
   if (jumped) route = "rfq_collect";
-  if (route === "rfq_ready" && (!rfqCollectComplete(extract) || !isRfqRecapConfirm(input.text))) {
+  if (route === "rfq_ready" && (!rfqCollectComplete(extract) || !confirmed)) {
     route = "rfq_collect";
   }
   if (jumped) {
@@ -318,10 +341,14 @@ export function coerceRfqPhaseTurn(input: {
   } else if (route === "rfq_ready" && !rfqCollectComplete(extract)) {
     const missing = nextMissingRfqField(extract);
     reply = missing ? notedAsk(extract, missing.ask) : rfqRecapText(extract);
-  } else if (route !== "rfq_ready" && rfqCollectComplete(extract) && !isRfqRecapConfirm(input.text)) {
-    route = "rfq_collect";
-    if (!/please confirm if the following details are correct/i.test(reply)) {
-      reply = rfqRecapText(extract);
+  } else if (route !== "rfq_ready" && rfqCollectComplete(extract) && !confirmed) {
+    if (input.recapKind === "other") {
+      route = "chat";
+    } else {
+      route = "rfq_collect";
+      if (!/please confirm if the following details are correct/i.test(reply)) {
+        reply = rfqRecapText(extract);
+      }
     }
   }
   return { route, reply, extract };
