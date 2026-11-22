@@ -867,12 +867,19 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
     ],
   };
   const saved = (await save(next))!;
+  const millEmail = await millSupplierEmail({
+    supplierName: offer.supplierName,
+    wechatOpenId: offer.wechatOpenId || "",
+  });
+  const millEmailStatus = await emailSupplierPack(saved, offer, millEmail);
   await import("@/lib/trade/admin-alerts")
     .then(({ notifySupplierPackIssued }) =>
       notifySupplierPackIssued({
         requestId: saved.requestId,
         product: saved.product,
         supplier: offer.supplierName,
+        millEmail,
+        millEmailStatus,
         dealId: saved.id,
       }),
     )
@@ -893,7 +900,7 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
     loadPort: offer.loadPort,
     packing: saved.execution?.packing || offer.notes,
     supplierName: offer.supplierName,
-    supplierEmail: await supplierEmailFor(offer.supplierName),
+    supplierEmail: millEmail,
     supplierUnitPrice: offer.unitPrice,
     currency: offer.currency || saved.currency,
     supplierOpenId: offer.wechatOpenId ?? "",
@@ -903,6 +910,91 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
   };
   await Promise.all([...urls].map((url) => notify(url, payload)));
   return saved;
+}
+
+async function emailSupplierPack(
+  deal: DeskDeal,
+  offer: NonNullable<ReturnType<typeof selectedOffer>>,
+  millEmail: string,
+) {
+  if (!millEmail.includes("@")) {
+    const latest = (await getRecord(DESK_DEALS, deal.id)) ?? deal;
+    await save({
+      ...latest,
+      messages: [
+        ...latest.messages,
+        message({
+          from: "system",
+          channel: "email",
+          text: `No email on file for ${offer.supplierName}. Supplier pack was not emailed.`,
+        }),
+      ],
+    });
+    return "missing_supplier_email";
+  }
+  try {
+    const po = supplierDocumentFromDeal(deal, "purchase_order");
+    const contract = supplierDocumentFromDeal(deal, "purchase_contract");
+    const docs = supplierDocumentFromDeal(deal, "documentary_instructions");
+    if (!po || !contract || !docs) return "missing_docs";
+    const [{ getDeskSettings }, { millSupplierPackEmail }, { sendEmail }, { buildFirmOrderPdf, firmOrderFilename }] = await Promise.all([
+      import("@/lib/desk-settings/store"),
+      import("@/lib/email/templates"),
+      import("@/lib/mailer"),
+      import("@/lib/firm-order/pdf"),
+    ]);
+    const settings = await getDeskSettings();
+    const priceLine = `${offer.currency || deal.currency || "USD"} ${offer.unitPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })} / MT`;
+    const copy = millSupplierPackEmail({
+      requestId: deal.requestId,
+      supplierName: offer.supplierName,
+      product: deal.product,
+      quantityMt: deal.quantityMt ?? offer.quantityMt,
+      priceLine,
+    });
+    const attachments = [];
+    for (const order of [po, contract, docs]) {
+      attachments.push({
+        filename: firmOrderFilename(order),
+        content: await buildFirmOrderPdf(order),
+        contentType: "application/pdf",
+      });
+    }
+    const mailed = await sendEmail(
+      { kind: "supplier-pack-mill", to: millEmail, subject: copy.subject, html: copy.html, text: copy.text, attachments },
+      settings.delivery,
+    );
+    const latest = (await getRecord(DESK_DEALS, deal.id)) ?? deal;
+    await save({
+      ...latest,
+      messages: [
+        ...latest.messages,
+        message({
+          from: "system",
+          channel: "email",
+          text:
+            mailed.status === "sent"
+              ? `Supplier pack emailed to ${offer.supplierName} <${millEmail}> at ${priceLine}.`
+              : `Supplier pack email to ${offer.supplierName} <${millEmail}> was ${mailed.status}${mailed.error ? `: ${mailed.error}` : ""}.`,
+        }),
+      ],
+    });
+    return mailed.status;
+  } catch (error) {
+    const latest = (await getRecord(DESK_DEALS, deal.id)) ?? deal;
+    await save({
+      ...latest,
+      messages: [
+        ...latest.messages,
+        message({
+          from: "system",
+          channel: "email",
+          text: `Supplier pack email to ${offer.supplierName} failed: ${error instanceof Error ? error.message : "send error"}.`,
+        }),
+      ],
+    });
+    return "failed";
+  }
 }
 
 function findDealForPi(deals: DeskDeal[], requestId: string, phone: string, email = "") {

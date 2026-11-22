@@ -36,6 +36,7 @@ export type MailKind =
   | "firm-offer-sent-admin"
   | "pi-sent-admin"
   | "supplier-pack-admin"
+  | "supplier-pack-mill"
   | "rfq-submitted-admin"
   | "test";
 

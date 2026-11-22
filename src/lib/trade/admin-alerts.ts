@@ -328,6 +328,8 @@ export async function notifySupplierPackIssued(input: {
   product: string;
   supplier: string;
   dealId: string;
+  millEmail?: string;
+  millEmailStatus?: string;
 }) {
   await mailAdmins({
     kind: "supplier-pack-admin",
@@ -338,6 +340,8 @@ export async function notifySupplierPackIssued(input: {
       ["Request", input.requestId],
       ["Supplier", input.supplier],
       ["Product", input.product],
+      ["Supplier email", input.millEmail || "not on file"],
+      ["Supplier email status", input.millEmailStatus || ""],
       ["Open desk", `${origin()}/admin/desk/${input.dealId}`],
     ],
   });

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { saveSalesContractDraftAction, sendSalesContractAndSupplierPackAction } from "@/app/admin/desk/actions";
+import { issueSupplierPackAction, saveSalesContractDraftAction, sendSalesContractAndSupplierPackAction } from "@/app/admin/desk/actions";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import { valuesFromPi, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import { salesContractFromPi } from "@/lib/firm-order/from-deal";
@@ -68,7 +68,19 @@ export function SalesContractEditor({ deal }: { deal: DeskDeal }) {
         toast.error(result.message);
         return;
       }
-      toast.success("Sales contract emailed to the buyer. Supplier pack queued for n8n.");
+      toast.success("Sales contract emailed to the buyer. Supplier pack emailed to the mill at their quoted unit.");
+      router.refresh();
+    });
+  };
+
+  const sendPack = () => {
+    start(async () => {
+      const result = await issueSupplierPackAction({ id: deal.id });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Supplier pack emailed to the mill at their quoted unit.");
       router.refresh();
     });
   };
@@ -168,6 +180,11 @@ export function SalesContractEditor({ deal }: { deal: DeskDeal }) {
             <button type="button" disabled={pending} onClick={send} className={btnPrimary}>
               {pending ? "Sending…" : contract?.status === "sent" ? "Send again" : "Send sales contract & supplier pack"}
             </button>
+            {contract?.status === "sent" ? (
+              <button type="button" disabled={pending} onClick={sendPack} className={btnSecondary}>
+                {pending ? "Sending…" : "Email supplier pack"}
+              </button>
+            ) : null}
           </div>
         </form>
         <div className="min-h-[28rem]">

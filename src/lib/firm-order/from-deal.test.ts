@@ -111,6 +111,8 @@ describe("firmOrderFromDeal", () => {
     assert.ok(pack);
     assert.equal(pack.unit_price_usd, 205);
     assert.equal(pack.supplier.name, "Harbour Fertiliser");
+    assert.equal(pack.buyer.name, "Aquifert Limited");
+    assert.equal(pack.buyer.email, null);
   });
 
   it("WhatsApp execution terms fill packing, origin, payment and window on buyer and supplier docs", () => {

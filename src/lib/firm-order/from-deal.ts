@@ -1,6 +1,7 @@
 import { selectedOffer } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 import {
+  AQUIFERT_PO_ISSUER,
   DEFAULT_PO_ADDITIONAL,
   contractReference,
   firmOfferNumber,
@@ -202,9 +203,9 @@ export function firmOrderFromDeal(deal: DeskDeal): FirmOrderDraft | null {
       wechat_open_id: offer.wechatOpenId ?? "",
     },
     buyer: {
-      name: deal.buyerName || null,
-      email: deal.buyerEmail || null,
-      phone: deal.buyerPhone || null,
+      name: AQUIFERT_PO_ISSUER.name,
+      email: null,
+      phone: null,
     },
     product: deal.product,
     form_grade,

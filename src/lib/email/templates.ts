@@ -266,6 +266,34 @@ export function millFirmOfferEmail(input: {
   });
 }
 
+export function millSupplierPackEmail(input: {
+  requestId: string;
+  supplierName: string;
+  product: string;
+  quantityMt: number | null;
+  priceLine: string;
+}): ComposedEmail {
+  const first = firstName(input.supplierName) || "there";
+  const qty = input.quantityMt ? `${input.quantityMt} MT ` : "";
+  return compose(`Aquifert supplier documents ${input.requestId} — ${input.product}`, {
+    title: `Supplier documents ${input.requestId}`,
+    preheader: `${qty}${input.product} at ${input.priceLine}. Purchase order, purchase contract and documentary instructions attached.`,
+    tagline: "Transparent Global Fertiliser Access",
+    eyebrow: "Supplier documents",
+    heading: `Hello ${first}`,
+    blocks: [
+      {
+        kind: "text",
+        html: inline(
+          `Please find attached the purchase order, purchase contract and documentary instructions for **${input.requestId}**. Price is **your quoted unit** (${input.priceLine}).`,
+        ),
+      },
+    ],
+    footerNote: "You received this because Aquifert selected your quote for this trade.",
+    deskEmail: DESK_EMAIL,
+  });
+}
+
 /** Short alert for the desk inbox. Rows are label, value. */
 export function deskAlertEmail(input: { subject: string; heading: string; preheader: string; rows: Array<[string, string]> }): ComposedEmail {
   const rows = input.rows.filter(([, value]) => value.trim());
