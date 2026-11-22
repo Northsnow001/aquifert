@@ -36,7 +36,18 @@ describe("nextSupplierChat", () => {
       text: "1000",
     });
     assert.match(turn.reply, /USD 1000\/MT for rfq#089/i);
-    assert.equal(turn.nextStage, "");
+    assert.match(turn.reply, /origin and load port/i);
+    assert.equal(turn.nextStage, "awaiting_origin_port");
+  });
+
+  test("asks origin and load port again instead of greeting", () => {
+    const turn = nextSupplierChat({
+      stage: "awaiting_origin_port",
+      confirmedRfqId: "rfq#089",
+      text: "ok",
+    });
+    assert.match(turn.reply, /origin and load port for rfq#089/i);
+    assert.equal(turn.nextStage, "awaiting_origin_port");
   });
 
   test("asks for the USD price when the RFQ reply is unclear", () => {

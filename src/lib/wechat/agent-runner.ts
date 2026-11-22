@@ -15,13 +15,25 @@ import type { TradeMessage, TradeSupplier, WechatChatState } from "@/lib/trade/t
 import { MATT_GUARD } from "@/lib/wechat/agent-defs";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 import { asBool, asString, parseJsonObject } from "@/lib/wechat/agent-parse";
-import { THANKS_QUOTE, WAIT_WEEKLY, askRfqPrice, looksLikeQuote, nextSupplierChat, thanksForPrice, waitingForWeekly } from "@/lib/wechat/chat";
+import {
+  THANKS_QUOTE,
+  WAIT_WEEKLY,
+  askMillOriginPort,
+  askRfqPrice,
+  looksLikeQuote,
+  nextSupplierChat,
+  thanksForPriceAndAskOriginPort,
+  waitingForWeekly,
+} from "@/lib/wechat/chat";
 import {
   buyerRequestFieldNames,
   filterMissingFields,
+  looksLikeMillOriginPort,
   looksLikePriceOnly,
   mergeOfferWithRfq,
+  millOriginPortGaps,
   parseBareOffer,
+  parseMillOriginPort,
   resolveQuoteRfqCode,
   rfqQuoteArmed,
   type OfferSlice,
@@ -108,6 +120,21 @@ async function writeQuote(supplier: TradeSupplier, offer: OfferSlice, weekly: bo
   return merged;
 }
 
+function offerRecord(offer: OfferSlice): Record<string, unknown> {
+  return { ...offer };
+}
+
+function applyMillOriginPort(offer: OfferSlice, text: string): OfferSlice {
+  const extra = parseMillOriginPort(text);
+  return {
+    ...offer,
+    origin: extra.origin || offer.origin,
+    load_port: extra.load_port || offer.load_port,
+    incoterms: extra.incoterms || offer.incoterms,
+    raw_body: [offer.raw_body, text].filter(Boolean).join("\n"),
+  };
+}
+
 function backfillPrice(slice: OfferSlice, text: string) {
   if (!looksLikeQuote(text)) return slice;
   const bare = parseBareOffer(text);
@@ -192,24 +219,56 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
   };
   const armed = !weekly && rfqQuoteArmed(state.stage, pendingRfq);
   if (!weekly && looksLikePriceOnly(input.text) && pendingRfq) {
-    await persistBareQuote();
-    const price = parseBareOffer(input.text).unit_price;
+    const saved = (await persistBareQuote()) || mergeOfferWithRfq(parseBareOffer(input.text), rfq, pendingRfq);
+    const gaps = millOriginPortGaps(saved);
     await saveSupplierChatState(input.supplier.id, {
       ...state,
-      stage: "",
+      stage: gaps.length ? "awaiting_origin_port" : "",
       rfqId: pendingRfq,
       followUpCount: 0,
-      captured: {},
+      missingFields: gaps,
+      captured: gaps.length ? offerRecord(saved) : {},
     });
     return {
-      reply: thanksForPrice(pendingRfq, price),
-      nextStage: "",
+      reply: thanksForPriceAndAskOriginPort(pendingRfq, saved.unit_price, gaps),
+      nextStage: gaps.length ? "awaiting_origin_port" : "",
       agent: "wechat-supplier-quote" as const,
       usedGemini: false,
     };
   }
+  if (!weekly && state.stage === "awaiting_origin_port" && pendingRfq) {
+    const prev = mergeOfferWithRfq(offerSlice(state.captured, pendingRfq, input.text), rfq, pendingRfq);
+    if (looksLikeMillOriginPort(input.text) || looksLikeQuote(input.text)) {
+      const saved = await writeQuote(input.supplier, applyMillOriginPort(prev, input.text), false, false, rfq);
+      const gaps = millOriginPortGaps(saved);
+      await saveSupplierChatState(input.supplier.id, {
+        ...state,
+        stage: gaps.length ? "awaiting_origin_port" : "",
+        rfqId: pendingRfq,
+        followUpCount: 0,
+        missingFields: gaps,
+        captured: gaps.length ? offerRecord(saved) : {},
+      });
+      return {
+        reply: gaps.length ? askMillOriginPort(pendingRfq, gaps) : THANKS_QUOTE,
+        nextStage: gaps.length ? "awaiting_origin_port" : "",
+        agent: "wechat-supplier-quote" as const,
+        usedGemini: false,
+      };
+    }
+    if (!looksLikeQuote(input.text) && !waitingForWeekly(input.text) && !/^(no|not now|nothing|no offer|不|不用|没有|暂时没有|暂无|无报价)([\s!.]*)$/i.test(input.text.trim())) {
+      await saveSupplierChatState(input.supplier.id, { ...state, stage: "awaiting_origin_port", rfqId: pendingRfq });
+      return {
+        reply: askMillOriginPort(pendingRfq, millOriginPortGaps(prev)),
+        nextStage: "awaiting_origin_port",
+        agent: "wechat-supplier-quote" as const,
+        usedGemini: false,
+      };
+    }
+  }
   if (
     armed &&
+    state.stage !== "awaiting_origin_port" &&
     !looksLikeQuote(input.text) &&
     !waitingForWeekly(input.text) &&
     !/^(no|not now|nothing|no offer|不|不用|没有|暂时没有|暂无|无报价)([\s!.]*)$/i.test(input.text.trim())
@@ -266,16 +325,27 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     const preview = weekly
       ? offerSlice(captured, asString(data.rfq_id), input.text)
       : mergeOfferWithRfq(backfillPrice(offerSlice(captured, asString(data.rfq_id), input.text), input.text), rfq, asString(data.rfq_id));
-    const missing = filterMissingFields(
-      Array.isArray(data.missing_fields) ? data.missing_fields.map((item) => asString(item)).filter(Boolean) : [],
-      weekly ? null : rfq,
-      preview,
-    );
+    const millGaps = weekly ? [] : millOriginPortGaps(preview);
+    const missing = [
+      ...new Set([
+        ...filterMissingFields(
+          Array.isArray(data.missing_fields) ? data.missing_fields.map((item) => asString(item)).filter(Boolean) : [],
+          weekly ? null : rfq,
+          preview,
+        ),
+        ...millGaps,
+      ]),
+    ];
     let nextStage = asString(data.next_stage);
     if (looksLikeQuote(input.text) && missing.length === 0) nextStage = "";
     const shouldSave = asString(data.route) === "log_price" || looksLikeQuote(input.text);
     if (shouldSave) {
       await saveOffers(input.supplier, data, input.text, weekly, rfq, rfqCode).catch(() => null);
+    }
+    if (shouldSave && millGaps.length) nextStage = "awaiting_origin_port";
+    let reply = asString(data.reply) || fallback.reply;
+    if (shouldSave && millGaps.length && !/load port|装货港|origin|产地/i.test(reply)) {
+      reply = `${reply}\n\n${askMillOriginPort(asString(data.rfq_id) || pendingRfq, millGaps)}`;
     }
     await saveSupplierChatState(input.supplier.id, {
       stage: nextStage,
@@ -283,9 +353,9 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
       rfqId: asString(data.rfq_id) || state.rfqId,
       missingFields: missing,
       followUpCount: nextStage === "rfq_followup" ? Math.max(1, state.followUpCount + (state.stage === "rfq_followup" ? 0 : 1)) : nextStage ? state.followUpCount : 0,
-      captured: nextStage ? captured : {},
+      captured: nextStage ? (shouldSave ? offerRecord(preview) : captured) : {},
     });
-    return { reply: asString(data.reply) || fallback.reply, nextStage, agent: "wechat-supplier-quote" as const, usedGemini: true };
+    return { reply, nextStage, agent: "wechat-supplier-quote" as const, usedGemini: true };
   } catch {
     const saved = await persistBareQuote();
     const nextStage = saved ? "" : fallback.nextStage;

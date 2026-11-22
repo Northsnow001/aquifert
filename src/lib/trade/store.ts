@@ -512,7 +512,7 @@ export async function insertWechatQuote(input: {
   if (rfqId) {
     const { data: existing } = await db
       .from("trade_quotes")
-      .select("id, code, extras, week_start")
+      .select("id, code, extras, week_start, origin, load_port")
       .eq("supplier_id", input.supplierId)
       .eq("rfq_id", rfqId)
       .eq("kind", "rfq")
@@ -525,6 +525,8 @@ export async function insertWechatQuote(input: {
           : {};
       row.extras = { ...prior, ...extras };
       if (existing.week_start) row.week_start = existing.week_start;
+      if (!text(row.origin) && text(existing.origin)) row.origin = existing.origin;
+      if (!text(row.load_port) && text(existing.load_port)) row.load_port = existing.load_port;
       if (!text(existing.code)) row.code = await nextOfferCode(now);
       const { error } = await db.from("trade_quotes").update(row).eq("id", existing.id);
       if (error) throw databaseError("update WeChat quote", error);
@@ -628,12 +630,12 @@ export async function listDeskCandidateQuotes(rfqId: string) {
   if (!db) return [];
   const { data, error } = await db
     .from("trade_quotes")
-    .select("code, supplier_id, unit_price, currency, incoterm, quantity_mt, load_port, destination_port, received_at, ready, is_no_offer, status")
+    .select("code, supplier_id, unit_price, currency, incoterm, quantity_mt, load_port, destination_port, received_at, is_no_offer, status")
     .eq("rfq_id", rfqId)
     .eq("kind", "rfq")
-    .eq("ready", true)
     .not("status", "in", "(superseded,no_offer)")
-    .order("received_at", { ascending: true });
+    .order("received_at", { ascending: true })
+    .order("code", { ascending: true });
   if (error) throw databaseError("list desk candidate quotes", error);
   const ids = [...new Set((data ?? []).map((row) => text(row.supplier_id)).filter(Boolean))];
   const suppliers = ids.length

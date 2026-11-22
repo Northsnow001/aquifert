@@ -59,6 +59,31 @@ describe("pickDeskShortlist", () => {
     assert.equal(picked.offers.length, 1);
   });
 
+  test("keeps an early FOB price with no load port ahead of later complete quotes", () => {
+    const picked = pickDeskShortlist({
+      quotes: [
+        quote({
+          supplierId: "S-014",
+          supplierName: "Whorl Fert",
+          unitPrice: 3900,
+          receivedAt: "2026-11-22T13:07:00.000Z",
+          loadPort: "",
+          destination: "to confirm",
+        }),
+        quote({ supplierId: "S-015", supplierName: "Northsnow", unitPrice: 4009, receivedAt: "2026-11-22T13:09:00.000Z", loadPort: "Qingdao" }),
+        quote({ supplierId: "S-005", supplierName: "Campbell", unitPrice: 4018, receivedAt: "2026-11-22T13:09:00.000Z", loadPort: "Tianjin" }),
+        quote({ supplierId: "S-006", supplierName: "Matthew Limited", unitPrice: 4027, receivedAt: "2026-11-22T13:09:00.000Z", loadPort: "Lianyungang" }),
+      ],
+      fanoutAt: "2026-11-22T12:00:00.000Z",
+      now: Date.parse("2026-11-22T13:10:00.000Z"),
+    });
+    assert.equal(picked.promote, true);
+    assert.deepEqual(
+      picked.offers.map((row) => row.supplierName),
+      ["Whorl Fert", "Campbell", "Matthew Limited"],
+    );
+  });
+
   test("keeps the earliest unique supplier when later dummy quotes arrive", () => {
     const picked = pickDeskShortlist({
       quotes: [

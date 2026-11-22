@@ -49,7 +49,8 @@ export function rfqQuoteArmed(stage: string, confirmedRfqId: string) {
       (step === "awaiting_previous_quote" ||
         step === "rfq_followup" ||
         step === "awaiting_quote" ||
-        step === "awaiting_new_quote"),
+        step === "awaiting_new_quote" ||
+        step === "awaiting_origin_port"),
   );
 }
 
@@ -74,6 +75,7 @@ export function resolveQuoteRfqCode(input: {
     input.quoteType === "previous" ||
     input.stage === "awaiting_previous_quote" ||
     input.stage === "rfq_followup" ||
+    input.stage === "awaiting_origin_port" ||
     (Boolean(confirmed) && looksLikePriceOnly(input.text));
   if (!armed) return "";
   return confirmed;
@@ -115,6 +117,64 @@ export function parseBareOffer(text: string): OfferSlice {
   };
 }
 
+const ORIGIN_NAMES: Array<[RegExp, string]> = [
+  [/中国|china/i, "China"],
+  [/俄罗斯|俄国|russia/i, "Russia"],
+  [/埃及|egypt/i, "Egypt"],
+  [/摩洛哥|morocco/i, "Morocco"],
+  [/沙特|saudi/i, "Saudi Arabia"],
+  [/阿曼|oman/i, "Oman"],
+  [/卡塔尔|qatar/i, "Qatar"],
+  [/印尼|印度尼西亚|indonesia/i, "Indonesia"],
+  [/越南|vietnam/i, "Vietnam"],
+  [/阿尔及利亚|algeria/i, "Algeria"],
+  [/约旦|jordan/i, "Jordan"],
+  [/美国|usa|united states/i, "USA"],
+  [/加拿大|canada/i, "Canada"],
+];
+
+const PORT_NAMES: Array<[RegExp, string]> = [
+  [/青岛|qingdao/i, "Qingdao"],
+  [/天津|tianjin/i, "Tianjin"],
+  [/连云港|lianyungang/i, "Lianyungang"],
+  [/张家港|zhangjiagang/i, "Zhangjiagang"],
+  [/大连|dalian/i, "Dalian"],
+  [/日照|rizhao/i, "Rizhao"],
+  [/南京|nanjing/i, "Nanjing"],
+  [/上海|shanghai/i, "Shanghai"],
+  [/宁波|ningbo/i, "Ningbo"],
+  [/防城|fangcheng/i, "Fangcheng"],
+];
+
+export function parseMillOriginPort(text: string) {
+  const bare = parseBareOffer(text);
+  let origin = "";
+  let load_port = bare.load_port;
+  for (const [re, name] of ORIGIN_NAMES) {
+    if (re.test(text)) origin = name;
+  }
+  for (const [re, name] of PORT_NAMES) {
+    if (re.test(text)) load_port = name;
+  }
+  const token = text.trim();
+  if (!origin && !load_port && /^[A-Za-z\u4e00-\u9fff][A-Za-z\u4e00-\u9fff\s'-]{2,40}$/.test(token)) {
+    if (!/^(yes|ok|okay|sure|no|hi|hello|谢谢|好的|可以)$/i.test(token)) load_port = token.replace(/\s+/g, " ");
+  }
+  return { origin, load_port, incoterms: bare.incoterms };
+}
+
+export function looksLikeMillOriginPort(text: string) {
+  const parsed = parseMillOriginPort(text);
+  return Boolean(parsed.origin || parsed.load_port);
+}
+
+export function millOriginPortGaps(offer: { origin?: string; load_port?: string }) {
+  const missing: Array<"origin" | "load_port"> = [];
+  if (!blank(offer.origin)) missing.push("origin");
+  if (!blank(offer.load_port)) missing.push("load_port");
+  return missing;
+}
+
 export function buyerRequestFieldNames(rfq: Record<string, unknown> | null) {
   if (!rfq) return [];
   return (
@@ -126,7 +186,6 @@ export function buyerRequestFieldNames(rfq: Record<string, unknown> | null) {
       ["incoterms", rfq.incoterm],
       ["destination", rfq.destination_port || rfq.destination_country],
       ["delivery_turnaround", rfq.shipment_window],
-      ["origin", rfq.origin_preference],
     ] as const
   )
     .filter(([, value]) => Boolean(blank(value)))
@@ -147,7 +206,7 @@ export function mergeOfferWithRfq(offer: OfferSlice, rfq: Record<string, unknown
     incoterms: fill(offer.incoterms, rfq?.incoterm),
     destination: fill(offer.destination, dest),
     load_port: offer.load_port,
-    origin: fill(offer.origin, rfq?.origin_preference),
+    origin: offer.origin,
     delivery_turnaround: fill(offer.delivery_turnaround, rfq?.shipment_window),
     validity: offer.validity,
     raw_body: offer.raw_body,
@@ -164,6 +223,7 @@ export function filterMissingFields(missing: string[], rfq: Record<string, unkno
     incoterms: offer.incoterms,
     destination: offer.destination,
     load_port: offer.load_port,
+    origin: offer.origin,
     delivery_turnaround: offer.delivery_turnaround,
     unit_price: offer.unit_price,
     validity: offer.validity,

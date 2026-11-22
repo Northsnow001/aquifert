@@ -1,4 +1,4 @@
-import { looksLikePriceOnly, rfqQuoteArmed } from "@/lib/wechat/quote-merge";
+import { looksLikeMillOriginPort, looksLikePriceOnly, millOriginPortGaps, rfqQuoteArmed } from "@/lib/wechat/quote-merge";
 
 export const GREETING =
   "Hello, this is Matt from Aquifert Ltd. Thank you for getting in touch. Would you like to share a quote with us today?\n\n您好，我是 Aquifert Ltd 的 Matt。感谢您的联系。请问您今天是否想向我们提供报价？";
@@ -26,6 +26,24 @@ export function thanksForPrice(rfqId: string, price: string) {
 export function askRfqPrice(rfqId: string) {
   const id = rfqId.trim() || "this RFQ";
   return `Please send the unit price in USD/MT for ${id} (for example 400 or 400 USD/MT). If this is not a quote for ${id}, tell us the Trade ID.\n\n请发送 ${id} 的单价（美元/吨），例如 400 或 400 USD/MT。如不是该编号的报价，请告知正确的交易编号。`;
+}
+
+export function askMillOriginPort(rfqId: string, missing: Array<"origin" | "load_port"> = ["origin", "load_port"]) {
+  const id = rfqId.trim() || "this RFQ";
+  const needOrigin = missing.includes("origin");
+  const needPort = missing.includes("load_port");
+  if (needOrigin && needPort) {
+    return `Please send origin and load port for ${id} (for example China, FOB Qingdao).\n\n请发送 ${id} 的产地和装货港，例如 中国，FOB 青岛。`;
+  }
+  if (needPort) {
+    return `Please send the load port for ${id} (for example Qingdao).\n\n请发送 ${id} 的装货港，例如 青岛。`;
+  }
+  return `Please send the origin for ${id} (for example China).\n\n请发送 ${id} 的产地，例如 中国。`;
+}
+
+export function thanksForPriceAndAskOriginPort(rfqId: string, price: string, missing: Array<"origin" | "load_port">) {
+  if (!missing.length) return thanksForPrice(rfqId, price);
+  return `${thanksForPrice(rfqId, price)}\n\n${askMillOriginPort(rfqId, missing)}`;
 }
 
 export const WAIT_WEEKLY =
@@ -58,7 +76,16 @@ export function nextSupplierChat(input: { stage?: string | null; text: string; c
   const rfqId = String(input.confirmedRfqId || "").trim();
   const armed = rfqQuoteArmed(stage, rfqId);
 
-  if (armed && looksLikePriceOnly(raw)) return { reply: thanksForPrice(rfqId, parseBarePrice(raw)), nextStage: "" };
+  if (armed && looksLikePriceOnly(raw)) {
+    return {
+      reply: thanksForPriceAndAskOriginPort(rfqId, parseBarePrice(raw), millOriginPortGaps({})),
+      nextStage: "awaiting_origin_port",
+    };
+  }
+  if (stage === "awaiting_origin_port") {
+    if (looksLikeMillOriginPort(raw) || looksLikeQuote(raw)) return { reply: THANKS_QUOTE, nextStage: "" };
+    return { reply: askMillOriginPort(rfqId), nextStage: "awaiting_origin_port" };
+  }
   if (looksLikeQuote(raw) || looksLikePriceOnly(raw)) return { reply: THANKS_QUOTE, nextStage: "" };
   if (waitingForWeekly(raw)) return { reply: WAIT_WEEKLY, nextStage: "" };
   if (NO.has(key)) return { reply: NO_QUOTE, nextStage: "" };

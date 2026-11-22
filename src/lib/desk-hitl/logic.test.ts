@@ -388,6 +388,9 @@ describe("firm terms after YES", () => {
     assert.match(payAsk.text, /pay/i);
     exec = applyBuyerTermAnswer(exec, "LC at sight");
     assert.equal(exec.paymentTerms, "LC at sight");
+    const originAsk = nextFirmAsk(exec);
+    assert.match(originAsk.text, /origin preference/i);
+    assert.doesNotMatch(originAsk.text, /load port/i);
     exec = applyBuyerTermAnswer(exec, "China ok");
     assert.equal(nextFirmAsk(exec).kind, "recap");
   });

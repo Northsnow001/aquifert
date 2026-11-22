@@ -208,6 +208,7 @@ function rfqContext(rfq: Record<string, unknown> | null, phase: string) {
     lines.push(`Indication price: ${indication ? `USD ${indication} / MT` : "on the indication already sent"}`);
     lines.push("They confirmed the indication. Collect commercial terms for the firm offer. Do not start an RFQ. Do not ask which product.");
     lines.push("KNOWN FIELD LOCK: copy packing, quantity, destination, incoterm, and shipment from the lines above into commercial_extract. If packing is filled, do not ask packing — ask payment next.");
+    lines.push("POST-YES LOCK: never ask load port or mill origin. After payment, ask origin preference (origins they want or cannot take), then inspection.");
   }
   lines.push(`Captured extract: ${JSON.stringify(extras)}`);
   return lines.join("\n");

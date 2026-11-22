@@ -35,8 +35,9 @@ export const MATT_GUARD = `Highest priority (overrides the rest of this prompt):
 - If they say yes, or they will wait for our weekly broadcast / RFQ, that is NOT a refusal. Thank them, say we will send the weekly update, do not ask for a quote now, do not use 3.6. route=chat, next_stage="", is_no_offer=false.
 - "Yes, I have a weekly broadcast but I will wait till you send me the weekly broadcast update" → wait-for-weekly, never 3.6.
 - A sentence that contains "yes" is not a no.
-- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 1000, 1000USD, 400 USD/MT FOB) is a quote for that Trade ID. unit_price is the number, currency USD. Extract only what they typed (price, incoterm, port). Do not ask them to re-send product, quantity, packing, destination, or shipment — those are already on the buyer request and the app fills them. Never greet. Never ask if they want to share a quote. route=log_price.
-- If Confirmed RFQ ID is set and the message is not a price, not a refusal, and not a full quote, ask them to confirm the unit price in USD/MT for that Trade ID. Do not restart the greeting.`;
+- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 1000, 1000USD, 400 USD/MT FOB) is a quote for that Trade ID. unit_price is the number, currency USD. Extract only what they typed (price, incoterm, origin, load port). Do not ask them to re-send product, quantity, packing, destination, or shipment — those are already on the buyer request and the app fills them. Never greet. Never ask if they want to share a quote. route=log_price.
+- Load port and mill origin are mill fields. If the price is recorded and origin or load port is still blank, ask only for those (e.g. China, FOB Qingdao). Do not ask the mill for the buyer's origin preference. next_stage=awaiting_origin_port.
+- If Confirmed RFQ ID is set and the message is not a price, not origin/load port, not a refusal, and not a full quote, ask them to confirm the unit price in USD/MT for that Trade ID. Do not restart the greeting.`;
 
 export const MATT_PROMPT = WORKFLOW_MATT_PROMPT;
 export const UNKNOWN_PROMPT = WORKFLOW_UNKNOWN_SUPPLIER_PROMPT;
@@ -105,7 +106,8 @@ If Last WhatsApp is a product name, route MUST be rfq_collect. Acknowledge the p
 When those are filled, recap Product, Quantity, Packing, Incoterms/Port, Shipping and wait for yes. Only then route rfq_ready.
 route chat and rfq_collect both still send the WhatsApp reply.
 NEW REQUEST LOCK: if Last WhatsApp or Chat History has a new request / new order / new enquiry, this is a FRESH RFQ. Ignore any earlier indication, firm offer, payment, origin, inspection, destination, or product from a previous enquiry. Do not reuse Delhi, CIF, CAD, or packing from another deal. Stay on route rfq_collect. Collect product, quantity, packing, incoterm, port, shipping. Recap those five. Wait for yes. Only then rfq_ready so suppliers can be asked for price. Never send or promise a firm offer, PI, or payment collection on a new request.
-KNOWN FIELD LOCK: after an indication YES, copy packing/qty/port/incoterm/shipping already on the enquiry into commercial_extract. Do not re-ask them. Ask the next blank field only (usually payment).`;
+KNOWN FIELD LOCK: after an indication YES, copy packing/qty/port/incoterm/shipping already on the enquiry into commercial_extract. Do not re-ask them. Ask the next blank field only (usually payment).
+POST-YES LOCK: never ask the buyer for load port or mill origin — that is the mill quote. After payment, ask origin preference (origins they want or cannot take), then inspection, then recap.`;
   }
   return BUYER_INTENT_ONBOARD_PROMPT;
 }

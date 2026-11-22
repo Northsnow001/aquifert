@@ -2,13 +2,18 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui";
 import { DealRecord } from "@/components/admin/desk/deal-record";
 import { getDeskDeal } from "@/lib/desk-hitl/store";
+import { refreshDeskShortlistByRequestId } from "@/lib/trade/desk-closer";
 
 export const dynamic = "force-dynamic";
 
 export default async function DeskDealPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const deal = await getDeskDeal(id);
+  let deal = await getDeskDeal(id);
   if (!deal) notFound();
+  if (deal.status === "waiting_desk") {
+    await refreshDeskShortlistByRequestId(deal.requestId).catch(() => undefined);
+    deal = (await getDeskDeal(id)) || deal;
+  }
   return (
     <div className="mx-auto max-w-6xl pb-24 md:pb-8">
       <PageHeader

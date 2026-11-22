@@ -61,7 +61,7 @@ function quoteFieldsFromRfq(row: Record<string, unknown>, rfq: Record<string, un
     packing: text(row.packing) || text(rfq.packing),
     incoterm: text(row.incoterm) || text(rfq.incoterm),
     destination_port: dest,
-    origin: text(row.origin) || text(rfq.origin_preference),
+    origin: text(row.origin),
     delivery_window: text(row.delivery_window) || text(rfq.shipment_window),
   };
 }

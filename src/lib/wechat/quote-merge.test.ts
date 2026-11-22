@@ -6,7 +6,9 @@ import {
   filterMissingFields,
   looksLikePriceOnly,
   mergeOfferWithRfq,
+  millOriginPortGaps,
   parseBareOffer,
+  parseMillOriginPort,
   resolveQuoteRfqCode,
 } from "@/lib/wechat/quote-merge";
 
@@ -84,6 +86,16 @@ describe("resolveQuoteRfqCode", () => {
     assert.equal(code, "rfq#074");
   });
 
+  test("keeps the Trade ID when they send origin or load port after the price", () => {
+    const code = resolveQuoteRfqCode({
+      text: "Qingdao",
+      quoteType: "",
+      confirmedRfqId: "rfq#089",
+      stage: "awaiting_origin_port",
+    });
+    assert.equal(code, "rfq#089");
+  });
+
   test("uses last RFQ when they send only a number after the card", () => {
     const code = resolveQuoteRfqCode({
       text: "1000",
@@ -117,6 +129,22 @@ describe("resolveQuoteRfqCode", () => {
   });
 });
 
+describe("parseMillOriginPort", () => {
+  test("reads China and Qingdao from a mill follow-up", () => {
+    const parsed = parseMillOriginPort("China, FOB Qingdao");
+    assert.equal(parsed.origin, "China");
+    assert.equal(parsed.load_port, "Qingdao");
+    assert.equal(parsed.incoterms, "FOB");
+    assert.deepEqual(millOriginPortGaps(parsed), []);
+  });
+
+  test("treats a bare port as load port", () => {
+    const parsed = parseMillOriginPort("Qingdao");
+    assert.equal(parsed.load_port, "Qingdao");
+    assert.deepEqual(millOriginPortGaps(parsed), ["origin"]);
+  });
+});
+
 describe("mergeOfferWithRfq", () => {
   test("fills product qty packing dest window from the buyer request and keeps mill price", () => {
     const merged = mergeOfferWithRfq(parseBareOffer("1000"), rfq, "rfq#074");
@@ -129,7 +157,7 @@ describe("mergeOfferWithRfq", () => {
     assert.equal(merged.incoterms, "CFR");
     assert.equal(merged.destination, "Lagos");
     assert.equal(merged.delivery_turnaround, "December");
-    assert.equal(merged.origin, "China");
+    assert.equal(merged.origin, "");
     assert.equal(merged.load_port, "");
   });
 
@@ -148,6 +176,13 @@ describe("mergeOfferWithRfq", () => {
     const merged = mergeOfferWithRfq(typed, rfq, "rfq#074");
     assert.equal(merged.product_name, "DAP");
     assert.equal(merged.quantity, "2000");
+  });
+
+  test("does not treat mill origin as a buyer request field", () => {
+    const names = buyerRequestFieldNames(rfq);
+    assert.equal(names.includes("origin"), false);
+    const merged = mergeOfferWithRfq(parseBareOffer("1000"), rfq, "rfq#074");
+    assert.equal(merged.origin, "");
   });
 
   test("treats Buyer Request Fields as already known", () => {

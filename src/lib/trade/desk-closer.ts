@@ -3,6 +3,7 @@ import "server-only";
 import { getDeskDeal, upsertShortlist } from "@/lib/desk-hitl/store";
 import { notifyDeskShortlist } from "@/lib/trade/admin-alerts";
 import {
+  getTradeRfqByCode,
   getTradeRfqDesk,
   getTradeRfqRecord,
   listDeskCandidateQuotes,
@@ -44,9 +45,6 @@ export async function considerRfqForDesk(rfqId: string) {
   const existing = await getDeskDeal(dealIdFor(requestId));
   if (existing && existing.status !== "waiting_desk") {
     return { ok: false as const, reason: "desk_locked" as const };
-  }
-  if (existing?.status === "waiting_desk" && existing.offers.length >= DESK_QUOTE_TARGET) {
-    return { ok: true as const, ...picked, requestId, dealId: existing.id, frozen: true as const };
   }
   const dest = String(rfq.destination_port || rfq.destination_country || "");
   const firstTime = !existing;
@@ -97,6 +95,13 @@ export async function considerRfqForDesk(rfqId: string) {
     }).catch(() => undefined);
   }
   return { ok: true as const, ...picked, requestId, dealId: deal.id };
+}
+
+export async function refreshDeskShortlistByRequestId(requestId: string) {
+  const rfq = await getTradeRfqByCode(requestId);
+  const id = rfq?.id != null ? String(rfq.id) : "";
+  if (!id) return { ok: false as const, reason: "missing" as const };
+  return considerRfqForDesk(id);
 }
 
 export async function closeWaitingRfqs() {
