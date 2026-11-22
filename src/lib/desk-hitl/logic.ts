@@ -464,10 +464,83 @@ export function firmOfferPackingAsk(input: {
   return `Good — we can proceed${price}. How would you like the ${qty}${product} packed? 25kg bags, jumbo bags, or bulk?`;
 }
 
+function labelledField(text: string, key: string): string {
+  const re = new RegExp(`(?:^|[\\n\\r·•\\-*])\\s*${key}\\s*[:\\-]\\s*([^\\n\\r]+)`, "i");
+  const hit = text.match(re);
+  return hit ? hit[1].replace(/\s+/g, " ").trim().slice(0, 160) : "";
+}
+
+export function looksLikePackingAnswer(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length > 80 || isBareConfirm(t)) return false;
+  return /^(bulk|jumbo(\s+bags?)?|big bags?|tonne bags?|25\s*kg(\s+bags?)?|50\s*kg(\s+bags?)?)$/i.test(t) || /\b(bulk|jumbo|big bags?|25\s*kg|50\s*kg)\b/i.test(t);
+}
+
+export function looksLikePaymentAnswer(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length > 120 || isBareConfirm(t)) return false;
+  return /\b(lc(\s+at\s+sight)?|sblc|cad|tt\b|t\/t|da\b|dp\b|bl\s*\+?\s*\d+)\b/i.test(t);
+}
+
+/** RFQ recap and trade-book fields already agreed — do not re-ask or overwrite with YES. */
+export function knownFirmTermsFromThread(messages: Array<{ text?: string } | string>): Partial<DeskExecution> {
+  let packing = "";
+  let shipmentWindow = "";
+  let incoterm = "";
+  let destinationPort = "";
+  let specification = "";
+  for (const row of messages) {
+    const t = typeof row === "string" ? row : String(row?.text || "");
+    packing = labelledField(t, "packing") || packing;
+    shipmentWindow = labelledField(t, "shipping(?: window)?") || labelledField(t, "shipment") || shipmentWindow;
+    const portLine = labelledField(t, "incoterms?\\s*/\\s*port") || labelledField(t, "incoterms?");
+    if (portLine) {
+      const term = portLine.match(/\b(CIF|CFR|FOB|CPT|CIP|DAP|DDP|FCA|EXW)\b/i);
+      if (term) incoterm = term[1].toUpperCase();
+      destinationPort =
+        portLine.replace(/\b(CIF|CFR|FOB|CPT|CIP|DAP|DDP|FCA|EXW)\b/gi, "").replace(/^[\s,/-]+|[\s,/-]+$/g, "").trim() || destinationPort;
+    }
+    const product = labelledField(t, "product");
+    const grade = product.match(/\(([^)]+)\)/);
+    if (grade) specification = grade[1].trim();
+  }
+  if (!packing) {
+    for (const row of messages) {
+      const t = typeof row === "string" ? row : String(row?.text || "").trim();
+      if (looksLikePackingAnswer(t) && t.length < 40) packing = t;
+    }
+  }
+  return { packing, shipmentWindow, incoterm, destinationPort, specification };
+}
+
+export function seedFirmExecution(exec: DeskExecution, ...known: Array<Partial<DeskExecution> | null | undefined>): DeskExecution {
+  const next = { ...exec };
+  for (const src of known) {
+    if (!src) continue;
+    for (const key of [
+      "packing",
+      "origin",
+      "destinationPort",
+      "incoterm",
+      "shipmentWindow",
+      "paymentTerms",
+      "inspection",
+      "documentation",
+      "specification",
+      "urgency",
+    ] as const) {
+      if (!String(next[key] || "").trim() && src[key]) next[key] = String(src[key]).trim();
+    }
+  }
+  return emptyExecution(next);
+}
+
 /** Fill the next blank commercial field from the buyer's WhatsApp answer. */
 export function applyBuyerTermAnswer(exec: DeskExecution, text: string): DeskExecution {
   const value = text.trim().slice(0, 500);
   if (!value || isBareConfirm(value)) return exec;
+  if (looksLikePaymentAnswer(value) && !exec.paymentTerms) return { ...exec, paymentTerms: value };
+  if (looksLikePackingAnswer(value)) return { ...exec, packing: value };
   if (!exec.packing) return { ...exec, packing: value };
   if (!exec.paymentTerms) return { ...exec, paymentTerms: value };
   if (!exec.origin) return { ...exec, origin: value };
@@ -501,6 +574,32 @@ export function nextFirmAsk(exec: DeskExecution): { kind: "question" | "recap"; 
   return { kind: "recap", text: firmTermsRecap(exec) };
 }
 
+export function firmOfferNextAsk(
+  exec: DeskExecution,
+  deal?: { product?: string; quantityMt?: number | null; currency?: string; buyerPrice?: number | null },
+  lastDesk = "",
+): { kind: "question" | "recap"; text: string } {
+  if (!exec.packing) {
+    return {
+      kind: "question",
+      text: firmOfferPackingAsk({
+        product: deal?.product,
+        quantityMt: deal?.quantityMt,
+        currency: deal?.currency,
+        buyerPrice: deal?.buyerPrice,
+      }),
+    };
+  }
+  const next = nextFirmAsk(exec);
+  if (next.kind === "question" && !exec.paymentTerms && !/how would you like to pay|packing stays/i.test(lastDesk)) {
+    return {
+      kind: "question",
+      text: `Noted — packing stays ${exec.packing}, as on the enquiry. How would you like to pay — LC at sight, SBLC, CAD, or TT?`,
+    };
+  }
+  return next;
+}
+
 const num = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) return Number(value);
@@ -518,6 +617,8 @@ export function parseShortlistBody(body: unknown): {
   buyerPhone: string;
   buyerCompany: string;
   buyerEmail: string;
+  packing: string;
+  shipmentWindow: string;
   offers: DeskOffer[];
   callbackUrl: string | null;
   currency: string;
@@ -565,6 +666,8 @@ export function parseShortlistBody(body: unknown): {
     buyerPhone: text(buyer.phone ?? raw.buyerPhone ?? raw.phone, 40).replace(/\s+/g, ""),
     buyerCompany: text(buyer.company ?? raw.buyerCompany, 160),
     buyerEmail: text(buyer.email ?? raw.buyerEmail ?? raw.email, 160),
+    packing: text(raw.packing, 80),
+    shipmentWindow: text(raw.shipmentWindow ?? raw.shipment_window ?? raw.shipping, 120),
     offers,
     callbackUrl: text(raw.callbackUrl ?? raw.resumeUrl ?? raw.waitUrl, 2000) || null,
     currency: text(raw.currency, 8) || offers[0].currency || "USD",

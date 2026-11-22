@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferPackingAsk, indicationWhatsApp, isBareConfirm, isIndicationAsk, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -200,7 +200,14 @@ export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error
       : [message({ from: "system", channel: "app", text: `Shortlist of ${parsed.offers.length} offer(s) from WF8.` })],
     callbackUrl: parsed.callbackUrl ?? existing?.callbackUrl ?? null,
     firmInterestAt: existing?.firmInterestAt ?? null,
-    execution: existing?.execution ?? null,
+    execution:
+      existing?.execution ??
+      emptyExecution({
+        packing: parsed.packing,
+        destinationPort: parsed.destination,
+        incoterm: parsed.incoterm,
+        shipmentWindow: parsed.shipmentWindow,
+      }),
     firmOffer: existing?.firmOffer ?? null,
     foPack: existing?.foPack ?? null,
     pi: existing?.pi ?? null,
@@ -474,10 +481,12 @@ export async function recordBuyerInbound(input: {
       const row = inboundEmail.includes("@") ? applyBuyerEmail(locked, inboundEmail) : locked;
       await save({ ...row, newEnquiry: null });
     }
-    const packing = message({
+    const exec = await seededExecution(deal);
+    const ask = firmOfferNextAsk(exec, deal, lastDeskText(deal));
+    const outbound = message({
       from: "desk",
       channel: "whatsapp",
-      text: packingHandoff({ ...deal, buyerPhone: phone || deal.buyerPhone }),
+      text: ask.text,
       outboundStatus: "queued",
     });
     const saved = (await save({
@@ -485,11 +494,18 @@ export async function recordBuyerInbound(input: {
       status: "firm_interest",
       firmInterestAt: now(),
       buyerPhone: phone || deal.buyerPhone,
+      execution: exec,
       messages: retireQueuedIndicationAsks([
         ...deal.messages,
         inbound,
-        message({ from: "system", channel: "app", text: "Buyer agreed. Collecting packing and payment for the firm offer." }),
-        packing,
+        message({
+          from: "system",
+          channel: "app",
+          text: exec.packing
+            ? `Buyer agreed. Packing already on file (${exec.packing}). Collecting remaining firm-offer terms.`
+            : "Buyer agreed. Collecting packing and payment for the firm offer.",
+        }),
+        outbound,
       ]),
     }))!;
     await syncRfqStatus(saved.requestId, "firm_interest", {
@@ -510,7 +526,7 @@ export async function recordBuyerInbound(input: {
         }),
       )
       .catch(() => undefined);
-    return deliverDeskLines(saved, [packing.id], undefined, phone || saved.buyerPhone);
+    return deliverDeskLines(saved, [outbound.id], undefined, phone || saved.buyerPhone);
   }
 
   const next: DeskDeal = {
@@ -608,13 +624,62 @@ async function emailMattAboutNegotiation(deal: DeskDeal, buyerText: string) {
   );
 }
 
-function packingHandoff(deal: DeskDeal) {
-  return firmOfferPackingAsk({
-    product: deal.product,
-    quantityMt: deal.quantityMt,
-    currency: deal.currency,
-    buyerPrice: deal.buyerPrice,
-  });
+async function termsFromRfq(requestId: string): Promise<Partial<DeskExecution>> {
+  try {
+    const { findRfqIdByCode, getTradeRfqRecord } = await import("@/lib/trade/store");
+    const id = await findRfqIdByCode(requestId);
+    if (!id) return {};
+    const row = await getTradeRfqRecord(id);
+    if (!row) return {};
+    const extras =
+      row.extras && typeof row.extras === "object" && !Array.isArray(row.extras) ? (row.extras as Record<string, unknown>) : {};
+    const extract =
+      extras.rfq_extract && typeof extras.rfq_extract === "object" && !Array.isArray(extras.rfq_extract)
+        ? (extras.rfq_extract as Record<string, unknown>)
+        : extras;
+    const take = (...values: unknown[]) => {
+      for (const value of values) {
+        const s = String(value ?? "").trim();
+        if (s) return s.slice(0, 160);
+      }
+      return "";
+    };
+    return {
+      packing: take(row.packing, extract.packing),
+      destinationPort: take(row.destination_port, extract.discharge_port, extract.destination),
+      incoterm: take(row.incoterm, extract.incoterm_pref),
+      shipmentWindow: take(row.shipment_window, extract.timing_notes),
+      specification: take(row.specification, extract.form_grade),
+      origin: take(row.origin_preference, extract.origin_pref),
+      paymentTerms: take(extract.payment_pref, extract.payment_terms),
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function termsFromWhatsApp(deal: DeskDeal): Promise<Partial<DeskExecution>> {
+  try {
+    const { listTradeThread } = await import("@/lib/trade/store");
+    const rows = await listTradeThread({ channel: "whatsapp", address: deal.buyerPhone });
+    return knownFirmTermsFromThread(rows.map((row) => row.body));
+  } catch {
+    return {};
+  }
+}
+
+async function seededExecution(deal: DeskDeal) {
+  const [fromBook, fromChat] = await Promise.all([termsFromRfq(deal.requestId), termsFromWhatsApp(deal)]);
+  return seedFirmExecution(
+    emptyExecution({
+      ...(deal.execution ?? {}),
+      destinationPort: deal.execution?.destinationPort || deal.destination,
+      incoterm: deal.execution?.incoterm || deal.incoterm,
+    }),
+    knownFirmTermsFromThread(deal.messages),
+    fromChat,
+    fromBook,
+  );
 }
 
 function lastDeskText(deal: DeskDeal) {
@@ -624,26 +689,8 @@ function lastDeskText(deal: DeskDeal) {
 async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: string, phone = "") {
   const row = inboundEmail.includes("@") ? applyBuyerEmail(deal, inboundEmail) : deal;
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
-  const exec = emptyExecution({
-    ...(row.execution ?? {}),
-    destinationPort: row.execution?.destinationPort || row.destination,
-    incoterm: row.execution?.incoterm || row.incoterm,
-  });
+  const exec = await seededExecution(row);
   const recapPending = /please confirm so we can prepare the firm offer/i.test(lastDeskText(row));
-  if (!exec.packing && isBareConfirm(text)) {
-    const outbound = message({
-      from: "desk",
-      channel: "whatsapp",
-      text: packingHandoff(row),
-      outboundStatus: "queued",
-    });
-    const saved = (await save({
-      ...row,
-      buyerPhone: phone || row.buyerPhone,
-      messages: retireQueuedIndicationAsks([...row.messages, inbound, outbound]),
-    }))!;
-    return deliverDeskLines(saved, [outbound.id], undefined, phone || saved.buyerPhone);
-  }
   if (recapPending && classifyBuyerReply(text) === "agree") {
     const confirmed = { ...exec, confirmedAt: now() };
     const parked = parkFirmOffer({
@@ -669,7 +716,7 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
     return deliverDeskLines(saved, [thanks.id], undefined, phone || saved.buyerPhone);
   }
   const merged = recapPending ? { ...exec, notes: [exec.notes, text.trim()].filter(Boolean).join(" · ") } : applyBuyerTermAnswer(exec, text);
-  const ask = nextFirmAsk(merged);
+  const ask = firmOfferNextAsk(merged, row, lastDeskText(row));
   const outbound = message({
     from: "desk",
     channel: "whatsapp",
@@ -712,12 +759,15 @@ export async function handNegotiationToAgent(input: { id: string; actor: string;
   if (!Number.isFinite(price) || price <= 0 || price > 10000) return { error: "Enter the agreed price per MT." };
   const actor = input.actor || "Desk";
   const agreed: DeskDeal = { ...deal, buyerPrice: price };
-  const outbound = message({ from: "desk", channel: "whatsapp", text: packingHandoff(agreed), outboundStatus: "queued" });
+  const exec = await seededExecution(agreed);
+  const ask = firmOfferNextAsk(exec, agreed, lastDeskText(agreed));
+  const outbound = message({ from: "desk", channel: "whatsapp", text: ask.text, outboundStatus: "queued" });
   const saved = (await save({
     ...agreed,
     status: "firm_interest",
     mattThread: false,
     firmInterestAt: now(),
+    execution: exec,
     messages: [
       ...deal.messages,
       message({

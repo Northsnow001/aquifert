@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, firmOfferPackingAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, firmOfferNextAsk, firmOfferPackingAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -320,6 +320,28 @@ describe("firm terms after YES", () => {
     assert.equal(exec.packing, "");
     assert.match(firmOfferPackingAsk({ product: "Cursor IV", quantityMt: 800, currency: "USD", buyerPrice: 648 }), /packed/i);
     assert.match(firmOfferPackingAsk({ product: "Cursor IV", quantityMt: 800, currency: "USD", buyerPrice: 648 }), /648/);
+  });
+
+  it("keeps bulk from the RFQ recap and asks payment, not packing again", () => {
+    const recap = [
+      "Please confirm if the following details are correct:",
+      "· Product: Cursor IV (high grade)",
+      "· Quantity: 800 MT",
+      "· Packing: bulk",
+      "· Incoterms/Port: CIF Delhi, India",
+      "· Shipping: 2-week window",
+    ].join("\n");
+    const known = knownFirmTermsFromThread([{ text: recap }]);
+    assert.equal(known.packing, "bulk");
+    assert.match(String(known.incoterm), /CIF/i);
+    assert.match(String(known.destinationPort), /Delhi/i);
+    const exec = seedFirmExecution(emptyExecution(), known);
+    const ask = firmOfferNextAsk(exec, { product: "Cursor IV", quantityMt: 800, currency: "USD", buyerPrice: 648 });
+    assert.match(ask.text, /packing stays bulk/i);
+    assert.match(ask.text, /pay/i);
+    assert.doesNotMatch(ask.text, /how would you like the .* packed/i);
+    const jumbo = applyBuyerTermAnswer(exec, "jumbo bags");
+    assert.equal(jumbo.packing, "jumbo bags");
   });
 
   it("asks packing, then payment, then a recap", () => {

@@ -275,6 +275,10 @@ function deskUserPrompt(input: {
 function postYesPackingAsk(rfq: Record<string, unknown> | null) {
   const extras = extrasOf(rfq);
   const price = Number(extras.buyer_unit_price);
+  const packing = asString(rfq?.packing);
+  if (packing) {
+    return `Noted — packing stays ${packing}, as on the enquiry. How would you like to pay — LC at sight, SBLC, CAD, or TT?`;
+  }
   return firmOfferPackingAsk({
     product: asString(rfq?.product_label),
     quantityMt: asString(rfq?.quantity_mt),
