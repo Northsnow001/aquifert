@@ -427,10 +427,32 @@ export function emptyExecution(partial?: Partial<DeskExecution>): DeskExecution 
   };
 }
 
+/** A lone YES after the indication — not a packing or payment answer. */
+export function isBareConfirm(text: string): boolean {
+  return /^(yes|yeah|yep|ok|okay|sure|agree|agreed|confirm|confirmed|accept|accepted|proceed|deal|go ahead|i agree|we agree)[\s!.]*$/i.test(
+    text.trim(),
+  );
+}
+
+export function firmOfferPackingAsk(input: {
+  product?: string;
+  quantityMt?: string | number | null;
+  currency?: string;
+  buyerPrice?: number | null;
+}): string {
+  const product = String(input.product || "the product").trim() || "the product";
+  const qty = input.quantityMt != null && String(input.quantityMt).trim() ? `${input.quantityMt} MT of ` : "";
+  const price =
+    input.buyerPrice != null
+      ? ` at ${input.currency || "USD"} ${Number(input.buyerPrice).toLocaleString("en-GB")} / MT`
+      : "";
+  return `Good — we can proceed${price}. How would you like the ${qty}${product} packed? 25kg bags, jumbo bags, or bulk?`;
+}
+
 /** Fill the next blank commercial field from the buyer's WhatsApp answer. */
 export function applyBuyerTermAnswer(exec: DeskExecution, text: string): DeskExecution {
   const value = text.trim().slice(0, 500);
-  if (!value) return exec;
+  if (!value || isBareConfirm(value)) return exec;
   if (!exec.packing) return { ...exec, packing: value };
   if (!exec.paymentTerms) return { ...exec, paymentTerms: value };
   if (!exec.origin) return { ...exec, origin: value };

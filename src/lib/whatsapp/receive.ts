@@ -63,17 +63,16 @@ async function continueKnown(input: {
     for (const msg of queued) {
       await outbound(input.phone, buyer.id, msg.text, { event: "desk", dealId: desk.id }, input.deliver);
     }
-    if (queued.length || (desk.status === "negotiating" && desk.mattThread)) {
-      return { reply: queued.at(-1)?.text || "", buyerId: buyer.id, desk: true };
+    if (queued.length || (desk.status === "negotiating" && desk.mattThread) || desk.status === "firm_interest") {
+      const lastDesk = [...desk.messages].reverse().find((row) => row.from === "desk");
+      return { reply: queued.at(-1)?.text || lastDesk?.text || "", buyerId: buyer.id, desk: true };
     }
   }
   const fo =
     (desk && "event" in desk && desk.event === "firm_interest") ||
     (desk && "status" in desk && desk.status === "firm_interest" && !desk.mattThread);
-  const rfqPhase = String(latest?.status || "");
-  const liveFo = rfqPhase === "indication_sent" || rfqPhase === "firm_interest";
-  if (fo || (liveFo && !(desk && "mattThread" in desk && desk.mattThread))) {
-    const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages });
+  if (fo) {
+    const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages, phase: "post_yes" });
     await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, route: turn.route, rfqCode: turn.rfqCode }, input.deliver);
     return { reply: turn.reply, buyerId: buyer.id, desk: true };
   }

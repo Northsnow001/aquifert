@@ -14,6 +14,7 @@ import {
   updateTradeBuyer,
 } from "@/lib/trade/store";
 import type { TradeBuyer, TradeMessage } from "@/lib/trade/types";
+import { firmOfferPackingAsk } from "@/lib/desk-hitl/logic";
 import { identityFromParts, mergeIdentity } from "@/lib/whatsapp/buyer-identity";
 import { asString, parseJsonObject } from "@/lib/wechat/agent-parse";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
@@ -162,7 +163,7 @@ export async function runInvitedBuyerTurn(input: {
 function buyerPhase(status: string) {
   if (status === "pi_sent" || status === "won") return "pi_sent";
   if (status === "firm_offer_sent") return "offer_review";
-  if (status === "indication_sent" || status === "firm_interest" || status === "negotiating") return "post_yes";
+  if (status === "firm_interest") return "post_yes";
   return "rfq";
 }
 
@@ -272,22 +273,34 @@ function deskUserPrompt(input: {
 }
 
 function postYesPackingAsk(rfq: Record<string, unknown> | null) {
-  const product = asString(rfq?.product_label) || "the product";
-  const qty = asString(rfq?.quantity_mt);
   const extras = extrasOf(rfq);
-  const price = asString(extras.buyer_unit_price);
-  const priceBit = price ? ` at USD ${price} / MT` : "";
-  const qtyBit = qty ? `${qty} MT of ` : "";
-  return `Good — we can proceed${priceBit}. How would you like the ${qtyBit}${product} packed? 25kg bags, jumbo bags, or bulk?`;
+  const price = Number(extras.buyer_unit_price);
+  return firmOfferPackingAsk({
+    product: asString(rfq?.product_label),
+    quantityMt: asString(rfq?.quantity_mt),
+    currency: "USD",
+    buyerPrice: Number.isFinite(price) && price > 0 ? price : null,
+  });
 }
 
-export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string; messages: TradeMessage[] }) {
+function waitingOnIndication(reply: string) {
+  return /come back to you shortly with an indication|already working on your indication|desk has pricing ready|we.?ll come back to you shortly/i.test(
+    reply,
+  );
+}
+
+export async function runKnownBuyerTurn(input: {
+  buyer: TradeBuyer;
+  text: string;
+  messages: TradeMessage[];
+  phase?: string;
+}) {
   const greet = `Hi ${firstName(input.buyer)} — what fertiliser are you looking to cover?`;
   const product = productLabelFrom(input.text);
   const productTurn = looksLikeProduct(input.text);
   const productReply = `${product} — what quantity in MT, and which discharge port or country?`;
   const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
-  const phase = buyerPhase(asString(latest?.status));
+  const phase = input.phase || buyerPhase(asString(latest?.status));
   if (!geminiKey()) {
     return {
       reply: phase === "post_yes" ? postYesPackingAsk(latest) : productTurn ? productReply : greet,
@@ -325,9 +338,14 @@ export async function runKnownBuyerTurn(input: { buyer: TradeBuyer; text: string
         reply = productReply;
       }
     }
-    if (phase === "post_yes" && (route === "rfq_collect" || route === "rfq_ready" || askingForProductAgain(reply))) {
+    if (
+      phase === "post_yes" &&
+      (route === "rfq_collect" || route === "rfq_ready" || askingForProductAgain(reply) || waitingOnIndication(reply))
+    ) {
       route = "commercial_collect";
-      if (askingForProductAgain(reply) || !asString(data.reply)) reply = postYesPackingAsk(latest);
+      if (askingForProductAgain(reply) || waitingOnIndication(reply) || !asString(data.reply)) {
+        reply = postYesPackingAsk(latest);
+      }
     }
     if (latest?.id && commercial && (route === "commercial_collect" || route === "firm_offer_ready" || route === "pi_ready")) {
       const extras = extrasOf(latest);

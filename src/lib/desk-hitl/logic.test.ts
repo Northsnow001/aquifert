@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread, applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, deskPhase, draftProductFrom, emptyExecution, firmOfferPackingAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isPlainRefusal, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, nextFirmAsk, offerIsLocked, parseBuyerEmailReply, parseFollowUpIntent, parseReplyIntent, parseShortlistBody, rfqKey, shouldTakeLocked } from "@/lib/desk-hitl/logic";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
 
 describe("buyerUnitPrice", () => {
@@ -306,6 +306,13 @@ describe("parseBuyerEmailReply", () => {
 });
 
 describe("firm terms after YES", () => {
+  it("does not store a bare YES as packing", () => {
+    const exec = applyBuyerTermAnswer(emptyExecution(), "yes");
+    assert.equal(exec.packing, "");
+    assert.match(firmOfferPackingAsk({ product: "Cursor IV", quantityMt: 800, currency: "USD", buyerPrice: 648 }), /packed/i);
+    assert.match(firmOfferPackingAsk({ product: "Cursor IV", quantityMt: 800, currency: "USD", buyerPrice: 648 }), /648/);
+  });
+
   it("asks packing, then payment, then a recap", () => {
     let exec = emptyExecution();
     assert.equal(nextFirmAsk(exec).kind, "question");
