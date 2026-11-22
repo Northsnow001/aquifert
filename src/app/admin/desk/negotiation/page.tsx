@@ -13,6 +13,7 @@ export default async function NegotiationPage() {
       <PageHeader
         title="Negotiation"
         description="The buyer asked to change the indication. This thread is yours. Reply here, hand it to the firm offer agent when you agree, or end it."
+        crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
       />
       <Card>
         {live.length === 0 ? (

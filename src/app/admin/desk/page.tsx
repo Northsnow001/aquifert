@@ -27,6 +27,7 @@ export default async function DeskShortlistsPage() {
       <PageHeader
         title="Desk shortlists"
         description="The desk opens after three unique supplier quotes, or after 24 hours with whatever we have (even one). Pick one, add your margin, send the indication. After the buyer confirms terms, the firm offer waits here until you send it."
+        crumbs={[{ href: "/admin/trade", label: "Trade book" }]}
         actions={<CloseAllDealsButton openCount={open.length} />}
       />
       <Card>

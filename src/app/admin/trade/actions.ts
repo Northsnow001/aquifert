@@ -21,6 +21,8 @@ import {
 } from "@/lib/trade/store";
 import { generateDevSupplierQuotes } from "@/lib/trade/dev-quotes";
 import { tradeDevToolsEnabled } from "@/lib/trade/trade-dev";
+import { dealsForBuyer, mergeBuyerAudit } from "@/lib/desk-hitl/audit";
+import { listDeskDeals } from "@/lib/desk-hitl/store";
 import { fanOutBuyerRfq } from "@/lib/wechat/fanout";
 import type { TradeBuyerDraft, TradeSupplierDraft } from "@/lib/trade/types";
 import { resetTradeAgent, saveTradeAgent } from "@/lib/wechat/agent-store";
@@ -93,13 +95,19 @@ export async function inviteSupplierAction(id: string) {
   }
 }
 
-export async function getBuyerThreadAction(input: { buyerId?: string; phone?: string }) {
+export async function getBuyerThreadAction(input: { buyerId?: string; phone?: string; email?: string }) {
   await requireAdmin();
   try {
     const messages = await listTradeThread({ channel: "whatsapp", buyerId: input.buyerId, address: input.phone });
-    return { ok: true as const, messages };
+    const deals = dealsForBuyer(await listDeskDeals(), input.phone || "", input.email || "");
+    return { ok: true as const, lines: mergeBuyerAudit(messages, deals), messages };
   } catch (error) {
-    return { ok: false as const, error: error instanceof Error ? error.message : "Could not load the conversation.", messages: [] };
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Could not load the conversation.",
+      lines: [],
+      messages: [],
+    };
   }
 }
 
