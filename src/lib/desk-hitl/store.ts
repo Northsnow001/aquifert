@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -56,8 +56,6 @@ async function save(deal: DeskDeal) {
 
 /** n8n WF9. Override with DESK_INDICATION_WEBHOOK_URL. */
 const DEFAULT_INDICATION_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/response_from_matt";
-/** n8n WF10 after payment. Override with DESK_SUPPLIER_PACK_WEBHOOK_URL. */
-const DEFAULT_SUPPLIER_PACK_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/supplier_documents";
 /** WhatsApp after Matt emails the firm offer. Override with DESK_FIRM_OFFER_WEBHOOK_URL. */
 const DEFAULT_FIRM_OFFER_WEBHOOK = "https://northsnow.app.n8n.cloud/webhook/notify_buyer_on_firm_offer";
 /** Chosen mill WeChat after Matt emails the FO. Override with DESK_FIRM_OFFER_MILL_WEBHOOK_URL. */
@@ -884,31 +882,26 @@ export async function issueSupplierPack(input: { id: string; actor: string }): P
       }),
     )
     .catch(() => undefined);
-  const urls = new Set<string>();
-  for (const raw of [process.env.DESK_SUPPLIER_PACK_WEBHOOK_URL, DEFAULT_SUPPLIER_PACK_WEBHOOK]) {
-    const url = raw?.trim().replace(/\/$/, "");
-    if (url?.startsWith("https://") || url?.startsWith("http://localhost")) urls.add(url);
+  const openid = offer.wechatOpenId || (await supplierWechatFor(offer.supplierName));
+  if (openid) {
+    const priceLine = `${offer.currency || saved.currency || "USD"} ${offer.unitPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })} / MT`;
+    const millText = hideBuyerPriceFromSupplier(
+      [
+        `Supplier documents: AQ Trade ID ${saved.requestId}`,
+        [saved.product, saved.quantityMt ? `${saved.quantityMt}MT` : ""].filter(Boolean).join(" "),
+        `Price: ${priceLine}`,
+        "Please check email for the purchase order, purchase contract and documentary instructions.",
+      ].join("\n"),
+      saved.buyerPrice,
+      offer.unitPrice,
+    );
+    try {
+      const { sendWechatText } = await import("@/lib/wechat/send");
+      await sendWechatText(openid, millText);
+    } catch {
+      /* email is the pack; WeChat is best-effort */
+    }
   }
-  const payload = {
-    event: "supplier_pack",
-    dealId: saved.id,
-    requestId: saved.requestId,
-    product: saved.product,
-    quantityMt: saved.quantityMt,
-    destination: saved.destination,
-    incoterm: offer.incoterm || saved.incoterm,
-    loadPort: offer.loadPort,
-    packing: saved.execution?.packing || offer.notes,
-    supplierName: offer.supplierName,
-    supplierEmail: millEmail,
-    supplierUnitPrice: offer.unitPrice,
-    currency: offer.currency || saved.currency,
-    supplierOpenId: offer.wechatOpenId ?? "",
-    purchase_order: supplierDocumentFromDeal(saved, "purchase_order"),
-    purchase_contract: supplierDocumentFromDeal(saved, "purchase_contract"),
-    documentary_instructions: supplierDocumentFromDeal(saved, "documentary_instructions"),
-  };
-  await Promise.all([...urls].map((url) => notify(url, payload)));
   return saved;
 }
 
