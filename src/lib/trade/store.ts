@@ -385,16 +385,6 @@ const RFQ_LATEST_COLS =
 export async function getLatestBuyerRfq(buyerId: string) {
   const db = dataClient();
   if (!db) return null;
-  const collecting = await db
-    .from("trade_rfqs")
-    .select(RFQ_LATEST_COLS)
-    .eq("buyer_id", buyerId)
-    .eq("status", "collecting")
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (collecting.error) throw databaseError("load latest buyer RFQ", collecting.error);
-  if (collecting.data) return collecting.data as Record<string, unknown>;
   const { data, error } = await db
     .from("trade_rfqs")
     .select(RFQ_LATEST_COLS)

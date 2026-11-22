@@ -79,6 +79,28 @@ describe("bindInboundToTrade", () => {
     );
   });
 
+  it("does not let Gemini call a product name courtesy", () => {
+    const bind = bindInboundToTrade({
+      text: "Uranium XL",
+      latestStatus: "rfq_sent",
+      latestProduct: "Noni44",
+      geminiKind: "courtesy",
+    });
+    assert.equal(bind.startNew, true);
+    assert.equal(bind.kind, "new_trade");
+  });
+
+  it("starts a new collecting RFQ when they ask for a new request on a leftover draft", () => {
+    assert.equal(
+      bindInboundToTrade({
+        text: "i need a new request",
+        latestStatus: "collecting",
+        latestProduct: "Dwell",
+      }).startNew,
+      true,
+    );
+  });
+
   it("lets Gemini mark a real new trade when the line is not courtesy", () => {
     const bind = bindInboundToTrade({
       text: "can we look at DAP as well",
@@ -295,7 +317,7 @@ describe("shouldNotifyTradeOpened", () => {
   it("sends one intent mail when the product is first named, not on later turns", () => {
     assert.equal(shouldNotifyTradeOpened("", "Dwell"), true);
     assert.equal(shouldNotifyTradeOpened("Dwell", "Dwell"), false);
-    assert.equal(shouldNotifyTradeOpened("Dwell", "Uranium XL"), false);
+    assert.equal(shouldNotifyTradeOpened("Dwell", "Uranium XL"), true);
     assert.equal(shouldNotifyTradeOpened("", "Dwell", true), false);
     assert.equal(shouldNotifyTradeOpened("", ""), false);
   });

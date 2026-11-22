@@ -68,7 +68,7 @@ function standaloneProductName(text: string) {
   if (isCourtesyMessage(t) || isRfqRecapConfirm(t)) return "";
   if (/^(yes|no|ok|okay|cad|lc|sblc|sgs|bulk|cif|cfr|fob|thanks|thank you)\b/i.test(t)) return "";
   if (/@|https?:/i.test(t)) return "";
-  if (t.split(/\s+/).filter(Boolean).length > 6) return "";
+  if (t.split(/\s+/).filter(Boolean).length > 12) return "";
   return t;
 }
 
@@ -81,16 +81,19 @@ export function bindInboundToTrade(input: {
 }) {
   const status = (input.latestStatus || "").trim();
   const phase = buyerPhaseFromStatus(status);
+  const named = standaloneProductName(input.text);
   if (!status || status === "collecting") {
+    if (status === "collecting" && Boolean(input.latestProduct?.trim()) && NEW_TRADE_PHRASE.test(input.text.trim())) {
+      return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
+    }
     return { kind: "same_trade" as const, startNew: false, phase: "rfq" as const };
   }
-  if (isCourtesyMessage(input.text) || input.geminiKind === "courtesy") {
+  if (isCourtesyMessage(input.text) || (input.geminiKind === "courtesy" && !named)) {
     return { kind: "courtesy" as const, startNew: false, phase };
   }
   if (hasNewTradeIntent(input.text, input.recentInbound)) {
     return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
   }
-  const named = standaloneProductName(input.text);
   if (named && productsDiffer(named, input.latestProduct || "")) {
     return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
   }
@@ -126,9 +129,10 @@ export function shouldNotifyTradeOpened(
   nextProduct: string,
   alreadyNotified = false,
 ) {
-  if (alreadyNotified) return false;
   const next = nextProduct.trim();
   if (!next) return false;
+  if (productsDiffer(previousProduct, next)) return true;
+  if (alreadyNotified) return false;
   return !previousProduct.trim();
 }
 

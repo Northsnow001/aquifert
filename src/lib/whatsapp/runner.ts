@@ -261,7 +261,7 @@ function firstName(buyer: TradeBuyer) {
 
 function looksLikeProduct(text: string) {
   const t = text.trim().replace(/^['"`]+|['"`]+$/g, "");
-  if (!t || t.length > 80 || isCourtesyMessage(t)) return false;
+  if (!t || t.length > 80 || isCourtesyMessage(t) || hasNewTradeIntent(t)) return false;
   if (/@/.test(t) || /https?:/i.test(t)) return false;
   if (/^(yes|no|correct|go ahead|proceed|thanks|thank you|ok|okay)\b/i.test(t)) return false;
   return true;
@@ -388,23 +388,6 @@ export async function runKnownBuyerTurn(input: {
       route: "chat",
     };
   }
-  if (!geminiKey() && !recapYes) {
-    return {
-      reply:
-        phase === "waiting_indication"
-          ? waitReply
-          : phase === "post_yes"
-            ? postYesPackingAsk(latest)
-            : productTurn
-              ? productReply
-              : greet,
-      agent: "whatsapp-buyer-desk" as const,
-      rfqCode: asString(draft?.code) || asString(latest?.code),
-      rfqId: asString(draft?.id) || asString(latest?.id),
-      fanout: false,
-      route: phase === "post_yes" ? "commercial_collect" : productTurn ? "rfq_collect" : "chat",
-    };
-  }
   let reply =
     phase === "waiting_indication"
       ? waitReply
@@ -424,7 +407,7 @@ export async function runKnownBuyerTurn(input: {
   }
 
   try {
-    if (!recapYes) {
+    if (!recapYes && geminiKey()) {
     const agent = await getTradeAgent("whatsapp-buyer-desk");
     const data = await askGemini(
       agent.systemPrompt,
