@@ -1,11 +1,13 @@
 import "server-only";
 
 import { recordBuyerInbound } from "@/lib/desk-hitl/store";
+import { notifyBuyerConversationStarted } from "@/lib/trade/admin-alerts";
 import {
   getTradeBuyerByWhatsApp,
   linkBuyerWhatsApp,
   linkBuyerWhatsAppFromHello,
   listOrphanWhatsAppThread,
+  listTradeThread,
   logTradeMessage,
   markBuyerOnWhatsApp,
 } from "@/lib/trade/store";
@@ -110,6 +112,21 @@ export async function handleWhatsAppInbound(input: { from: string; body: string;
       body: text,
       payload: { msgType: "text" },
     });
+  }
+
+  const thread = buyer
+    ? await listTradeThread({ channel: "whatsapp", buyerId: buyer.id, address: phone }).catch(() => [])
+    : await listOrphanWhatsAppThread(phone).catch(() => []);
+  const inboundSoFar = thread.filter((row) => row.direction === "in").length;
+  const firstInbound = (!justLinked && inboundSoFar === 1) || (justLinked && inboundSoFar === 0);
+  if (firstInbound) {
+    await notifyBuyerConversationStarted({
+      buyer: buyer?.contactName || input.name || phone,
+      company: buyer?.companyName,
+      phone,
+      message: text,
+      buyerId: buyer?.id,
+    }).catch(() => undefined);
   }
 
   if (!buyer) {

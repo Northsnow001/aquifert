@@ -12,6 +12,7 @@ export type DeskCandidate = {
   destination: string;
   receivedAt: string;
   wechatOpenid: string;
+  offerCode?: string;
 };
 
 export function pickDeskShortlist(input: {
@@ -21,7 +22,11 @@ export function pickDeskShortlist(input: {
 }) {
   const seen = new Set<string>();
   const unique: DeskCandidate[] = [];
-  const ordered = [...input.quotes].sort((a, b) => Date.parse(a.receivedAt || "0") - Date.parse(b.receivedAt || "0"));
+  const ordered = [...input.quotes].sort((a, b) => {
+    const time = Date.parse(a.receivedAt || "0") - Date.parse(b.receivedAt || "0");
+    if (time !== 0) return time;
+    return (a.offerCode || a.supplierId).localeCompare(b.offerCode || b.supplierId);
+  });
   for (const quote of ordered) {
     if (!quote.supplierId || quote.unitPrice <= 0 || seen.has(quote.supplierId)) continue;
     seen.add(quote.supplierId);
@@ -34,7 +39,7 @@ export function pickDeskShortlist(input: {
     return { promote: true as const, reason: "three_quotes" as const, offers: unique.slice(0, DESK_QUOTE_TARGET) };
   }
   if (unique.length >= 1 && waitOver) {
-    return { promote: true as const, reason: "wait_elapsed" as const, offers: unique };
+    return { promote: true as const, reason: "wait_elapsed" as const, offers: unique.slice(0, DESK_QUOTE_TARGET) };
   }
   return { promote: false as const, reason: unique.length ? ("waiting" as const) : ("none" as const), offers: unique };
 }

@@ -23,6 +23,8 @@ export type MailKind =
   | "negotiation-desk"
   | "supplier-wechat-invite"
   | "buyer-whatsapp-invite"
+  | "desk-shortlist-admin"
+  | "buyer-chat-admin"
   | "test";
 
 export type MailAttachment = { filename: string; content: Uint8Array | Buffer; contentType?: string; cid?: string };

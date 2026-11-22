@@ -615,7 +615,7 @@ export async function listDeskCandidateQuotes(rfqId: string) {
   if (!db) return [];
   const { data, error } = await db
     .from("trade_quotes")
-    .select("supplier_id, unit_price, currency, incoterm, quantity_mt, load_port, destination_port, received_at, ready, is_no_offer, status")
+    .select("code, supplier_id, unit_price, currency, incoterm, quantity_mt, load_port, destination_port, received_at, ready, is_no_offer, status")
     .eq("rfq_id", rfqId)
     .eq("kind", "rfq")
     .eq("ready", true)
@@ -632,6 +632,7 @@ export async function listDeskCandidateQuotes(rfqId: string) {
     .map((row) => {
       const mill = millMap[text(row.supplier_id)] ?? {};
       return {
+        offerCode: text(row.code),
         supplierId: text(row.supplier_id),
         supplierName: text(mill.company_name) || "Supplier",
         unitPrice: num(row.unit_price) ?? 0,

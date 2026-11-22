@@ -59,6 +59,25 @@ describe("pickDeskShortlist", () => {
     assert.equal(picked.offers.length, 1);
   });
 
+  test("keeps the earliest unique supplier when later dummy quotes arrive", () => {
+    const picked = pickDeskShortlist({
+      quotes: [
+        quote({ supplierId: "S-014", supplierName: "Whorl Fert", unitPrice: 400, receivedAt: "2026-11-21T22:50:00.000Z", offerCode: "OFF-201" }),
+        quote({ supplierId: "S-015", supplierName: "Northsnow", unitPrice: 410, receivedAt: "2026-11-21T22:52:00.000Z", offerCode: "OFF-202" }),
+        quote({ supplierId: "S-005", supplierName: "Campbell", unitPrice: 420, receivedAt: "2026-11-22T06:51:00.000Z", offerCode: "OFF-205" }),
+        quote({ supplierId: "S-004", supplierName: "MATT Ltd", unitPrice: 430, receivedAt: "2026-11-22T06:51:00.000Z", offerCode: "OFF-203" }),
+        quote({ supplierId: "S-006", supplierName: "Matthew Limited", unitPrice: 440, receivedAt: "2026-11-22T06:51:00.000Z", offerCode: "OFF-204" }),
+      ],
+      fanoutAt: "2026-11-21T20:00:00.000Z",
+      now: Date.parse("2026-11-22T07:00:00.000Z"),
+    });
+    assert.equal(picked.promote, true);
+    assert.deepEqual(
+      picked.offers.map((row) => row.supplierName),
+      ["Whorl Fert", "Northsnow", "MATT Ltd"],
+    );
+  });
+
   test("does not send an empty book after 24 hours", () => {
     const picked = pickDeskShortlist({
       quotes: [],

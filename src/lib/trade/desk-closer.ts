@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDeskDeal, upsertShortlist } from "@/lib/desk-hitl/store";
+import { notifyDeskShortlist } from "@/lib/trade/admin-alerts";
 import {
   getTradeRfqDesk,
   getTradeRfqRecord,
@@ -8,7 +9,7 @@ import {
   listRfqsWaitingOnSuppliers,
   patchTradeRfq,
 } from "@/lib/trade/store";
-import { pickDeskShortlist } from "@/lib/trade/desk-closer-logic";
+import { DESK_QUOTE_TARGET, pickDeskShortlist } from "@/lib/trade/desk-closer-logic";
 
 export { DESK_QUOTE_TARGET, DESK_QUOTE_WAIT_MS, pickDeskShortlist } from "@/lib/trade/desk-closer-logic";
 export type { DeskCandidate } from "@/lib/trade/desk-closer-logic";
@@ -44,7 +45,11 @@ export async function considerRfqForDesk(rfqId: string) {
   if (existing && existing.status !== "waiting_desk") {
     return { ok: false as const, reason: "desk_locked" as const };
   }
+  if (existing?.status === "waiting_desk" && existing.offers.length >= DESK_QUOTE_TARGET) {
+    return { ok: true as const, ...picked, requestId, dealId: existing.id, frozen: true as const };
+  }
   const dest = String(rfq.destination_port || rfq.destination_country || "");
+  const firstTime = !existing;
   const deal = await upsertShortlist({
     requestId,
     product: String(rfq.product_label || ""),
@@ -59,7 +64,7 @@ export async function considerRfqForDesk(rfqId: string) {
       email: desk?.buyerEmail || "",
     },
     offers: picked.offers.map((offer, index) => ({
-      id: offer.supplierId || `off-${index + 1}`,
+      id: offer.offerCode || offer.supplierId || `off-${index + 1}`,
       supplierName: offer.supplierName,
       unitPrice: offer.unitPrice,
       currency: offer.currency,
@@ -76,8 +81,20 @@ export async function considerRfqForDesk(rfqId: string) {
   if (status !== "awaiting_desk") {
     await patchTradeRfq(rfqId, {
       status: "awaiting_desk",
-      extras: { ...extras, desk_promoted_at: new Date().toISOString(), desk_reason: picked.reason },
+      extras: { ...extras, desk_promoted_at: new Date().toISOString(), desk_reason: picked.reason, desk_notified_at: new Date().toISOString() },
     });
+  }
+  if (firstTime) {
+    await notifyDeskShortlist({
+      requestId,
+      dealId: deal.id,
+      product: String(rfq.product_label || ""),
+      buyer: [desk?.buyerContact, desk?.buyerCompany].filter(Boolean).join(" · "),
+      quantityMt: rfq.quantity_mt != null && String(rfq.quantity_mt) !== "" ? `${rfq.quantity_mt} MT` : "",
+      destination: dest,
+      reason: picked.reason,
+      offers: picked.offers,
+    }).catch(() => undefined);
   }
   return { ok: true as const, ...picked, requestId, dealId: deal.id };
 }
