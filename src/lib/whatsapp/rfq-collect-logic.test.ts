@@ -7,6 +7,7 @@ import {
   hasNewTradeIntent,
   isolateExtractToTrade,
   isCourtesyMessage,
+  isRfqRecapConfirm,
   isRfqRecapConfirmTurn,
   nextMissingRfqField,
   parseRfqRecap,
@@ -277,7 +278,7 @@ describe("coerceRfqPhaseTurn", () => {
       route: "commercial_collect",
       reply: "Noted — packing stays bulk, as on the enquiry. How would you like to pay — LC at sight, SBLC, CAD, or TT?",
       extract: recap.extract,
-      text: "yes",
+      text: "Yes correct",
     });
     assert.equal(confirmed.route, "rfq_ready");
   });
@@ -310,6 +311,18 @@ describe("RFQ recap confirm", () => {
       ),
       true,
     );
+    assert.equal(isRfqRecapConfirm("Yes correct"), true);
+    assert.equal(isRfqRecapConfirm("yes that's correct"), true);
+    assert.equal(
+      isRfqRecapConfirmTurn(
+        [
+          { direction: "out", body: recap },
+        ],
+        "Yes correct",
+      ),
+      true,
+    );
+    assert.equal(isRfqRecapConfirm("yes I need a new request"), false);
   });
 });
 

@@ -217,7 +217,12 @@ export function rfqCollectComplete(extract: RfqExtract) {
 }
 
 export function isRfqRecapConfirm(text: string) {
-  return /^(yes|yep|yeah|ok|okay|sure|correct|confirmed|go ahead|proceed)([\s!.]*)$/i.test(text.trim());
+  const t = text.trim();
+  if (!t || t.length > 80 || NEW_TRADE_PHRASE.test(t)) return false;
+  if (/^(yes|yep|yeah|ok|okay|sure|correct|confirmed|go ahead|proceed)([\s!.]*)$/i.test(t)) return true;
+  if (/^(yes|yep|yeah|ok|okay|sure)[\s,!.-]+(that'?s\s+|it'?s\s+)?(correct|right|confirmed|fine|good|ok|okay)\b[\s!.]*$/i.test(t)) return true;
+  if (/^(all\s+)?(correct|confirmed|looks\s+good|sounds\s+good)[\s!.]*$/i.test(t)) return true;
+  return false;
 }
 
 export function isRfqRecapMessage(text: string) {
