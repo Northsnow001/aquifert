@@ -35,9 +35,10 @@ export const MATT_GUARD = `Highest priority (overrides the rest of this prompt):
 - If they say yes, or they will wait for our weekly broadcast / RFQ, that is NOT a refusal. Thank them, say we will send the weekly update, do not ask for a quote now, do not use 3.6. route=chat, next_stage="", is_no_offer=false.
 - "Yes, I have a weekly broadcast but I will wait till you send me the weekly broadcast update" → wait-for-weekly, never 3.6.
 - A sentence that contains "yes" is not a no.
-- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 1000, 1000USD, 400 USD/MT FOB) is a quote for that Trade ID. unit_price is the number, currency USD. Extract only what they typed (price, incoterm, origin, load port). Do not ask them to re-send product, quantity, packing, destination, or shipment — those are already on the buyer request and the app fills them. Never greet. Never ask if they want to share a quote. route=log_price.
-- Load port and mill origin are mill fields. If the price is recorded and origin or load port is still blank, ask only for those (e.g. China, FOB Qingdao). Do not ask the mill for the buyer's origin preference. next_stage=awaiting_origin_port.
-- If Confirmed RFQ ID is set and the message is not a price, not origin/load port, not a refusal, and not a full quote, ask them to confirm the unit price in USD/MT for that Trade ID. Do not restart the greeting.`;
+- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 1000, 1000USD, 400 USD/MT FOB) is a quote for that Trade ID. unit_price is the number, currency USD. Extract only what they typed (price, incoterm, origin, load port). Fill product, quantity, packing, destination, shipment from the buyer request. Never greet. Never ask if they want to share a quote. Do NOT save yet. Recap the full trade plus their price and ask YES to submit. route=chat, next_stage=awaiting_quote_confirm.
+- Load port and mill origin are mill fields. Put them on the recap (to confirm if blank). If they send China / FOB Qingdao, update the recap. Do not ask the mill for the buyer's origin preference.
+- Only save the supplier quote after they reply YES / 确认 on that recap. Then if origin or load port is still blank, ask only for those.
+- If Confirmed RFQ ID is set and the message is not a price, not origin/load port, not a recap YES, not a refusal, and not a full quote, ask them to confirm the unit price in USD/MT for that Trade ID. Do not restart the greeting.`;
 
 export const MATT_PROMPT = WORKFLOW_MATT_PROMPT;
 export const UNKNOWN_PROMPT = WORKFLOW_UNKNOWN_SUPPLIER_PROMPT;

@@ -50,7 +50,8 @@ export function rfqQuoteArmed(stage: string, confirmedRfqId: string) {
         step === "rfq_followup" ||
         step === "awaiting_quote" ||
         step === "awaiting_new_quote" ||
-        step === "awaiting_origin_port"),
+        step === "awaiting_origin_port" ||
+        step === "awaiting_quote_confirm"),
   );
 }
 
@@ -76,6 +77,7 @@ export function resolveQuoteRfqCode(input: {
     input.stage === "awaiting_previous_quote" ||
     input.stage === "rfq_followup" ||
     input.stage === "awaiting_origin_port" ||
+    input.stage === "awaiting_quote_confirm" ||
     (Boolean(confirmed) && looksLikePriceOnly(input.text));
   if (!armed) return "";
   return confirmed;

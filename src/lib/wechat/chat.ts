@@ -1,4 +1,10 @@
-import { looksLikeMillOriginPort, looksLikePriceOnly, millOriginPortGaps, rfqQuoteArmed } from "@/lib/wechat/quote-merge";
+import {
+  looksLikeMillOriginPort,
+  looksLikePriceOnly,
+  millOriginPortGaps,
+  rfqQuoteArmed,
+  type OfferSlice,
+} from "@/lib/wechat/quote-merge";
 
 export const GREETING =
   "Hello, this is Matt from Aquifert Ltd. Thank you for getting in touch. Would you like to share a quote with us today?\n\n您好，我是 Aquifert Ltd 的 Matt。感谢您的联系。请问您今天是否想向我们提供报价？";
@@ -15,14 +21,74 @@ export const NO_QUOTE =
 export const THANKS_QUOTE =
   "Thank you — we've received your message and recorded it. Our team will follow up if anything else is needed.\n\n谢谢，我们已收到并记录您的消息。如需其他信息，我们的团队会再联系。";
 
+function dash(value: string, zh = false) {
+  const t = value.trim();
+  return t || (zh ? "待确认" : "to confirm");
+}
+
+function recapDraft(rfqId: string, text: string, price = ""): OfferSlice {
+  return {
+    rfq_id: rfqId,
+    product_name: "",
+    specification: "",
+    unit_price: price || parseBarePrice(text),
+    currency: price || parseBarePrice(text) ? "USD" : "",
+    quantity: "",
+    packaging: "",
+    destination: "",
+    load_port: "",
+    origin: "",
+    delivery_turnaround: "",
+    incoterms: "",
+    validity: "",
+    raw_body: text,
+  };
+}
+
+export function millQuoteRecap(offer: OfferSlice, rfqCode: string) {
+  const id = rfqCode.trim() || offer.rfq_id.trim() || "this RFQ";
+  const qty = offer.quantity.trim();
+  const price = offer.unit_price.trim() ? `USD ${offer.unit_price.trim()}/MT` : "";
+  const terms = [offer.incoterms, offer.destination].filter((part) => part.trim()).join(" ");
+  const en = [
+    `Please confirm this quote for ${id}:`,
+    `Product: ${dash(offer.product_name)}`,
+    `Quantity: ${qty ? `${qty} MT` : "to confirm"}`,
+    `Packing: ${dash(offer.packaging)}`,
+    `Incoterm / dest: ${terms || "to confirm"}`,
+    `Shipping: ${dash(offer.delivery_turnaround)}`,
+    `Your price: ${price || "to confirm"}`,
+    `Origin: ${dash(offer.origin)}`,
+    `Load port: ${dash(offer.load_port)}`,
+    "Reply YES to submit. Or send origin and load port (e.g. China, FOB Qingdao).",
+  ].join("\n");
+  const zh = [
+    `请确认 ${id} 的报价：`,
+    `产品：${dash(offer.product_name, true)}`,
+    `数量：${qty ? `${qty} 吨` : "待确认"}`,
+    `包装：${dash(offer.packaging, true)}`,
+    `贸易术语/目的地：${terms || "待确认"}`,
+    `装期：${dash(offer.delivery_turnaround, true)}`,
+    `您的价格：${price ? `${offer.unit_price.trim()} 美元/吨` : "待确认"}`,
+    `产地：${dash(offer.origin, true)}`,
+    `装货港：${dash(offer.load_port, true)}`,
+    "回复 YES 提交。或发送产地和装货港，例如 中国，FOB 青岛。",
+  ].join("\n");
+  return `${en}\n\n${zh}`;
+}
+
 export function thanksForPrice(rfqId: string, price: string, missing: Array<"origin" | "load_port"> = ["origin", "load_port"]) {
   const id = rfqId.trim() || "this RFQ";
   const usd = price.trim() || "";
-  const line = usd ? `Thank you — recorded USD ${usd}/MT for ${id}.` : `Thank you — we've recorded your price for ${id}.`;
-  const zh = usd ? `谢谢，已记录 ${id} 的价格为 ${usd} 美元/吨。` : `谢谢，已记录您对 ${id} 的报价。`;
+  const line = usd ? `Thank you — submitted USD ${usd}/MT for ${id}.` : `Thank you — we've submitted your quote for ${id}.`;
+  const zh = usd ? `谢谢，已提交 ${id} 的报价 ${usd} 美元/吨。` : `谢谢，已提交您对 ${id} 的报价。`;
   const recorded = `${line}\n\n${zh}`;
-  const gaps = missing.length ? missing : (["origin", "load_port"] as Array<"origin" | "load_port">);
-  return `${recorded}\n\n${askMillOriginPort(id, gaps)}`;
+  if (!missing.length) return recorded;
+  return `${recorded}\n\n${askMillOriginPort(id, missing)}`;
+}
+
+export function isMillQuoteConfirm(text: string) {
+  return /^(yes|y|ok|okay|sure|confirm|confirmed|是|好|好的|可以|确认|对)([\s!.]*)$/i.test(text.trim());
 }
 
 export function askRfqPrice(rfqId: string) {
@@ -77,11 +143,14 @@ export function nextSupplierChat(input: { stage?: string | null; text: string; c
   const rfqId = String(input.confirmedRfqId || "").trim();
   const armed = rfqQuoteArmed(stage, rfqId);
 
-  if (armed && looksLikePriceOnly(raw)) {
-    return {
-      reply: thanksForPriceAndAskOriginPort(rfqId, parseBarePrice(raw), millOriginPortGaps({})),
-      nextStage: "awaiting_origin_port",
-    };
+  if (armed && (looksLikePriceOnly(raw) || looksLikeQuote(raw)) && stage !== "awaiting_quote_confirm") {
+    return { reply: millQuoteRecap(recapDraft(rfqId, raw), rfqId), nextStage: "awaiting_quote_confirm" };
+  }
+  if (stage === "awaiting_quote_confirm") {
+    if (isMillQuoteConfirm(raw)) {
+      return { reply: thanksForPrice(rfqId, "", millOriginPortGaps({})), nextStage: "awaiting_origin_port" };
+    }
+    return { reply: millQuoteRecap(recapDraft(rfqId, raw), rfqId), nextStage: "awaiting_quote_confirm" };
   }
   if (stage === "awaiting_origin_port") {
     if (looksLikeMillOriginPort(raw) || looksLikeQuote(raw)) return { reply: THANKS_QUOTE, nextStage: "" };
