@@ -242,7 +242,7 @@ export function isRfqRecapConfirm(text: string, geminiKind: RecapReplyKind | nul
   if (/^(yes|yep|yeah|ok|okay|sure|correct|confirmed|go ahead|proceed)([\s!.]*)$/i.test(t)) return true;
   if (/^(yes|yep|yeah|ok|okay|sure)[\s,!.-]+(that'?s\s+|it'?s\s+)?(correct|right|confirmed|fine|good|ok|okay)\b[\s!.]*$/i.test(t)) return true;
   if (/^(all\s+)?(correct|confirmed|looks\s+good|sounds\s+good|good to go)[\s!.]*$/i.test(t)) return true;
-  return geminiKind === "confirm";
+  return false;
 }
 
 export function isRfqRecapMessage(text: string) {
