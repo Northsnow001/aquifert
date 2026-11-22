@@ -62,7 +62,7 @@ export function mergeBuyerAudit(wa: TradeMessage[], deals: DeskDeal[]): BuyerAud
       });
     }
   }
-  lines.sort((a, b) => Date.parse(a.at || 0) - Date.parse(b.at || 0) || a.id.localeCompare(b.id));
+  lines.sort((a, b) => (Date.parse(a.at) || 0) - (Date.parse(b.at) || 0) || a.id.localeCompare(b.id));
   const seen = new Set<string>();
   const out: BuyerAuditLine[] = [];
   for (const line of lines) {
