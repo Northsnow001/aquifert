@@ -451,7 +451,7 @@ export function firmTermsRecap(exec: DeskExecution) {
     .join("\n");
 }
 
-export function nextFirmAsk(exec: DeskExecution): { kind: "question"; text: string } | { kind: "recap"; text: string } | { kind: "ready" } {
+export function nextFirmAsk(exec: DeskExecution): { kind: "question" | "recap"; text: string } {
   if (!exec.packing) {
     return { kind: "question", text: "How would you like it packed — 25kg bags, jumbo bags, or bulk?" };
   }

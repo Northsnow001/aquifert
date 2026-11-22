@@ -311,7 +311,9 @@ describe("firm terms after YES", () => {
     assert.equal(nextFirmAsk(exec).kind, "question");
     exec = applyBuyerTermAnswer(exec, "jumbo bags");
     assert.equal(exec.packing, "jumbo bags");
-    assert.match(nextFirmAsk(exec).kind === "question" ? nextFirmAsk(exec).text : "", /pay/i);
+    const payAsk = nextFirmAsk(exec);
+    assert.equal(payAsk.kind, "question");
+    assert.match(payAsk.text, /pay/i);
     exec = applyBuyerTermAnswer(exec, "LC at sight");
     assert.equal(exec.paymentTerms, "LC at sight");
     exec = applyBuyerTermAnswer(exec, "China ok");
