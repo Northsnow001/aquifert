@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { MessageCircle, Radio, X } from "lucide-react";
+import { FlaskConical, MessageCircle, Radio, X } from "lucide-react";
 import { toast } from "sonner";
-import { fanOutRfqAction, getRfqDeskAction } from "@/app/admin/trade/actions";
+import { fanOutRfqAction, generateDevQuotesAction, getRfqDeskAction } from "@/app/admin/trade/actions";
 import { SupplierThread } from "@/components/admin/trade/supplier-thread";
 import { btnGhost, btnPrimary, btnSecondary } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
@@ -66,6 +66,8 @@ function fact(label: string, value: string) {
 export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void }) {
   const [pending, start] = useTransition();
   const [desk, setDesk] = useState<TradeRfqDesk | null>(null);
+  const [devTools, setDevTools] = useState(false);
+  const [quoteTarget, setQuoteTarget] = useState(3);
   const [error, setError] = useState("");
   const [thread, setThread] = useState<TradeRfqAsk | null>(null);
 
@@ -77,6 +79,7 @@ export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void
       }
       setError("");
       setDesk(result.desk);
+      setDevTools(result.devTools);
     });
   };
 
@@ -86,6 +89,24 @@ export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rfqId]);
+
+  const generate = () => {
+    start(async () => {
+      const result = await generateDevQuotesAction(rfqId, quoteTarget);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      if (!result.created) {
+        toast.message(`Already have ${result.unique} unique quote${result.unique === 1 ? "" : "s"}.`);
+      } else {
+        toast.success(
+          `Generated ${result.created} unique quote${result.created === 1 ? "" : "s"} · ${result.unique} ready for this RFQ`,
+        );
+      }
+      load();
+    });
+  };
 
   const send = (resendFailed: boolean) => {
     start(async () => {
@@ -153,7 +174,32 @@ export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void
                 <p className="text-[12.5px] text-mid">
                   {sent} sent · {quoted} quoted · {failed} failed
                 </p>
+                <p className="w-full text-[12px] text-dim">
+                  Matt sees this after 3 unique supplier quotes, or after 24 hours with at least one.
+                </p>
               </div>
+              {devTools ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-[#e2c48a] bg-[#fffaf0] px-3 py-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9a5b00]">Dev only</p>
+                  <label htmlFor="dev-quote-target" className="flex items-center gap-1.5 text-[12.5px] text-mid">
+                    Unique quotes
+                    <input
+                      id="dev-quote-target"
+                      type="number"
+                      min={1}
+                      max={8}
+                      value={quoteTarget}
+                      onChange={(event) => setQuoteTarget(Math.min(8, Math.max(1, Number(event.target.value) || 1)))}
+                      className="w-14 rounded-lg border border-border bg-white px-2 py-1 text-[13px] text-ink"
+                    />
+                  </label>
+                  <button type="button" className={btnSecondary} disabled={pending} onClick={generate}>
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    Generate quotes
+                  </button>
+                  <p className="text-[12px] text-[#7a5200]">Fills missing unique suppliers only. Safe to remove later.</p>
+                </div>
+              ) : null}
 
               <h3 className="mt-6 text-[12px] font-semibold uppercase tracking-[0.12em] text-dim">Suppliers</h3>
               <ul className="mt-2 divide-y divide-border rounded-2xl border border-border">

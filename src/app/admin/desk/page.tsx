@@ -26,7 +26,7 @@ export default async function DeskShortlistsPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Desk shortlists"
-        description="WF8 drops the first three offers here. Pick one, add your margin, send the indication. After the buyer confirms terms, the firm offer waits here until you send it."
+        description="The desk opens after three unique supplier quotes, or after 24 hours with whatever we have (even one). Pick one, add your margin, send the indication. After the buyer confirms terms, the firm offer waits here until you send it."
         actions={<CloseAllDealsButton openCount={open.length} />}
       />
       <Card>
@@ -36,7 +36,7 @@ export default async function DeskShortlistsPage() {
             body={
               closedCount
                 ? `${closedCount} closed trade(s) kept on file. A new WhatsApp RFQ will open a new rfq#.`
-                : "When the RFQ closer finds matching offers, they appear here. Point WF8 True at POST /api/desk/shortlists."
+                : "When three unique suppliers quote — or 24 hours pass with at least one quote — the shortlist appears here."
             }
           />
         ) : (

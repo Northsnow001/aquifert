@@ -17,6 +17,8 @@ import {
   updateTradeBuyer,
   updateTradeSupplier,
 } from "@/lib/trade/store";
+import { generateDevSupplierQuotes } from "@/lib/trade/dev-quotes";
+import { tradeDevToolsEnabled } from "@/lib/trade/trade-dev";
 import { fanOutBuyerRfq } from "@/lib/wechat/fanout";
 import type { TradeBuyerDraft, TradeSupplierDraft } from "@/lib/trade/types";
 import { resetTradeAgent, saveTradeAgent } from "@/lib/wechat/agent-store";
@@ -255,7 +257,7 @@ export async function getRfqDeskAction(id: string) {
   try {
     const desk = await getTradeRfqDesk(id);
     if (!desk) return { ok: false as const, error: "Buyer request not found." };
-    return { ok: true as const, desk };
+    return { ok: true as const, desk, devTools: tradeDevToolsEnabled() };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not load this trade." };
   }
@@ -269,6 +271,18 @@ export async function fanOutRfqAction(id: string, resendFailed = false) {
     return { ok: true as const, ...result };
   } catch (error) {
     return { ok: false as const, error: error instanceof Error ? error.message : "Could not send this request to suppliers." };
+  }
+}
+
+export async function generateDevQuotesAction(id: string, targetCount: number) {
+  await requireAdmin();
+  if (!tradeDevToolsEnabled()) return { ok: false as const, error: "Dev quote tools are off. Unset TRADE_DEV_TOOLS or set it to 1." };
+  try {
+    const result = await generateDevSupplierQuotes(id, targetCount);
+    refresh();
+    return { ok: true as const, ...result };
+  } catch (error) {
+    return { ok: false as const, error: error instanceof Error ? error.message : "Could not generate supplier quotes." };
   }
 }
 

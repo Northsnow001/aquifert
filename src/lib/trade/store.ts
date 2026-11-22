@@ -441,6 +441,12 @@ async function nextOfferCode(at: Date) {
   return formatOfferCode(at, Date.now() % 10_000);
 }
 
+async function maybePromoteRfqToDesk(rfqId: string | null, isNoOffer: boolean) {
+  if (!rfqId || isNoOffer) return;
+  const { considerRfqForDesk } = await import("@/lib/trade/desk-closer");
+  await considerRfqForDesk(rfqId).catch(() => undefined);
+}
+
 export async function insertWechatQuote(input: {
   supplierId: string;
   kind: "rfq" | "weekly";
@@ -459,6 +465,7 @@ export async function insertWechatQuote(input: {
   isNoOffer?: boolean;
   rawMessage: string;
   extras?: Record<string, unknown>;
+  sourceChannel?: string;
 }) {
   const db = dataClient();
   if (!db) return;
@@ -483,7 +490,7 @@ export async function insertWechatQuote(input: {
     incoterm: input.incoterm || null,
     delivery_window: input.deliveryWindow || null,
     status: input.isNoOffer ? "no_offer" : "received",
-    source_channel: "wechat",
+    source_channel: input.sourceChannel || "wechat",
     is_no_offer: Boolean(input.isNoOffer),
     week_start: mondayOf(now),
     raw_message: input.rawMessage,
@@ -509,6 +516,7 @@ export async function insertWechatQuote(input: {
       const { error } = await db.from("trade_quotes").update(row).eq("id", existing.id);
       if (error) throw databaseError("update WeChat quote", error);
       await markRfqAskQuoted(rfqId, input.supplierId, Boolean(input.isNoOffer)).catch(() => undefined);
+      await maybePromoteRfqToDesk(rfqId, Boolean(input.isNoOffer));
       return;
     }
   }
@@ -516,6 +524,7 @@ export async function insertWechatQuote(input: {
   const { error } = await db.from("trade_quotes").insert(row);
   if (error) throw databaseError("save WeChat quote", error);
   if (rfqId) await markRfqAskQuoted(rfqId, input.supplierId, Boolean(input.isNoOffer)).catch(() => undefined);
+  await maybePromoteRfqToDesk(rfqId, Boolean(input.isNoOffer));
 }
 
 export async function logTradeMessage(input: {
@@ -599,6 +608,86 @@ export async function markSupplierLastRfq(id: string, code: string) {
     })
     .eq("id", id);
   if (error) throw databaseError("mark supplier last RFQ", error);
+}
+
+export async function listDeskCandidateQuotes(rfqId: string) {
+  const db = dataClient();
+  if (!db) return [];
+  const { data, error } = await db
+    .from("trade_quotes")
+    .select("supplier_id, unit_price, currency, incoterm, quantity_mt, load_port, destination_port, received_at, ready, is_no_offer, status")
+    .eq("rfq_id", rfqId)
+    .eq("kind", "rfq")
+    .eq("ready", true)
+    .not("status", "in", "(superseded,no_offer)")
+    .order("received_at", { ascending: true });
+  if (error) throw databaseError("list desk candidate quotes", error);
+  const ids = [...new Set((data ?? []).map((row) => text(row.supplier_id)).filter(Boolean))];
+  const suppliers = ids.length
+    ? await db.from("trade_suppliers").select("id, company_name, wechat_openid").in("id", ids)
+    : { data: [] };
+  const millMap = Object.fromEntries((suppliers.data ?? []).map((row) => [text(row.id), row as Record<string, unknown>]));
+  return (data ?? [])
+    .filter((row) => !row.is_no_offer && (num(row.unit_price) ?? 0) > 0)
+    .map((row) => {
+      const mill = millMap[text(row.supplier_id)] ?? {};
+      return {
+        supplierId: text(row.supplier_id),
+        supplierName: text(mill.company_name) || "Supplier",
+        unitPrice: num(row.unit_price) ?? 0,
+        currency: text(row.currency) || "USD",
+        incoterm: text(row.incoterm) || "FOB",
+        quantityMt: num(row.quantity_mt),
+        loadPort: text(row.load_port),
+        destination: text(row.destination_port),
+        receivedAt: text(row.received_at),
+        wechatOpenid: text(mill.wechat_openid),
+      };
+    });
+}
+
+export async function listLiveRfqQuoteKeys(rfqId: string) {
+  const db = dataClient();
+  if (!db) return { supplierIds: [] as string[], prices: [] as number[], loadPorts: [] as string[] };
+  const { data, error } = await db
+    .from("trade_quotes")
+    .select("supplier_id, unit_price, load_port, is_no_offer, status")
+    .eq("rfq_id", rfqId)
+    .eq("kind", "rfq")
+    .not("status", "in", "(superseded,no_offer)");
+  if (error) throw databaseError("list live RFQ quotes", error);
+  const supplierIds: string[] = [];
+  const prices: number[] = [];
+  const loadPorts: string[] = [];
+  for (const row of data ?? []) {
+    const id = text(row.supplier_id);
+    if (id) supplierIds.push(id);
+    const price = num(row.unit_price);
+    if (price && price > 0) prices.push(price);
+    const port = text(row.load_port);
+    if (port) loadPorts.push(port);
+  }
+  return { supplierIds, prices, loadPorts };
+}
+
+export async function listRfqsWaitingOnSuppliers() {
+  const db = dataClient();
+  if (!db) return [];
+  const { data, error } = await db
+    .from("trade_rfqs")
+    .select("id")
+    .in("status", ["collecting", "open", "rfq_sent", "awaiting_desk"])
+    .order("updated_at", { ascending: true })
+    .limit(80);
+  if (error) throw databaseError("list RFQs waiting on suppliers", error);
+  return (data ?? []).map((row) => text(row.id)).filter(Boolean);
+}
+
+export async function skipSupplierInvite(id: string) {
+  const db = dataClient();
+  if (!db) return;
+  const { error } = await db.from("trade_suppliers").update({ onboarding_status: "skipped" }).eq("id", id);
+  if (error) throw databaseError("skip supplier invite", error);
 }
 
 export async function getTradeRfqRecord(id: string) {
