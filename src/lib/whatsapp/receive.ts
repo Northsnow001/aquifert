@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isIndicationAsk } from "@/lib/desk-hitl/logic";
-import { hasNewTradeIntent } from "@/lib/whatsapp/rfq-collect-logic";
+import { hasNewTradeIntent, isRfqRecapConfirmTurn } from "@/lib/whatsapp/rfq-collect-logic";
 import { buyerHasLiveDeskThread, markWhatsAppSent, recordBuyerInbound } from "@/lib/desk-hitl/store";
 import { isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
 import { notifyBuyerConversationStarted } from "@/lib/trade/admin-alerts";
@@ -56,6 +56,16 @@ async function continueKnown(input: {
   const latest = await getLatestBuyerRfq(buyer.id).catch(() => null);
   const recentInbound = messages.filter((row) => row.direction === "in").slice(-8).map((row) => row.body);
   const startingNew = hasNewTradeIntent(input.text, recentInbound);
+  if (isRfqRecapConfirmTurn(messages, input.text)) {
+    const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages, phase: "rfq" });
+    await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode, route: turn.route }, input.deliver);
+    if (turn.fanout && turn.rfqId) {
+      await fanOutBuyerRfq(turn.rfqId).catch((error) => {
+        console.error("[rfq fan-out]", error instanceof Error ? error.message : error);
+      });
+    }
+    return { reply: turn.reply, buyerId: buyer.id };
+  }
   const desk = await recordBuyerInbound({
     phone: input.phone,
     text: input.text,

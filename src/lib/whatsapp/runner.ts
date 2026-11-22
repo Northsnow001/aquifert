@@ -21,6 +21,9 @@ import { getTradeAgent } from "@/lib/wechat/agent-store";
 import {
   coerceRfqPhaseTurn,
   isolateExtractToTrade,
+  isRfqRecapConfirmTurn,
+  lastAgentText,
+  parseRfqRecap,
   shouldNotifyTradeOpened,
   shouldStartNewRfq,
   threadSinceNewTrade,
@@ -319,17 +322,20 @@ export async function runKnownBuyerTurn(input: {
   const productReply = `${product} — what quantity in MT, and which discharge port or country?`;
   const latest = await getLatestBuyerRfq(input.buyer.id).catch(() => null);
   const recentInbound = input.messages.filter((row) => row.direction === "in").slice(-8).map((row) => row.body);
-  const forceNew = shouldStartNewRfq({
-    text: input.text,
-    recentInbound,
-    latestStatus: asString(latest?.status),
-    requestedPhase: input.phase,
-    latestProduct: asString(latest?.product_label),
-  });
-  const phase = forceNew ? "rfq" : input.phase || buyerPhase(asString(latest?.status));
+  const recapYes = isRfqRecapConfirmTurn(input.messages, input.text);
+  const forceNew = recapYes
+    ? asString(latest?.status) !== "collecting"
+    : shouldStartNewRfq({
+        text: input.text,
+        recentInbound,
+        latestStatus: asString(latest?.status),
+        requestedPhase: input.phase,
+        latestProduct: asString(latest?.product_label),
+      });
+  const phase = recapYes || forceNew ? "rfq" : input.phase || buyerPhase(asString(latest?.status));
   const draft = forceNew ? null : latest;
   const promptMessages = forceNew || phase === "rfq" ? threadSinceNewTrade(input.messages, input.text) : input.messages;
-  if (!geminiKey()) {
+  if (!geminiKey() && !recapYes) {
     return {
       reply: phase === "post_yes" ? postYesPackingAsk(latest) : productTurn ? productReply : greet,
       agent: "whatsapp-buyer-desk" as const,
@@ -345,8 +351,13 @@ export async function runKnownBuyerTurn(input: {
   let fanout = false;
   let route = phase === "post_yes" ? "commercial_collect" : productTurn ? "rfq_collect" : "chat";
   let extract: Record<string, unknown> | null = phase === "rfq" && productTurn ? { product } : null;
+  if (recapYes) {
+    extract = { ...extrasOf(draft), ...parseRfqRecap(lastAgentText(input.messages)) };
+    route = "rfq_ready";
+  }
 
   try {
+    if (!recapYes) {
     const agent = await getTradeAgent("whatsapp-buyer-desk");
     const data = await askGemini(
       agent.systemPrompt,
@@ -409,6 +420,7 @@ export async function runKnownBuyerTurn(input: {
           console.error("[firm offer park]", error);
         });
       }
+    }
     }
   } catch (error) {
     console.error("[buyer desk]", error instanceof Error ? error.message : error);

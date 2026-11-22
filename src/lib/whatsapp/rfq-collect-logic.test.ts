@@ -4,7 +4,9 @@ import {
   coerceRfqPhaseTurn,
   hasNewTradeIntent,
   isolateExtractToTrade,
+  isRfqRecapConfirmTurn,
   nextMissingRfqField,
+  parseRfqRecap,
   productsDiffer,
   rfqCollectComplete,
   shouldNotifyTradeOpened,
@@ -151,12 +153,42 @@ describe("coerceRfqPhaseTurn", () => {
     assert.match(recap.reply, /Please confirm if the following details are correct/i);
 
     const confirmed = coerceRfqPhaseTurn({
-      route: "rfq_ready",
-      reply: "Thank you for confirming",
+      route: "commercial_collect",
+      reply: "Noted — packing stays bulk, as on the enquiry. How would you like to pay — LC at sight, SBLC, CAD, or TT?",
       extract: recap.extract,
       text: "yes",
     });
     assert.equal(confirmed.route, "rfq_ready");
+  });
+});
+
+describe("RFQ recap confirm", () => {
+  const recap = [
+    "Please confirm if the details for this enquiry are correct:",
+    "• Product: Grannular VI",
+    "• Quantity: 700 MT",
+    "• Packing: Bulk",
+    "• Incoterms/Port: FOB",
+    "• Shipping: 4-week window",
+  ].join("\n");
+
+  it("reads the recap and treats yes as confirm, not payment", () => {
+    const parsed = parseRfqRecap(recap);
+    assert.equal(parsed.product, "Grannular VI");
+    assert.equal(parsed.quantity_mt, "700");
+    assert.equal(parsed.packing, "Bulk");
+    assert.equal(parsed.incoterm_pref, "FOB");
+    assert.equal(parsed.timing_notes, "4-week window");
+    assert.equal(
+      isRfqRecapConfirmTurn(
+        [
+          { direction: "in", body: "4weeks" },
+          { direction: "out", body: recap },
+        ],
+        "yes",
+      ),
+      true,
+    );
   });
 });
 

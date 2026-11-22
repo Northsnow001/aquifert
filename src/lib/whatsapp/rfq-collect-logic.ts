@@ -145,6 +145,49 @@ export function isRfqRecapConfirm(text: string) {
   return /^(yes|yep|yeah|ok|okay|sure|correct|confirmed|go ahead|proceed)([\s!.]*)$/i.test(text.trim());
 }
 
+export function isRfqRecapMessage(text: string) {
+  const t = text.trim();
+  if (!t || /prepare the firm offer/i.test(t)) return false;
+  return /please confirm if .{0,160}details/i.test(t) && /product\s*:/i.test(t);
+}
+
+export function lastAgentText(messages: Array<{ direction?: string; from?: string; body?: string; text?: string }>) {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const row = messages[i];
+    if (row.direction === "out" || row.from === "desk") return String(row.body || row.text || "");
+  }
+  return "";
+}
+
+export function isRfqRecapConfirmTurn(
+  messages: Array<{ direction?: string; from?: string; body?: string; text?: string }>,
+  text: string,
+) {
+  return isRfqRecapConfirm(text) && isRfqRecapMessage(lastAgentText(messages));
+}
+
+export function parseRfqRecap(text: string) {
+  const grab = (label: string) => {
+    const match = text.match(new RegExp(`${label}\\s*:\\s*([^\\n•]+)`, "i"));
+    return match ? match[1].replace(/\s+/g, " ").trim() : "";
+  };
+  const quantity = grab("quantity");
+  const terms = grab("incoterms?\\s*/\\s*port") || grab("incoterms?");
+  const term = terms.match(/\b(CIF|CFR|FOB|CPT|CIP|DAP|DDP|FCA|EXW)\b/i)?.[1] || "";
+  const port = terms
+    .replace(/\b(CIF|CFR|FOB|CPT|CIP|DAP|DDP|FCA|EXW)\b/gi, "")
+    .replace(/^[\s,/-]+|[\s,/-]+$/g, "")
+    .trim();
+  return {
+    product: grab("product"),
+    quantity_mt: quantity.replace(/[^\d.]/g, ""),
+    packing: grab("packing"),
+    incoterm_pref: term.toUpperCase(),
+    discharge_port: port,
+    timing_notes: grab("shipping"),
+  };
+}
+
 export function looksLikeCommercialJump(reply: string, route: string) {
   if (COMMERCIAL_ROUTE.has(route)) return true;
   return FIRM_OFFER_TALK.test(reply);
@@ -181,6 +224,9 @@ export function coerceRfqPhaseTurn(input: {
   let route = input.route;
   let reply = input.reply;
   const extract = input.extract;
+  if (isRfqRecapConfirm(input.text) && rfqCollectComplete(extract)) {
+    return { route: "rfq_ready", reply, extract };
+  }
   const jumped = looksLikeCommercialJump(reply, route);
   if (jumped) route = "rfq_collect";
   if (route === "rfq_ready" && (!rfqCollectComplete(extract) || !isRfqRecapConfirm(input.text))) {
