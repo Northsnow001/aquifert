@@ -6,6 +6,7 @@ import { getDeskSettings } from "@/lib/desk-settings/store";
 import { DESK_EMAIL } from "@/lib/email/brand";
 import { analyticsWaitlistEmail, contactReceiptEmail, deskAlertEmail, splitTopic } from "@/lib/email/templates";
 import { sendEmail, type MailKind } from "@/lib/mailer";
+import { isAlertInbox } from "@/lib/trade/admin-alert-logic";
 
 /** The inbox that should receive desk alerts. Falls back to noreply@aquifert.com. */
 export function deskInbox(replyTo: string | undefined) {
@@ -19,8 +20,7 @@ export async function sendDeskAlert(input: { kind: MailKind; subject: string; he
     const { delivery } = await getDeskSettings();
     const email = deskAlertEmail(input);
     const extra = deskInbox(delivery.replyTo).toLowerCase();
-    const skip = extra.split("@")[0] === "noreply" || extra.split("@")[0] === "no-reply";
-    const to = [...new Set([...allowlistedAdminEmails(), ...(skip ? [] : [extra])])];
+    const to = [...new Set([...allowlistedAdminEmails(), ...(isAlertInbox(extra) ? [extra] : [])])];
     const sent = await Promise.all(to.map((addr) => sendEmail({ kind: input.kind, to: addr, ...email }, delivery)));
     return sent[0] ?? null;
   } catch (error) {

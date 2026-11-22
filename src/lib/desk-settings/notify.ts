@@ -7,6 +7,7 @@ import { getDeskSettings } from "@/lib/desk-settings/store";
 import type { TemplateKind } from "@/lib/desk-settings/types";
 import { allowlistedAdminEmails } from "@/lib/admin-access";
 import { sendEmail, type OutboxEntry } from "@/lib/mailer";
+import { isAlertInbox } from "@/lib/trade/admin-alert-logic";
 
 export async function siteOrigin() {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
@@ -30,8 +31,7 @@ export async function notifySubmission(kind: TemplateKind, input: { data: FormEm
   }
   if (form.sendAdmin) {
     const extra = form.recipient.trim().toLowerCase();
-    const skipExtra = !EMAIL_PATTERN.test(extra) || extra.split("@")[0] === "noreply" || extra.split("@")[0] === "no-reply";
-    const admins = [...new Set([...allowlistedAdminEmails(), ...(skipExtra ? [] : [extra])])];
+    const admins = [...new Set([...allowlistedAdminEmails(), ...(isAlertInbox(extra) ? [extra] : [])])];
     const email = formEmail({ ...base, audience: "admin", template: form.admin });
     for (const addr of admins) {
       sent.push(await sendEmail({ kind: `${kind}-admin`, to: addr, ...email }, settings.delivery));

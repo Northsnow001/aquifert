@@ -8,6 +8,7 @@ test("allowlisted addresses are admin even without the Supabase flag", () => {
   assert.equal(isAllowlistedAdminEmail("deji.ogunmola09@gmail.com"), true);
   assert.equal(isAllowlistedAdminEmail("mol@aquifert.com"), true);
   assert.equal(isAllowlistedAdminEmail("campbell@aquifert.com"), true);
+  assert.equal(isAllowlistedAdminEmail("noreply@aquifert.com"), true);
   assert.equal(isAllowlistedAdminEmail("campbellstark.nz@gmail.com"), false);
 });
 

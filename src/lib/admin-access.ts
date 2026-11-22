@@ -5,6 +5,7 @@ export const DEFAULT_ADMINS = [
   "deji.ogunmola09@gmail.com",
   "mol@aquifert.com",
   "campbell@aquifert.com",
+  "noreply@aquifert.com",
 ];
 
 function extraAdminEmails() {

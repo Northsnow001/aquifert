@@ -1,3 +1,12 @@
+/** Aquifert's no-reply mailbox is a required desk alert inbox. Other noreply locals are skipped. */
+export function isAlertInbox(addr: string) {
+  const email = addr.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+  const [local, domain] = email.split("@");
+  if (local === "noreply" || local === "no-reply") return domain === "aquifert.com";
+  return true;
+}
+
 /** Quiet window so a continuing chat does not re-page the desk. */
 export const CONVERSATION_QUIET_MS = 4 * 60 * 60 * 1000;
 

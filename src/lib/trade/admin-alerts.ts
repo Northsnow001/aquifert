@@ -1,12 +1,12 @@
 import "server-only";
 
 import { allowlistedAdminEmails } from "@/lib/admin-access";
-import { EMAIL_PATTERN } from "@/lib/desk-settings/email-rules";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { SITE_URL } from "@/lib/email/brand";
 import { deskAlertEmail } from "@/lib/email/templates";
 import { sendEmail, type MailKind } from "@/lib/mailer";
 import { deskInbox } from "@/lib/email/member-emails";
+import { isAlertInbox } from "@/lib/trade/admin-alert-logic";
 import type { DeskCandidate } from "@/lib/trade/desk-closer-logic";
 
 function origin() {
@@ -15,10 +15,7 @@ function origin() {
 
 function routableInbox(addr: string) {
   const email = addr.trim().toLowerCase();
-  if (!EMAIL_PATTERN.test(email)) return "";
-  const local = email.split("@")[0] || "";
-  if (local === "noreply" || local === "no-reply") return "";
-  return email;
+  return isAlertInbox(email) ? email : "";
 }
 
 async function mailAdmins(input: { kind: MailKind; subject: string; heading: string; preheader: string; rows: Array<[string, string]> }) {

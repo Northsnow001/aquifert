@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CONVERSATION_QUIET_MS, isLiveDeskStatus, isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
+import { CONVERSATION_QUIET_MS, isAlertInbox, isLiveDeskStatus, isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
 
 describe("isNewBuyerConversation", () => {
   it("pages the desk on the first inbound", () => {
@@ -36,6 +36,14 @@ describe("isNewBuyerConversation", () => {
       ),
       true,
     );
+  });
+});
+
+describe("isAlertInbox", () => {
+  it("keeps Aquifert noreply and skips other noreply mailboxes", () => {
+    assert.equal(isAlertInbox("noreply@aquifert.com"), true);
+    assert.equal(isAlertInbox("kaytoba49@gmail.com"), true);
+    assert.equal(isAlertInbox("noreply@gmail.com"), false);
   });
 });
 
