@@ -48,6 +48,16 @@ describe("shouldStartNewRfq", () => {
         text: "Uranium XL",
         recentInbound: ["i need a new request"],
         latestStatus: "collecting",
+        latestProduct: "Dwell",
+      }),
+      false,
+    );
+    assert.equal(
+      shouldStartNewRfq({
+        text: "Lagos",
+        latestStatus: "collecting",
+        latestProduct: "Dwell",
+        requestedPhase: "rfq",
       }),
       false,
     );
@@ -193,10 +203,11 @@ describe("RFQ recap confirm", () => {
 });
 
 describe("shouldNotifyTradeOpened", () => {
-  it("pages admins when a product name first lands, including a different SKU on an existing buyer", () => {
-    assert.equal(shouldNotifyTradeOpened("", "Uranium XL"), true);
-    assert.equal(shouldNotifyTradeOpened("Cursor IV", "Uranium XL"), true);
-    assert.equal(shouldNotifyTradeOpened("Uranium XL", "Uranium XL"), false);
+  it("sends one intent mail when the product is first named, not on later turns", () => {
+    assert.equal(shouldNotifyTradeOpened("", "Dwell"), true);
+    assert.equal(shouldNotifyTradeOpened("Dwell", "Dwell"), false);
+    assert.equal(shouldNotifyTradeOpened("Dwell", "Uranium XL"), false);
+    assert.equal(shouldNotifyTradeOpened("", "Dwell", true), false);
     assert.equal(shouldNotifyTradeOpened("", ""), false);
   });
 });

@@ -48,17 +48,23 @@ export function shouldStartNewRfq(input: {
   latestProduct?: string;
 }) {
   const status = (input.latestStatus || "").trim();
-  const named = standaloneProductName(input.text);
-  if (named && productsDiffer(named, input.latestProduct || "")) return true;
   if (status === "collecting" || !status) return false;
   if (input.requestedPhase === "rfq") return true;
-  return hasNewTradeIntent(input.text, input.recentInbound);
+  if (hasNewTradeIntent(input.text, input.recentInbound)) return true;
+  const named = standaloneProductName(input.text);
+  return Boolean(named && productsDiffer(named, input.latestProduct || ""));
 }
 
-export function shouldNotifyTradeOpened(previousProduct: string, nextProduct: string) {
+/** One admin mail when a product is first named on this request — not on every follow-up. */
+export function shouldNotifyTradeOpened(
+  previousProduct: string,
+  nextProduct: string,
+  alreadyNotified = false,
+) {
+  if (alreadyNotified) return false;
   const next = nextProduct.trim();
   if (!next) return false;
-  return next.toLowerCase() !== previousProduct.trim().toLowerCase();
+  return !previousProduct.trim();
 }
 
 export function threadSinceNewTrade<T extends { direction?: string; body?: string }>(

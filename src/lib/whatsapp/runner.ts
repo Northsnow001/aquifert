@@ -429,8 +429,11 @@ export async function runKnownBuyerTurn(input: {
   if (phase === "rfq" && extract && asString(extract.product) && (route === "rfq_collect" || route === "rfq_ready")) {
     const fields = fieldsFromExtract(extract, input.text);
     const previousProduct = asString(draft?.product_label);
+    const alreadyNotified = Boolean(extrasOf(draft).trade_intent_notified);
+    const sendIntent = shouldNotifyTradeOpened(previousProduct, fields.productLabel, alreadyNotified);
+    if (sendIntent) fields.extras = { ...fields.extras, trade_intent_notified: true };
     const alertOpened = async (requestId: string) => {
-      if (!shouldNotifyTradeOpened(previousProduct, fields.productLabel)) return;
+      if (!sendIntent) return;
       await notifyTradeOpened({
         requestId,
         product: fields.productLabel,

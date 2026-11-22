@@ -28,4 +28,24 @@ describe("nextSupplierChat", () => {
     const turn = nextSupplierChat({ stage: "ask_quote_intent", text: "Hi" });
     assert.equal(turn.reply, QUOTE_FORMAT);
   });
+
+  test("records a bare price against the open RFQ instead of greeting", () => {
+    const turn = nextSupplierChat({
+      stage: "awaiting_previous_quote",
+      confirmedRfqId: "rfq#089",
+      text: "1000",
+    });
+    assert.match(turn.reply, /USD 1000\/MT for rfq#089/i);
+    assert.equal(turn.nextStage, "");
+  });
+
+  test("asks for the USD price when the RFQ reply is unclear", () => {
+    const turn = nextSupplierChat({
+      stage: "awaiting_previous_quote",
+      confirmedRfqId: "rfq#089",
+      text: "ok",
+    });
+    assert.match(turn.reply, /unit price in USD\/MT for rfq#089/i);
+    assert.equal(turn.nextStage, "rfq_followup");
+  });
 });

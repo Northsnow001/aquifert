@@ -15,13 +15,15 @@ import type { TradeMessage, TradeSupplier, WechatChatState } from "@/lib/trade/t
 import { MATT_GUARD } from "@/lib/wechat/agent-defs";
 import { getTradeAgent } from "@/lib/wechat/agent-store";
 import { asBool, asString, parseJsonObject } from "@/lib/wechat/agent-parse";
-import { THANKS_QUOTE, WAIT_WEEKLY, looksLikeQuote, nextSupplierChat, waitingForWeekly } from "@/lib/wechat/chat";
+import { THANKS_QUOTE, WAIT_WEEKLY, askRfqPrice, looksLikeQuote, nextSupplierChat, thanksForPrice, waitingForWeekly } from "@/lib/wechat/chat";
 import {
   buyerRequestFieldNames,
   filterMissingFields,
+  looksLikePriceOnly,
   mergeOfferWithRfq,
   parseBareOffer,
   resolveQuoteRfqCode,
+  rfqQuoteArmed,
   type OfferSlice,
 } from "@/lib/wechat/quote-merge";
 
@@ -162,7 +164,7 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     captured: {},
   } satisfies WechatChatState));
   const weekly = state.stage === "weekly" || input.supplier.awaitingReply === "weekly";
-  const fallback = nextSupplierChat({ stage: state.stage, text: input.text });
+  const fallback = nextSupplierChat({ stage: state.stage, text: input.text, confirmedRfqId: state.rfqId });
   if (waitingForWeekly(input.text)) {
     await saveSupplierChatState(input.supplier.id, { ...state, stage: "", followUpCount: 0 });
     return { reply: WAIT_WEEKLY, nextStage: "", agent: "wechat-supplier-quote" as const, usedGemini: false };
@@ -180,12 +182,46 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
 
   const persistBareQuote = async () => {
     try {
-      if (weekly || !looksLikeQuote(input.text)) return null;
+      if (weekly || !(looksLikeQuote(input.text) || looksLikePriceOnly(input.text))) return null;
       return await saveOffers(input.supplier, { rfq_id: rfqCode }, input.text, weekly, rfq, rfqCode);
     } catch {
       return null;
     }
   };
+
+  const pendingRfq = rfqCode || state.rfqId || input.supplier.lastRfqCode || "";
+  const armed = !weekly && rfqQuoteArmed(state.stage, pendingRfq);
+  if (!weekly && looksLikePriceOnly(input.text) && pendingRfq) {
+    await persistBareQuote();
+    const price = parseBareOffer(input.text).unit_price;
+    await saveSupplierChatState(input.supplier.id, {
+      ...state,
+      stage: "",
+      rfqId: pendingRfq,
+      followUpCount: 0,
+      captured: {},
+    });
+    return {
+      reply: thanksForPrice(pendingRfq, price),
+      nextStage: "",
+      agent: "wechat-supplier-quote" as const,
+      usedGemini: false,
+    };
+  }
+  if (
+    armed &&
+    !looksLikeQuote(input.text) &&
+    !waitingForWeekly(input.text) &&
+    !/^(no|not now|nothing|no offer|不|不用|没有|暂时没有|暂无|无报价)([\s!.]*)$/i.test(input.text.trim())
+  ) {
+    await saveSupplierChatState(input.supplier.id, { ...state, stage: "rfq_followup", rfqId: pendingRfq });
+    return {
+      reply: askRfqPrice(pendingRfq),
+      nextStage: "rfq_followup",
+      agent: "wechat-supplier-quote" as const,
+      usedGemini: false,
+    };
+  }
 
   if (!geminiKey()) {
     const saved = await persistBareQuote();

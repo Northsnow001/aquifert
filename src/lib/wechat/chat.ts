@@ -1,3 +1,5 @@
+import { looksLikePriceOnly, rfqQuoteArmed } from "@/lib/wechat/quote-merge";
+
 export const GREETING =
   "Hello, this is Matt from Aquifert Ltd. Thank you for getting in touch. Would you like to share a quote with us today?\n\n您好，我是 Aquifert Ltd 的 Matt。感谢您的联系。请问您今天是否想向我们提供报价？";
 
@@ -13,6 +15,19 @@ export const NO_QUOTE =
 export const THANKS_QUOTE =
   "Thank you — we've received your message and recorded it. Our team will follow up if anything else is needed.\n\n谢谢，我们已收到并记录您的消息。如需其他信息，我们的团队会再联系。";
 
+export function thanksForPrice(rfqId: string, price: string) {
+  const id = rfqId.trim() || "this RFQ";
+  const usd = price.trim() || "";
+  const line = usd ? `Thank you — recorded USD ${usd}/MT for ${id}.` : `Thank you — we've recorded your price for ${id}.`;
+  const zh = usd ? `谢谢，已记录 ${id} 的价格为 ${usd} 美元/吨。` : `谢谢，已记录您对 ${id} 的报价。`;
+  return `${line}\n\n${zh}`;
+}
+
+export function askRfqPrice(rfqId: string) {
+  const id = rfqId.trim() || "this RFQ";
+  return `Please send the unit price in USD/MT for ${id} (for example 400 or 400 USD/MT). If this is not a quote for ${id}, tell us the Trade ID.\n\n请发送 ${id} 的单价（美元/吨），例如 400 或 400 USD/MT。如不是该编号的报价，请告知正确的交易编号。`;
+}
+
 export const WAIT_WEEKLY =
   "Thank you — we'll send the weekly broadcast when it goes out. No need to quote until then.\n\n谢谢，我们会在每周广播发出时发给您。在此之前无需报价。";
 
@@ -25,21 +40,29 @@ const NEW = new Set(["new", "new one", "new quote", "fresh", "新", "新的", "�
 const PREV = new Set(["previous", "old", "existing", "update", "follow up", "last one", "之前", "以前", "旧的", "上次", "更新", "跟进"]);
 
 export function looksLikeQuote(text: string) {
-  return /rfq#?\s*\d+/i.test(text) || /(\d+(?:\.\d+)?)\s*(usd|\$|美元|\/mt|\/t)/i.test(text);
+  return /rfq#?\s*\d+/i.test(text) || /(\d+(?:\.\d+)?)\s*(usd|\$|美元|\/mt|\/t)/i.test(text) || looksLikePriceOnly(text);
+}
+
+function parseBarePrice(text: string) {
+  return text.trim().match(/(\d{3,6}(?:\.\d{1,2})?)/)?.[1] || "";
 }
 
 export function waitingForWeekly(text: string) {
   return /weekly\s+broadcast|wait(?:ing)?\s+(?:till|until|for).{0,40}(broadcast|weekly|rfq)|until you send/i.test(text);
 }
 
-export function nextSupplierChat(input: { stage?: string | null; text: string }) {
+export function nextSupplierChat(input: { stage?: string | null; text: string; confirmedRfqId?: string }) {
   const stage = String(input.stage ?? "").trim();
   const raw = input.text.trim();
   const key = compact(raw);
+  const rfqId = String(input.confirmedRfqId || "").trim();
+  const armed = rfqQuoteArmed(stage, rfqId);
 
-  if (looksLikeQuote(raw)) return { reply: THANKS_QUOTE, nextStage: "" };
+  if (armed && looksLikePriceOnly(raw)) return { reply: thanksForPrice(rfqId, parseBarePrice(raw)), nextStage: "" };
+  if (looksLikeQuote(raw) || looksLikePriceOnly(raw)) return { reply: THANKS_QUOTE, nextStage: "" };
   if (waitingForWeekly(raw)) return { reply: WAIT_WEEKLY, nextStage: "" };
   if (NO.has(key)) return { reply: NO_QUOTE, nextStage: "" };
+  if (armed) return { reply: askRfqPrice(rfqId), nextStage: "rfq_followup" };
 
   if (stage === "ask_quote_intent") {
     if (YES.has(key)) return { reply: QUOTE_TYPE, nextStage: "ask_quote_type" };

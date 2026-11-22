@@ -4,6 +4,7 @@ import { extractRfqCode } from "@/lib/trade/rfq-code";
 import {
   buyerRequestFieldNames,
   filterMissingFields,
+  looksLikePriceOnly,
   mergeOfferWithRfq,
   parseBareOffer,
   resolveQuoteRfqCode,
@@ -22,7 +23,25 @@ const rfq = {
   origin_preference: "China",
 };
 
+describe("looksLikePriceOnly", () => {
+  test("treats 1000 and 1000USD as a mill unit price", () => {
+    assert.equal(looksLikePriceOnly("1000"), true);
+    assert.equal(looksLikePriceOnly("1000USD"), true);
+    assert.equal(looksLikePriceOnly("400 MT"), false);
+    assert.equal(looksLikePriceOnly("Hi"), false);
+  });
+});
+
 describe("parseBareOffer", () => {
+  test("reads a bare number as USD after an RFQ", () => {
+    const offer = parseBareOffer("1000");
+    assert.equal(offer.unit_price, "1000");
+    assert.equal(offer.currency, "USD");
+    assert.equal(offer.product_name, "");
+    assert.equal(offer.quantity, "");
+    assert.equal(offer.packaging, "");
+  });
+
   test("reads a price-only FOB line", () => {
     const offer = parseBareOffer("400 USD/MT FOB");
     assert.equal(offer.unit_price, "400");
@@ -67,6 +86,17 @@ describe("resolveQuoteRfqCode", () => {
     assert.equal(code, "rfq#074");
   });
 
+  test("uses last RFQ when they send only a number after the card", () => {
+    const code = resolveQuoteRfqCode({
+      text: "1000",
+      quoteType: "",
+      confirmedRfqId: "",
+      stage: "",
+      lastRfqCode: "rfq#089",
+    });
+    assert.equal(code, "rfq#089");
+  });
+
   test("does not attach Last RFQ Ref on a cold hello", () => {
     const code = resolveQuoteRfqCode({
       text: "Hi",
@@ -90,17 +120,16 @@ describe("resolveQuoteRfqCode", () => {
 });
 
 describe("mergeOfferWithRfq", () => {
-  test("fills product qty packing dest window from the buyer request and keeps mill price", () => {
-    const merged = mergeOfferWithRfq(parseBareOffer("400 USD/MT FOB"), rfq, "rfq#074");
+  test("attaches the Trade ID and keeps only what the mill typed", () => {
+    const merged = mergeOfferWithRfq(parseBareOffer("1000"), rfq, "rfq#074");
     assert.equal(merged.rfq_id, "rfq#074");
-    assert.equal(merged.product_name, "Urea granular 46%");
-    assert.equal(merged.quantity, "5000");
-    assert.equal(merged.packaging, "50 kg bags");
-    assert.equal(merged.unit_price, "400");
-    assert.equal(merged.incoterms, "FOB");
-    assert.equal(merged.destination, "Lagos");
-    assert.equal(merged.delivery_turnaround, "December");
-    assert.equal(merged.origin, "China");
+    assert.equal(merged.unit_price, "1000");
+    assert.equal(merged.currency, "USD");
+    assert.equal(merged.product_name, "");
+    assert.equal(merged.quantity, "");
+    assert.equal(merged.packaging, "");
+    assert.equal(merged.destination, "");
+    assert.equal(merged.incoterms, "");
   });
 
   test("does not overwrite mill quantity or product", () => {
@@ -116,7 +145,11 @@ describe("mergeOfferWithRfq", () => {
     const names = buyerRequestFieldNames(rfq);
     assert.ok(names.includes("product_name"));
     assert.ok(names.includes("quantity"));
-    const missing = filterMissingFields(["product_name", "validity", "unit_price"], rfq, mergeOfferWithRfq(parseBareOffer("400 USD/MT FOB"), rfq, "rfq#074"));
+    const missing = filterMissingFields(
+      ["product_name", "validity", "unit_price"],
+      rfq,
+      mergeOfferWithRfq(parseBareOffer("400 USD/MT FOB"), rfq, "rfq#074"),
+    );
     assert.deepEqual(missing, ["validity"]);
   });
 });
