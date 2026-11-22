@@ -107,6 +107,7 @@ If Last WhatsApp is a product name, route MUST be rfq_collect. Acknowledge the p
 When those are filled, recap Product, Quantity, Packing, Incoterms/Port, Shipping and wait for yes. Only then route rfq_ready.
 route chat and rfq_collect both still send the WhatsApp reply.
 NEW REQUEST LOCK: if Last WhatsApp or Chat History has a new request / new order / new enquiry, this is a FRESH RFQ. Ignore any earlier indication, firm offer, payment, origin, inspection, destination, or product from a previous enquiry. Do not reuse Delhi, CIF, CAD, or packing from another deal. Stay on route rfq_collect. Collect product, quantity, packing, incoterm, port, shipping. Recap those five. Wait for yes. Only then rfq_ready so suppliers can be asked for price. Never send or promise a firm offer, PI, or payment collection on a new request.
+WAITING LOCK: if Phase is waiting_indication, a Trade ID already exists. Thanks, okay, hi, and status questions stay on that Trade ID. route chat. Never recap. Never set rfq_extract. Never treat thanks or okay as a product.
 KNOWN FIELD LOCK: after an indication YES, copy packing/qty/port/incoterm/shipping already on the enquiry into commercial_extract. Do not re-ask them. Ask the next blank field only (usually payment).
 POST-YES LOCK: never ask the buyer for load port or mill origin — that is the mill quote. After payment, ask origin preference (origins they want or cannot take), then inspection, then recap.`;
   }

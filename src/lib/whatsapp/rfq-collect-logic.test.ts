@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  bindInboundToTrade,
+  buyerPhaseFromStatus,
   coerceRfqPhaseTurn,
   hasNewTradeIntent,
   isolateExtractToTrade,
+  isCourtesyMessage,
   isRfqRecapConfirmTurn,
   nextMissingRfqField,
   parseRfqRecap,
@@ -12,7 +15,81 @@ import {
   shouldNotifyTradeOpened,
   shouldStartNewRfq,
   threadSinceNewTrade,
+  waitingIndicationReply,
 } from "@/lib/whatsapp/rfq-collect-logic";
+
+describe("buyerPhaseFromStatus", () => {
+  it("parks RFQ intake after the Trade ID is issued", () => {
+    assert.equal(buyerPhaseFromStatus("collecting"), "rfq");
+    assert.equal(buyerPhaseFromStatus("open"), "waiting_indication");
+    assert.equal(buyerPhaseFromStatus("rfq_sent"), "waiting_indication");
+    assert.equal(buyerPhaseFromStatus("awaiting_desk"), "waiting_indication");
+    assert.equal(buyerPhaseFromStatus("firm_interest"), "post_yes");
+  });
+});
+
+describe("isCourtesyMessage", () => {
+  it("treats thanks and okay as courtesy, not a product", () => {
+    assert.equal(isCourtesyMessage("Okay Thanks"), true);
+    assert.equal(isCourtesyMessage("thanks"), true);
+    assert.equal(isCourtesyMessage("ok"), true);
+    assert.equal(isCourtesyMessage("Noni44"), false);
+    assert.equal(isCourtesyMessage("Need a new order"), false);
+  });
+});
+
+describe("bindInboundToTrade", () => {
+  it("keeps Okay Thanks on the live Trade ID after fan-out", () => {
+    const bind = bindInboundToTrade({
+      text: "Okay Thanks",
+      latestStatus: "rfq_sent",
+      latestProduct: "Noni44",
+    });
+    assert.equal(bind.kind, "courtesy");
+    assert.equal(bind.startNew, false);
+    assert.equal(bind.phase, "waiting_indication");
+    assert.match(waitingIndicationReply("rfq#092", "Noni44"), /rfq#092/);
+  });
+
+  it("starts a new collecting RFQ only for a different product or new-order phrase", () => {
+    assert.equal(
+      bindInboundToTrade({
+        text: "Need a new order",
+        latestStatus: "rfq_sent",
+        latestProduct: "Noni44",
+      }).startNew,
+      true,
+    );
+    assert.equal(
+      bindInboundToTrade({
+        text: "Uranium XL",
+        latestStatus: "firm_interest",
+        latestProduct: "Noni44",
+      }).startNew,
+      true,
+    );
+    assert.equal(
+      bindInboundToTrade({
+        text: "Okay Thanks",
+        latestStatus: "rfq_sent",
+        latestProduct: "Noni44",
+        geminiKind: "new_trade",
+      }).startNew,
+      false,
+    );
+  });
+
+  it("lets Gemini mark a real new trade when the line is not courtesy", () => {
+    const bind = bindInboundToTrade({
+      text: "can we look at DAP as well",
+      latestStatus: "rfq_sent",
+      latestProduct: "Noni44",
+      geminiKind: "new_trade",
+    });
+    assert.equal(bind.startNew, true);
+    assert.equal(bind.kind, "new_trade");
+  });
+});
 
 describe("hasNewTradeIntent", () => {
   it("reads a new-request phrase on this turn or a recent inbound", () => {
@@ -65,6 +142,18 @@ describe("shouldStartNewRfq", () => {
 
   it("does not start a new RFQ for the first enquiry", () => {
     assert.equal(shouldStartNewRfq({ text: "Urea", latestStatus: "" }), false);
+  });
+
+  it("does not start a new RFQ because receive passed phase rfq", () => {
+    assert.equal(
+      shouldStartNewRfq({
+        text: "Okay Thanks",
+        latestStatus: "rfq_sent",
+        latestProduct: "Noni44",
+        requestedPhase: "rfq",
+      }),
+      false,
+    );
   });
 
   it("starts a new trade when the product is not the live one", () => {

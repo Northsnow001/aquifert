@@ -38,7 +38,10 @@ export async function listTradeAgents(): Promise<TradeAgent[]> {
       (key === "whatsapp-buyer-onboard" && !stored.includes("Do not assume they are a buyer")) ||
       ((key === "whatsapp-buyer-onboard" || key === "whatsapp-buyer-complete") &&
         stored.toLowerCase().includes("end user")) ||
-      (key === "whatsapp-buyer-desk" && (!stored.includes("KNOWN FIELD LOCK") || !stored.includes("NEW REQUEST LOCK")))
+      (key === "whatsapp-buyer-desk" &&
+        (!stored.includes("KNOWN FIELD LOCK") ||
+          !stored.includes("NEW REQUEST LOCK") ||
+          !stored.includes("WAITING LOCK")))
     );
   });
   if (toSeed.length) {

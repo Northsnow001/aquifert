@@ -1,6 +1,38 @@
 const NEW_TRADE_PHRASE =
   /\b(new (order|rfq|request|enquiry|inquiry|supply)|another (order|rfq|product|supply)|different product|start (over|again)|fresh (rfq|enquiry))\b/i;
 
+const COURTESY_RE =
+  /^(hi+|hello|hey|yo|gm|good\s+(morning|afternoon|evening)|start|thanks|thank you|thx|ok|okay|okey|noted|cheers|great|perfect|cool|alright|all good)(([\s!,.]+(thanks|thank you|thx))*)?([\s!.]*)$/i;
+
+const WAITING_STATUSES = new Set(["open", "rfq_sent", "awaiting_desk"]);
+
+export type BuyerDeskPhase = "rfq" | "waiting_indication" | "post_yes" | "offer_review" | "pi_sent";
+export type TradeBindKind = "courtesy" | "same_trade" | "new_trade" | "unclear";
+
+export function isCourtesyMessage(text: string) {
+  const t = text.trim();
+  if (!t || t.length > 80) return false;
+  return COURTESY_RE.test(t);
+}
+
+export function buyerPhaseFromStatus(status: string): BuyerDeskPhase {
+  const s = status.trim();
+  if (s === "pi_sent" || s === "won") return "pi_sent";
+  if (s === "firm_offer_sent") return "offer_review";
+  if (s === "firm_interest") return "post_yes";
+  if (s === "indication_sent" || s === "negotiating") return "offer_review";
+  if (WAITING_STATUSES.has(s)) return "waiting_indication";
+  return "rfq";
+}
+
+export function waitingIndicationReply(code: string, product = "") {
+  const id = code.trim() || "this request";
+  const prod = product.trim();
+  return prod
+    ? `Noted — ${id} (${prod}) is with the desk. We'll come back shortly with an indication.`
+    : `Noted — ${id} is with the desk. We'll come back shortly with an indication.`;
+}
+
 const COMMERCIAL_ROUTE = new Set([
   "commercial_collect",
   "firm_offer_ready",
@@ -32,12 +64,49 @@ export function productsDiffer(a: string, b: string) {
 
 function standaloneProductName(text: string) {
   const t = text.trim();
-  if (!t || t.length > 80 || /\d/.test(t) || NEW_TRADE_PHRASE.test(t)) return "";
-  if (/^(yes|no|ok|okay|cad|lc|sblc|sgs|bulk|cif|cfr|fob)\b/i.test(t)) return "";
+  if (!t || t.length > 80 || NEW_TRADE_PHRASE.test(t)) return "";
+  if (isCourtesyMessage(t) || isRfqRecapConfirm(t)) return "";
+  if (/^(yes|no|ok|okay|cad|lc|sblc|sgs|bulk|cif|cfr|fob|thanks|thank you)\b/i.test(t)) return "";
   if (/@|https?:/i.test(t)) return "";
   if (t.split(/\s+/).filter(Boolean).length > 6) return "";
   return t;
 }
+
+export function bindInboundToTrade(input: {
+  text: string;
+  recentInbound?: string[];
+  latestStatus?: string;
+  latestProduct?: string;
+  geminiKind?: TradeBindKind | null;
+}) {
+  const status = (input.latestStatus || "").trim();
+  const phase = buyerPhaseFromStatus(status);
+  if (!status || status === "collecting") {
+    return { kind: "same_trade" as const, startNew: false, phase: "rfq" as const };
+  }
+  if (isCourtesyMessage(input.text) || input.geminiKind === "courtesy") {
+    return { kind: "courtesy" as const, startNew: false, phase };
+  }
+  if (hasNewTradeIntent(input.text, input.recentInbound)) {
+    return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
+  }
+  const named = standaloneProductName(input.text);
+  if (named && productsDiffer(named, input.latestProduct || "")) {
+    return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
+  }
+  if (input.geminiKind === "new_trade") {
+    return { kind: "new_trade" as const, startNew: true, phase: "rfq" as const };
+  }
+  return { kind: "same_trade" as const, startNew: false, phase };
+}
+
+export const TRADE_BIND_PROMPT = `You classify one WhatsApp line against the buyer's LIVE trade.
+Return JSON only: {"kind":"courtesy"|"same_trade"|"new_trade"|"unclear"}
+- courtesy: thanks, okay, hi, noted, acknowledgements. Never new_trade. Never a product.
+- same_trade: follow-up on the live product, destination, price, status, or Trade ID.
+- new_trade: they clearly want a different enquiry (new order/request, or a fertiliser that is not the live product).
+- unclear: if unsure. Prefer same_trade over new_trade when a live Trade ID exists.
+Never treat thanks or okay as a product name.`;
 
 /** Open a new collecting RFQ instead of writing onto a live or confirmed request. */
 export function shouldStartNewRfq(input: {
@@ -46,13 +115,9 @@ export function shouldStartNewRfq(input: {
   latestStatus?: string;
   requestedPhase?: string;
   latestProduct?: string;
+  geminiKind?: TradeBindKind | null;
 }) {
-  const status = (input.latestStatus || "").trim();
-  if (status === "collecting" || !status) return false;
-  if (input.requestedPhase === "rfq") return true;
-  if (hasNewTradeIntent(input.text, input.recentInbound)) return true;
-  const named = standaloneProductName(input.text);
-  return Boolean(named && productsDiffer(named, input.latestProduct || ""));
+  return bindInboundToTrade(input).startNew;
 }
 
 /** One admin mail when a product is first named on this request — not on every follow-up. */

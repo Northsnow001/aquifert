@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isIndicationAsk } from "@/lib/desk-hitl/logic";
-import { hasNewTradeIntent, isRfqRecapConfirmTurn } from "@/lib/whatsapp/rfq-collect-logic";
+import { bindInboundToTrade, isRfqRecapConfirmTurn } from "@/lib/whatsapp/rfq-collect-logic";
 import { buyerHasLiveDeskThread, markWhatsAppSent, recordBuyerInbound } from "@/lib/desk-hitl/store";
 import { isNewBuyerConversation } from "@/lib/trade/admin-alert-logic";
 import { notifyBuyerConversationStarted } from "@/lib/trade/admin-alerts";
@@ -55,7 +55,13 @@ async function continueKnown(input: {
   const messages = await whatsappThread(input.phone, buyer.id);
   const latest = await getLatestBuyerRfq(buyer.id).catch(() => null);
   const recentInbound = messages.filter((row) => row.direction === "in").slice(-8).map((row) => row.body);
-  const startingNew = hasNewTradeIntent(input.text, recentInbound);
+  const bind = bindInboundToTrade({
+    text: input.text,
+    recentInbound,
+    latestStatus: latest ? String(latest.status || "") : "",
+    latestProduct: latest ? String(latest.product_label || "") : "",
+  });
+  const startingNew = bind.startNew;
   if (isRfqRecapConfirmTurn(messages, input.text)) {
     const turn = await runKnownBuyerTurn({ buyer, text: input.text, messages, phase: "rfq" });
     await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode, route: turn.route }, input.deliver);
@@ -72,7 +78,7 @@ async function continueKnown(input: {
     email: buyer.email,
     requestId: startingNew ? undefined : latest?.code ? String(latest.code) : undefined,
   }).catch(() => ({ event: "chat" as const }));
-  const newRfqPhase = startingNew || Boolean(desk && "phase" in desk && desk.phase === "rfq");
+  const newRfqPhase = startingNew;
   if (desk && "messages" in desk && !newRfqPhase) {
     const queued = desk.messages.filter((row) => {
       if (row.from !== "desk" || row.outboundStatus !== "queued") return false;
@@ -121,7 +127,7 @@ async function continueKnown(input: {
     buyer,
     text: input.text,
     messages,
-    phase: newRfqPhase ? "rfq" : undefined,
+    phase: startingNew ? "rfq" : bind.phase,
   });
   await outbound(input.phone, buyer.id, turn.reply, { agent: turn.agent, rfqCode: turn.rfqCode }, input.deliver);
   if (turn.fanout && turn.rfqId) {
