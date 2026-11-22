@@ -136,7 +136,7 @@ export async function generateDevSupplierQuotes(rfqId: string, addCount = DESK_Q
       incoterm,
       deliveryWindow: window,
       rawMessage: raw,
-      sourceChannel: "dev",
+      sourceChannel: "other",
       extras: {
         generated: true,
         generated_at: new Date().toISOString(),

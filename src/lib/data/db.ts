@@ -26,7 +26,11 @@ export function assertLocalAllowed() {
 }
 
 export const isMissingTable = (error: { message: string; code?: string }) =>
-  error.code === "42P01" || error.code === "PGRST205" || /does not exist|schema cache|relation/i.test(error.message);
+  error.code === "42P01" ||
+  error.code === "PGRST205" ||
+  /schema cache/i.test(error.message) ||
+  /relation .+ does not exist/i.test(error.message) ||
+  /could not find the table/i.test(error.message);
 
 export function databaseError(action: string, error: { message: string; code?: string }) {
   return new Error(
