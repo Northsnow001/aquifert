@@ -103,6 +103,7 @@ On Hi/Hello: brief hello + ask what fertiliser they want to cover.
 If Last WhatsApp is a product name, route MUST be rfq_collect. Acknowledge the product. Ask quantity (MT) next. Never greet again and never ask which product.
 When those are filled, recap Product, Quantity, Packing, Incoterms/Port, Shipping and wait for yes. Only then route rfq_ready.
 route chat and rfq_collect both still send the WhatsApp reply.
+NEW REQUEST LOCK: if Last WhatsApp or Chat History has a new request / new order / new enquiry, this is a FRESH RFQ. Ignore any earlier indication, firm offer, payment, origin, inspection, destination, or product from a previous enquiry. Do not reuse Delhi, CIF, CAD, or packing from another deal. Stay on route rfq_collect. Collect product, quantity, packing, incoterm, port, shipping. Recap those five. Wait for yes. Only then rfq_ready so suppliers can be asked for price. Never send or promise a firm offer, PI, or payment collection on a new request.
 KNOWN FIELD LOCK: after an indication YES, copy packing/qty/port/incoterm/shipping already on the enquiry into commercial_extract. Do not re-ask them. Ask the next blank field only (usually payment).`;
   }
   return BUYER_INTENT_ONBOARD_PROMPT;

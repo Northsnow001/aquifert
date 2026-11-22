@@ -147,7 +147,7 @@ export function offerIsLocked(deal: {
 
 /** The buyer is pointing back at the document already sent, not at a new supply. */
 export function mentionsLockedRequest(text: string, requestId = ""): boolean {
-  if (/\b(proforma|firm offer|invoice|pi)\b/i.test(text)) return true;
+  if (/\b(proforma|invoice|\bpi\b)\b/i.test(text)) return true;
   if (/\brfq\s*#?\s*\d+\b/i.test(text)) return true;
   const id = requestId.trim().toLowerCase();
   return Boolean(id && text.toLowerCase().includes(id));
@@ -211,12 +211,18 @@ export function lockedInboundDecision(input: {
   draft: string | null;
   piSent: boolean;
 }): LockedInbound {
-  const back = mentionsLockedRequest(input.text, input.requestId);
+  const namedThisTrade = Boolean(
+    input.requestId.trim() && input.text.toLowerCase().includes(input.requestId.trim().toLowerCase()),
+  );
+  const namedDocument = /\b(proforma|invoice|\bpi\b)\b/i.test(input.text);
   const opening = input.draft !== null || looksLikeNewSupply(input.text, input.product);
-  if (back || !opening) {
+  if (namedThisTrade || namedDocument) {
     return { take: "follow_up", phase: input.piSent ? "pi_sent" : "offer_review", product: input.draft ?? "" };
   }
-  return { take: "new_supply", phase: "rfq", product: draftProductFrom(input.text, input.draft ?? "") };
+  if (opening) {
+    return { take: "new_supply", phase: "rfq", product: draftProductFrom(input.text, input.draft ?? "") };
+  }
+  return { take: "follow_up", phase: input.piSent ? "pi_sent" : "offer_review", product: input.draft ?? "" };
 }
 
 export function deskPhase(input: {

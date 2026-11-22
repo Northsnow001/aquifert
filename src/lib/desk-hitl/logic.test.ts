@@ -109,6 +109,16 @@ describe("locked request", () => {
       lockedInboundDecision({ text: "the invoice", product: "Normal Alkaline", requestId: "rfq#027", draft: "Corkage Fert", piSent: true }),
       { take: "follow_up", phase: "pi_sent", product: "Corkage Fert" },
     );
+    assert.deepEqual(
+      lockedInboundDecision({
+        text: "no, proceed to prepare firm offer",
+        product: "Cursor IV",
+        requestId: "rfq#081",
+        draft: "Uranium XL",
+        piSent: false,
+      }),
+      { take: "new_supply", phase: "rfq", product: "Uranium XL" },
+    );
   });
 
   it("gives a YES on an open indication to that indication, not the old proforma", () => {

@@ -113,8 +113,8 @@ export async function notifyTradeOpened(input: {
   await mailAdmins({
     kind: "rfq-opened-admin",
     subject: `New trade ${input.requestId} — ${input.product}`,
-    heading: "New buyer request opened",
-    preheader: `${input.buyer} started ${input.requestId}.`,
+    heading: "New trade intent",
+    preheader: `${input.buyer} named ${input.product} on ${input.requestId}.`,
     rows: [
       ["Request", input.requestId],
       ["Buyer", input.buyer],

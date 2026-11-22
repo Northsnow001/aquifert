@@ -3,7 +3,7 @@ import "server-only";
 import { getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
-import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
+import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
@@ -425,9 +425,13 @@ export async function recordBuyerInbound(input: {
     }
   }
   if (collecting && !offerIsLocked(collecting)) {
-    const follow = await resolveFirmFollowUp(text, collecting.product);
-    if (follow === "firm_order") {
-      return continueFirmInterest(collecting, text, inboundEmail, phone);
+    const startingNew =
+      looksLikeNewRfq(text, collecting.product) || looksLikeNewSupply(text, collecting.product);
+    if (!startingNew) {
+      const follow = await resolveFirmFollowUp(text, collecting.product);
+      if (follow === "firm_order") {
+        return continueFirmInterest(collecting, text, inboundEmail, phone);
+      }
     }
   }
   if (!deal && awaitingFo && kind === "agree") {
