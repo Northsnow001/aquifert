@@ -38,8 +38,6 @@ describe("parseBareOffer", () => {
     assert.equal(offer.unit_price, "1000");
     assert.equal(offer.currency, "USD");
     assert.equal(offer.product_name, "");
-    assert.equal(offer.quantity, "");
-    assert.equal(offer.packaging, "");
   });
 
   test("reads a price-only FOB line", () => {
@@ -120,16 +118,27 @@ describe("resolveQuoteRfqCode", () => {
 });
 
 describe("mergeOfferWithRfq", () => {
-  test("attaches the Trade ID and keeps only what the mill typed", () => {
+  test("fills product qty packing dest window from the buyer request and keeps mill price", () => {
     const merged = mergeOfferWithRfq(parseBareOffer("1000"), rfq, "rfq#074");
     assert.equal(merged.rfq_id, "rfq#074");
+    assert.equal(merged.product_name, "Urea granular 46%");
+    assert.equal(merged.quantity, "5000");
+    assert.equal(merged.packaging, "50 kg bags");
     assert.equal(merged.unit_price, "1000");
     assert.equal(merged.currency, "USD");
-    assert.equal(merged.product_name, "");
-    assert.equal(merged.quantity, "");
-    assert.equal(merged.packaging, "");
-    assert.equal(merged.destination, "");
-    assert.equal(merged.incoterms, "");
+    assert.equal(merged.incoterms, "CFR");
+    assert.equal(merged.destination, "Lagos");
+    assert.equal(merged.delivery_turnaround, "December");
+    assert.equal(merged.origin, "China");
+    assert.equal(merged.load_port, "");
+  });
+
+  test("keeps a mill FOB load port and still fills product and qty", () => {
+    const merged = mergeOfferWithRfq(parseBareOffer("FOB Qingdao 400 USD/MT"), rfq, "rfq#074");
+    assert.equal(merged.load_port, "Qingdao");
+    assert.equal(merged.incoterms, "FOB");
+    assert.equal(merged.product_name, "Urea granular 46%");
+    assert.equal(merged.quantity, "5000");
   });
 
   test("does not overwrite mill quantity or product", () => {

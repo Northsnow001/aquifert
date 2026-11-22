@@ -178,18 +178,18 @@ export async function runKnownSupplierTurn(input: { supplier: TradeSupplier; tex
     lastRfqCode: input.supplier.lastRfqCode ?? undefined,
     weekly,
   });
-  const rfq = rfqCode && !weekly ? await getTradeRfqByCode(rfqCode).catch(() => null) : null;
+  const pendingRfq = rfqCode || state.rfqId || input.supplier.lastRfqCode || "";
+  const rfq = pendingRfq && !weekly ? await getTradeRfqByCode(pendingRfq).catch(() => null) : null;
 
   const persistBareQuote = async () => {
     try {
       if (weekly || !(looksLikeQuote(input.text) || looksLikePriceOnly(input.text))) return null;
-      return await saveOffers(input.supplier, { rfq_id: rfqCode }, input.text, weekly, rfq, rfqCode);
+      const code = rfqCode || pendingRfq;
+      return await saveOffers(input.supplier, { rfq_id: code }, input.text, weekly, rfq, code);
     } catch {
       return null;
     }
   };
-
-  const pendingRfq = rfqCode || state.rfqId || input.supplier.lastRfqCode || "";
   const armed = !weekly && rfqQuoteArmed(state.stage, pendingRfq);
   if (!weekly && looksLikePriceOnly(input.text) && pendingRfq) {
     await persistBareQuote();

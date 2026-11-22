@@ -23,6 +23,12 @@ function blank(value: unknown) {
   return value == null ? "" : String(value).trim();
 }
 
+function fill(typed: string, fromRfq: unknown) {
+  const t = typed.trim();
+  if (!t || /^0+(?:\.0+)?$/.test(t)) return blank(fromRfq);
+  return t;
+}
+
 export function looksLikeNewQuoteIntent(text: string) {
   return /\bnew quote\b|\bnew one\b|新报价|新的报价/i.test(text) && !extractRfqCode(text);
 }
@@ -129,10 +135,22 @@ export function buyerRequestFieldNames(rfq: Record<string, unknown> | null) {
 
 export function mergeOfferWithRfq(offer: OfferSlice, rfq: Record<string, unknown> | null, rfqCode: string): OfferSlice {
   if (!rfq && !rfqCode) return { ...offer };
+  const dest = blank(rfq?.destination_port) || blank(rfq?.destination_country);
   return {
-    ...offer,
     rfq_id: offer.rfq_id || rfqCode || blank(rfq?.code),
+    product_name: fill(offer.product_name, rfq?.product_label),
+    specification: fill(offer.specification, rfq?.specification),
+    unit_price: offer.unit_price,
     currency: offer.currency || (offer.unit_price ? "USD" : ""),
+    quantity: fill(offer.quantity, rfq?.quantity_mt),
+    packaging: fill(offer.packaging, rfq?.packing),
+    incoterms: fill(offer.incoterms, rfq?.incoterm),
+    destination: fill(offer.destination, dest),
+    load_port: offer.load_port,
+    origin: fill(offer.origin, rfq?.origin_preference),
+    delivery_turnaround: fill(offer.delivery_turnaround, rfq?.shipment_window),
+    validity: offer.validity,
+    raw_body: offer.raw_body,
   };
 }
 

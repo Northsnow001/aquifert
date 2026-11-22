@@ -45,6 +45,27 @@ function nested(row: Record<string, unknown>, ...keys: string[]) {
   return null;
 }
 
+function quoteQty(row: Record<string, unknown>, fromRfq: unknown) {
+  const qty = row.quantity_mt;
+  if (qty == null || qty === "" || Number(qty) === 0) return fromRfq ?? qty;
+  return qty;
+}
+
+function quoteFieldsFromRfq(row: Record<string, unknown>, rfq: Record<string, unknown> | null) {
+  if (!rfq) return {};
+  const dest = text(row.destination_port) || text(rfq.destination_port) || text(rfq.destination_country);
+  return {
+    product_label: text(row.product_label) || text(rfq.product_label),
+    specification: text(row.specification) || text(rfq.specification),
+    quantity_mt: quoteQty(row, rfq.quantity_mt),
+    packing: text(row.packing) || text(rfq.packing),
+    incoterm: text(row.incoterm) || text(rfq.incoterm),
+    destination_port: dest,
+    origin: text(row.origin) || text(rfq.origin_preference),
+    delivery_window: text(row.delivery_window) || text(rfq.shipment_window),
+  };
+}
+
 function missingRfq(row: Record<string, unknown>) {
   const checks: [string, unknown][] = [
     ["Product Name", row.product_label],
@@ -91,6 +112,7 @@ function fromDb(spec: BookSpec, row: Record<string, unknown>): BookRow {
     supplier_contact: text(supplier?.contact_name),
     supplier_email: text(supplier?.email),
     rfq_code: text(rfq?.code) || text(extras.rfq_code) || extractRfqCode(text(row.raw_message)),
+    ...(spec.slug === "quotes" ? quoteFieldsFromRfq(row, rfq) : {}),
     validity_text: text(extras.validity),
     price_check_flag: text(extras.price_check_flag),
     notes: text(row.notes) || text(extras.notes),
@@ -111,7 +133,7 @@ export async function listBookRows(slug: string): Promise<BookRow[]> {
     spec.slug === "rfqs"
       ? "*, buyer:trade_buyers!buyer_id(code, company_name, contact_name), mill:trade_suppliers!selected_supplier_id(company_name)"
       : spec.slug === "quotes"
-        ? "*, supplier:trade_suppliers!supplier_id(code, company_name, contact_name, email), rfq:trade_rfqs!rfq_id(code)"
+        ? "*, supplier:trade_suppliers!supplier_id(code, company_name, contact_name, email), rfq:trade_rfqs!rfq_id(code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, origin_preference, shipment_window)"
         : "*";
   const queried = await db.from(spec.table).select(select).order(order, { ascending }).limit(2000);
   const result = queried.error && (spec.slug === "rfqs" || spec.slug === "quotes")
@@ -129,23 +151,29 @@ async function fillQuoteRfqCodes(
 ): Promise<BookRow[]> {
   const ids = [...new Set(rows.map((row) => text(row.rfq_id)).filter(Boolean))];
   if (!ids.length) return rows;
-  const map: Record<string, string> = {};
+  const map: Record<string, Record<string, unknown>> = {};
   for (let i = 0; i < ids.length; i += 200) {
-    const { data, error } = await db.from("trade_rfqs").select("id, code").in("id", ids.slice(i, i + 200));
+    const { data, error } = await db
+      .from("trade_rfqs")
+      .select("id, code, product_label, specification, quantity_mt, packing, incoterm, destination_port, destination_country, origin_preference, shipment_window")
+      .in("id", ids.slice(i, i + 200));
     if (error) break;
     for (const item of data ?? []) {
       const id = text((item as { id?: unknown }).id);
-      const code = text((item as { code?: unknown }).code);
-      if (id && code) map[id] = code;
+      if (id) map[id] = item as Record<string, unknown>;
     }
   }
-  return rows.map((row) => ({
-    ...row,
-    rfq_code:
-      text(row.rfq_code) ||
-      map[text(row.rfq_id)] ||
-      extractRfqCode(text(row.raw_message) || text(row.supplier_response)),
-  }));
+  return rows.map((row) => {
+    const rfq = map[text(row.rfq_id)] || null;
+    return {
+      ...row,
+      ...quoteFieldsFromRfq(row, rfq),
+      rfq_code:
+        text(row.rfq_code) ||
+        text(rfq?.code) ||
+        extractRfqCode(text(row.raw_message) || text(row.supplier_response)),
+    };
+  });
 }
 
 export async function listAllBookCounts() {

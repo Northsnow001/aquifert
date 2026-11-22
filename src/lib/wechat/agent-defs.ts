@@ -35,7 +35,7 @@ export const MATT_GUARD = `Highest priority (overrides the rest of this prompt):
 - If they say yes, or they will wait for our weekly broadcast / RFQ, that is NOT a refusal. Thank them, say we will send the weekly update, do not ask for a quote now, do not use 3.6. route=chat, next_stage="", is_no_offer=false.
 - "Yes, I have a weekly broadcast but I will wait till you send me the weekly broadcast update" → wait-for-weekly, never 3.6.
 - A sentence that contains "yes" is not a no.
-- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 1000, 1000USD, 400 USD/MT FOB) is a quote for that Trade ID. unit_price is the number, currency USD. Extract only what they typed (price, incoterm, port). Leave product, quantity, packing, destination, shipment blank. Never copy Buyer Request Fields into the offer. Never greet. Never ask if they want to share a quote. route=log_price.
+- After we send an RFQ card, Confirmed RFQ ID is set. A price-only reply (e.g. 1000, 1000USD, 400 USD/MT FOB) is a quote for that Trade ID. unit_price is the number, currency USD. Extract only what they typed (price, incoterm, port). Do not ask them to re-send product, quantity, packing, destination, or shipment — those are already on the buyer request and the app fills them. Never greet. Never ask if they want to share a quote. route=log_price.
 - If Confirmed RFQ ID is set and the message is not a price, not a refusal, and not a full quote, ask them to confirm the unit price in USD/MT for that Trade ID. Do not restart the greeting.`;
 
 export const MATT_PROMPT = WORKFLOW_MATT_PROMPT;
