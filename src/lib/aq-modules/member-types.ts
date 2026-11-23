@@ -66,6 +66,12 @@ export type MemberPrefs = {
   signalWindow: number;
   briefProducts: string[];
   briefByEmail: boolean;
+  /** Mock stand-in for Stripe. Only an admin action can set this. */
+  mockPlan: "growth" | "enterprise" | null;
+  mockSubscribedAt: string | null;
+  onboardingDone: boolean;
+  onboardingAnswers: Record<string, string[]>;
+  interests: { countries: string[]; tags: string[]; categories: string[] };
 };
 
 export const REQUEST_STATUSES = ["new", "contacted", "done"] as const;

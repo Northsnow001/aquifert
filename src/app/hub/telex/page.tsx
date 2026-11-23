@@ -12,6 +12,8 @@ import { publishedTelex, type TelexView } from "@/lib/aq-modules/telex";
 import { TELEX_PRODUCTS, type TelexProduct } from "@/lib/aq-modules/types";
 import { formatStamp } from "@/lib/content-types";
 import { getHubContent } from "@/lib/hub-content";
+import { answerTerms, feedIsPersonal, matchesFeed } from "@/lib/onboarding/questions";
+import { getOnboardingQuestions } from "@/lib/onboarding/store";
 import { readTelexIds } from "@/lib/telex-reads/store";
 
 export const metadata: Metadata = { title: "TELEX" };
@@ -36,7 +38,11 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
   const { user, admin, can } = await getHubAccess();
   const [content, prefs, readIds] = await Promise.all([getHubContent(), getPrefs(user), readTelexIds(user)]);
 
-  const telex = publishedTelex(content.telex, admin ? "all" : user.plan);
+  const personal = feedIsPersonal({ admin, mockPlan: prefs.mockPlan, onboardingDone: prefs.onboardingDone });
+  const terms = personal ? answerTerms(await getOnboardingQuestions(), prefs.onboardingAnswers) : [];
+  const telex = publishedTelex(content.telex, admin ? "all" : user.plan).filter((item) =>
+    !personal || matchesFeed({ text: `${item.headline} ${item.tags.join(" ")} ${item.paragraphs.join(" ")} ${item.product}`, tags: item.tags, category: item.product }, prefs.interests, terms),
+  );
   const saved = TELEX_PRODUCTS.filter((item) => prefs.telexProducts.includes(item));
   const selected = parseProducts(first(params.p), saved);
   const query = (first(params.q) ?? "").slice(0, 120);
@@ -77,6 +83,7 @@ export default async function TelexPage({ searchParams }: { searchParams: Promis
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" aria-hidden />
           <p>
             Preliminary market intel, filed as the desk hears it.
+            {personal ? " Filtered to the countries, tags and categories from your onboarding." : null}
             {telex[0] ? <> Last flash {formatStamp(telex[0].publishedAt)} desk time.</> : null}
             {locked ? (
               <>

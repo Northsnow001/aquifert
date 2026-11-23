@@ -19,7 +19,7 @@ import { TelexGuide } from "@/components/hub/telex-guide";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { DeskConnect } from "@/components/hub/desk-connect";
 import { HubTabs } from "@/components/hub/hub-tabs";
-import { ADMIN_LINK, DRAWER_GROUPS, hasPaidPages, HUB_NAV, isActive, navFor, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
+import { ADMIN_LINK, drawerGroupsFor, hasPaidPages, HUB_NAV, isActive, navFor, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
 import { ThemeToggle } from "@/components/hub/theme-toggle";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
@@ -44,18 +44,20 @@ function NavList({
   pathname,
   items,
   admin,
+  plan,
   unlocked,
   onNavigate,
 }: {
   pathname: string;
   items: HubNavItem[];
   admin: boolean;
+  plan: SessionUser["plan"];
   unlocked: string[];
   onNavigate?: () => void;
 }) {
   const { t } = useI18n();
   const byKey = new Map(items.map((item) => [item.key, item]));
-  const groups = DRAWER_GROUPS.map((group) => ({
+  const groups = drawerGroupsFor(plan, admin).map((group) => ({
     ...group,
     rows: group.items.flatMap((key) => {
       const item = byKey.get(key);
@@ -282,7 +284,7 @@ export function AppShell({
   }, [drawer]);
 
   const nav = useMemo(() => navFor(user.plan, admin), [user.plan, admin]);
-  const hubTabs = useMemo(() => tabsFor(nav, unlocked), [nav, unlocked]);
+  const hubTabs = useMemo(() => tabsFor(nav, unlocked, { plan: user.plan, admin }), [nav, unlocked, user.plan, admin]);
   const palette = useMemo<PaletteItem[]>(() => {
     const pages: PaletteItem[] = nav.map((item) => ({
       href: item.href,
@@ -419,7 +421,7 @@ export function AppShell({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <NavList pathname={pathname} items={nav} admin={admin} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
+            <NavList pathname={pathname} items={nav} admin={admin} plan={user.plan} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
             <div className="aq-safe-bottom shrink-0 border-t border-black/[.06] px-4 pt-3">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[13px] font-bold text-white">

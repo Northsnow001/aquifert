@@ -1,19 +1,19 @@
 import { Suspense } from "react";
-import { ToolsHeading, ToolsTabs } from "@/components/hub/tools-tabs";
+import { AnalyticsTabs } from "@/components/hub/tools-tabs";
 import { fmtDayYear } from "@/lib/aq-analytics/contracts";
 import { dataNow } from "@/lib/aq-analytics/queries";
-import { requireAqPreview } from "@/lib/aq-preview";
+import { requireAqAnalytics } from "@/lib/aq-preview";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsLayout({ children }: { children: React.ReactNode }) {
-  await requireAqPreview("/hub/tools");
+  await requireAqAnalytics("/hub/plans/aq-analytics");
   const now = await dataNow().catch(() => "2026-09-03");
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <ToolsHeading />
+      <h1 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">AQ Analytics</h1>
       <Suspense fallback={<div className="h-10 border-b border-border" />}>
-        <ToolsTabs analytics />
+        <AnalyticsTabs />
       </Suspense>
       <p className="text-[12px] text-dim">
         Freight analytics · BL data to {fmtDayYear(now)}

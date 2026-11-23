@@ -34,13 +34,11 @@ export function ToolsBoard({
   mapLocked = false,
   plan,
   view = "map",
-  analytics = false,
 }: {
   commentaryHtml: string;
   mapLocked?: boolean;
   plan: Plan;
   view?: string;
-  analytics?: boolean;
 }) {
   const tab: Tab = view === "calc" || view === "how" || view === "glossary" ? view : "map";
   const [layers, setLayers] = useState<Record<Layer, boolean>>({
@@ -66,7 +64,7 @@ export function ToolsBoard({
     <div className="flex min-w-0 max-w-full flex-col gap-5">
       <ToolsHeading />
       <Suspense fallback={<div className="h-10 border-b border-border" />}>
-        <ToolsTabs analytics={analytics} />
+        <ToolsTabs />
       </Suspense>
 
       {tab === "map" && mapLocked ? <LockedMap plan={plan} urea={urea} /> : null}

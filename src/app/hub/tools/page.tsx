@@ -7,5 +7,5 @@ export const dynamic = "force-dynamic";
 
 export default async function ToolsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const [{ user, admin }, { toolsCommentary }, { view }] = await Promise.all([getHubAccess(), getHubContent(), searchParams]);
-  return <ToolsBoard commentaryHtml={sanitizeRichText(toolsCommentary.html)} mapLocked={!admin && user.plan === "core"} plan={user.plan} view={view} analytics={admin} />;
+  return <ToolsBoard commentaryHtml={sanitizeRichText(toolsCommentary.html)} mapLocked={!admin && user.plan === "core"} plan={user.plan} view={view} />;
 }

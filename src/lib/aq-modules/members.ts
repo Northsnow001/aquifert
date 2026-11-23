@@ -45,11 +45,36 @@ export const DEFAULT_PREFS: Omit<MemberPrefs, "id" | "at" | "userId" | "email"> 
   signalWindow: 30,
   briefProducts: [],
   briefByEmail: false,
+  mockPlan: null,
+  mockSubscribedAt: null,
+  onboardingDone: false,
+  onboardingAnswers: {},
+  interests: { countries: [], tags: [], categories: [] },
 };
+
+const stringList = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []);
 
 export async function getPrefs(user: Owner): Promise<MemberPrefs> {
   const row = await getRecord(MEMBER_PREFS, user.id);
-  return { ...DEFAULT_PREFS, ...(row ?? {}), id: user.id, userId: user.id, email: user.email, at: row?.at ?? new Date(0).toISOString() };
+  const merged = { ...DEFAULT_PREFS, ...(row ?? {}) };
+  const answers = merged.onboardingAnswers;
+  const plan = merged.mockPlan === "growth" || merged.mockPlan === "enterprise" ? merged.mockPlan : null;
+  return {
+    ...merged,
+    mockPlan: plan,
+    mockSubscribedAt: typeof merged.mockSubscribedAt === "string" ? merged.mockSubscribedAt : null,
+    onboardingDone: merged.onboardingDone === true,
+    onboardingAnswers: answers && typeof answers === "object" && !Array.isArray(answers) ? Object.fromEntries(Object.entries(answers).map(([key, value]) => [key, stringList(value)])) : {},
+    interests: {
+      countries: stringList(merged.interests?.countries),
+      tags: stringList(merged.interests?.tags),
+      categories: stringList(merged.interests?.categories),
+    },
+    id: user.id,
+    userId: user.id,
+    email: user.email,
+    at: row?.at ?? new Date(0).toISOString(),
+  };
 }
 
 export async function savePrefs(user: Owner, patch: Partial<Omit<MemberPrefs, "id" | "at" | "userId" | "email">>) {

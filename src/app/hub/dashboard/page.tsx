@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight, BellRing, Calculator, CalendarDays, Crown, FlaskConical, Package, Radio, ShoppingCart } from "lucide-react";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { AquibotBriefing, type BriefRow } from "@/components/hub/aquibot-briefing";
+import { OnboardingOverlay } from "@/components/hub/onboarding-overlay";
 import { HomeHero } from "@/components/hub/home-hero";
 import { hasPaidPages } from "@/components/hub/nav";
 import { EmptyPanel, Panel, StatTile, Tag } from "@/components/hub/kit";
@@ -20,6 +21,9 @@ import { INBOX } from "@/lib/data/tables";
 import { getFreightDesk, monthlyUsage, nextReset } from "@/lib/freight-desk/store";
 import { planLimit as freightLimit } from "@/lib/freight-desk/types";
 import { getHubContent } from "@/lib/hub-content";
+import { answerTerms, feedIsPersonal, matchesFeed, resolveQuestions } from "@/lib/onboarding/questions";
+import { getOnboardingQuestions } from "@/lib/onboarding/store";
+import { catalogFromDesk } from "@/lib/onboarding/validate";
 import { getNetbackDesk, netbackUsage } from "@/lib/netback-desk/store";
 import { planLimit as netbackLimit } from "@/lib/netback-desk/types";
 
@@ -45,12 +49,28 @@ export default async function DashboardPage() {
     listRecords(INBOX, { email: user.email, limit: 20 }),
   ]);
 
+  if (admin && prefs.mockPlan && !prefs.onboardingDone) {
+    const [questions, catalog] = await Promise.all([getOnboardingQuestions(), catalogFromDesk()]);
+    const live = resolveQuestions(questions, catalog);
+    if (live.length) return <OnboardingOverlay plan={prefs.mockPlan} questions={live} />;
+  }
+
+  const personal = feedIsPersonal({ admin, mockPlan: prefs.mockPlan, onboardingDone: prefs.onboardingDone });
+  const terms = personal ? answerTerms(await getOnboardingQuestions(), prefs.onboardingAnswers) : [];
+  const keep = (text: string, tags: string[], category: string) => !personal || matchesFeed({ text, tags, category }, prefs.interests, terms);
+
   const nitrogenLimit = admin ? 0 : limitFor(modules.limits.nitrogenReports, user.plan);
   const fLimit = admin ? 0 : freightLimit(freightDesk.settings, user.plan);
   const nLimit = admin ? 0 : netbackLimit(netbackDesk.settings, user.plan);
   const calcLimit = fLimit && nLimit ? fLimit + nLimit : 0;
-  const telex = publishedTelex(content.telex, admin ? "all" : user.plan);
+  const telex = publishedTelex(content.telex, admin ? "all" : user.plan).filter((item) =>
+    keep(`${item.headline} ${item.tags.join(" ")} ${item.paragraphs.join(" ")} ${item.product}`, item.tags, item.product),
+  );
   const readable = telex.filter((item) => item.readable);
+  const notes = publishedAnalysis(modules).filter((note) =>
+    keep(`${note.title} ${note.products.join(" ")} ${note.regions.join(" ")} ${plainText(note.body)}`, [...note.products, ...note.regions], productOf(`${note.products.join(" ")} ${note.title}`)),
+  );
+  const argus = modules.series.filter((row) => keep(`${row.label} ${row.basis} ${row.group}`, [row.label, row.basis], row.group));
   const orders = requests.filter((item) => item.table === "order_enquiries").slice(0, 3);
   const alertStates = evaluateAlerts(alerts, modules.series);
   const triggered = alertStates.filter((state) => state.triggered);
@@ -59,7 +79,7 @@ export default async function DashboardPage() {
 
   const brief: BriefRow[] = [
     ...readable.slice(0, 3).map((item) => ({ id: `t-${item.id}`, headline: item.headline, product: item.product, tone: item.tone, source: "Telex", href: "/hub/telex" })),
-    ...publishedAnalysis(modules)
+    ...notes
       .slice(0, 2)
       .map((note) => ({
         id: `a-${note.id}`,
@@ -79,7 +99,11 @@ export default async function DashboardPage() {
           <Tag tone="teal" className="mr-1.5 align-middle">
             {PLAN_LABEL[user.plan]} plan
           </Tag>
-          {user.plan === "core" ? "AQ ONE is included. Upgrade any time to unlock AQ Analytics." : "Your plan includes AQ Analytics. Locked items show what else is available."}
+          {personal
+            ? `Your ${PLAN_LABEL[prefs.mockPlan ?? "growth"]} dashboard, set from the products, regions and interests you chose.`
+            : user.plan === "core"
+              ? "AQ ONE is included. Upgrade any time to unlock AQ Analytics."
+              : "Your plan includes AQ Analytics. Locked items show what else is available."}
         </p>
       </div>
 
@@ -238,12 +262,58 @@ export default async function DashboardPage() {
             </Link>
           }
         >
-          <TelexList items={telex.slice(0, 8)} />
+          <TelexList items={telex.slice(0, 8)} empty={personal ? "No Telex flashes match your countries, tags and categories yet." : undefined} />
         </Panel>
         <div className="lg:col-span-2">
           <AquibotBriefing rows={brief} persona={prefs.persona} />
         </div>
       </div>
+
+      {personal ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Panel title="AQ View" sub="Notes for the products and regions you follow" icon={Radio} className="lg:max-h-[520px]" bodyClassName="overflow-y-auto p-4">
+            {notes.length ? (
+              <ul className="space-y-3">
+                {notes.slice(0, 6).map((note) => (
+                  <li key={note.id}>
+                    <Link href={`/hub/analysis/${note.slug}`} className="block no-underline">
+                      <p className="text-[15px] font-semibold text-ink">{note.title}</p>
+                      <p className="text-[13px] text-mid">{note.products.join(" · ") || "Market analysis"}</p>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[14px] text-mid">No AQ View notes match your interests yet.</p>
+            )}
+          </Panel>
+          <Panel title="ARGUS" sub="Desk price series for your book. The live ARGUS feed connects to this panel." icon={Radio} bodyClassName="p-4">
+            {argus.length ? (
+              <ul className="space-y-3">
+                {argus.slice(0, 6).map((row) => {
+                  const last = row.points[row.points.length - 1];
+                  const prev = row.points[row.points.length - 2];
+                  const delta = last && prev ? last.value - prev.value : null;
+                  return (
+                    <li key={row.id} className="flex items-baseline justify-between gap-3 border-b border-border pb-2 last:border-0">
+                      <div>
+                        <p className="text-[14.5px] font-semibold text-ink">{row.label}</p>
+                        <p className="text-[12.5px] text-mid">{row.basis}</p>
+                      </div>
+                      <p className="text-[14px] font-semibold text-ink">
+                        {last ? last.value : "—"} <span className="text-[12px] font-medium text-dim">{row.unit}</span>
+                        {delta !== null ? <span className={`ml-2 text-[12px] ${delta > 0 ? "text-emerald-700" : delta < 0 ? "text-danger" : "text-dim"}`}>{delta > 0 ? "+" : ""}{delta.toFixed(1)}</span> : null}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-[14px] text-mid">No price series match your products yet. ARGUS prices will show here once the feed is connected.</p>
+            )}
+          </Panel>
+        </div>
+      ) : null}
     </div>
   );
 }

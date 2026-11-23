@@ -7,7 +7,9 @@ import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { MembershipBoard } from "@/components/hub/plans/membership-board";
 import { isPlan, longDay } from "@/components/hub/plans/shared";
+import { MockSubscribe } from "@/components/hub/mock-subscribe";
 import { getHubAccess } from "@/lib/aq-modules/access";
+import { getPrefs } from "@/lib/aq-modules/members";
 import { isTier, TIER_LABEL, type MembershipOffer } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
 import { MODULES, PLAN_LABEL } from "@/lib/aq-modules/types";
@@ -53,7 +55,13 @@ const FAQ = [
 
 export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ plan?: string; tier?: string; from?: string }> }) {
   const [{ plan: planParam, tier: tierParam, from }, { user, admin, modules, can }] = await Promise.all([searchParams, getHubAccess()]);
-  const [allowances, requests, settings, registration] = await Promise.all([planAllowances(modules), myMembershipRequests(user), getDeskSettings(), findZeroRegistration(user)]);
+  const [allowances, requests, settings, registration, prefs] = await Promise.all([
+    planAllowances(modules),
+    myMembershipRequests(user),
+    getDeskSettings(),
+    findZeroRegistration(user),
+    getPrefs(user),
+  ]);
   const zero = settings.zero.showOnHub
     ? { name: user.name, email: user.email, success: settings.zero.success, last: registration ? zeroSummary(registration) : null }
     : null;
@@ -73,6 +81,12 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
 
   return (
     <div className="flex flex-col gap-6 pb-2">
+      {admin ? (
+        <div className="flex flex-col gap-3">
+          <MockSubscribe plan="growth" subscribed={prefs.mockPlan === "growth" && prefs.onboardingDone} />
+          <MockSubscribe plan="enterprise" subscribed={prefs.mockPlan === "enterprise" && prefs.onboardingDone} />
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4">
         <MembershipBoard plan={user.plan} admin={admin} zero={zero} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
       </div>

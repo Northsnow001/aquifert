@@ -5,12 +5,13 @@ import { estimateLane } from "@/lib/aq-analytics/queries";
 import { updateAqAnalytics } from "@/lib/aq-analytics/store";
 import type { LaneEstimate, LaneEstimateInput } from "@/lib/aq-analytics/contracts";
 import { isAdminUser } from "@/lib/admin-access";
+import { canSeeAqAnalytics } from "@/lib/aq-analytics-access";
 import { getSession } from "@/lib/session";
 
 async function requirePreview() {
   const user = await getSession();
-  if (!user) throw new Error("Sign in to use AQ Trader Tools.");
-  if (!isAdminUser(user)) throw new Error("AQ Analytics is not on this account yet.");
+  if (!user) throw new Error("Sign in to use AQ Analytics.");
+  if (!canSeeAqAnalytics({ plan: user.plan, admin: isAdminUser(user) })) throw new Error("AQ Analytics is not on this account yet.");
   return user;
 }
 

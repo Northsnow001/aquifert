@@ -54,6 +54,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       title: "Publishing",
       items: [
         { href: "/admin/telex", label: "Telex", icon: "telex", badge: drafts ? `${drafts} draft` : content.telex.length },
+        { href: "/admin/analysis", label: "AQ View notes", icon: "analysis", badge: analysisDrafts ? `${analysisDrafts} draft` : aq.analysis.length },
         { href: "/admin/indicators", label: "Market Indicators", icon: "indicators" },
         { href: "/admin/hedge", label: "Hedge Tables", icon: "hedge", badge: content.hedgeReports.length },
         {
@@ -76,7 +77,6 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       title: "AQ Modules",
       items: [
         { href: "/admin/aq-access", label: "Access & allowances", icon: "access" },
-        { href: "/admin/analysis", label: "AQ View notes", icon: "analysis", badge: analysisDrafts ? `${analysisDrafts} draft` : aq.analysis.length },
         { href: "/admin/market-data", label: "Market data", icon: "marketData", badge: marketFreshness(aq.series).badge },
         { href: "/admin/community-calls", label: "Weekly Market Calls", icon: "calls", badge: nextCallRegistered },
         { href: "/admin/supply-demand", label: "Supply & demand", icon: "supplyDemand" },
@@ -132,6 +132,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       title: "Members",
       items: [
         { href: "/admin/members", label: "All members", icon: "members" },
+        { href: "/admin/onboarding", label: "Onboarding questions", icon: "analysis" },
         { href: "/admin/banned", label: "Banned users", icon: "banned", badge: bans },
         { href: "/admin/settings", label: "Settings", icon: "settings" },
       ],

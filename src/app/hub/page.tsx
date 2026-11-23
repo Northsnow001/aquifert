@@ -13,6 +13,8 @@ import { productOf, TELEX_PRODUCTS, type AnalysisNote } from "@/lib/aq-modules/t
 import { deskNow, formatDay } from "@/lib/content-types";
 import { feedViewCookie, parseFeedView, type FeedView } from "@/lib/feed-view";
 import { getHubContent, sortHedge } from "@/lib/hub-content";
+import { answerTerms, feedIsPersonal, matchesFeed } from "@/lib/onboarding/questions";
+import { getOnboardingQuestions } from "@/lib/onboarding/store";
 import { readTelexIds } from "@/lib/telex-reads/store";
 
 export const dynamic = "force-dynamic";
@@ -64,10 +66,16 @@ export default async function HomePage() {
   const [content, prefs, jar, readIds] = await Promise.all([getHubContent(), getPrefs(user), cookies(), readTelexIds(user)]);
 
   const readable = publishedTelex(content.telex, admin ? "all" : user.plan).filter((item) => item.readable);
+  const personal = feedIsPersonal({ admin, mockPlan: prefs.mockPlan, onboardingDone: prefs.onboardingDone });
+  const terms = personal ? answerTerms(await getOnboardingQuestions(), prefs.onboardingAnswers) : [];
+  const keep = (text: string, tags: string[], category: string) => !personal || matchesFeed({ text, tags, category }, prefs.interests, terms);
+  const interested = readable.filter((item) => keep(`${item.headline} ${item.tags.join(" ")} ${item.paragraphs.join(" ")} ${item.product}`, item.tags, item.product));
   const saved = TELEX_PRODUCTS.filter((item) => prefs.telexProducts.includes(item));
-  const shown = saved.length ? readable.filter((item) => saved.includes(item.product)) : readable;
+  const shown = saved.length ? interested.filter((item) => saved.includes(item.product)) : interested;
 
-  const notes = publishedAnalysis(modules).slice(0, FEED_COUNT);
+  const notes = publishedAnalysis(modules)
+    .filter((note) => keep(`${note.title} ${note.products.join(" ")} ${note.regions.join(" ")}`, [...note.products, ...note.regions], productOf(`${note.products.join(" ")} ${note.title}`)))
+    .slice(0, FEED_COUNT);
   const telexCount = notes.length >= FEED_COUNT ? FEED_COUNT : TELEX_MIN;
   const hedgeReports = sortHedge(content.hedgeReports).filter((item) => item.status === "published");
 

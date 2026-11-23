@@ -6,13 +6,17 @@ import {
   Calculator,
   ChartLine,
   CircleUser,
+  ClipboardList,
+  Factory,
   FileText,
   FlaskConical,
   Globe,
   House,
+  Inbox,
   LayoutDashboard,
   LifeBuoy,
   Mail,
+  Map,
   Newspaper,
   PhoneCall,
   Radio,
@@ -24,6 +28,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
+import { canSeeAqAnalytics } from "@/lib/aq-analytics-access";
 import type { ModuleKey } from "@/lib/aq-modules/types";
 import type { Plan } from "@/lib/session-shared";
 
@@ -44,6 +49,8 @@ export type HubNavItem = {
   paidOnly?: boolean;
   /** Kept out of every menu until the feature launches. The page itself still exists. */
   hidden?: boolean;
+  /** Shown to admins and to AQ Analytics and AQ ZERO members. */
+  analyticsTool?: boolean;
   /** Plan entry: hovering the row opens a card with this pitch instead of the ⓘ tip. */
   promo?: { headline: string; line?: string };
 };
@@ -181,6 +188,97 @@ export const HUB_NAV: HubNavItem[] = [
     tip: "Advisory for the Global Market. Trader-level analysis and licensed market data, with no physical trading.",
   },
   {
+    key: "aa-map",
+    href: "/hub/tools/analytics",
+    label: "Intelligence map",
+    short: "Map",
+    icon: Map,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "Where cargoes are moving, which origins are ahead or behind the five-year pace, and the lanes that connect them.",
+  },
+  {
+    key: "aa-board",
+    href: "/hub/tools/analytics/board",
+    label: "Freight board",
+    short: "Board",
+    icon: Ship,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "The freight board: volumes, stages and the lanes behind the map.",
+  },
+  {
+    key: "aa-market",
+    href: "/hub/tools/analytics/market",
+    label: "My market",
+    short: "Market",
+    icon: ChartLine,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "One destination in detail: pace against the five-year average, products and the cargoes pointed at it.",
+  },
+  {
+    key: "aa-producers",
+    href: "/hub/tools/analytics/producers",
+    label: "Producers",
+    short: "Producers",
+    icon: Factory,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "Export origins and how much each one is shipping.",
+  },
+  {
+    key: "aa-enquiries",
+    href: "/hub/tools/analytics/enquiries",
+    label: "Freight enquiries",
+    short: "Enquiries",
+    icon: Inbox,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "Open freight enquiries, the vessel sizes they need and where they are in the desk.",
+  },
+  {
+    key: "aa-lane",
+    href: "/hub/tools/analytics/calculator",
+    label: "Lane calculator",
+    short: "Lane",
+    icon: Calculator,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "Estimate one lane from load port, discharge port, product and cargo size.",
+  },
+  {
+    key: "aa-reports",
+    href: "/hub/tools/analytics/reports",
+    label: "Reports",
+    short: "Reports",
+    icon: FileText,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "A market report from the latest enquiries, lineups, shipments and AQ View commentary.",
+  },
+  {
+    key: "aa-alerts",
+    href: "/hub/tools/analytics/alerts",
+    label: "Alerts",
+    short: "Alerts",
+    icon: Bell,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "The markets you follow, and when the desk should tell you they moved.",
+  },
+  {
+    key: "aa-plans",
+    href: "/hub/tools/analytics/plans",
+    label: "Plans",
+    short: "Plans",
+    icon: ClipboardList,
+    section: "AQ Analytics",
+    analyticsTool: true,
+    tip: "Standard, Premium and Enterprise, and how to ask the desk for access.",
+  },
+
+  {
     key: "signal",
     href: "/hub/signal",
     label: "AQ Signal",
@@ -314,21 +412,26 @@ export const ADMIN_LINK = { href: "/admin", label: "Admin console", icon: Shield
 export type HubTabLink = { key: string; href: string; icon: HubNavItem["icon"]; locked: boolean; promo?: string };
 export type HubTab = { key: string; tour?: string; links: HubTabLink[] };
 
-/** Desktop tab row, left to right. A tab with one page is a plain link; more pages open a dropdown. */
-const TAB_GROUPS: { key: string; items: string[] }[] = [
-  { key: "dashboard", items: ["dashboard"] },
-  { key: "suite", items: ["home", "telex", "analysis", "library", "freight", "netback", "tools"] },
-  { key: "nitrogen", items: ["nitrogen"] },
-  { key: "order-group", items: ["order"] },
-  { key: "plans", items: ["zero", "aq-analytics"] },
-  { key: "call", items: ["call"] },
-  { key: "contact", items: ["contact"] },
-  { key: "analytics", items: ["a-telex", "a-market", "a-signal", "a-freight", "a-sd", "a-briefing", "a-alerts"] },
-];
+/** Desk pages that live under AQ Analytics, in menu order. */
+export const ANALYTICS_MENU_KEYS = ["aa-map", "aa-board", "aa-market", "aa-producers", "aa-enquiries", "aa-lane", "aa-reports", "aa-alerts", "aa-plans"] as const;
+
+/** Desktop tab row, left to right. AQ Analytics sits between Client Suite and Nitrogen Report, with AQ Zero beside it. */
+function tabGroups(viewer: { plan: Plan; admin: boolean }): { key: string; items: string[] }[] {
+  return [
+    { key: "dashboard", items: ["dashboard"] },
+    { key: "suite", items: ["home", "telex", "analysis", "library", "freight", "netback", "tools"] },
+    { key: "aq-analytics", items: canSeeAqAnalytics(viewer) ? [...ANALYTICS_MENU_KEYS] : ["aq-analytics"] },
+    { key: "zero", items: ["zero"] },
+    { key: "nitrogen", items: ["nitrogen"] },
+    { key: "order-group", items: ["order"] },
+    { key: "call", items: ["call"] },
+    { key: "contact", items: ["contact"] },
+  ];
+}
 
 /** Tabs built from the member's own menu, so hidden and paid-only pages stay out exactly as they do in the drawer. */
-export function tabsFor(nav: HubNavItem[], unlocked: string[]): HubTab[] {
-  return TAB_GROUPS.map((group) => {
+export function tabsFor(nav: HubNavItem[], unlocked: string[], viewer: { plan: Plan; admin: boolean }): HubTab[] {
+  return tabGroups(viewer).map((group) => {
     const links = group.items.flatMap((key): HubTabLink[] => {
       const item = nav.find((entry) => entry.key === key);
       if (!item) return [];
@@ -345,7 +448,8 @@ export const hasPaidPages = (plan: Plan, admin: boolean) => admin || plan !== "c
 
 export function navFor(plan: Plan, admin: boolean) {
   const paid = hasPaidPages(plan, admin);
-  return HUB_NAV.filter((item) => !item.hidden && (paid || !item.paidOnly));
+  const analytics = canSeeAqAnalytics({ plan, admin });
+  return HUB_NAV.filter((item) => !item.hidden && (paid || !item.paidOnly) && (!item.analyticsTool || analytics));
 }
 
 /** Phone tab bar: the four most-used places plus "More", which opens the full menu. */
@@ -356,16 +460,23 @@ export function tabKeysFor(plan: Plan, admin: boolean) {
 /** Keys that live under Client Suite on desktop and in the phone drawer. */
 export const SUITE_KEYS = ["home", "telex", "analysis", "library", "freight", "netback", "tools"] as const;
 
-/** Phone drawer groups, matching the desktop Client Suite arrangement. */
-export const DRAWER_GROUPS: { key: string; labelKey: string | null; noteKey?: string; items: string[] }[] = [
-  { key: "main", labelKey: null, items: ["dashboard"] },
-  { key: "suite", labelKey: "tab.suite", noteKey: "note.aq1", items: [...SUITE_KEYS] },
-  { key: "desk", labelKey: null, items: ["nitrogen", "aquibot", "order", "call", "contact"] },
-  { key: "plans", labelKey: "section.plans", items: ["zero", "aq-analytics"] },
-  { key: "analytics", labelKey: "section.analytics", noteKey: "note.analytics", items: ["a-telex", "a-market", "a-signal", "a-freight", "a-sd", "a-briefing", "a-alerts"] },
-  { key: "help", labelKey: "section.help", items: ["guide"] },
-  { key: "you", labelKey: "section.you", items: ["account"] },
-];
+/** Phone drawer groups. AQ Analytics follows Client Suite, and AQ Zero sits beside it. */
+export function drawerGroupsFor(plan: Plan, admin: boolean): { key: string; labelKey: string | null; noteKey?: string; items: string[] }[] {
+  return [
+    { key: "main", labelKey: null, items: ["dashboard"] },
+    { key: "suite", labelKey: "tab.suite", noteKey: "note.aq1", items: [...SUITE_KEYS] },
+    {
+      key: "analytics",
+      labelKey: "section.analytics",
+      noteKey: "note.analytics",
+      items: canSeeAqAnalytics({ plan, admin }) ? [...ANALYTICS_MENU_KEYS] : ["aq-analytics"],
+    },
+    { key: "zero", labelKey: null, items: ["zero"] },
+    { key: "desk", labelKey: null, items: ["nitrogen", "aquibot", "order", "call", "contact"] },
+    { key: "help", labelKey: "section.help", items: ["guide"] },
+    { key: "you", labelKey: "section.you", items: ["account"] },
+  ];
+}
 
 /**
  * Tour stops in menu order. Each one points at the element carrying `data-tour={key}`; stops whose element is not
@@ -375,9 +486,11 @@ export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: fa
   { key: "welcome", anchor: false, title: "Welcome to Aquifert ONE", body: "A one-minute walk through the menu, so you know where everything lives. Use the arrow keys or the buttons, and skip whenever you like." },
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },
   { key: "home", title: "Client Suite", body: "Your workspace dropdown: Hub, Telex, AQ View, Library, Calculators and AQ Trader Tools." },
+  { key: "aq-analytics", title: "AQ Analytics", body: "Between Client Suite and Nitrogen Report. Open it for the membership, or for the intelligence map and freight desk if AQ Analytics is on your account." },
+  { key: "aa-map", title: "AQ Analytics", body: "Intelligence map, freight board, your market, producers, freight enquiries, the lane calculator, reports, alerts and plans." },
+  { key: "zero", title: "AQ Zero", body: "AQ Zero sits beside AQ Analytics. Supplier-cost fertiliser with a fixed operations fee, and a place to register for the pilot." },
   { key: "nitrogen", title: "Nitrogen Report", body: "Answer six questions on one page and get an AQ View nitrogen brief tailored to your market, yours to keep." },
   { key: "order", title: "Order Fertiliser", body: "Send the trading desk an enquiry for the products, quantity and months you need." },
-  { key: "zero", title: "Plans", body: "See AQ ZERO and AQ Analytics, and what each plan adds." },
   { key: "call", title: "Weekly Meetup", body: "Join the desk's weekly market meetup, or catch up on the last one." },
   { key: "contact", title: "Trade Desk", body: "Reach the desk by WhatsApp, a booked meeting or a message." },
   { key: "more", title: "More", body: "Everything else in the menu lives here: Client Suite pages, plans, Aquibot and help." },
@@ -398,7 +511,8 @@ const EXTRA_TITLES: [string, string][] = [
 const EXACT_TITLES: Record<string, string> = { "/hub/analytics": "AQ Analytics" };
 
 export function isActive(pathname: string, href: string) {
-  return href === "/hub" ? pathname === "/hub" : pathname === href || pathname.startsWith(`${href}/`);
+  if (href === "/hub" || href === "/hub/tools" || href === "/hub/tools/analytics") return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function pageTitle(pathname: string) {

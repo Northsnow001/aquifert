@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
-const ITEMS: { href: string; label: string; id: string }[] = [
+const TOOLS: { href: string; label: string; id: string }[] = [
   { href: "/hub/tools", label: "World Map", id: "world" },
   { href: "/hub/tools?view=calc", label: "Cost Calculator", id: "calc" },
   { href: "/hub/tools?view=how", label: "How It's Made", id: "how" },
   { href: "/hub/tools?view=glossary", label: "Glossary", id: "glossary" },
+];
+
+const ANALYTICS: { href: string; label: string; id: string }[] = [
   { href: "/hub/tools/analytics", label: "Intelligence map", id: "map" },
   { href: "/hub/tools/analytics/board", label: "Freight board", id: "board" },
   { href: "/hub/tools/analytics/market", label: "My market", id: "market" },
@@ -19,7 +22,7 @@ const ITEMS: { href: string; label: string; id: string }[] = [
   { href: "/hub/tools/analytics/plans", label: "Plans", id: "plans" },
 ];
 
-function activeId(pathname: string, view: string | null) {
+function analyticsId(pathname: string) {
   if (pathname.startsWith("/hub/tools/analytics/board")) return "board";
   if (pathname.startsWith("/hub/tools/analytics/market")) return "market";
   if (pathname.startsWith("/hub/tools/analytics/producers")) return "producers";
@@ -28,38 +31,42 @@ function activeId(pathname: string, view: string | null) {
   if (pathname.startsWith("/hub/tools/analytics/reports")) return "reports";
   if (pathname.startsWith("/hub/tools/analytics/alerts")) return "alerts";
   if (pathname.startsWith("/hub/tools/analytics/plans")) return "plans";
-  if (pathname.startsWith("/hub/tools/analytics")) return "map";
-  if (view === "calc" || view === "how" || view === "glossary") return view;
-  return "world";
+  return "map";
 }
 
-export function ToolsTabs({ analytics = false }: { analytics?: boolean }) {
-  const pathname = usePathname();
-  const view = useSearchParams().get("view");
-  const current = activeId(pathname, view);
-  const items = analytics ? ITEMS : ITEMS.filter((item) => !item.href.startsWith("/hub/tools/analytics"));
+function TabRow({ items, current }: { items: { href: string; label: string; id: string }[]; current: string }) {
   return (
     <div className="flex items-end gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {items.map((item, index) => {
+      {items.map((item) => {
         const on = item.id === current;
-        const divider = index === 4;
         return (
-          <span key={item.id} className="flex shrink-0 items-end">
-            {divider ? <span className="mx-1 mb-2 h-4 w-px bg-border" aria-hidden /> : null}
-            <Link
-              href={item.href}
-              aria-current={on ? "page" : undefined}
-              className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium no-underline ${
-                on ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
-              }`}
-            >
-              {item.label}
-            </Link>
-          </span>
+          <Link
+            key={item.id}
+            href={item.href}
+            aria-current={on ? "page" : undefined}
+            className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium no-underline ${
+              on ? "border-blue text-blue" : "border-transparent text-mid hover:text-ink"
+            }`}
+          >
+            {item.label}
+          </Link>
         );
       })}
     </div>
   );
+}
+
+export function ToolsTabs() {
+  const pathname = usePathname();
+  const view = useSearchParams().get("view");
+  const current = view === "calc" || view === "how" || view === "glossary" ? view : "world";
+  return <TabRow items={TOOLS} current={pathname.startsWith("/hub/tools/analytics") ? "" : current} />;
+}
+
+/** Intelligence map, freight board and the rest of the AQ Analytics desk. */
+export function AnalyticsTabs() {
+  const pathname = usePathname();
+  return <TabRow items={ANALYTICS} current={analyticsId(pathname)} />;
 }
 
 export function ToolsHeading() {

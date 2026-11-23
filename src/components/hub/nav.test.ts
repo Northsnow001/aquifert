@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { navFor, tabKeysFor, tabsFor, TOUR_STOPS } from "./nav";
+import { ANALYTICS_MENU_KEYS, navFor, tabKeysFor, tabsFor, TOUR_STOPS } from "./nav";
 
 test("the free plan has no dashboard in the menu or the phone tab bar", () => {
   assert.equal(navFor("core", false).some((item) => item.key === "dashboard"), false);
@@ -23,31 +23,45 @@ test("hidden items stay out of the menu on every plan", () => {
   }
 });
 
-test("AQ Zero and AQ Analytics sit under Plans and open their own plan pages", () => {
+test("AQ Zero and AQ Analytics keep their own plan pages", () => {
   const plans = navFor("core", false).filter((item) => item.section === "Plans");
   assert.deepEqual(plans.map((item) => item.key), ["zero", "aq-analytics"]);
   assert.deepEqual(plans.map((item) => item.href), ["/hub/plans/aq-zero", "/hub/plans/aq-analytics"]);
   for (const item of plans) assert.ok(item.promo?.headline);
 });
 
-test("the Plans tab holds only AQ Zero and AQ Analytics, account pages stay in Account", () => {
-  const plans = tabsFor(navFor("enterprise", false), []).find((tab) => tab.key === "plans");
-  assert.deepEqual(plans?.links.map((link) => link.key), ["zero", "aq-analytics"]);
+test("AQ Analytics sits between Client Suite and Nitrogen Report, with AQ Zero beside it", () => {
+  const core = tabsFor(navFor("core", false), [], { plan: "core", admin: false });
+  assert.deepEqual(core.map((tab) => tab.key), ["suite", "aq-analytics", "zero", "nitrogen", "order-group", "call", "contact"]);
+  assert.deepEqual(core.find((tab) => tab.key === "aq-analytics")?.links.map((link) => link.key), ["aq-analytics"]);
+  assert.deepEqual(core.find((tab) => tab.key === "zero")?.links.map((link) => link.href), ["/hub/plans/aq-zero"]);
+
+  for (const [plan, admin] of [["growth", false], ["enterprise", false], ["core", true]] as const) {
+    const tabs = tabsFor(navFor(plan, admin), [], { plan, admin });
+    const keys = tabs.map((tab) => tab.key);
+    assert.deepEqual(keys.slice(keys.indexOf("suite"), keys.indexOf("nitrogen") + 1), ["suite", "aq-analytics", "zero", "nitrogen"]);
+    assert.deepEqual(tabs.find((tab) => tab.key === "aq-analytics")?.links.map((link) => link.key), [...ANALYTICS_MENU_KEYS]);
+  }
+});
+
+test("AQ ONE does not see the AQ Analytics desk menus", () => {
+  const keys = navFor("core", false).map((item) => item.key);
+  for (const key of ANALYTICS_MENU_KEYS) assert.equal(keys.includes(key), false);
 });
 
 test("Client Suite holds Hub, Telex, AQ View, Library, Calculators and Trader Tools; Trade Desk and Weekly Meetup stay top-level", () => {
-  const tabs = tabsFor(navFor("core", false), []);
+  const tabs = tabsFor(navFor("core", false), [], { plan: "core", admin: false });
   const keys = tabs.map((tab) => tab.key);
   assert.deepEqual(tabs.find((tab) => tab.key === "suite")?.links.map((link) => link.key), ["home", "telex", "analysis", "library", "freight", "netback", "tools"]);
-  assert.deepEqual(keys, ["suite", "nitrogen", "order-group", "plans", "call", "contact"]);
   assert.equal(keys.includes("guide"), false);
   assert.equal(keys.includes("aquibot"), false);
   assert.equal(keys.includes("telex-feed"), false);
+  assert.equal(tabs.find((tab) => tab.key === "suite")?.links.some((link) => link.href.startsWith("/hub/tools/analytics")), false);
 });
 
 test("the tour stops at every desktop tab, in tab-row order, on every plan", () => {
   for (const [plan, admin] of [["core", false], ["growth", false], ["enterprise", false], ["core", true]] as const) {
-    const tabs = tabsFor(navFor(plan, admin), []);
+    const tabs = tabsFor(navFor(plan, admin), [], { plan, admin });
     assert.deepEqual(
       tabs.filter((tab) => !tab.tour).map((tab) => tab.key),
       [],

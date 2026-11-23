@@ -4,7 +4,9 @@ import { Fragment } from "react";
 import { Activity, ArrowRight, Bell, BookOpen, Check, LineChart, Newspaper, Scale, Ship, X } from "lucide-react";
 import { SalesHero } from "@/components/hub/sales-hero";
 import { ClosingCta, CrossSell, HeroTitle, PlanLink, heroGhost, heroPrimary } from "@/components/hub/plans/sales";
+import { MockSubscribe } from "@/components/hub/mock-subscribe";
 import { getHubAccess } from "@/lib/aq-modules/access";
+import { getPrefs } from "@/lib/aq-modules/members";
 import { MODULES, PLAN_RANK, type ModuleKey } from "@/lib/aq-modules/types";
 import { splitLines } from "@/lib/site-content/normalize";
 import { MODULE_CARD_FIELDS, isShown, sectionOrder } from "@/lib/site-content/schema";
@@ -26,7 +28,9 @@ const MODULE_CARD: Record<ModuleKey, { icon: typeof LineChart; field: keyof type
 const REGISTER = "/hub/account/membership?plan=growth&from=aq-analytics";
 
 export default async function AqAnalyticsPlanPage() {
-  const [{ modules }, content] = await Promise.all([getHubAccess(), getSiteContent()]);
+  const access = await getHubAccess();
+  const [content, prefs] = await Promise.all([getSiteContent(), getPrefs(access.user)]);
+  const { modules, admin } = access;
   const copy = content.aqAnalytics;
   const { hero, plan, crossSell, closing } = copy;
   // Sales / waitlist surface for every viewer (including admin): register interest, never open the live product from this page.
@@ -88,6 +92,7 @@ export default async function AqAnalyticsPlanPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 pb-2">
+      {admin ? <MockSubscribe plan="growth" subscribed={prefs.mockPlan === "growth" && prefs.onboardingDone} /> : null}
       <SalesHero src={hero.video} poster={hero.image} videoLabel={hero.label} eyebrow={hero.eyebrow} badge={hero.badge || undefined} title={<HeroTitle title={hero.title} highlight={hero.highlight} />} sub={hero.sub}>
         <PlanLink href={mainHref} label={hero.registerLabel} className={heroPrimary} arrow />
         <PlanLink href={hero.secondaryLink || REGISTER} label={hero.secondaryLabel} className={heroGhost} />
