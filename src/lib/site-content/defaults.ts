@@ -1,6 +1,7 @@
 import { MEMBERSHIP_OFFERS, type MembershipOffer } from "@/lib/aq-modules/membership";
 import { moduleInfo, type ModuleKey } from "@/lib/aq-modules/types";
 import type { SiteContent } from "@/lib/site-content/schema";
+import { SITE_SHARE_DESCRIPTION } from "@/lib/site-share";
 
 const DESK_MAIL = "mailto:enquiry@aquifert.com";
 
@@ -32,8 +33,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
   home: {
     seo: {
       title: "Aquifert - Knowledge | Fertiliser | Delivered - Informing decisions with transparency on your fertiliser sourcing",
-      description:
-        "Aquifert is the UK-based B2B fertiliser sourcing platform where membership replaces margin. Source water-soluble fertiliser, Urea, DAP, MOP, MAP and NPK from vetted global producers, with AI-drafted quotes, live container tracking and invoice financing.",
+      description: SITE_SHARE_DESCRIPTION,
     },
     hero: {
       title: "Connecting Clients in the Global Fertiliser Market",
@@ -428,7 +428,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
     header: {
       menu: [
         { label: "Home", link: "/" },
-        { label: "Platform", link: "/platform" },
+        { label: "AQ Suite", link: "/platform" },
         { label: "Why Aquifert", link: "/why-aquifert" },
         { label: "Fertiliser Now", link: "/membership" },
         { label: "Contact", link: "/contact" },

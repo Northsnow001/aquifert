@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { SITE_SHARE_DESCRIPTION } from "@/lib/site-share";
+
 const SITE = "https://aquifert.com";
 
 function upsertMeta(attr: "name" | "property", key: string, content: string) {
@@ -85,8 +87,7 @@ export const ORGANIZATION_JSONLD: Record<string, unknown> = {
       name: "Aquifert",
       url: SITE,
       logo: `${SITE}/brand/logo-v2.png`,
-      description:
-        "Aquifert is a UK-based B2B fertiliser sourcing platform. Members source water-soluble fertiliser, Urea, DAP, MOP, MAP and NPK, directly from vetted global producers at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
+      description: SITE_SHARE_DESCRIPTION,
       foundingLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: "London", addressCountry: "GB" } },
       knowsAbout: [
         "fertiliser trading",

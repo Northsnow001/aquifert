@@ -33,13 +33,14 @@ function activeId(pathname: string, view: string | null) {
   return "world";
 }
 
-export function ToolsTabs() {
+export function ToolsTabs({ analytics = false }: { analytics?: boolean }) {
   const pathname = usePathname();
   const view = useSearchParams().get("view");
   const current = activeId(pathname, view);
+  const items = analytics ? ITEMS : ITEMS.filter((item) => !item.href.startsWith("/hub/tools/analytics"));
   return (
     <div className="flex items-end gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {ITEMS.map((item, index) => {
+      {items.map((item, index) => {
         const on = item.id === current;
         const divider = index === 4;
         return (

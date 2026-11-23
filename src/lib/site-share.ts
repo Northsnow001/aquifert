@@ -1,0 +1,3 @@
+/** The sentence WhatsApp, search and social cards show under the Aquifert link. */
+export const SITE_SHARE_DESCRIPTION =
+  "Aquifert offers world class speciality and standardised fertiliser sourcing coupled with market advisory services focused on quality outcomes and transparency.  This is achieved through our exemplary supplier network while drawing on 3 decades of fertiliser industry experience. Aquifert is focusing on expanding its capabilities through a high leverage dedicated technology development.  Aquifert aims to positively impact fertiliser sourcing by offering a dynamic value focused and unique approach for our clients.";

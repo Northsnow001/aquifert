@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { SITE_SHARE_DESCRIPTION } from "@/lib/site-share";
 import { CookieConsent } from "@/marketing/components/CookieConsent";
 import "./globals.css";
 
@@ -32,8 +33,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://aquifert.com";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: "Aquifert - Knowledge | Fertiliser | Delivered - Informing decisions with transparency on your fertiliser sourcing",
-  description:
-    "Aquifert is the B2B fertiliser sourcing platform where membership replaces margin. Source water-soluble fertiliser, Urea, DAP, MOP, MAP and NPK, at true landed cost, with AI-drafted quotes, live container tracking and invoice financing.",
+  description: SITE_SHARE_DESCRIPTION,
   keywords:
     "fertiliser sourcing platform, B2B fertiliser marketplace, buy fertiliser UK, water-soluble fertiliser suppliers, fertiliser landed cost, urea DAP MOP MAP NPK prices, fertiliser container tracking, fertiliser invoice financing, agricultural supply chain platform",
   robots: "index, follow, max-image-preview:large, max-snippet:-1",
@@ -45,16 +45,14 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Aquifert",
     title: "Aquifert, Fertiliser Trading at True Landed Cost",
-    description:
-      "The B2B fertiliser marketplace where membership replaces margin. AI-drafted quotes, live container tracking, market intelligence and invoice financing for UK agriculture.",
+    description: SITE_SHARE_DESCRIPTION,
     url: "/",
     images: ["/media/hero-ship-containers.jpg"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Aquifert, Fertiliser Trading at True Landed Cost",
-    description:
-      "Source Urea, DAP, MOP, MAP and NPK direct from vetted global producers. Transparent landed cost, 24-hour quotes, live tracking from port to farm gate.",
+    description: SITE_SHARE_DESCRIPTION,
     images: ["/media/hero-ship-containers.jpg"],
   },
 };

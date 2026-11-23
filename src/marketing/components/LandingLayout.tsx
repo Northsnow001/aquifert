@@ -16,6 +16,27 @@ import { COMPANY_DETAILS, LEGAL_LINKS } from "@/lib/legal/documents";
 import { fillYear } from "@/lib/site-content/normalize";
 import { useSiteGlobal } from "@/marketing/lib/site-global";
 
+/**
+ * A saved menu item whose address is the homepage never leaves the page, so the
+ * click looks dead and the item stays underlined. Known labels get their page.
+ */
+const HEADER_PAGES: Record<string, string> = {
+  "aq suite": "/platform",
+  platform: "/platform",
+  "why aquifert": "/why-aquifert",
+  "fertiliser now": "/membership",
+  contact: "/contact",
+  help: "/help",
+};
+
+function headerHref(label: string, link: string) {
+  const href = link.trim();
+  const name = label.trim().toLowerCase();
+  if (name === "home") return href || "/";
+  if (href && href !== "/" && href !== "#") return href;
+  return HEADER_PAGES[name] || href || "/";
+}
+
 export function LandingLayout({ children }: { children: ReactNode }) {
   const { header, footer } = useSiteGlobal();
   const footerColumns = [
@@ -69,7 +90,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           {header.menu.map((n, i) => (
             <SiteNavLink
               key={i}
-              href={n.link}
+              href={headerHref(n.label, n.link)}
               className={(isActive) =>
                 `relative py-2 text-[12px] font-semibold uppercase tracking-[0.1em] transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-navy-700 after:transition-opacity hover:text-navy-700 ${
                   isActive ? "text-navy-800 after:opacity-100" : "text-slate-600 after:opacity-0 hover:after:opacity-100"
@@ -84,7 +105,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           {header.utility.length ? (
             <nav className="hidden items-center gap-4 xl:flex" aria-label="Utility">
               {header.utility.map((u, i) => (
-                <SiteLink key={i} href={u.link} className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:text-navy-800">
+                <SiteLink key={i} href={headerHref(u.label, u.link)} className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:text-navy-800">
                   {u.label}
                 </SiteLink>
               ))}
@@ -128,14 +149,14 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         <div className="fixed inset-x-0 bottom-0 top-[72px] z-[75] overflow-y-auto overscroll-contain bg-white lg:hidden" role="dialog" aria-label="Menu">
           <nav className="flex flex-col gap-1 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 sm:px-6" aria-label="Mobile">
             {header.menu.map((n, i) => (
-              <SiteNavLink key={i} href={n.link} className={() => "flex min-h-12 items-center border-b border-slate-100 py-3 text-sm font-semibold uppercase tracking-[0.1em] text-navy-800"}>
+              <SiteNavLink key={i} href={headerHref(n.label, n.link)} className={() => "flex min-h-12 items-center border-b border-slate-100 py-3 text-sm font-semibold uppercase tracking-[0.1em] text-navy-800"}>
                 {n.label}
               </SiteNavLink>
             ))}
             {header.utility.length ? (
               <div className="mt-4 flex flex-col gap-2">
                 {header.utility.map((u, i) => (
-                  <SiteLink key={i} href={u.link} className="py-2 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
+                  <SiteLink key={i} href={headerHref(u.label, u.link)} className="py-2 text-[12px] font-medium uppercase tracking-[0.08em] text-slate-500">
                     {u.label}
                   </SiteLink>
                 ))}

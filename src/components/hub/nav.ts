@@ -139,7 +139,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Tools",
     icon: Wrench,
     section: "AQ ONE",
-    tip: "World map, cost calculator, how fertilisers are made and a glossary, plus the freight intelligence map, your markets, producers, enquiries, lane calculator, reports, alerts and plans.",
+    tip: "World map, cost calculator, how fertilisers are made and a glossary.",
   },
   {
     key: "order",
@@ -148,7 +148,7 @@ export const HUB_NAV: HubNavItem[] = [
     short: "Buy",
     icon: ShoppingCart,
     section: "AQ ONE",
-    tip: "Register for Aquifert Zero, follow your trades and documents, or tell the trading desk what you need and get a quote back.",
+    tip: "Register for Aquifert Zero, or tell the trading desk what you need and get a quote back.",
   },
   {
     key: "call",

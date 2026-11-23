@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { estimateLane } from "@/lib/aq-analytics/queries";
 import { updateAqAnalytics } from "@/lib/aq-analytics/store";
 import type { LaneEstimate, LaneEstimateInput } from "@/lib/aq-analytics/contracts";
+import { isAdminUser } from "@/lib/admin-access";
 import { getSession } from "@/lib/session";
 
-async function requireMember() {
+async function requirePreview() {
   const user = await getSession();
   if (!user) throw new Error("Sign in to use AQ Trader Tools.");
+  if (!isAdminUser(user)) throw new Error("AQ Analytics is not on this account yet.");
   return user;
 }
 
@@ -17,7 +19,7 @@ function refresh() {
 }
 
 export async function saveHubMarketsAction(form: FormData) {
-  await requireMember();
+  await requirePreview();
   const countries = String(form.get("countries") ?? "")
     .split(",")
     .map((item) => item.trim())
@@ -51,7 +53,7 @@ export async function saveHubMarketsAction(form: FormData) {
 }
 
 export async function addHubScheduleAction(form: FormData) {
-  await requireMember();
+  await requirePreview();
   const name = String(form.get("name") ?? "").trim();
   const cadence = String(form.get("cadence") ?? "").trim();
   const market = String(form.get("market") ?? "").trim();
@@ -64,7 +66,7 @@ export async function addHubScheduleAction(form: FormData) {
 }
 
 export async function requestHubAccessAction(form: FormData) {
-  const user = await requireMember();
+  const user = await requirePreview();
   const plan = String(form.get("plan") ?? "premium").trim();
   const message = String(form.get("message") ?? "").trim();
   const company = String(form.get("company") ?? "").trim();
@@ -79,7 +81,7 @@ export async function requestHubAccessAction(form: FormData) {
 }
 
 export async function estimateHubLaneAction(input: LaneEstimateInput): Promise<{ ok: true; data: LaneEstimate } | { ok: false; message: string }> {
-  await requireMember();
+  await requirePreview();
   try {
     return { ok: true, data: await estimateLane(input) };
   } catch (error) {
