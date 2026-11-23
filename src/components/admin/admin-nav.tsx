@@ -82,6 +82,7 @@ const GROUP_TONE: Record<string, string> = {
   Calculators: "aq-chip-blue",
   Desk: "aq-chip-amber",
   "Trade book": "aq-chip-amber",
+  "Aquifert Repository": "aq-chip-amber",
   Members: "aq-chip-rose",
 };
 
