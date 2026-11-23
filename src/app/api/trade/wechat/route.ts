@@ -1,8 +1,10 @@
 import { after, NextResponse, type NextRequest } from "next/server";
+import { deskUsesAgent, forwardToN8n, n8nWechatInboundUrl } from "@/lib/desk-engine";
 import { wechatSignatureMatches } from "@/lib/wechat/inbound";
 import { handleWechatXml } from "@/lib/wechat/receive";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function serverToken() {
   return process.env.WECHAT_TOKEN?.trim() || "";
@@ -33,9 +35,10 @@ export async function POST(req: NextRequest) {
   const xml = await req.text();
   after(async () => {
     try {
-      await handleWechatXml(xml);
-    } catch {
-      // Always ack so WeChat does not retry the same event.
+      if (deskUsesAgent("wechat")) await handleWechatXml(xml);
+      else await forwardToN8n(n8nWechatInboundUrl(), xml, "text/xml; charset=utf-8");
+    } catch (error) {
+      console.error("[wechat inbound]", error instanceof Error ? error.message : error);
     }
   });
   return plain("success");

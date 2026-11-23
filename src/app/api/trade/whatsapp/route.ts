@@ -1,8 +1,10 @@
 import { after, NextResponse, type NextRequest } from "next/server";
+import { deskUsesAgent, forwardToN8n, n8nWhatsAppInboundUrl } from "@/lib/desk-engine";
 import { deskHitlAuthorized } from "@/lib/desk-hitl/n8n-auth";
 import { handleWhatsAppInbound } from "@/lib/whatsapp/receive";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function twiml(body = "") {
   const inner = body ? `<Message>${escapeXml(body)}</Message>` : "";
@@ -24,6 +26,9 @@ async function parseInbound(req: NextRequest) {
       from: String(form.get("From") || ""),
       body: String(form.get("Body") || ""),
       name: String(form.get("ProfileName") || ""),
+      waId: String(form.get("WaId") || ""),
+      to: String(form.get("To") || ""),
+      messageSid: String(form.get("MessageSid") || form.get("SmsSid") || ""),
       twilio: true,
     };
   }
@@ -32,6 +37,9 @@ async function parseInbound(req: NextRequest) {
     from: String(json?.from ?? json?.phone ?? json?.From ?? ""),
     body: String(json?.body ?? json?.text ?? json?.Body ?? ""),
     name: String(json?.name ?? json?.ProfileName ?? ""),
+    waId: "",
+    to: "",
+    messageSid: "",
     twilio: false,
   };
 }
@@ -41,6 +49,27 @@ export async function POST(req: NextRequest) {
   const inbound = await parseInbound(req);
   if (!inbound.twilio && !deskHitlAuthorized(req)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  if (!deskUsesAgent("whatsapp")) {
+    if (inbound.twilio) {
+      const payload = JSON.stringify({
+        Body: inbound.body,
+        From: inbound.from,
+        ProfileName: inbound.name,
+        WaId: inbound.waId,
+        To: inbound.to,
+        MessageSid: inbound.messageSid,
+      });
+      after(async () => {
+        try {
+          await forwardToN8n(n8nWhatsAppInboundUrl(), payload, "application/json");
+        } catch (error) {
+          console.error("[n8n whatsapp]", error instanceof Error ? error.message : error);
+        }
+      });
+      return twiml();
+    }
+    return NextResponse.json({ ok: true, engine: "n8n" });
   }
   if (inbound.twilio) {
     after(async () => {

@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { isAdminUser } from "@/lib/admin-access";
+import { deskUsesAgent } from "@/lib/desk-engine";
 import { closeWaitingRfqs } from "@/lib/trade/desk-closer";
 import { getSession } from "@/lib/session";
 
@@ -20,6 +21,7 @@ async function handle(request: Request) {
     const user = await getSession();
     if (!user || !isAdminUser(user)) return Response.json({ ok: false, message: "Not allowed." }, { status: 401 });
   }
+  if (!deskUsesAgent("whatsapp")) return Response.json({ ok: true, skipped: "n8n" });
   const results = await closeWaitingRfqs();
   return Response.json({
     ok: true,
