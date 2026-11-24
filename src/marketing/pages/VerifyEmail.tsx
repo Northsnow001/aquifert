@@ -30,12 +30,7 @@ export default function VerifyEmail() {
   useEffect(() => setPendingSignup(readSignupPending()), []);
   const emailFromQuery = (params.get("email") ?? "").trim().toLowerCase();
   const phoneFromQuery = phoneToE164(params.get("phone") ?? "") ?? "";
-  const channel: SignupChannel =
-    pending?.channel === "both" || (Boolean(emailFromQuery) && Boolean(phoneFromQuery))
-      ? "both"
-      : pending?.channel === "sms" || (!emailFromQuery && Boolean(phoneFromQuery))
-        ? "sms"
-        : "email";
+  const channel: SignupChannel = emailFromQuery || pending?.email ? "email" : phoneFromQuery || pending?.channel === "sms" ? "sms" : "email";
   const email = (pending?.email || emailFromQuery).toLowerCase();
   const phone = (pending?.channel === "sms" ? phoneToE164(pending.phone ?? "") : null) || phoneFromQuery;
 

@@ -8,7 +8,6 @@ import { Button } from "@/marketing/components/ui/button";
 import { isAdminUser } from "@/lib/admin-access";
 import { friendlyAuthError } from "@/marketing/lib/auth-errors";
 import { safeRedirectPath } from "@/marketing/lib/redirect";
-import { phoneToE164 } from "@/marketing/lib/auth-signup";
 import { getSupabaseBrowser, isSupabaseBrowserConfigured } from "@/marketing/lib/supabase";
 import { track } from "@/lib/analytics";
 
@@ -24,9 +23,7 @@ export default function Login() {
 
   const passwordSaved = params.get("set") === "1";
   const passwordReset = params.get("reset") === "1";
-  const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState(() => params.get("email")?.trim() ?? "");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [honey, setHoney] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,18 +43,13 @@ export default function Login() {
     setPending(true);
     try {
       const supabase = getSupabaseBrowser();
-      const e164 = method === "phone" ? phoneToE164(phone) : null;
-      if (method === "phone" && !e164) {
-        setError("Enter the phone number with its country code, for example +44…");
-        setPending(false);
-        return;
-      }
-      const { data, error: signError } = await supabase.auth.signInWithPassword(
-        method === "phone" ? { phone: e164!, password } : { email: email.trim().toLowerCase(), password },
-      );
+      const { data, error: signError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
       if (signError) throw signError;
       if (!data.session) throw new Error("No session returned. Confirm your email if required, then try again.");
-      track("login", { method });
+      track("login", { method: "email" });
 
       // Full navigation so the server sees the new session cookie on the first hub render.
       const admin = isAdminUser({
@@ -83,31 +75,7 @@ export default function Login() {
           <h1 className="mt-8 text-2xl font-bold tracking-tight text-navy-900">Sign in</h1>
           <p className="mt-1.5 text-sm text-slate-600">Access your AQ ONE Fertiliser Portal</p>
 
-          <div className="mt-6 grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1" role="group" aria-label="Sign in with">
-            {(
-              [
-                ["email", "Email"],
-                ["phone", "Phone number"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={method === value}
-                onClick={() => {
-                  setMethod(value);
-                  setError(null);
-                }}
-                className={`h-9 rounded-md text-[13px] font-semibold ${
-                  method === value ? "bg-white text-navy-900 shadow-sm" : "text-slate-600 hover:text-navy-900"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <form className="mt-5" onSubmit={onSubmit}>
+          <form className="mt-6" onSubmit={onSubmit}>
             <input
               type="text"
               value={honey}
@@ -118,40 +86,19 @@ export default function Login() {
               className="absolute -left-[9999px] h-0 w-0 opacity-0"
               name="company_website"
             />
-            {method === "phone" ? (
-              <>
-                <label htmlFor="login-phone" className="text-[13px] font-semibold text-navy-900">
-                  Phone number
-                </label>
-                <input
-                  id="login-phone"
-                  type="tel"
-                  autoComplete="tel"
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className={`${inputCls} mt-1`}
-                  placeholder="+44 7400 123456"
-                  required
-                />
-              </>
-            ) : (
-              <>
-                <label htmlFor="login-email" className="text-[13px] font-semibold text-navy-900">
-                  Email
-                </label>
-                <input
-                  id="login-email"
-                  type="email"
-                  autoComplete="username"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`${inputCls} mt-1`}
-                  placeholder="name@company.com"
-                  required
-                />
-              </>
-            )}
+            <label htmlFor="login-email" className="text-[13px] font-semibold text-navy-900">
+              Email
+            </label>
+            <input
+              id="login-email"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`${inputCls} mt-1`}
+              placeholder="name@company.com"
+              required
+            />
             <div className="mt-4 flex items-center justify-between">
               <label htmlFor="login-password" className="text-[13px] font-semibold text-navy-900">
                 Password
@@ -171,7 +118,7 @@ export default function Login() {
             />
             {passwordSaved && !error && (
               <p className="mt-3 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[13px] text-teal-900" role="status">
-                Password saved. Sign in with your email or phone number and new password to continue.
+                Password saved. Sign in with your email and new password to continue.
               </p>
             )}
             {passwordReset && !error && (

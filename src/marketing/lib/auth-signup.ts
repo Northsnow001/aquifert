@@ -1,4 +1,4 @@
-/** How the verification code is delivered. `both` sends an email code and a text together. */
+/** How a verification code was delivered. New accounts use email. `both` remains for sessions started before that change. */
 export type SignupChannel = "email" | "sms" | "both";
 
 /** Pending signup profile stored between register → verify → set-password. */

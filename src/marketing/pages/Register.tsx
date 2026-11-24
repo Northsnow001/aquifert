@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Step 1 — Collect profile, email, and phone, then send both codes together.
+ * Step 1 — Collect profile, email, and phone, then email the verification code.
  */
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "@/marketing/router";
@@ -139,7 +139,7 @@ export default function Register() {
         company: form.company.trim(),
         country: form.country.trim(),
         phone,
-        channel: "both" as const,
+        channel: "email" as const,
         next: next ?? undefined,
       };
       const response = await fetch("/api/signup/codes", {
@@ -148,11 +148,11 @@ export default function Register() {
         body: JSON.stringify(profile),
       });
       const body = (await response.json().catch(() => null)) as { message?: string } | null;
-      if (!response.ok) throw new Error(body?.message || "Could not send the codes.");
+      if (!response.ok) throw new Error(body?.message || "Could not send the code.");
 
       saveSignupPending(profile);
-      track("sign_up_start", { method: "email_and_phone" });
-      navigate(`/verify-email?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}`);
+      track("sign_up_start", { method: "email" });
+      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not start sign-up.";
       setErrors({ form: friendlyAuthError(message, "signup") });
@@ -173,7 +173,7 @@ export default function Register() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Create your account</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          We&apos;ll email a code and text a code at the same time. You&apos;ll set a password after both are entered.
+          We&apos;ll email you a code. You&apos;ll set a password after you enter it.
         </p>
 
         <div className="mt-6 space-y-4">
@@ -267,7 +267,7 @@ export default function Register() {
               <p className={errCls}>{errors.phone}</p>
             ) : (
               <p className="mt-1 text-[12px] text-slate-500">
-                Include the country code. A text is sent here at the same time as the email.
+                Include the country code. We keep this on your account. Sign-in uses your email.
               </p>
             )}
           </div>
@@ -285,7 +285,7 @@ export default function Register() {
             className="h-11 w-full bg-navy-700 text-white hover:bg-navy-800"
             size="lg"
           >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Send verification codes"}
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : "Send verification code"}
           </Button>
           <p className="text-center text-[11.5px] leading-relaxed text-slate-500">
             By creating an account you agree to our{" "}

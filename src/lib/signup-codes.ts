@@ -17,8 +17,8 @@ export type SignupCodeInput = {
 const TAKEN = "This email or phone number already has an account. Sign in, or open the invitation email to set your password.";
 
 /**
- * Creates one account when needed, then asks Supabase to email a code and text a different code.
- * The two sends run together. Calling them from the browser would create two accounts.
+ * Creates one account when needed, stores the phone number, and emails the only verification code.
+ * The phone is contact information. Sign-in stays on the email address.
  */
 export async function sendSignupCodes(input: SignupCodeInput): Promise<{ ok: true } | { ok: false; message: string }> {
   const email = input.email.trim().toLowerCase();
@@ -33,24 +33,18 @@ export async function sendSignupCodes(input: SignupCodeInput): Promise<{ ok: tru
 
   const db = createAdminClient();
   if (!db) {
-    return { ok: false, message: "Sign-up cannot send the text yet. The server is missing SUPABASE_SERVICE_ROLE_KEY." };
+    return { ok: false, message: "Sign-up cannot send the email yet. The server is missing SUPABASE_SERVICE_ROLE_KEY." };
   }
 
   const metadata = { name, company, country, phone, full_name: name };
   const ready = await accountForCodes(db, { email, phone, metadata });
   if (!ready.ok) return ready;
 
-  const [emailSend, smsSend] = await Promise.all([
-    db.auth.signInWithOtp({ email, options: { shouldCreateUser: false, data: metadata } }),
-    db.auth.signInWithOtp({ phone, options: { shouldCreateUser: false, channel: "sms", data: metadata } }),
-  ]);
-  const failure = emailSend.error ?? smsSend.error;
-  if (!failure) return { ok: true };
-
-  const which = emailSend.error && smsSend.error ? "email and text message" : emailSend.error ? "email" : "text message";
+  const emailSend = await db.auth.signInWithOtp({ email, options: { shouldCreateUser: false, data: metadata } });
+  if (!emailSend.error) return { ok: true };
   return {
     ok: false,
-    message: `The ${which} could not be sent. ${friendlyAuthError(failure.message, "signup")}`,
+    message: `The email could not be sent. ${friendlyAuthError(emailSend.error.message, "signup")}`,
   };
 }
 
@@ -62,7 +56,7 @@ async function accountForCodes(
     email: input.email,
     phone: input.phone,
     email_confirm: false,
-    phone_confirm: false,
+    phone_confirm: true,
     user_metadata: input.metadata,
   });
   if (!created.error) return { ok: true };
@@ -77,12 +71,11 @@ async function accountForCodes(
   if (link.error || !user) return { ok: false, message: TAKEN };
   const owned = phoneToE164(user.phone ?? "");
   if (owned && owned !== input.phone) return { ok: false, message: TAKEN };
-  if (!owned) {
-    const updated = await db.auth.admin.updateUserById(user.id, {
-      phone: input.phone,
-      user_metadata: { ...(user.user_metadata ?? {}), ...input.metadata },
-    });
-    if (updated.error) return { ok: false, message: friendlyAuthError(updated.error.message, "signup") };
-  }
+  const updated = await db.auth.admin.updateUserById(user.id, {
+    ...(owned ? {} : { phone: input.phone }),
+    phone_confirm: true,
+    user_metadata: { ...(user.user_metadata ?? {}), ...input.metadata },
+  });
+  if (updated.error) return { ok: false, message: friendlyAuthError(updated.error.message, "signup") };
   return { ok: true };
 }

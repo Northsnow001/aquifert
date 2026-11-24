@@ -221,7 +221,7 @@ export default function SetPassword() {
       clearSignupPending();
 
       if (!fromInvite && !inviteToken) {
-        track("sign_up", { method: "email_and_phone" });
+        track("sign_up", { method: "email" });
         await fetch("/api/signup/desk", { method: "POST" }).catch(() => undefined);
       }
 
@@ -292,7 +292,7 @@ export default function SetPassword() {
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy-900">Set your password</h1>
         <p className="mt-1.5 text-sm text-slate-600">
-          {fromInvite ? "You were invited" : pending?.channel === "both" ? "Email and phone verified" : pending?.channel === "sms" ? "Phone verified" : "Email verified"}
+          {fromInvite ? "You were invited" : pending?.channel === "sms" ? "Phone verified" : "Email verified"}
           {email || pending?.email || pending?.phone ? (
             <>
               {" "}

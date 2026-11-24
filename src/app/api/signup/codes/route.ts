@@ -4,7 +4,7 @@ import { sendSignupCodes } from "@/lib/signup-codes";
 
 const text = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
 
-/** Sends the email code and the SMS together for one new account. */
+/** Stores the phone number and emails the verification code for one new account. */
 export async function POST(request: Request) {
   let body: unknown;
   try {
