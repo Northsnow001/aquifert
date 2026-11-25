@@ -95,7 +95,7 @@ export async function submitOrderEnquiry(input: OrderInput) {
   await notifySubmission("order", {
     data: orderEmailData(submission),
     applicantEmail: order.email,
-    adminPath: "/admin/enquiries?type=order",
+    adminPath: "/admin/desk/inquiries?tab=app",
   });
   return { ok: true as const };
 }

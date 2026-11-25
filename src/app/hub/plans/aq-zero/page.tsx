@@ -6,9 +6,8 @@ import { SalesHero } from "@/components/hub/sales-hero";
 import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { ClosingCta, CrossSell, Eyebrow, HeroTitle, PlanLink, heroGhost, heroPrimary, PlanBadge } from "@/components/hub/plans/sales";
-import { MockSubscribe } from "@/components/hub/mock-subscribe";
+import { startMockSubscription } from "@/app/hub/onboarding-actions";
 import { getHubAccess } from "@/lib/aq-modules/access";
-import { getPrefs } from "@/lib/aq-modules/members";
 import { MEMBERSHIP_OFFERS, type MembershipTier } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
 import { splitLines } from "@/lib/site-content/normalize";
@@ -43,12 +42,11 @@ const tierCopy = (copy: SitePage<"aqZero">["programmes"], tier: MembershipTier) 
 
 export default async function AqZeroPlanPage() {
   const { user, admin, modules } = await getHubAccess();
-  const [registration, requests, allowances, content, prefs] = await Promise.all([
+  const [registration, requests, allowances, content] = await Promise.all([
     findZeroRegistration(user).catch(() => null),
     myMembershipRequests(user).catch(() => []),
     planAllowances(modules),
     getSiteContent(),
-    getPrefs(user),
   ]);
   const copy = content.aqZero;
   const currentTier =
@@ -113,6 +111,25 @@ export default async function AqZeroPlanPage() {
                   >
                     Manage membership <ArrowRight className="h-4 w-4" aria-hidden />
                   </Link>
+                ) : admin ? (
+                  <form action={startMockSubscription} className="mt-7">
+                    <input type="hidden" name="plan" value="enterprise" />
+                    <button
+                      type="submit"
+                      aria-label={registered ? `Update my details for ${card.name}` : register}
+                      className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 text-[15px] font-semibold transition active:scale-[0.98] ${
+                        registered ? "border border-[#2fa865] bg-white text-[#1f7a45] hover:bg-[#f1faf4]" : "bg-navy-700 text-white hover:bg-navy-600"
+                      }`}
+                    >
+                      {registered ? (
+                        <>
+                          <Check className="h-4 w-4" aria-hidden /> Update my details
+                        </>
+                      ) : (
+                        register
+                      )}
+                    </button>
+                  </form>
                 ) : (
                   <Link
                     href={`/hub/account/membership?plan=enterprise&tier=${offer.tier}&from=aq-zero`}
@@ -172,7 +189,6 @@ export default async function AqZeroPlanPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 pb-2">
-      {admin ? <MockSubscribe plan="enterprise" subscribed={prefs.mockPlan === "enterprise" && prefs.onboardingDone} /> : null}
       <SalesHero src={hero.video} poster={hero.image} videoLabel={hero.label} eyebrow={hero.eyebrow} badge={hero.badge || undefined} title={<HeroTitle title={hero.title} highlight={hero.highlight} />} sub={hero.sub}>
         <PlanLink href={hrefFor(hero.primaryLink, hero.primaryLabel, "#aq-zero-tiers")} label={hero.primaryLabel} className={heroPrimary} arrow />
         <PlanLink href={hrefFor(hero.secondaryLink, hero.secondaryLabel, CONTACT)} label={hero.secondaryLabel} className={heroGhost} />

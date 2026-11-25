@@ -34,14 +34,15 @@ export async function startMockSubscription(form: FormData) {
     });
   }
   revalidatePath("/hub/dashboard");
-  redirect("/hub/dashboard");
+  redirect(plan === "enterprise" ? "/hub/zero" : "/hub/tools/analytics/home");
 }
 
 export async function completeOnboarding(answers: Record<string, string[]>) {
-  const user = await adminUser();
-  if (!user) return { ok: false as const, message: "Mock subscription is for admin accounts." };
+  const user = await getSession();
+  if (!user) return { ok: false as const, message: "Sign in to finish setup." };
   const prefs = await getPrefs(user);
-  if (!prefs.mockPlan) return { ok: false as const, message: "Subscribe before answering." };
+  const subscribed = prefs.mockPlan || (user.plan === "growth" || user.plan === "enterprise" ? user.plan : null);
+  if (!subscribed) return { ok: false as const, message: "Subscribe before answering." };
   const questions = await getOnboardingQuestions();
   const catalog = await catalogFromDesk();
   const checked = checkedAnswers(questions, catalog, answers);
@@ -57,5 +58,7 @@ export async function completeOnboarding(answers: Record<string, string[]>) {
   revalidatePath("/hub/dashboard");
   revalidatePath("/hub");
   revalidatePath("/hub/telex");
+  revalidatePath("/hub/tools/analytics/home");
+  revalidatePath("/hub/zero");
   return { ok: true as const };
 }

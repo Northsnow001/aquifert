@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { I18nProvider } from "@/components/app/i18n";
-import { AppShell } from "@/components/hub/app-shell";
+import { HubChrome } from "@/components/hub/hub-chrome";
 import { MarketTicker, stanceOf, type TickerItem } from "@/components/hub/market-ticker";
 import { SuspendedNotice } from "@/components/hub/suspended-notice";
 import { AddressRefusedNotice } from "@/components/hub/address-refused-notice";
@@ -39,9 +39,9 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   ];
   return (
     <I18nProvider initial={isLang(saved) ? saved : "en"}>
-      <AppShell user={user} admin={admin} unlocked={unlocked} theme={parseTheme(jar.get(THEME_COOKIE)?.value)} ticker={<MarketTicker items={ticker} />}>
+      <HubChrome user={user} admin={admin} unlocked={unlocked} theme={parseTheme(jar.get(THEME_COOKIE)?.value)} ticker={<MarketTicker items={ticker} />}>
         {children}
-      </AppShell>
+      </HubChrome>
     </I18nProvider>
   );
 }
