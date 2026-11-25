@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Banknote, Building2, Clock, CreditCard, FileText, Mail, MessageSquare, Receipt, ShieldCheck } from "lucide-react";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
+import { BillingNotice } from "@/components/hub/billing-notice";
+import { ManageBillingForm } from "@/components/hub/subscribe-form";
 import { AccountIntro, EmptyPanel, Panel, Tag } from "@/components/hub/kit";
 import { longDay } from "@/components/hub/plans/shared";
 import { getHubAccess } from "@/lib/aq-modules/access";
@@ -12,13 +14,14 @@ export const metadata: Metadata = { title: "Billing" };
 export const dynamic = "force-dynamic";
 
 const HOW = [
-  { icon: Receipt, title: "Invoiced by the desk", body: "Your membership is invoiced by the Aquifert desk each billing period, and every invoice is emailed to your billing contact." },
-  { icon: Banknote, title: "Ways to pay", body: "Pay by bank transfer using the details on your invoice, or by card through a secure payment link the desk sends you." },
-  { icon: ShieldCheck, title: "Card details stay out of the hub", body: "Aquifert never asks for card details inside the hub. If a message asks you to, check with billing first." },
+  { icon: Receipt, title: "Invoiced by Stripe", body: "AQ Analytics and AQ Zero are billed by Stripe. Each invoice is emailed to the address on the subscription." },
+  { icon: Banknote, title: "Ways to pay", body: "Pay by card on the Stripe checkout page. The membership opens as soon as the payment succeeds." },
+  { icon: ShieldCheck, title: "Card details stay with Stripe", body: "Aquifert never sees or stores the card number. Update the card, download invoices or cancel from the billing portal." },
   { icon: Building2, title: "Company and VAT details", body: "Tell billing your registered company name, address and VAT number and they appear on every invoice." },
 ];
 
-export default async function BillingPage() {
+export default async function BillingPage({ searchParams }: { searchParams: Promise<{ billing?: string }> }) {
+  const { billing } = await searchParams;
   const { user, admin } = await getHubAccess();
   const requests = await myMembershipRequests(user);
   const open = [...requests].sort((a, b) => b.at.localeCompare(a.at)).find((item) => item.status !== "done");
@@ -51,8 +54,9 @@ export default async function BillingPage() {
               Active
             </Tag>
           </div>
+          <BillingNotice code={billing} />
           <p className="mt-4 text-[14.5px] text-mid">
-            {user.plan === "enterprise" ? "Pricing and terms are agreed with the desk for your team." : "Billed monthly by the desk. Change plan whenever your needs change."}
+            {user.plan === "core" ? "AQ ONE is free. AQ Analytics and AQ Zero are paid on Stripe." : "Billed by Stripe. Change the card, the plan or cancellation in the billing portal."}
           </p>
           {open ? (
             <p className="mt-4 flex items-start gap-2 rounded-xl bg-[#fff4df] px-3.5 py-2.5 text-[13.5px] text-[#9a5b00]">
@@ -60,11 +64,17 @@ export default async function BillingPage() {
               Your request to move to {PLAN_LABEL[open.requestedPlan]} was sent on {longDay(open.at)}. Billing updates once the desk confirms it.
             </p>
           ) : null}
-          {admin ? <p className="mt-4 rounded-xl bg-blue-light px-3.5 py-2.5 text-[13.5px] text-blue">Admin account: plan and billing changes for members are made in Supabase or the admin console.</p> : null}
+          {admin ? <p className="mt-4 rounded-xl bg-blue-light px-3.5 py-2.5 text-[13.5px] text-blue">Admin accounts pay through the same Stripe checkout. The plan changes when the payment succeeds.</p> : null}
           <div className="mt-auto flex flex-wrap gap-2 pt-5">
-            <Link href="/hub/account/membership" className={btnPrimary}>
-              Change plan <ArrowRight className="h-4 w-4" />
-            </Link>
+            {user.plan === "core" ? (
+              <Link href="/hub/account/membership" className={btnPrimary}>
+                Change plan <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <ManageBillingForm className={btnPrimary}>
+                Manage billing <ArrowRight className="h-4 w-4" />
+              </ManageBillingForm>
+            )}
             <Link href="/hub/account/usage" className={btnSecondary}>
               Plan & usage
             </Link>

@@ -7,6 +7,8 @@ import { MarketTicker, stanceOf, type TickerItem } from "@/components/hub/market
 import { SuspendedNotice } from "@/components/hub/suspended-notice";
 import { AddressRefusedNotice } from "@/components/hub/address-refused-notice";
 import { isAdminUser } from "@/lib/admin-access";
+import { hasAqAnalytics, hasAqZero } from "@/lib/aq-analytics-access";
+import { getPrefs } from "@/lib/aq-modules/members";
 import { getAqModules } from "@/lib/aq-modules/store";
 import { publishedTelex } from "@/lib/aq-modules/telex";
 import { unlockedModules } from "@/lib/aq-modules/types";
@@ -26,7 +28,11 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   if (ban) return <SuspendedNotice email={user.email} />;
   if (addressRefused) return <AddressRefusedNotice email={user.email} />;
   const admin = isAdminUser(user);
-  const [modules, content] = await Promise.all([getAqModules(), getHubContent()]);
+  const [modules, content, prefs] = await Promise.all([getAqModules(), getHubContent(), getPrefs(user).catch(() => null)]);
+  const access = {
+    analytics: hasAqAnalytics({ plan: user.plan, mockPlan: prefs?.mockPlan ?? null }),
+    zero: hasAqZero({ plan: user.plan, mockPlan: prefs?.mockPlan ?? null }),
+  };
   const unlocked = unlockedModules(modules.access, { plan: user.plan, admin });
   const jar = await cookies();
   const saved = jar.get(LANG_COOKIE)?.value;
@@ -39,7 +45,7 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   ];
   return (
     <I18nProvider initial={isLang(saved) ? saved : "en"}>
-      <HubChrome user={user} admin={admin} unlocked={unlocked} theme={parseTheme(jar.get(THEME_COOKIE)?.value)} ticker={<MarketTicker items={ticker} />}>
+      <HubChrome user={user} admin={admin} unlocked={unlocked} theme={parseTheme(jar.get(THEME_COOKIE)?.value)} ticker={<MarketTicker items={ticker} />} access={access}>
         {children}
       </HubChrome>
     </I18nProvider>

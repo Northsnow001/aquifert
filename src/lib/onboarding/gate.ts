@@ -3,9 +3,8 @@ import type { Plan } from "@/lib/session-shared";
 
 export type ProductPlan = "growth" | "enterprise";
 
-/** The product a member is setting up: a mock subscription wins, otherwise their real plan. */
-export function productPlan(user: { plan: Plan }, prefs: Pick<MemberPrefs, "mockPlan">): ProductPlan | null {
-  if (prefs.mockPlan) return prefs.mockPlan;
+/** The paid product on the account. Stripe writes this plan after checkout. */
+export function productPlan(user: { plan: Plan }, _prefs?: Pick<MemberPrefs, "mockPlan">): ProductPlan | null {
   if (user.plan === "growth" || user.plan === "enterprise") return user.plan;
   return null;
 }

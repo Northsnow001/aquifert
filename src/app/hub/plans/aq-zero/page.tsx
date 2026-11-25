@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Fragment } from "react";
 import { ArrowRight, Check, Rocket, Search, Sprout, Wheat, X } from "lucide-react";
 import { SalesHero } from "@/components/hub/sales-hero";
 import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { ClosingCta, CrossSell, Eyebrow, HeroTitle, PlanLink, heroGhost, heroPrimary, PlanBadge } from "@/components/hub/plans/sales";
-import { startMockSubscription } from "@/app/hub/onboarding-actions";
+import { BillingNotice } from "@/components/hub/billing-notice";
+import { ManageBillingForm, SubscribeForm } from "@/components/hub/subscribe-form";
+import { createClient } from "@/lib/supabase/server";
 import { getHubAccess } from "@/lib/aq-modules/access";
 import { MEMBERSHIP_OFFERS, type MembershipTier } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
@@ -40,8 +41,12 @@ const tierCopy = (copy: SitePage<"aqZero">["programmes"], tier: MembershipTier) 
   missing: splitLines(copy[`${tier}Missing`]),
 });
 
-export default async function AqZeroPlanPage() {
-  const { user, admin, modules } = await getHubAccess();
+export default async function AqZeroPlanPage({ searchParams }: { searchParams: Promise<{ billing?: string }> }) {
+  const { billing } = await searchParams;
+  const { user, modules } = await getHubAccess();
+  const supabase = await createClient();
+  const profile = supabase ? await supabase.from("profiles").select("membership_tier").eq("id", user.id).maybeSingle() : { data: null };
+  const paidTier = user.plan === "enterprise" && (profile.data?.membership_tier === "sprout" || profile.data?.membership_tier === "harvest" || profile.data?.membership_tier === "scale") ? profile.data.membership_tier : null;
   const [registration, requests, allowances, content] = await Promise.all([
     findZeroRegistration(user).catch(() => null),
     myMembershipRequests(user).catch(() => []),
@@ -75,7 +80,7 @@ export default async function AqZeroPlanPage() {
           {tiers.map((offer) => {
             const card = tierCopy(programmes, offer.tier);
             const Icon = TIER_ICON[offer.tier];
-            const current = currentTier === offer.tier;
+            const current = paidTier === offer.tier || currentTier === offer.tier;
             const registered = !current && registration?.programme === offer.tier;
             const badge = current ? "Current plan" : registered ? "Registered" : offer.popular ? programmes.popularLabel : null;
             const frame = current || registered ? "ring-2 ring-[#2fa865]" : offer.popular ? "border-2 border-teal-500 shadow-[0_18px_40px_-22px_rgb(79_127_114/0.7)]" : "";
@@ -105,47 +110,16 @@ export default async function AqZeroPlanPage() {
                   ))}
                 </ul>
                 {current ? (
-                  <Link
-                    href="/hub/account/membership"
-                    className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#2fa865] bg-[#f1faf4] px-4 text-[15px] font-semibold text-[#1f7a45] no-underline transition hover:bg-[#e3f5ea]"
-                  >
-                    Manage membership <ArrowRight className="h-4 w-4" aria-hidden />
-                  </Link>
-                ) : admin ? (
-                  <form action={startMockSubscription} className="mt-7">
-                    <input type="hidden" name="plan" value="enterprise" />
-                    <button
-                      type="submit"
-                      aria-label={registered ? `Update my details for ${card.name}` : register}
-                      className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 text-[15px] font-semibold transition active:scale-[0.98] ${
-                        registered ? "border border-[#2fa865] bg-white text-[#1f7a45] hover:bg-[#f1faf4]" : "bg-navy-700 text-white hover:bg-navy-600"
-                      }`}
-                    >
-                      {registered ? (
-                        <>
-                          <Check className="h-4 w-4" aria-hidden /> Update my details
-                        </>
-                      ) : (
-                        register
-                      )}
-                    </button>
-                  </form>
+                  <ManageBillingForm className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[#2fa865] bg-[#f1faf4] px-4 text-[15px] font-semibold text-[#1f7a45] transition hover:bg-[#e3f5ea]">
+                    Manage billing <ArrowRight className="h-4 w-4" aria-hidden />
+                  </ManageBillingForm>
                 ) : (
-                  <Link
-                    href={`/hub/account/membership?plan=enterprise&tier=${offer.tier}&from=aq-zero`}
-                    aria-label={registered ? `Update my details for ${card.name}` : register}
-                    className={`mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full px-4 text-[15px] font-semibold no-underline transition active:scale-[0.98] ${
-                      registered ? "border border-[#2fa865] bg-white text-[#1f7a45] hover:bg-[#f1faf4]" : "bg-navy-700 text-white hover:bg-navy-600"
-                    }`}
+                  <SubscribeForm
+                    offer={offer.tier}
+                    className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-navy-700 px-4 text-[15px] font-semibold text-white transition hover:bg-navy-600 active:scale-[0.98]"
                   >
-                    {registered ? (
-                      <>
-                        <Check className="h-4 w-4" aria-hidden /> Update my details
-                      </>
-                    ) : (
-                      register
-                    )}
-                  </Link>
+                    {register}
+                  </SubscribeForm>
                 )}
               </section>
             );
@@ -189,6 +163,7 @@ export default async function AqZeroPlanPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 pb-2">
+      <BillingNotice code={billing} />
       <SalesHero src={hero.video} poster={hero.image} videoLabel={hero.label} eyebrow={hero.eyebrow} badge={hero.badge || undefined} title={<HeroTitle title={hero.title} highlight={hero.highlight} />} sub={hero.sub}>
         <PlanLink href={hrefFor(hero.primaryLink, hero.primaryLabel, "#aq-zero-tiers")} label={hero.primaryLabel} className={heroPrimary} arrow />
         <PlanLink href={hrefFor(hero.secondaryLink, hero.secondaryLabel, CONTACT)} label={hero.secondaryLabel} className={heroGhost} />

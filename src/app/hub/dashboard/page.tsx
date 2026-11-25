@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { ArrowRight, BellRing, Calculator, CalendarDays, Crown, FlaskConical, Package, Radio, ShoppingCart } from "lucide-react";
 import { btnPrimary, btnSecondary } from "@/components/app/form";
 import { AquibotBriefing, type BriefRow } from "@/components/hub/aquibot-briefing";
-import { OnboardingOverlay } from "@/components/hub/onboarding-overlay";
 import { HomeHero } from "@/components/hub/home-hero";
 import { hasPaidPages } from "@/components/hub/nav";
 import { EmptyPanel, Panel, StatTile, Tag } from "@/components/hub/kit";
@@ -21,9 +20,8 @@ import { INBOX } from "@/lib/data/tables";
 import { getFreightDesk, monthlyUsage, nextReset } from "@/lib/freight-desk/store";
 import { planLimit as freightLimit } from "@/lib/freight-desk/types";
 import { getHubContent } from "@/lib/hub-content";
-import { answerTerms, feedIsPersonal, matchesFeed, resolveQuestions } from "@/lib/onboarding/questions";
+import { answerTerms, feedIsPersonal, matchesFeed } from "@/lib/onboarding/questions";
 import { getOnboardingQuestions } from "@/lib/onboarding/store";
-import { catalogFromDesk } from "@/lib/onboarding/validate";
 import { getNetbackDesk, netbackUsage } from "@/lib/netback-desk/store";
 import { planLimit as netbackLimit } from "@/lib/netback-desk/types";
 
@@ -48,12 +46,6 @@ export default async function DashboardPage() {
     myRegistrations(user),
     listRecords(INBOX, { email: user.email, limit: 20 }),
   ]);
-
-  if (admin && prefs.mockPlan && !prefs.onboardingDone) {
-    const [questions, catalog] = await Promise.all([getOnboardingQuestions(), catalogFromDesk()]);
-    const live = resolveQuestions(questions, catalog);
-    if (live.length) return <OnboardingOverlay plan={prefs.mockPlan} questions={live} />;
-  }
 
   const personal = feedIsPersonal({ admin, mockPlan: prefs.mockPlan, onboardingDone: prefs.onboardingDone });
   const terms = personal ? answerTerms(await getOnboardingQuestions(), prefs.onboardingAnswers) : [];

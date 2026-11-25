@@ -19,7 +19,7 @@ import { TelexGuide } from "@/components/hub/telex-guide";
 import { AquibotDock } from "@/components/hub/aquibot-dock";
 import { DeskConnect } from "@/components/hub/desk-connect";
 import { HubTabs } from "@/components/hub/hub-tabs";
-import { ADMIN_LINK, drawerGroupsFor, hasPaidPages, HUB_NAV, isActive, navFor, tabKeysFor, tabsFor, type HubNavItem } from "@/components/hub/nav";
+import { ADMIN_LINK, CLOSED_ACCESS, drawerGroupsFor, hasPaidPages, hubHref, HUB_NAV, isActive, navFor, tabKeysFor, tabsFor, type HubNavItem, type ProductAccess } from "@/components/hub/nav";
 import { ThemeToggle } from "@/components/hub/theme-toggle";
 import { PLAN_LABEL } from "@/lib/aq-modules/types";
 import { initials, type SessionUser } from "@/lib/session-shared";
@@ -46,6 +46,7 @@ function NavList({
   admin,
   plan,
   unlocked,
+  access,
   onNavigate,
 }: {
   pathname: string;
@@ -53,6 +54,7 @@ function NavList({
   admin: boolean;
   plan: SessionUser["plan"];
   unlocked: string[];
+  access: ProductAccess;
   onNavigate?: () => void;
 }) {
   const { t } = useI18n();
@@ -78,14 +80,15 @@ function NavList({
             <div className="mx-2.5 mb-1 mt-1 border-t border-black/[.06]" />
           ) : null}
           {group.rows.map((item) => {
-            const active = isActive(pathname, item.href);
+            const dest = hubHref(item.key, item.href, access);
+            const active = dest.match ? pathname === dest.match || pathname.startsWith(`${dest.match}/`) : isActive(pathname, dest.href);
             const locked = Boolean(item.module && !unlocked.includes(item.module));
             const label = t(`nav.${item.key}`);
             if (item.promo) {
               return (
-                <NavHoverCard key={item.key} label={label} headline={item.promo.headline} line={item.promo.line} href={item.href} cta="View membership">
+                <NavHoverCard key={item.key} label={label} headline={item.promo.headline} line={item.promo.line} href={dest.href} cta={dest.match ? "Open" : "View membership"}>
                   <Link
-                    href={item.href}
+                    href={dest.href}
                     onClick={onNavigate}
                     className="aq-nav-link group flex items-center gap-3 rounded-xl px-3 py-[9px] text-[15px] font-medium text-ink/85 no-underline transition-colors hover:bg-white/70 hover:text-ink"
                   >
@@ -246,6 +249,8 @@ export function AppShell({
   unlocked = [],
   theme: initialTheme = "light",
   ticker,
+  access = CLOSED_ACCESS,
+  rail,
   children,
 }: {
   user: SessionUser;
@@ -253,6 +258,8 @@ export function AppShell({
   unlocked?: string[];
   theme?: Theme;
   ticker?: React.ReactNode;
+  access?: ProductAccess;
+  rail?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -283,11 +290,11 @@ export function AppShell({
     };
   }, [drawer]);
 
-  const nav = useMemo(() => navFor(user.plan, admin), [user.plan, admin]);
-  const hubTabs = useMemo(() => tabsFor(nav, unlocked, { plan: user.plan, admin }), [nav, unlocked, user.plan, admin]);
+  const nav = useMemo(() => navFor(user.plan, admin, access.analytics), [user.plan, admin, access.analytics]);
+  const hubTabs = useMemo(() => tabsFor(nav, unlocked, { plan: user.plan, admin, access }), [nav, unlocked, user.plan, admin, access]);
   const palette = useMemo<PaletteItem[]>(() => {
     const pages: PaletteItem[] = nav.map((item) => ({
-      href: item.href,
+      href: hubHref(item.key, item.href, access).href,
       label: item.module && !unlocked.includes(item.module) ? `${t(`nav.${item.key}`)} (locked)` : t(`nav.${item.key}`),
       group: item.section === "You" ? "Account" : item.section === "Main" ? "Go to" : item.section,
       hint: item.tip.split(". ")[0],
@@ -302,7 +309,7 @@ export function AppShell({
       { href: "#tour", label: t("top.tour"), group: "Help", icon: <CirclePlay />, action: startTour },
     ];
     return [...pages, ...account, ...(admin ? [{ href: "/admin", label: t("top.admin"), group: "Help", icon: <ADMIN_LINK.icon /> }] : [])];
-  }, [nav, admin, unlocked, t]);
+  }, [nav, admin, unlocked, t, access]);
 
   const tabs = tabKeysFor(user.plan, admin).map((key) => HUB_NAV.find((item) => item.key === key)!);
 
@@ -368,13 +375,16 @@ export function AppShell({
           {ticker}
         </div>
 
-        <div id="aq-scroll" className="aq-canvas relative flex min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-          <main id="main-content" className="relative flex-1 px-3 pb-28 pt-4 transition-opacity duration-300 sm:px-6 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-7">
-            <DeskConnect name={user.name} email={user.email} />
-            <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">
-              {children}
-            </div>
-          </main>
+        <div className={rail ? "flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row" : "contents"}>
+          {rail}
+          <div id="aq-scroll" className="aq-canvas relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+            <main id="main-content" className="relative flex-1 px-3 pb-28 pt-4 transition-opacity duration-300 sm:px-6 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-7">
+              <DeskConnect name={user.name} email={user.email} />
+              <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">
+                {children}
+              </div>
+            </main>
+          </div>
         </div>
       </div>
 
@@ -421,7 +431,7 @@ export function AppShell({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <NavList pathname={pathname} items={nav} admin={admin} plan={user.plan} unlocked={unlocked} onNavigate={() => setDrawer(false)} />
+            <NavList pathname={pathname} items={nav} admin={admin} plan={user.plan} unlocked={unlocked} access={access} onNavigate={() => setDrawer(false)} />
             <div className="aq-safe-bottom shrink-0 border-t border-black/[.06] px-4 pt-3">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#5789b0] to-[#1e405f] text-[13px] font-bold text-white">

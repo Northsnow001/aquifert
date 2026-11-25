@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Fragment } from "react";
 import { Activity, ArrowRight, Bell, BookOpen, Check, LineChart, Newspaper, Scale, Ship, X } from "lucide-react";
 import { SalesHero } from "@/components/hub/sales-hero";
 import { ClosingCta, CrossSell, HeroTitle, PlanLink, heroGhost, heroPrimary } from "@/components/hub/plans/sales";
-import { MockSubscribe } from "@/components/hub/mock-subscribe";
+import { BillingNotice } from "@/components/hub/billing-notice";
+import { SubscribeForm } from "@/components/hub/subscribe-form";
 import { getHubAccess } from "@/lib/aq-modules/access";
-import { getPrefs } from "@/lib/aq-modules/members";
 import { MODULES, PLAN_RANK, type ModuleKey } from "@/lib/aq-modules/types";
 import { splitLines } from "@/lib/site-content/normalize";
 import { MODULE_CARD_FIELDS, isShown, sectionOrder } from "@/lib/site-content/schema";
@@ -27,15 +26,14 @@ const MODULE_CARD: Record<ModuleKey, { icon: typeof LineChart; field: keyof type
 
 const REGISTER = "/hub/account/membership?plan=growth&from=aq-analytics";
 
-export default async function AqAnalyticsPlanPage() {
+export default async function AqAnalyticsPlanPage({ searchParams }: { searchParams: Promise<{ billing?: string }> }) {
+  const { billing } = await searchParams;
   const access = await getHubAccess();
-  const [content, prefs] = await Promise.all([getSiteContent(), getPrefs(access.user)]);
-  const { modules, admin } = access;
+  const [content] = await Promise.all([getSiteContent()]);
+  const { modules } = access;
   const copy = content.aqAnalytics;
   const { hero, plan, crossSell, closing } = copy;
-  // Sales / waitlist surface for every viewer (including admin): register interest, never open the live product from this page.
   const included = MODULES.filter((item) => PLAN_RANK.growth >= PLAN_RANK[modules.access[item.key]]);
-  const mainHref = REGISTER;
 
   const blocks: Record<string, React.ReactNode> = {
     plan: (
@@ -61,9 +59,9 @@ export default async function AqAnalyticsPlanPage() {
               </li>
             ))}
           </ul>
-          <Link href={REGISTER} className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-navy-700 px-4 text-[15px] font-semibold text-white no-underline transition hover:bg-navy-600 active:scale-[0.98]">
+          <SubscribeForm offer="analytics" className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-navy-700 px-4 text-[15px] font-semibold text-white transition hover:bg-navy-600 active:scale-[0.98]">
             {plan.registerLabel} <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
+          </SubscribeForm>
         </div>
 
         <ul className="grid content-start gap-4 sm:grid-cols-2 lg:col-span-3">
@@ -85,16 +83,20 @@ export default async function AqAnalyticsPlanPage() {
     closing: (
       <ClosingCta title={closing.title} body={closing.body} gradient="linear-gradient(115deg, #16304D 0%, #254F76 55%, #2F6FB3 100%)" glow="-right-20 -top-24 bg-[#3AB0FF]/20">
         <PlanLink href={closing.primaryLink} label={closing.primaryLabel} className={heroPrimary} arrow />
-        <PlanLink href={REGISTER} label={closing.registerLabel} className={heroGhost} />
+        <SubscribeForm offer="analytics" className={heroGhost}>
+          {closing.registerLabel}
+        </SubscribeForm>
       </ClosingCta>
     ),
   };
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 pb-2">
-      {admin ? <MockSubscribe plan="growth" subscribed={prefs.mockPlan === "growth" && prefs.onboardingDone} /> : null}
+      <BillingNotice code={billing} />
       <SalesHero src={hero.video} poster={hero.image} videoLabel={hero.label} eyebrow={hero.eyebrow} badge={hero.badge || undefined} title={<HeroTitle title={hero.title} highlight={hero.highlight} />} sub={hero.sub}>
-        <PlanLink href={mainHref} label={hero.registerLabel} className={heroPrimary} arrow />
+        <SubscribeForm offer="analytics" className={heroPrimary}>
+          {hero.registerLabel} <ArrowRight className="h-4 w-4" aria-hidden />
+        </SubscribeForm>
         <PlanLink href={hero.secondaryLink || REGISTER} label={hero.secondaryLabel} className={heroGhost} />
       </SalesHero>
 

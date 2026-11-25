@@ -30,18 +30,29 @@ test("AQ Zero and AQ Analytics keep their own plan pages", () => {
   for (const item of plans) assert.ok(item.promo?.headline);
 });
 
-test("AQ Analytics sits between Client Suite and Nitrogen Report, with AQ Zero beside it", () => {
-  const core = tabsFor(navFor("core", false), [], { plan: "core", admin: false });
-  assert.deepEqual(core.map((tab) => tab.key), ["suite", "aq-analytics", "zero", "nitrogen", "order-group", "call", "contact"]);
-  assert.deepEqual(core.find((tab) => tab.key === "aq-analytics")?.links.map((link) => link.key), ["aq-analytics"]);
-  assert.deepEqual(core.find((tab) => tab.key === "zero")?.links.map((link) => link.href), ["/hub/plans/aq-zero"]);
-
-  for (const [plan, admin] of [["growth", false], ["enterprise", false], ["core", true]] as const) {
+test("AQ Analytics sits between Client Suite and Nitrogen Report, with AQ Zero beside it, each as one link", () => {
+  for (const [plan, admin] of [["core", false], ["growth", false], ["enterprise", false], ["core", true]] as const) {
     const tabs = tabsFor(navFor(plan, admin), [], { plan, admin });
     const keys = tabs.map((tab) => tab.key);
     assert.deepEqual(keys.slice(keys.indexOf("suite"), keys.indexOf("nitrogen") + 1), ["suite", "aq-analytics", "zero", "nitrogen"]);
-    assert.deepEqual(tabs.find((tab) => tab.key === "aq-analytics")?.links.map((link) => link.key), [...ANALYTICS_MENU_KEYS]);
+    assert.deepEqual(tabs.find((tab) => tab.key === "aq-analytics")?.links.map((link) => link.key), ["aq-analytics"]);
+    assert.equal(tabs.find((tab) => tab.key === "aq-analytics")?.links[0].href, "/hub/plans/aq-analytics");
+    assert.deepEqual(tabs.find((tab) => tab.key === "zero")?.links.map((link) => link.href), ["/hub/plans/aq-zero"]);
+    assert.equal(tabs.find((tab) => tab.key === "aq-analytics")?.links.some((link) => ANALYTICS_MENU_KEYS.includes(link.key as (typeof ANALYTICS_MENU_KEYS)[number])), false);
   }
+});
+
+test("an active membership opens the product from the header instead of the subscription page", () => {
+  const analytics = tabsFor(navFor("growth", false, true), [], { plan: "growth", admin: false, access: { analytics: true, zero: false } });
+  const analyticsLink = analytics.find((tab) => tab.key === "aq-analytics")?.links[0];
+  assert.equal(analyticsLink?.href, "/hub/tools/analytics/home");
+  assert.equal(analyticsLink?.match, "/hub/tools/analytics");
+  assert.equal(analytics.find((tab) => tab.key === "zero")?.links[0].href, "/hub/plans/aq-zero");
+
+  const both = tabsFor(navFor("enterprise", false, true), [], { plan: "enterprise", admin: false, access: { analytics: true, zero: true } });
+  assert.equal(both.find((tab) => tab.key === "aq-analytics")?.links[0].href, "/hub/tools/analytics/home");
+  assert.equal(both.find((tab) => tab.key === "zero")?.links[0].href, "/hub/zero");
+  assert.equal(both.find((tab) => tab.key === "zero")?.links[0].match, "/hub/zero");
 });
 
 test("AQ ONE does not see the AQ Analytics desk menus", () => {

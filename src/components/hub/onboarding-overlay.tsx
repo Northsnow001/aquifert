@@ -21,7 +21,7 @@ function stepLabel(question: OnboardingQuestion, index: number) {
   return STEP_LABEL[question.id] ?? `Question ${index + 1}`;
 }
 
-export function OnboardingOverlay({ plan, questions }: { plan: "growth" | "enterprise"; questions: OnboardingQuestion[] }) {
+export function OnboardingOverlay({ plan, questions, embedded = false }: { plan: "growth" | "enterprise"; questions: OnboardingQuestion[]; embedded?: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
@@ -36,12 +36,13 @@ export function OnboardingOverlay({ plan, questions }: { plan: "growth" | "enter
   const single = question.kind === "single";
 
   useEffect(() => {
+    if (embedded) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, []);
+  }, [embedded]);
 
   useEffect(() => {
     setQuery("");
@@ -74,14 +75,16 @@ export function OnboardingOverlay({ plan, questions }: { plan: "growth" | "enter
     router.refresh();
   };
 
-  return (
-    <div className="aq-app fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-6" role="presentation">
-      <div className="absolute inset-0 bg-[#0b1e2d]/55 backdrop-blur-[2px]" />
+  const card = (
       <div
         role="dialog"
-        aria-modal="true"
+        aria-modal={embedded ? undefined : true}
         aria-labelledby="onboarding-title"
-        className="relative flex max-h-[min(860px,100dvh)] w-full max-w-4xl flex-col overflow-hidden rounded-t-[22px] bg-white text-ink shadow-[0_30px_80px_-24px_rgb(11_30_45/0.55)] sm:max-h-[min(820px,calc(100dvh-3rem))] sm:rounded-[22px]"
+        className={`relative flex w-full max-w-4xl flex-col overflow-hidden bg-white text-ink ${
+          embedded
+            ? "max-h-[min(820px,calc(100dvh-12rem))] rounded-[22px] border border-border shadow-[0_18px_40px_-24px_rgb(11_30_45/0.35)]"
+            : "max-h-[min(860px,100dvh)] rounded-t-[22px] shadow-[0_30px_80px_-24px_rgb(11_30_45/0.55)] sm:max-h-[min(820px,calc(100dvh-3rem))] sm:rounded-[22px]"
+        }`}
         onKeyDown={(event) => {
           if (event.key === "Escape") event.preventDefault();
         }}
@@ -232,6 +235,14 @@ export function OnboardingOverlay({ plan, questions }: { plan: "growth" | "enter
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) return <div className="mx-auto w-full max-w-4xl">{card}</div>;
+
+  return (
+    <div className="aq-app fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-6" role="presentation">
+      <div className="absolute inset-0 bg-[#0b1e2d]/55 backdrop-blur-[2px]" />
+      {card}
     </div>
   );
 }

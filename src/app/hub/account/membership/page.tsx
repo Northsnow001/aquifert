@@ -7,9 +7,8 @@ import { ComparePlans } from "@/components/hub/plans/compare-plans";
 import { planAllowances } from "@/components/hub/plans/load";
 import { MembershipBoard } from "@/components/hub/plans/membership-board";
 import { isPlan, longDay } from "@/components/hub/plans/shared";
-import { MockSubscribe } from "@/components/hub/mock-subscribe";
+import { BillingNotice } from "@/components/hub/billing-notice";
 import { getHubAccess } from "@/lib/aq-modules/access";
-import { getPrefs } from "@/lib/aq-modules/members";
 import { isTier, TIER_LABEL, type MembershipOffer } from "@/lib/aq-modules/membership";
 import { myMembershipRequests } from "@/lib/aq-modules/members";
 import { MODULES, PLAN_LABEL } from "@/lib/aq-modules/types";
@@ -41,7 +40,7 @@ const FAQ = [
   },
   {
     q: "When does a new plan take effect?",
-    a: "As soon as the desk updates your account. New modules unlock and higher allowances apply the next time you open a page.",
+    a: "As soon as Stripe confirms the payment. New modules unlock the next time you open a page.",
   },
   {
     q: "When do allowances reset?",
@@ -49,18 +48,17 @@ const FAQ = [
   },
   {
     q: "How am I billed?",
-    a: "The desk confirms pricing with you and invoices you directly. Your invoices and billing contact are on the Billing page.",
+    a: "You pay by card on Stripe. The plan opens as soon as the payment succeeds, and the Billing page opens Stripe's portal for the card, invoices and cancellation.",
   },
 ];
 
-export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ plan?: string; tier?: string; from?: string }> }) {
-  const [{ plan: planParam, tier: tierParam, from }, { user, admin, modules, can }] = await Promise.all([searchParams, getHubAccess()]);
-  const [allowances, requests, settings, registration, prefs] = await Promise.all([
+export default async function MembershipPage({ searchParams }: { searchParams: Promise<{ plan?: string; tier?: string; from?: string; billing?: string }> }) {
+  const [{ plan: planParam, tier: tierParam, from, billing }, { user, admin, modules, can }] = await Promise.all([searchParams, getHubAccess()]);
+  const [allowances, requests, settings, registration] = await Promise.all([
     planAllowances(modules),
     myMembershipRequests(user),
     getDeskSettings(),
     findZeroRegistration(user),
-    getPrefs(user),
   ]);
   const zero = settings.zero.showOnHub
     ? { name: user.name, email: user.email, success: settings.zero.success, last: registration ? zeroSummary(registration) : null }
@@ -81,12 +79,7 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
 
   return (
     <div className="flex flex-col gap-6 pb-2">
-      {admin ? (
-        <div className="flex flex-col gap-3">
-          <MockSubscribe plan="growth" subscribed={prefs.mockPlan === "growth" && prefs.onboardingDone} />
-          <MockSubscribe plan="enterprise" subscribed={prefs.mockPlan === "enterprise" && prefs.onboardingDone} />
-        </div>
-      ) : null}
+      <BillingNotice code={billing} />
       <div className="flex flex-col gap-4">
         <MembershipBoard plan={user.plan} admin={admin} zero={zero} currentTier={currentTier} initialOffer={initialOffer} source={from ?? ""} />
       </div>

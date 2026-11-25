@@ -10,7 +10,7 @@ export default async function OnboardingAdminPage() {
     <div className="mx-auto max-w-3xl">
       <PageHeader
         title="Onboarding questions"
-        description="Asked once, after an admin mock-subscribes to AQ Analytics or AQ Zero, and before the dashboard opens. Country, tag and category choices come from the live lists and decide which Telex flashes and Aquibot briefing the member sees."
+        description="Asked once, after Stripe confirms AQ Analytics or AQ Zero, and before that dashboard opens. Country, tag and category choices come from the live lists and decide which Telex flashes and Aquibot briefing the member sees."
       />
       <OnboardingEditor initial={questions} />
     </div>

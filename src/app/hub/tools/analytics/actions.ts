@@ -4,14 +4,15 @@ import { revalidatePath } from "next/cache";
 import { estimateLane } from "@/lib/aq-analytics/queries";
 import { updateAqAnalytics } from "@/lib/aq-analytics/store";
 import type { LaneEstimate, LaneEstimateInput } from "@/lib/aq-analytics/contracts";
-import { isAdminUser } from "@/lib/admin-access";
-import { canSeeAqAnalytics } from "@/lib/aq-analytics-access";
+import { hasAqAnalytics } from "@/lib/aq-analytics-access";
+import { getPrefs } from "@/lib/aq-modules/members";
 import { getSession } from "@/lib/session";
 
 async function requirePreview() {
   const user = await getSession();
   if (!user) throw new Error("Sign in to use AQ Analytics.");
-  if (!canSeeAqAnalytics({ plan: user.plan, admin: isAdminUser(user) })) throw new Error("AQ Analytics is not on this account yet.");
+  const prefs = await getPrefs(user);
+  if (!hasAqAnalytics({ plan: user.plan, mockPlan: prefs.mockPlan })) throw new Error("AQ Analytics is not on this account yet.");
   return user;
 }
 

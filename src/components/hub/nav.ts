@@ -409,18 +409,30 @@ export const HUB_NAV: HubNavItem[] = [
 
 export const ADMIN_LINK = { href: "/admin", label: "Admin console", icon: ShieldCheck };
 
-export type HubTabLink = { key: string; href: string; icon: HubNavItem["icon"]; locked: boolean; promo?: string };
+export type HubTabLink = { key: string; href: string; match?: string; icon: HubNavItem["icon"]; locked: boolean; promo?: string };
 export type HubTab = { key: string; tour?: string; links: HubTabLink[] };
 
-/** Desk pages that live under AQ Analytics, in menu order. */
+/** Desk pages that live under AQ Analytics, in menu order. They stay in the product's left menu, not the header. */
 export const ANALYTICS_MENU_KEYS = ["aa-map", "aa-board", "aa-market", "aa-producers", "aa-enquiries", "aa-lane", "aa-reports", "aa-alerts", "aa-plans"] as const;
 
-/** Desktop tab row, left to right. AQ Analytics sits between Client Suite and Nitrogen Report, with AQ Zero beside it. */
-function tabGroups(viewer: { plan: Plan; admin: boolean }): { key: string; items: string[] }[] {
+/** Which paid products this member can open. False sends the header straight to that product's subscription page. */
+export type ProductAccess = { analytics: boolean; zero: boolean };
+
+export const CLOSED_ACCESS: ProductAccess = { analytics: false, zero: false };
+
+/** Header and drawer destination. A single link: subscription until payment, then the product home. */
+export function hubHref(key: string, href: string, access: ProductAccess): { href: string; match?: string } {
+  if (key === "aq-analytics" && access.analytics) return { href: "/hub/tools/analytics/home", match: "/hub/tools/analytics" };
+  if (key === "zero" && access.zero) return { href: "/hub/zero", match: "/hub/zero" };
+  return { href };
+}
+
+/** Desktop tab row, left to right. AQ Analytics and AQ Zero are each one link, never a dropdown. */
+function tabGroups(): { key: string; items: string[] }[] {
   return [
     { key: "dashboard", items: ["dashboard"] },
     { key: "suite", items: ["home", "telex", "analysis", "library", "freight", "netback", "tools"] },
-    { key: "aq-analytics", items: canSeeAqAnalytics(viewer) ? [...ANALYTICS_MENU_KEYS] : ["aq-analytics"] },
+    { key: "aq-analytics", items: ["aq-analytics"] },
     { key: "zero", items: ["zero"] },
     { key: "nitrogen", items: ["nitrogen"] },
     { key: "order-group", items: ["order"] },
@@ -430,12 +442,14 @@ function tabGroups(viewer: { plan: Plan; admin: boolean }): { key: string; items
 }
 
 /** Tabs built from the member's own menu, so hidden and paid-only pages stay out exactly as they do in the drawer. */
-export function tabsFor(nav: HubNavItem[], unlocked: string[], viewer: { plan: Plan; admin: boolean }): HubTab[] {
-  return tabGroups(viewer).map((group) => {
+export function tabsFor(nav: HubNavItem[], unlocked: string[], viewer: { plan: Plan; admin: boolean; access?: ProductAccess }): HubTab[] {
+  const access = viewer.access ?? CLOSED_ACCESS;
+  return tabGroups().map((group) => {
     const links = group.items.flatMap((key): HubTabLink[] => {
       const item = nav.find((entry) => entry.key === key);
       if (!item) return [];
-      return [{ key, href: item.href, icon: item.icon, locked: Boolean(item.module && !unlocked.includes(item.module)), promo: item.promo?.headline }];
+      const dest = hubHref(key, item.href, access);
+      return [{ key, href: dest.href, match: dest.match, icon: item.icon, locked: Boolean(item.module && !unlocked.includes(item.module)), promo: item.promo?.headline }];
     });
     const tour = TOUR_STOPS.find((stop) => links.some((link) => link.key === stop.key))?.key;
     return { key: group.key, tour, links };
@@ -446,9 +460,8 @@ export const SECTIONS: HubSection[] = ["Main", "AQ ONE", "Plans", "AQ Analytics"
 
 export const hasPaidPages = (plan: Plan, admin: boolean) => admin || plan !== "core";
 
-export function navFor(plan: Plan, admin: boolean) {
+export function navFor(plan: Plan, admin: boolean, analytics = canSeeAqAnalytics({ plan, admin })) {
   const paid = hasPaidPages(plan, admin);
-  const analytics = canSeeAqAnalytics({ plan, admin });
   return HUB_NAV.filter((item) => !item.hidden && (paid || !item.paidOnly) && (!item.analyticsTool || analytics));
 }
 
@@ -460,17 +473,12 @@ export function tabKeysFor(plan: Plan, admin: boolean) {
 /** Keys that live under Client Suite on desktop and in the phone drawer. */
 export const SUITE_KEYS = ["home", "telex", "analysis", "library", "freight", "netback", "tools"] as const;
 
-/** Phone drawer groups. AQ Analytics follows Client Suite, and AQ Zero sits beside it. */
-export function drawerGroupsFor(plan: Plan, admin: boolean): { key: string; labelKey: string | null; noteKey?: string; items: string[] }[] {
+/** Phone drawer groups. AQ Analytics and AQ Zero are each one link, beside Client Suite. */
+export function drawerGroupsFor(_plan: Plan, _admin: boolean): { key: string; labelKey: string | null; noteKey?: string; items: string[] }[] {
   return [
     { key: "main", labelKey: null, items: ["dashboard"] },
     { key: "suite", labelKey: "tab.suite", noteKey: "note.aq1", items: [...SUITE_KEYS] },
-    {
-      key: "analytics",
-      labelKey: "section.analytics",
-      noteKey: "note.analytics",
-      items: canSeeAqAnalytics({ plan, admin }) ? [...ANALYTICS_MENU_KEYS] : ["aq-analytics"],
-    },
+    { key: "analytics", labelKey: null, items: ["aq-analytics"] },
     { key: "zero", labelKey: null, items: ["zero"] },
     { key: "desk", labelKey: null, items: ["nitrogen", "aquibot", "order", "call", "contact"] },
     { key: "help", labelKey: "section.help", items: ["guide"] },
@@ -486,9 +494,9 @@ export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: fa
   { key: "welcome", anchor: false, title: "Welcome to Aquifert ONE", body: "A one-minute walk through the menu, so you know where everything lives. Use the arrow keys or the buttons, and skip whenever you like." },
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },
   { key: "home", title: "Client Suite", body: "Your workspace dropdown: Hub, Telex, AQ View, Library, Calculators and AQ Trader Tools." },
-  { key: "aq-analytics", title: "AQ Analytics", body: "Between Client Suite and Nitrogen Report. Open it for the membership, or for the intelligence map and freight desk if AQ Analytics is on your account." },
+  { key: "aq-analytics", title: "AQ Analytics", body: "Opens the AQ Analytics subscription. Once that membership is active, it opens the product: its pages sit in the left menu, and this header stays so you can move around Aquifert ONE." },
   { key: "aa-map", title: "AQ Analytics", body: "Intelligence map, freight board, your market, producers, freight enquiries, the lane calculator, reports, alerts and plans." },
-  { key: "zero", title: "AQ Zero", body: "AQ Zero sits beside AQ Analytics. Supplier-cost fertiliser with a fixed operations fee, and a place to register for the pilot." },
+  { key: "zero", title: "AQ Zero", body: "Opens the AQ Zero subscription. Once that membership is active, it opens AQ Zero with its own left menu, and this header stays so you can move around Aquifert ONE." },
   { key: "nitrogen", title: "Nitrogen Report", body: "Answer six questions on one page and get an AQ View nitrogen brief tailored to your market, yours to keep." },
   { key: "order", title: "Order Fertiliser", body: "Send the trading desk an enquiry for the products, quantity and months you need." },
   { key: "call", title: "Weekly Meetup", body: "Join the desk's weekly market meetup, or catch up on the last one." },

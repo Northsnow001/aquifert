@@ -31,7 +31,11 @@ const tabClass = (active: boolean) =>
   }`;
 
 /** Plan promos point at the Buy Fertiliser page with a preset tab, so they never light up as the current page. */
-const linkActive = (pathname: string, link: HubTabLink) => !link.href.includes("?") && isActive(pathname, link.href);
+const linkActive = (pathname: string, link: HubTabLink) => {
+  if (link.href.includes("?")) return false;
+  if (link.match) return pathname === link.match || pathname.startsWith(`${link.match}/`);
+  return isActive(pathname, link.href);
+};
 
 /** The desktop menu line: one tab per area, dropdowns for areas with several pages. */
 export function HubTabs({ tabs, pathname }: { tabs: HubTab[]; pathname: string }) {
