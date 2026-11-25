@@ -34,8 +34,8 @@ import {
 } from "@/lib/desk-hitl/store";
 import { parseFoUpload, readFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { FO_ATTACHMENT_LABEL } from "@/lib/desk-hitl/types";
-import { firmOfferLetter } from "@/lib/desk-hitl/gates";
 import { getDeskSettings } from "@/lib/desk-settings/store";
+import { firmOfferEmailDocument } from "@/lib/firm-order/offer-email";
 import { buildFirmOrderPdf, firmOrderFilename } from "@/lib/firm-order/pdf";
 import { sendEmail } from "@/lib/mailer";
 import { getSession } from "@/lib/session";
@@ -175,38 +175,6 @@ export async function endNegotiationAction(input: { id: string }): Promise<{ ok:
   return { ok: true };
 }
 
-function firmOfferOrderText(order: {
-  reference: string;
-  product: string;
-  quantity_mt: number;
-  unit_price_usd: number | null;
-  currency: string;
-  incoterm: string;
-  packing: string;
-  load_port: string;
-  discharge_port: string;
-  shipping: string;
-  payment_terms: string;
-  additional_information: string;
-}) {
-  return [
-    `Firm offer ${order.reference}`,
-    `Product: ${order.product}`,
-    `Quantity: ${order.quantity_mt} MT`,
-    `Price: ${order.currency || "USD"} ${order.unit_price_usd ?? "—"} / MT`,
-    `Incoterm: ${order.incoterm}`,
-    `Packing: ${order.packing}`,
-    `Load port: ${order.load_port}`,
-    `Discharge: ${order.discharge_port}`,
-    `Shipment: ${order.shipping}`,
-    `Payment terms: ${order.payment_terms}`,
-    order.additional_information ? `Further terms: ${order.additional_information}` : "",
-    "The offer is this email. It is not an attachment.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
 export async function saveFirmOfferDraftAction(input: {
   id: string;
   values: PiEditorValues;
@@ -226,14 +194,14 @@ async function firmOfferMail(id: string, values: PiEditorValues, subject: string
   const order = saved.firmOffer?.order;
   if (!order) return { error: "No firm offer on this deal yet." };
   const settings = await getDeskSettings();
-  const text = firmOfferLetter({ note, orderText: firmOfferOrderText(order), terms: settings.firmOfferTerms });
+  const letter = firmOfferEmailDocument({ order, note });
   const attachments = [];
   for (const file of saved.foPack?.attachments ?? []) {
     const content = await readFoAttachmentFile(file);
     if (!content) return { error: `Could not read ${file.filename}. Upload it again.` };
     attachments.push({ filename: `${FO_ATTACHMENT_LABEL[file.kind]}-${file.filename}`, content, contentType: file.contentType });
   }
-  return { saved, order, settings, text, subject: subject.trim(), attachments };
+  return { saved, order, settings, text: letter.text, html: letter.html, subject: subject.trim(), attachments };
 }
 
 export async function sendFirmOfferToBuyerAction(input: {
@@ -255,7 +223,7 @@ export async function sendFirmOfferToBuyerAction(input: {
       to,
       subject: packed.subject,
       text: packed.text,
-      html: `<pre style="font-family:Georgia,serif;white-space:pre-wrap">${packed.text.replace(/[&<>]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[ch] || ch)}</pre>`,
+      html: packed.html,
       attachments: packed.attachments,
     },
     packed.settings.delivery,
@@ -288,7 +256,7 @@ export async function sendFirmOfferDraftToMeAction(input: {
       to: user.email,
       subject: `Draft: ${packed.subject}`,
       text: packed.text,
-      html: `<pre style="font-family:Georgia,serif;white-space:pre-wrap">${packed.text.replace(/[&<>]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[ch] || ch)}</pre>`,
+      html: packed.html,
       attachments: packed.attachments,
     },
     packed.settings.delivery,

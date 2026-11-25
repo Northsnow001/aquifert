@@ -2,6 +2,7 @@ import "server-only";
 
 import { readFile } from "fs/promises";
 import path from "path";
+import { CONTRACT_LETTERHEAD, legalContractCopy } from "@/lib/firm-order/contract-copy";
 import { AQUIFERT_BANK, AQUIFERT_PO_ISSUER, type FirmOrderDraft } from "@/lib/firm-order/types";
 
 type RGB = [number, number, number];
@@ -263,30 +264,6 @@ export function firmOrderFilename(order: FirmOrderDraft) {
   return `Purchase_Order_${ref}.pdf`;
 }
 
-const CONTRACT_LETTERHEAD =
-  "Aquifert Limited is a company registered in England and Wales (Company No.14506592) at 71-75 Shelton Street, London WC2H 9JQ.";
-
-const AQUIFERT_LEGAL_ADDRESS = `AQUIFERT LIMITED
-71-75 SHELTON STREET
-COVENT GARDEN,
-LONDON, WC2H 9JQ
-VAT NO: ${AQUIFERT_PO_ISSUER.vatNumber}`;
-
-const PREPAYMENT_CLAUSE = `Any prepayment made by the Buyer under this contract shall be deemed to be an advance payment toward procurement, booking, logistics arrangements, supplier commitments, packaging, and other performance obligations undertaken by the Seller in reliance on this contract.
-
-The Buyer acknowledges and agrees that upon receipt of any prepayment, the Seller may immediately allocate such funds toward upstream supply contracts, freight bookings, container positioning, financial hedging, inspection arrangements, or other performance-related costs.
-
-In the event that:
-(A) the Buyer cancels, suspends, delays, or otherwise fails to perform its obligations; or
-(B) the contract cannot be performed due to circumstances attributable to the Buyer;
-the Seller shall be entitled to retain the prepayment and apply it against any costs, losses, cancellation charges, price differences, financing costs, or liabilities incurred.`;
-
-const UNLOADING_CLAUSE = `Buyer shall be responsible for receiving the containers and for paying all terminal handling charges to the carrier or its agent at destination. Buyer shall be responsible for unstuffing/unloading the product from the containers at Buyer's cost. Buyer shall have the time allowed under Seller's contract with the carrier and/or container lessor, whichever is less, to unload/unstuff and return the containers in which the product was transported. If Seller incurs any cost or expense, including but not limited to storage fees, demurrage/detention or other delay charges as a result of Buyer's failure to promptly remove the product from the vessel, conveyance, facility or container at destination, Buyer shall reimburse Seller for all such costs and expenses.`;
-
-const RETURNING_CLAUSE = `Buyer shall be responsible for any and all consequences of delay beyond the time allowed by the carrier or container lessor in returning the containers to the carrier or container lessor and Buyer shall be responsible for any damage to the containers during unloading/unstuffing. Buyer shall indemnify Seller for any liability Seller may have to the carrier or container lessor for delay in returning the containers and any damage to the containers during unstuffing/unloading.`;
-
-const LAW_CLAUSE = `This contract shall be governed by and construed in accordance with the laws of the United Arab Emirates. Any dispute, controversy, or claim arising out of or in connection with this contract, including any question regarding its existence, validity, interpretation, performance, breach, termination, or any non-contractual obligations arising out of or in connection with it, shall be referred to and finally resolved by arbitration under the Rules of Arbitration of the Dubai International Arbitration Centre (DIAC), which rules are deemed to be incorporated by reference into this clause. The arbitration shall be conducted by a sole arbitrator appointed in accordance with the DIAC Rules. The seat, or legal place, of arbitration shall be Dubai, United Arab Emirates. The language of the arbitration shall be English. The arbitral award shall be final and binding on the parties, and judgment upon the award may be entered and enforced by any court of competent jurisdiction.`;
-
 async function buildLegalContractPdf(
   order: FirmOrderDraft,
   kind: "sales" | "purchase",
@@ -307,15 +284,7 @@ async function buildLegalContractPdf(
   const logoH = 34;
   const logoW = logoH * logoRatio;
   let y = 102;
-  const amount = lineAmount(order);
-  const unit = order.unit_price_usd != null ? money(order.unit_price_usd) : "—";
-  const counterparty =
-    kind === "sales"
-      ? order.buyer.name || "the Buyer"
-      : order.supplier.name || "the Seller";
-  const destination = order.discharge_port || order.price_basis || "";
-  const basis = [order.incoterm, destination].filter(Boolean).join(" ");
-  const contractDate = displayDate(order.po_date) || displayDate(new Date().toISOString());
+  const copy = legalContractCopy(order, kind, title);
   const leading = 13;
 
   const color = (rgb: RGB) => doc.setTextColor(...rgb);
@@ -389,96 +358,28 @@ async function buildLegalContractPdf(
   letterhead();
   color(INK);
   font(22, "bold");
-  doc.text(title, pageW / 2, y, { align: "center" });
+  doc.text(copy.title, pageW / 2, y, { align: "center" });
   y += 26;
   font(10);
-  doc.text(`CONTRACT REFERENCE: ${order.order_ref || order.reference}`, margin, y);
+  doc.text(`CONTRACT REFERENCE: ${copy.reference}`, margin, y);
   y += 14;
-  doc.text(`DATE: ${contractDate}`, margin, y);
+  doc.text(`DATE: ${copy.date}`, margin, y);
   y += 18;
   font(10, "italic");
-  const instrument = title === "FIRM OFFER" ? "Firm Offer" : kind === "sales" ? "Sales Contract" : "Purchase Contract";
-  const preamble =
-    kind === "sales"
-      ? `This ${instrument} is entered into between Aquifert Limited (“Seller”) and ${order.buyer.name || "the Buyer"} (“Buyer”) on the terms and conditions set out below.`
-      : `This Purchase Contract is entered into between Aquifert Limited (“Buyer”) and ${order.supplier.name || "the Seller"} (“Seller”) on the terms and conditions set out below.`;
-  const preambleLines = doc.splitTextToSize(preamble, contentW) as string[];
+  const preambleLines = doc.splitTextToSize(copy.preamble, contentW) as string[];
   doc.text(preambleLines, margin, y);
   y += preambleLines.length * leading + 14;
 
-  if (kind === "sales") {
-    term("BUYER:", [order.buyer.name, order.buyer.phone, order.buyer.email].filter(Boolean).join("\n") || "As notified");
-    term("SELLER:", AQUIFERT_LEGAL_ADDRESS);
-  } else {
-    term("BUYER:", AQUIFERT_LEGAL_ADDRESS);
-    term(
-      "SELLER:",
-      [order.supplier.name, order.supplier.attention, order.supplier.address, order.supplier.city, order.supplier.country]
-        .filter(Boolean)
-        .join("\n") || "As notified",
-    );
-  }
-  if (order.reference && order.reference !== order.order_ref) term("TRADE REFERENCE:", order.reference);
-  term("PRODUCT:", [order.product, order.form_grade].filter(Boolean).join(" — "));
-  term("QUANTITY:", `${order.quantity_mt || "—"} MTS +/- ${order.tolerance_pct || 5}% IN BUYERS OPTION`);
-  term(
-    "QUALITY:",
-    order.form_grade
-      ? `The product shall meet the following specifications: ${order.form_grade}. Quality and quantity as per internationally recognised third-party certificate of analysis at load port.`
-      : "The product shall meet the commercially agreed specification. Quality and quantity as per internationally recognised third-party certificate of analysis at load port.",
-  );
-  if (order.packing) term("PACKING:", order.packing);
-  if (order.origin) term("ORIGIN:", order.origin);
-  term(
-    "DELIVERY:",
-    `${basis} (Incoterms 2020). Duty unpaid, customs uncleared and taxes unpaid unless otherwise stated.`,
-  );
-  term("FREE DAYS:", "As per standard conditions of the liner.");
-  term(
-    "SHIPMENT PERIOD:",
-    order.shipping
-      ? `${order.shipping} from loading port in Seller option. Transhipment is allowed and partial deliveries are allowed.`
-      : "As agreed, from loading port in Seller option. Transhipment is allowed and partial deliveries are allowed.",
-  );
-  term(
-    "PRICE:",
-    `USD ${unit} PER METRIC TONNE ${basis}${amount != null ? `. TOTAL VALUE USD ${money(amount)}` : ""}`,
-  );
-  term(
-    "PAYMENT:",
-    order.payment_terms ||
-      (kind === "sales"
-        ? "As stated on the Proforma Invoice. Full amount due into Seller's designated bank account without any discount or rebate. Bank charges for Buyer's account."
-        : "As agreed. Payment to Seller's designated bank account without any discount or rebate. Bank charges for Buyer's account."),
-  );
+  for (const item of copy.terms) term(item.label, item.body);
 
   newPage();
-  clause("PREPAYMENT ALLOCATION AND REIMBURSEMENT", PREPAYMENT_CLAUSE);
-  clause(
-    "INSPECTION",
-    kind === "sales"
-      ? "As per internationally recognised third party inspections company's (AMSPEC, TCI and SGS etc.) certificate of analysis and quantity at load port for Aquifert cost."
-      : "As per internationally recognised third party inspections company's certificate of analysis and quantity at load port for Buyer's cost.",
-  );
-  clause(
-    "INSURANCE",
-    kind === "sales"
-      ? "For Seller's account and responsibility as per Incoterms 2020."
-      : "For Buyer's account and responsibility as per Incoterms 2020.",
-  );
-  clause("UNLOADING/UNSTUFFING CONTAINERS", UNLOADING_CLAUSE);
-  clause("RETURNING CONTAINERS", RETURNING_CLAUSE);
-  clause("GOVERNING LAW AND JURISDICTION", LAW_CLAUSE);
-  clause(
-    "GENERAL TERMS",
-    "The provisions of Incoterms 2020 and the General Terms and Conditions for CFR/CIF sales of Aquifert Limited shall be incorporated into this contract. In the event of any inconsistency between those terms and this contract, this contract shall prevail.",
-  );
+  for (const item of copy.clauses) clause(item.heading, item.body);
 
   ensure(160);
   y += 18;
   font(10, "bold");
-  doc.text("FOR AND ON BEHALF OF AQUIFERT LTD", margin, y);
-  doc.text(`FOR AND ON BEHALF OF ${counterparty.toUpperCase()}`, right - 200, y);
+  doc.text(copy.sellerSignOff, margin, y);
+  doc.text(copy.counterpartySignOff, right - 200, y);
   y += 46;
   doc.setDrawColor(...INK);
   doc.setLineWidth(0.6);
@@ -489,13 +390,13 @@ async function buildLegalContractPdf(
   doc.text("SIGNATURE", margin, y);
   doc.text("SIGNATURE", right - 200, y);
   y += 16;
-  doc.text("NAME: MATT O'LEARY", margin, y);
+  doc.text(`NAME: ${copy.signatoryName}`, margin, y);
   doc.text("NAME:", right - 200, y);
   y += 14;
-  doc.text("TITLE: MANAGING DIRECTOR", margin, y);
+  doc.text(`TITLE: ${copy.signatoryTitle}`, margin, y);
   doc.text("TITLE:", right - 200, y);
   y += 14;
-  doc.text(`DATE: ${contractDate}`, margin, y);
+  doc.text(`DATE: ${copy.date}`, margin, y);
   doc.text("DATE:", right - 200, y);
 
   const pages = doc.getNumberOfPages();
@@ -506,7 +407,7 @@ async function buildLegalContractPdf(
     doc.line(margin, footerY - 10, right, footerY - 10);
     color(MUTED);
     font(7.5);
-    doc.text(AQUIFERT_PO_ISSUER.footer, margin, footerY, { maxWidth: contentW - 70 });
+    doc.text(copy.footer, margin, footerY, { maxWidth: contentW - 70 });
     doc.text(`Page ${i} of ${pages}`, right, footerY, { align: "right" });
   }
 

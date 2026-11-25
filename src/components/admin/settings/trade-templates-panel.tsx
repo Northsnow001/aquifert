@@ -47,7 +47,7 @@ export function TradeTemplatesPanel({
       </div>
       <div>
         <h2 className="text-[15px] font-semibold text-ink">Firm offer terms</h2>
-        <p className="mt-1 text-[13px] text-mid">Added under the firm offer in the buyer email. Replace this when the signed terms arrive.</p>
+        <p className="mt-1 text-[13px] text-mid">Kept on file. The buyer email uses the firm offer document, the same wording as the PDF, and does not add this paragraph.</p>
         <label className={`${label} mt-3`} htmlFor="firm-terms">Terms</label>
         <textarea id="firm-terms" className={`${textarea} mt-1 font-serif`} rows={6} value={terms} onChange={(event) => setTerms(event.target.value)} />
       </div>

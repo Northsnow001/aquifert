@@ -15,9 +15,10 @@ import {
   uploadFoAttachmentAction,
 } from "@/app/admin/desk/actions";
 import { btnDanger, btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
-import { valuesFromPi, type PiEditorValues } from "@/lib/desk-hitl/pi";
-import { firmOfferLetter, firmOfferMismatches, firmOfferSubject } from "@/lib/desk-hitl/gates";
+import { applyFirmOfferEditor, valuesFromPi, type PiEditorValues } from "@/lib/desk-hitl/pi";
+import { firmOfferMismatches, firmOfferSubject } from "@/lib/desk-hitl/gates";
 import { firmOfferDraftFromDeal } from "@/lib/firm-order/from-deal";
+import { firmOfferMessageHtml } from "@/lib/firm-order/offer-email";
 import { FO_ATTACHMENT_KINDS, FO_ATTACHMENT_LABEL, type DeskDeal, type FoAttachmentKind } from "@/lib/desk-hitl/types";
 
 const emptyValues: PiEditorValues = {
@@ -62,7 +63,21 @@ function Field({
   );
 }
 
-export function FoEditor({ deal, terms }: { deal: DeskDeal; terms: string }) {
+function FirmOfferPreview({ order, values, note }: { order: NonNullable<ReturnType<typeof firmOfferDraftFromDeal>>; values: PiEditorValues; note: string }) {
+  const next = applyFirmOfferEditor(order, values);
+  if ("error" in next) {
+    return <p className="rounded-xl border border-border bg-s2/40 px-3 py-2 text-[12.5px] text-mid">{next.error}</p>;
+  }
+  return (
+    <div
+      className="max-h-96 overflow-auto rounded-xl border border-border bg-[#f3f3f3] p-3"
+      aria-label="Firm offer email preview"
+      dangerouslySetInnerHTML={{ __html: firmOfferMessageHtml({ order: next, note }) }}
+    />
+  );
+}
+
+export function FoEditor({ deal }: { deal: DeskDeal }) {
   const order = firmOfferDraftFromDeal(deal);
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -317,7 +332,7 @@ export function FoEditor({ deal, terms }: { deal: DeskDeal; terms: string }) {
           </fieldset>
           <fieldset className="space-y-3" disabled={closed}>
             <legend className="text-[12px] font-semibold uppercase tracking-wide text-dim">Email to the buyer</legend>
-            <p className="text-[12.5px] text-mid">The firm offer is written in the email. COA, TDS and photos stay as attachments. Nothing is sent until you press Send.</p>
+            <p className="text-[12.5px] text-mid">The email is the firm offer, in the same layout as the PDF. COA, TDS and photos stay as attachments. Nothing is sent until you press Send.</p>
             {firmOfferMismatches(deal).length ? (
               <ul className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-ink">
                 {firmOfferMismatches(deal).map((flag) => (
@@ -335,13 +350,7 @@ export function FoEditor({ deal, terms }: { deal: DeskDeal; terms: string }) {
               <label className={label} htmlFor="fo-note">Personal note</label>
               <textarea id="fo-note" rows={3} className={`${textarea} mt-1`} value={note} onChange={(event) => setNote(event.target.value)} />
             </div>
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-s2/40 px-3 py-2 font-serif text-[12.5px] text-ink">
-              {firmOfferLetter({
-                note,
-                orderText: `Firm offer\nProduct: ${values.product}\nQuantity: ${values.quantityMt} MT\nPrice: USD ${values.unitPrice} / MT\nIncoterm: ${values.incoterm}\nPacking: ${values.packing}\nDischarge: ${values.dischargePort}\nShipment: ${values.shipping}\nPayment terms: ${values.paymentTerms}`,
-                terms,
-              })}
-            </pre>
+            <FirmOfferPreview order={order} values={values} note={note} />
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"

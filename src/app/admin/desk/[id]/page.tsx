@@ -28,7 +28,7 @@ export default async function DeskDealPage({ params }: { params: Promise<{ id: s
             : { href: "/admin/desk", label: "Desk shortlists" },
         ]}
       />
-      <DealRecord deal={deal} template={settings.indicationTemplate} terms={settings.firmOfferTerms} />
+      <DealRecord deal={deal} template={settings.indicationTemplate} />
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/a
 import { agreedPriceFromThread } from "@/lib/desk-hitl/logic";
 import { DEAL_STATUS_LABEL, type DeskDeal } from "@/lib/desk-hitl/types";
 
-export function DeskDealBoard({ deal, template, terms }: { deal: DeskDeal; template: string; terms: string }) {
+export function DeskDealBoard({ deal, template }: { deal: DeskDeal; template: string }) {
   const router = useRouter();
   const [reply, setReply] = useState("");
   const suggested = agreedPriceFromThread(deal);
@@ -72,7 +72,7 @@ export function DeskDealBoard({ deal, template, terms }: { deal: DeskDeal; templ
 
       <ShortlistPanel deal={deal} template={template} />
 
-      {deal.buyerPrice != null && (deal.firmOffer || deal.execution?.confirmedAt || deal.buyerPlan === "aq_zero") ? <FoEditor deal={deal} terms={terms} /> : null}
+      {deal.buyerPrice != null && (deal.firmOffer || deal.execution?.confirmedAt || deal.buyerPlan === "aq_zero") ? <FoEditor deal={deal} /> : null}
       {deal.pi ? <PiEditor deal={deal} /> : null}
       {deal.pi?.status === "sent" ? <AfterPayment deal={deal} /> : null}
 
