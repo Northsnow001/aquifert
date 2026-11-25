@@ -93,7 +93,7 @@ export async function sendTestEmail(kind: TemplateKind, audience: "applicant" | 
     template: cleaned,
     data: sampleFor(kind).data,
     deskEmail: delivery.replyTo,
-    adminHref: `${await siteOrigin()}${kind === "order" ? "/admin/enquiries" : "/admin/zero"}`,
+    adminHref: `${await siteOrigin()}${kind === "order" ? "/admin/desk/inquiries?view=enquiries" : "/admin/zero"}`,
   });
   const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, delivery);
   refresh();

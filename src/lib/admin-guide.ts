@@ -460,9 +460,9 @@ export const GUIDE: GuideSection[] = [
     group: "Desk",
     title: "Enquiries",
     icon: "inbox",
-    href: "/admin/enquiries",
+    href: "/admin/desk/inquiries?view=enquiries",
     summary:
-      "Order Desk requests and Contact messages sent from the hub, newest first. Each entry shows the signed-in account that sent it.",
+      "Order Desk requests and Contact messages, in the same table as trading inquiries. Use the Enquiries switch.",
     tasks: [
       {
         title: "Handle an enquiry",

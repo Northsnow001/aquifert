@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/admin/ui";
 import { CopyText } from "@/components/admin/copy-text";
-import { filterInquiries, listInquiries, type InquiryRow } from "@/lib/desk-inquiries/model";
+import { filterInquiries, inquiryView, listInquiries, rowsInView, type InquiryRow } from "@/lib/desk-inquiries/model";
 
 export const dynamic = "force-dynamic";
 
@@ -20,26 +20,43 @@ function cell(value: string) {
   return value || "—";
 }
 
+function sourceLabel(row: InquiryRow) {
+  if (row.source === "ai_agent") return `AI · ${row.channel}`;
+  if (row.source === "contact") return "Contact";
+  return "Trade Desk App";
+}
+
 export default async function InquiriesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; status?: string; page?: string }>;
+  searchParams: Promise<{ view?: string; tab?: string; q?: string; status?: string; page?: string }>;
 }) {
   const params = await searchParams;
+  const view = inquiryView(params.view);
   const all = await listInquiries();
+  const inView = rowsInView(all, view);
   const rows = filterInquiries(all, params);
   const page = Math.max(1, Number(params.page) || 1);
   const slice = rows.slice((page - 1) * PAGE, page * PAGE);
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
-  const statuses = [...new Set(all.map((row) => row.status))];
-  const tabs = [
-    { key: "", label: "All", count: all.length },
-    { key: "app", label: "Trade Desk (App)", count: all.filter((row) => row.source === "trade_desk_app").length },
-    { key: "ai", label: "AI Agent", count: all.filter((row) => row.source === "ai_agent").length },
-  ];
+  const statuses = [...new Set(inView.map((row) => row.status))];
+  const inquiriesCount = rowsInView(all, "inquiries").length;
+  const enquiriesCount = rowsInView(all, "enquiries").length;
+  const tabs =
+    view === "enquiries"
+      ? [
+          { key: "", label: "All", count: inView.length },
+          { key: "app", label: "Order Desk", count: inView.filter((row) => row.source === "trade_desk_app").length },
+          { key: "contact", label: "Contact", count: inView.filter((row) => row.source === "contact").length },
+        ]
+      : [
+          { key: "", label: "All", count: inView.length },
+          { key: "app", label: "Trade Desk (App)", count: inView.filter((row) => row.source === "trade_desk_app").length },
+          { key: "ai", label: "AI Agent", count: inView.filter((row) => row.source === "ai_agent").length },
+        ];
   const query = (extra: Record<string, string | undefined>) => {
     const next = new URLSearchParams();
-    const merged = { tab: params.tab, q: params.q, status: params.status, ...extra };
+    const merged = { view: view === "enquiries" ? "enquiries" : undefined, tab: params.tab, q: params.q, status: params.status, ...extra };
     for (const [key, value] of Object.entries(merged)) if (value) next.set(key, value);
     const text = next.toString();
     return text ? `?${text}` : "";
@@ -49,14 +66,40 @@ export default async function InquiriesPage({
     <div className="mx-auto max-w-[1600px]">
       <PageHeader
         crumbs={[{ href: "/admin/desk", label: "Desk shortlists" }]}
-        title="Inquiries"
-        description="Buyer inquiries from the hub Trade Desk form and from the AI desk (WhatsApp). Open a row for the full request. Supplier choice and margin approval stay on the shortlist."
+        title={view === "enquiries" ? "Enquiries" : "Inquiries"}
+        description={
+          view === "enquiries"
+            ? "Order Desk forms and contact messages from the hub. Same table as the trading inquiries."
+            : "Buyer inquiries from the hub Trade Desk form and from the AI desk (WhatsApp). Open a row for the full request. Supplier choice and margin approval stay on the shortlist."
+        }
         actions={
           <a href={`/admin/desk/inquiries/export${query({})}`} className="inline-flex h-9 items-center rounded-full border border-border bg-white px-4 text-[13px] font-semibold text-ink no-underline">
             Export CSV
           </a>
         }
       />
+      <div className="mb-4 inline-flex rounded-full bg-s2 p-1" role="tablist" aria-label="Inbox">
+        {(
+          [
+            { key: "inquiries", label: "Inquiries", count: inquiriesCount },
+            { key: "enquiries", label: "Enquiries", count: enquiriesCount },
+          ] as const
+        ).map((item) => {
+          const on = view === item.key;
+          return (
+            <Link
+              key={item.key}
+              href={`/admin/desk/inquiries${item.key === "enquiries" ? "?view=enquiries" : ""}`}
+              role="tab"
+              aria-selected={on}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13.5px] font-semibold no-underline ${on ? "bg-white text-ink shadow-sm" : "text-mid hover:text-ink"}`}
+            >
+              {item.label}
+              <span className={`rounded-full px-1.5 font-mono text-[10.5px] ${on ? "bg-blue-light text-blue" : "bg-white/80 text-dim"}`}>{item.count}</span>
+            </Link>
+          );
+        })}
+      </div>
       <Card>
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-4 pt-3">
           <div className="flex gap-1">
@@ -75,6 +118,7 @@ export default async function InquiriesPage({
             })}
           </div>
           <form className="flex flex-wrap gap-2 pb-3" action="/admin/desk/inquiries">
+            {view === "enquiries" ? <input type="hidden" name="view" value="enquiries" /> : null}
             {params.tab ? <input type="hidden" name="tab" value={params.tab} /> : null}
             <input name="q" defaultValue={params.q ?? ""} placeholder="Buyer, company, product, ID" className="h-9 w-56 rounded-full border border-border px-3 text-[13px]" />
             <select name="status" defaultValue={params.status ?? ""} className="h-9 rounded-full border border-border bg-white px-3 text-[13px]">
@@ -89,7 +133,10 @@ export default async function InquiriesPage({
           </form>
         </div>
         {slice.length === 0 ? (
-          <EmptyState title="No inquiries in this view" body="Trade Desk form submissions and WhatsApp enquiries appear here as soon as they are received." />
+          <EmptyState
+            title={view === "enquiries" ? "No enquiries in this view" : "No inquiries in this view"}
+            body={view === "enquiries" ? "Order Desk forms and contact messages land here as soon as they are sent." : "Trade Desk form submissions and WhatsApp enquiries appear here as soon as they are received."}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1280px] text-left text-[12.5px]">
@@ -147,7 +194,7 @@ function InquiryLine({ row }: { row: InquiryRow }) {
         {typeof stamp === "object" ? stamp.local : stamp}
       </td>
       <td className="px-3 py-2.5">
-        <Pill tone={row.source === "ai_agent" ? "teal" : "blue"}>{row.source === "ai_agent" ? `AI · ${row.channel}` : "Trade Desk App"}</Pill>
+        <Pill tone={row.source === "ai_agent" ? "teal" : row.source === "contact" ? "amber" : "blue"}>{sourceLabel(row)}</Pill>
       </td>
       <td className="px-3 py-2.5">{cell(row.buyerName)}</td>
       <td className="px-3 py-2.5">{cell(row.company)}</td>

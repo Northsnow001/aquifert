@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   if (!user || !isAdminUser(user)) return new NextResponse("Sign in as an admin.", { status: 401 });
   const url = new URL(request.url);
   const rows = filterInquiries(await listInquiries(), {
+    view: url.searchParams.get("view") ?? undefined,
     tab: url.searchParams.get("tab") ?? undefined,
     q: url.searchParams.get("q") ?? undefined,
     status: url.searchParams.get("status") ?? undefined,
