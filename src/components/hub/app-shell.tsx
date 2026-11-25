@@ -379,7 +379,7 @@ export function AppShell({
           {rail}
           <div id="aq-scroll" className="aq-canvas relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
             <main id="main-content" className="relative flex-1 px-3 pb-28 pt-4 transition-opacity duration-300 sm:px-6 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-7">
-              <DeskConnect name={user.name} email={user.email} />
+              <DeskConnect name={user.name} email={user.email} show={user.plan === "core"} />
               <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">
                 {children}
               </div>

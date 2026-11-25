@@ -18,9 +18,6 @@ const BRANCHES = [
   { y: 88, d: `M ${START.x} ${START.y} C ${START.x} 88, ${START.x} 88, ${PORT} 88` },
   { y: 156, d: `M ${START.x} ${START.y} C ${START.x} 132, ${START.x - 12} 156, ${PORT} 156` },
 ];
-const OPEN_MS = 5_000;
-const CYCLE_MS = 5 * 60_000;
-
 function RouterGlyph() {
   const branch = "M7.6 12 H9.6 C12.8 12 13 6.5 16.4 6.5 M9.6 12 C12.8 12 13 17.5 16.4 17.5";
   return (
@@ -44,8 +41,8 @@ type Option = {
   external: boolean;
 };
 
-/** Talk-to-the-desk launcher. Always anchored on the right with clear page margins. */
-export function DeskConnect({ name, email }: { name: string; email: string }) {
+/** Talk-to-the-desk launcher. Shown to free AQ ONE members, and only when they open it. */
+export function DeskConnect({ name, email, show }: { name: string; email: string; show: boolean }) {
   const [open, setOpen] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const { open: dockOpen } = useAquibotDock();
@@ -87,30 +84,7 @@ export function DeskConnect({ name, email }: { name: string; email: string }) {
     };
   }, [open]);
 
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (window.matchMedia("(max-width: 1023px)").matches) return;
-
-    let collapseTimer = 0;
-    const pulse = () => {
-      if (holdOpen.current || document.visibilityState === "hidden") return;
-      setOpen(true);
-      window.clearTimeout(collapseTimer);
-      collapseTimer = window.setTimeout(() => {
-        if (!holdOpen.current) setOpen(false);
-      }, OPEN_MS);
-    };
-
-    const firstPulse = window.setTimeout(pulse, 2_500);
-    const cycle = window.setInterval(pulse, CYCLE_MS);
-    return () => {
-      window.clearTimeout(firstPulse);
-      window.clearTimeout(collapseTimer);
-      window.clearInterval(cycle);
-    };
-  }, []);
-
-  if (dockOpen) return null;
+  if (!show || dockOpen) return null;
 
   const options: Option[] = [
     {

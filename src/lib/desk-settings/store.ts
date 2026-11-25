@@ -46,6 +46,10 @@ function normalize(raw: unknown): DeskSettings {
     zero: { ...form(zero, base.zero, RETIRED_TEMPLATES.zero), showOnHub: flag(zero.showOnHub, base.zero.showOnHub) },
     members: { blocked: list(members.blocked), allowed: list(members.allowed) },
     delivery: { fromName: text(delivery.fromName, base.delivery.fromName), replyTo: address(delivery.replyTo, base.delivery.replyTo) },
+    indicationTemplate: text(value.indicationTemplate, base.indicationTemplate).trim() || base.indicationTemplate,
+    firmOfferTerms: text(value.firmOfferTerms, base.firmOfferTerms).trim() || base.firmOfferTerms,
+    zeroWeeklyClose: text(value.zeroWeeklyClose, base.zeroWeeklyClose).trim() || base.zeroWeeklyClose,
+    marketInbox: text(value.marketInbox, base.marketInbox).trim(),
     updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null,
   };
 }

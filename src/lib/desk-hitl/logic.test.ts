@@ -166,7 +166,7 @@ describe("parseReplyIntent", () => {
 });
 
 describe("parseShortlistBody", () => {
-  it("takes the first three priced offers and buyer phone", () => {
+  it("keeps every priced offer and shortlists the first three", () => {
     const parsed = parseShortlistBody({
       requestId: "REQ-9",
       product: "Urea 46",
@@ -182,7 +182,10 @@ describe("parseShortlistBody", () => {
       callbackUrl: "https://n8n.example/webhook/wait",
     });
     assert.ok(parsed);
-    assert.equal(parsed.offers.length, 3);
+    assert.equal(parsed.offers.length, 4);
+    assert.equal(parsed.offers[2].shortlisted, true);
+    assert.equal(parsed.offers[3].shortlisted, false);
+    assert.equal(parsed.offers[0].channel, "wechat");
     assert.equal(parsed.buyerPhone, "+2348010000000");
     assert.equal(parsed.buyerEmail, "");
     assert.equal(parsed.quantityMt, 500);

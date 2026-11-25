@@ -20,7 +20,7 @@ function when(iso: string | null) {
   return d.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-export function DealRecord({ deal }: { deal: DeskDeal }) {
+export function DealRecord({ deal, template, terms }: { deal: DeskDeal; template: string; terms: string }) {
   const [tab, setTab] = useState<(typeof tabs)[number]["id"]>("details");
   const offer = selectedOffer(deal);
   const docs = dealDocumentRows(deal);
@@ -106,7 +106,7 @@ export function DealRecord({ deal }: { deal: DeskDeal }) {
 
       {tab === "details" ? (
         <div className="space-y-4">
-          <DeskDealBoard deal={deal} />
+          <DeskDealBoard deal={deal} template={template} terms={terms} />
         </div>
       ) : null}
 

@@ -167,7 +167,7 @@ export function inquiryView(value: string | undefined): InquiryView {
 }
 
 export function rowsInView(rows: InquiryRow[], view: InquiryView) {
-  return rows.filter((row) => (view === "enquiries" ? row.source !== "ai_agent" : row.source !== "contact"));
+  return rows.filter((row) => (view === "enquiries" ? row.source === "contact" : row.source !== "contact"));
 }
 
 export function filterInquiries(rows: InquiryRow[], input: { view?: string; tab?: string; q?: string; status?: string }) {

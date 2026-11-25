@@ -46,8 +46,7 @@ export default async function InquiriesPage({
     view === "enquiries"
       ? [
           { key: "", label: "All", count: inView.length },
-          { key: "app", label: "Order Desk", count: inView.filter((row) => row.source === "trade_desk_app").length },
-          { key: "contact", label: "Contact", count: inView.filter((row) => row.source === "contact").length },
+          { key: "contact", label: "Contact form", count: inView.filter((row) => row.source === "contact").length },
         ]
       : [
           { key: "", label: "All", count: inView.length },
@@ -66,11 +65,11 @@ export default async function InquiriesPage({
     <div className="mx-auto max-w-[1600px]">
       <PageHeader
         crumbs={[{ href: "/admin/desk", label: "Desk shortlists" }]}
-        title={view === "enquiries" ? "Enquiries" : "Inquiries"}
+        title={view === "enquiries" ? "General inquiries" : "Trade inquiries"}
         description={
           view === "enquiries"
-            ? "Order Desk forms and contact messages from the hub. Same table as the trading inquiries."
-            : "Buyer inquiries from the hub Trade Desk form and from the AI desk (WhatsApp). Open a row for the full request. Supplier choice and margin approval stay on the shortlist."
+            ? "Contact form and other general questions. Trade requests stay on Trade inquiries."
+            : "Trade desk requests and AI agent inquiries. Open a row for the full request. Supplier choice and margin approval stay on the shortlist."
         }
         actions={
           <a href={`/admin/desk/inquiries/export${query({})}`} className="inline-flex h-9 items-center rounded-full border border-border bg-white px-4 text-[13px] font-semibold text-ink no-underline">
@@ -81,8 +80,8 @@ export default async function InquiriesPage({
       <div className="mb-4 inline-flex rounded-full bg-s2 p-1" role="tablist" aria-label="Inbox">
         {(
           [
-            { key: "inquiries", label: "Inquiries", count: inquiriesCount },
-            { key: "enquiries", label: "Enquiries", count: enquiriesCount },
+            { key: "inquiries", label: "Trade inquiries", count: inquiriesCount },
+            { key: "enquiries", label: "General inquiries", count: enquiriesCount },
           ] as const
         ).map((item) => {
           const on = view === item.key;
@@ -134,8 +133,8 @@ export default async function InquiriesPage({
         </div>
         {slice.length === 0 ? (
           <EmptyState
-            title={view === "enquiries" ? "No enquiries in this view" : "No inquiries in this view"}
-            body={view === "enquiries" ? "Order Desk forms and contact messages land here as soon as they are sent." : "Trade Desk form submissions and WhatsApp enquiries appear here as soon as they are received."}
+            title={view === "enquiries" ? "No general inquiries" : "No trade inquiries"}
+            body={view === "enquiries" ? "Contact form messages land here as soon as they are sent." : "Trade desk requests and AI agent inquiries appear here as soon as they are received."}
           />
         ) : (
           <div className="overflow-x-auto">

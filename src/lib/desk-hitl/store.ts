@@ -6,7 +6,7 @@ import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify
 import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
-import type { DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage } from "@/lib/desk-hitl/types";
+import type { BuyerPlan, DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage, DeskOffer, OfferChannel, SupplierDoc } from "@/lib/desk-hitl/types";
 import { listOutbox } from "@/lib/mailer";
 import { buyerDocumentFromDeal, firmOfferDraftFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
@@ -167,6 +167,22 @@ export async function getDeskDeal(id: string) {
   return recovered;
 }
 
+function mergeOffers(incoming: DeskOffer[], previous: DeskOffer[] | undefined): DeskOffer[] {
+  return incoming.map((offer) => {
+    const prev = previous?.find((item) => item.id === offer.id) ?? previous?.find((item) => item.supplierName === offer.supplierName && item.unitPrice === offer.unitPrice);
+    if (!prev) return offer;
+    return {
+      ...offer,
+      shortlisted: prev.shortlisted ?? offer.shortlisted,
+      channel: prev.channel ?? offer.channel,
+      product: prev.product || offer.product,
+      supplierEmail: prev.supplierEmail || offer.supplierEmail,
+      messages: prev.messages ?? [],
+      documents: prev.documents ?? offer.documents,
+    };
+  });
+}
+
 export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error: string }> {
   const parsed = parseShortlistBody(body);
   if (!parsed) return { error: "Need requestId, product and at least one offer with a unit price." };
@@ -188,7 +204,13 @@ export async function upsertShortlist(body: unknown): Promise<DeskDeal | { error
     buyerPhone: parsed.buyerPhone,
     buyerCompany: parsed.buyerCompany,
     buyerEmail: parsed.buyerEmail || existing?.buyerEmail || "",
-    offers: parsed.offers,
+    buyerPlan: existing?.buyerPlan ?? "aq_one",
+    packing: existing?.packing || parsed.packing,
+    shipmentWindow: existing?.shipmentWindow || parsed.shipmentWindow,
+    offers: mergeOffers(parsed.offers, existing?.offers),
+    indicationDraft: existing?.indicationDraft ?? null,
+    firmEmail: existing?.firmEmail ?? null,
+    sends: existing?.sends ?? [],
     selectedOfferId: existing?.selectedOfferId ?? null,
     marginPct: existing?.marginPct ?? null,
     buyerPrice: existing?.buyerPrice ?? null,
@@ -225,13 +247,17 @@ export async function confirmIndication(input: {
   offerId: string;
   marginPct: number;
   actor: string;
+  /** Exact text the admin reviewed. When omitted, the built-in indication is used. */
+  text?: string;
 }): Promise<DeskDeal | { error: string }> {
   const deal = await getRecord(DESK_DEALS, input.id);
   if (!deal) return { error: "That shortlist was not found." };
   if (deal.status === "closed") return { error: "This request is closed." };
   if (deal.status === "firm_interest") return { error: "This deal is already firm interest." };
   const offer = deal.offers.find((item) => item.id === input.offerId);
-  if (!offer) return { error: "Choose one of the three offers." };
+  if (!offer) return { error: "Choose a supplier quote." };
+  if (offer.shortlisted === false) return { error: "Add this supplier to the shortlist before sending an indication." };
+  if (deal.buyerPlan === "aq_zero") return { error: "AQ Zero skips the indication. Continue to the firm offer instead." };
   if (!Number.isFinite(input.marginPct) || input.marginPct < 0 || input.marginPct > 80) {
     return { error: "Margin must be between 0 and 80%." };
   }
@@ -253,7 +279,12 @@ export async function confirmIndication(input: {
       }),
     ],
   };
-  const body = indicationWhatsApp(next);
+  const body = input.text?.trim() || indicationWhatsApp(next);
+  next.indicationDraft = { text: body, savedAt: now(), savedBy: input.actor || "Desk" };
+  next.sends = [
+    ...(deal.sends ?? []),
+    { id: idOf("send"), at: now(), actor: input.actor || "Desk", channel: "whatsapp", to: deal.buyerPhone || "buyer", subject: "", body },
+  ];
   next.messages.push(message({ from: "desk", channel: "whatsapp", text: body, outboundStatus: "queued" }));
   const saved = (await save(next))!;
   await syncRfqStatus(saved.requestId, "indication_sent", {
@@ -1661,4 +1692,203 @@ export async function markWhatsAppSent(dealId: string, messageId: string): Promi
     messages: deal.messages.map((msg) => (msg.id === messageId ? { ...msg, outboundStatus: "sent" as const } : msg)),
   };
   return (await save(next))!;
+}
+
+async function loadDeal(id: string) {
+  const deal = await getRecord(DESK_DEALS, id);
+  return deal ?? null;
+}
+
+export async function saveIndicationDraft(input: { id: string; offerId: string; marginPct: number; text: string; actor: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status !== "waiting_desk") return { error: "The indication has already been sent." };
+  const offer = deal.offers.find((item) => item.id === input.offerId);
+  if (!offer) return { error: "Choose a supplier quote." };
+  const text = input.text.trim();
+  if (!text) return { error: "Write the indication before saving it." };
+  const saved = await save({
+    ...deal,
+    selectedOfferId: offer.id,
+    marginPct: input.marginPct,
+    buyerPrice: buyerUnitPrice(offer.unitPrice, input.marginPct),
+    currency: offer.currency || deal.currency,
+    indicationDraft: { text, savedAt: now(), savedBy: input.actor || "Desk" },
+  });
+  return saved ?? { error: "Could not save the draft." };
+}
+
+export async function setOfferShortlist(input: { id: string; offerId: string; shortlisted: boolean; actor: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.status !== "waiting_desk") return { error: "The shortlist is locked once the indication has been sent." };
+  const offer = deal.offers.find((item) => item.id === input.offerId);
+  if (!offer) return { error: "That quote was not found." };
+  if (!input.shortlisted && deal.offers.filter((item) => item.id !== offer.id && item.shortlisted !== false).length === 0) {
+    return { error: "Keep at least one supplier on the shortlist." };
+  }
+  const offers = deal.offers.map((item) => (item.id === offer.id ? { ...item, shortlisted: input.shortlisted } : item));
+  const saved = await save({
+    ...deal,
+    offers,
+    selectedOfferId: input.shortlisted ? deal.selectedOfferId : deal.selectedOfferId === offer.id ? offers.find((item) => item.shortlisted !== false)?.id ?? null : deal.selectedOfferId,
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `${input.actor || "Desk"} ${input.shortlisted ? "added" : "removed"} ${offer.supplierName} ${input.shortlisted ? "to" : "from"} the shortlist.`,
+      }),
+    ],
+  });
+  return saved ?? { error: "Could not update the shortlist." };
+}
+
+export async function setBuyerPlan(input: { id: string; plan: BuyerPlan; actor: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (input.plan !== "aq_one" && input.plan !== "aq_zero" && input.plan !== "aq_analytics") return { error: "Choose AQ ONE, AQ Zero or AQ Analytics." };
+  const label = input.plan === "aq_one" ? "AQ ONE" : input.plan === "aq_zero" ? "AQ Zero" : "AQ Analytics";
+  const saved = await save({
+    ...deal,
+    buyerPlan: input.plan,
+    messages: [...deal.messages, message({ from: "system", channel: "app", text: `${input.actor || "Desk"} set the buyer plan to ${label}.` })],
+  });
+  if (!saved) return { error: "Could not save the buyer plan." };
+  try {
+    const { getTradeRfqByCode, patchTradeRfq } = await import("@/lib/trade/store");
+    const rfq = await getTradeRfqByCode(saved.requestId);
+    const rfqId = typeof rfq?.id === "string" ? rfq.id : "";
+    if (rfqId) {
+      const extras = rfq?.extras && typeof rfq.extras === "object" && !Array.isArray(rfq.extras) ? (rfq.extras as Record<string, unknown>) : {};
+      await patchTradeRfq(rfqId, { extras: { ...extras, buyer_plan: input.plan } });
+    }
+  } catch {
+    // The deal keeps the plan even when the trade book row cannot be updated.
+  }
+  return saved;
+}
+
+export async function continueWithoutIndication(input: { id: string; offerId: string; actor: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  if (deal.buyerPlan !== "aq_zero") return { error: "Only an AQ Zero buyer skips the indication." };
+  if (deal.status !== "waiting_desk") return { error: "This request has already moved on." };
+  const offer = deal.offers.find((item) => item.id === input.offerId);
+  if (!offer || offer.shortlisted === false) return { error: "Choose a shortlisted supplier." };
+  const saved = await save({
+    ...deal,
+    status: "negotiating",
+    selectedOfferId: offer.id,
+    marginPct: 0,
+    buyerPrice: offer.unitPrice,
+    currency: offer.currency || deal.currency,
+    messages: [
+      ...deal.messages,
+      message({
+        from: "system",
+        channel: "app",
+        text: `${input.actor || "Desk"} continued ${offer.supplierName} for AQ Zero with no margin and no indication. Buyer price ${offer.currency} ${offer.unitPrice}/MT.`,
+      }),
+    ],
+  });
+  return saved ?? { error: "Could not continue this request." };
+}
+
+export async function messageSupplier(input: { id: string; offerId: string; channel: OfferChannel; text: string; actor: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  const offer = deal.offers.find((item) => item.id === input.offerId);
+  if (!offer) return { error: "That quote was not found." };
+  const text = input.text.trim();
+  if (!text) return { error: "Write a message first." };
+  if (input.channel !== "email" && input.channel !== "wechat" && input.channel !== "whatsapp") return { error: "Choose email, WeChat or WhatsApp." };
+  let delivery = "Saved on the trade.";
+  if (input.channel === "email") {
+    const to = offer.supplierEmail?.trim() || "";
+    if (!to.includes("@")) return { error: "This supplier has no email on the quote." };
+    const { sendEmail } = await import("@/lib/mailer");
+    const { getDeskSettings } = await import("@/lib/desk-settings/store");
+    const settings = await getDeskSettings();
+    const mailed = await sendEmail(
+      {
+        kind: "supplier-message",
+        to,
+        subject: `${deal.requestId} | ${deal.product}`,
+        text,
+        html: `<p>${text.replace(/\n/g, "<br/>")}</p><p>Inquiry ${deal.requestId}</p>`,
+      },
+      settings.delivery,
+    );
+    if (mailed.status !== "sent") return { error: mailed.error || "The email was not sent." };
+    delivery = `Emailed to ${to}.`;
+  } else if (input.channel === "wechat") {
+    const openid = offer.wechatOpenId?.trim() || "";
+    if (!openid) return { error: "This supplier has no WeChat id on the quote." };
+    const { sendWechatText } = await import("@/lib/wechat/send");
+    const sent = await sendWechatText(openid, text);
+    if (!sent.ok) return { error: sent.error || "WeChat did not accept the message." };
+    delivery = "Sent on WeChat.";
+  } else {
+    delivery = "Saved on this trade. Send WhatsApp from the supplier thread when a number is on file.";
+  }
+  const supplierNote = { id: idOf("sup"), at: now(), from: "desk" as const, channel: input.channel, text, actor: input.actor || "Desk" };
+  const offers = deal.offers.map((item) => (item.id === offer.id ? { ...item, channel: input.channel, messages: [...(item.messages ?? []), supplierNote] } : item));
+  const saved = await save({
+    ...deal,
+    offers,
+    messages: [
+      ...deal.messages,
+      message({ from: "desk", channel: input.channel === "wechat" ? "app" : input.channel, text: `To ${offer.supplierName}: ${text}` }),
+      message({ from: "system", channel: "app", text: delivery }),
+    ],
+    sends: [...(deal.sends ?? []), { id: idOf("send"), at: now(), actor: input.actor || "Desk", channel: input.channel, to: offer.supplierName, subject: deal.requestId, body: text }],
+  });
+  return saved ?? { error: "Could not save the supplier message." };
+}
+
+export async function markSupplierDocument(input: {
+  id: string;
+  offerId: string;
+  kind: "coa" | "tds" | "photos" | "firmOffer";
+  filename: string;
+  href: string;
+  actor: string;
+}) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  const offer = deal.offers.find((item) => item.id === input.offerId);
+  if (!offer) return { error: "That quote was not found." };
+  const filename = input.filename.trim();
+  if (!filename) return { error: "Name the document." };
+  const doc: SupplierDoc = { filename, href: input.href.trim(), receivedAt: now() };
+  const documents = { ...(offer.documents ?? {}) };
+  if (input.kind === "photos") documents.photos = [...(documents.photos ?? []), doc];
+  else documents[input.kind] = doc;
+  const offers = deal.offers.map((item) => (item.id === offer.id ? { ...item, documents } : item));
+  const saved = await save({
+    ...deal,
+    offers,
+    messages: [...deal.messages, message({ from: "system", channel: "app", text: `${input.actor || "Desk"} marked ${filename} received from ${offer.supplierName}.` })],
+  });
+  return saved ?? { error: "Could not save the document." };
+}
+
+export async function saveFirmEmail(input: { id: string; subject: string; note: string; actor: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  const subject = input.subject.trim();
+  if (!subject) return { error: "Write a subject. It should keep the inquiry ID." };
+  const saved = await save({ ...deal, firmEmail: { subject, note: input.note.trim(), savedAt: now(), savedBy: input.actor || "Desk" } });
+  return saved ?? { error: "Could not save the email draft." };
+}
+
+export async function recordDealSend(input: { id: string; actor: string; channel: string; to: string; subject: string; body: string }) {
+  const deal = await loadDeal(input.id);
+  if (!deal) return { error: "That shortlist was not found." };
+  const saved = await save({
+    ...deal,
+    sends: [...(deal.sends ?? []), { id: idOf("send"), at: now(), actor: input.actor, channel: input.channel, to: input.to, subject: input.subject, body: input.body }],
+  });
+  return saved ?? { error: "Could not record the send." };
 }

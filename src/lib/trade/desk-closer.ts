@@ -61,7 +61,7 @@ export async function considerRfqForDesk(rfqId: string) {
       company: desk?.buyerCompany || "",
       email: desk?.buyerEmail || "",
     },
-    offers: picked.offers.map((offer, index) => ({
+    offers: (picked.allOffers ?? picked.offers).map((offer, index) => ({
       id: offer.offerCode || offer.supplierId || `off-${index + 1}`,
       supplierName: offer.supplierName,
       unitPrice: offer.unitPrice,
@@ -72,6 +72,7 @@ export async function considerRfqForDesk(rfqId: string) {
       destination: offer.destination || dest,
       receivedAt: offer.receivedAt,
       wechatOpenId: offer.wechatOpenid,
+      shortlisted: picked.offers.some((pickedOffer) => (pickedOffer.offerCode || pickedOffer.supplierId) === (offer.offerCode || offer.supplierId)),
     })),
   });
   if ("error" in deal) return { ok: false as const, reason: "shortlist" as const };

@@ -3,6 +3,10 @@ import { Download } from "lucide-react";
 import { ZeroRegistrationsPanel } from "@/components/admin/zero/registrations-panel";
 import { PageHeader, btnSecondary } from "@/components/admin/ui";
 import { getDeskSettings } from "@/lib/desk-settings/store";
+import { listDeskDeals } from "@/lib/desk-hitl/store";
+import { listMembers } from "@/lib/members";
+import { listRecords } from "@/lib/data/records";
+import { MEMBER_PREFS } from "@/lib/data/tables";
 import { listZeroRegistrations } from "@/lib/zero-interest";
 import { intentOf } from "@/lib/zero-types";
 
@@ -11,8 +15,13 @@ export const dynamic = "force-dynamic";
 const PILOT_SLOTS = 12;
 
 export default async function ZeroAdminPage() {
-  const rows = await listZeroRegistrations();
-  const settings = await getDeskSettings();
+  const [rows, settings, members, prefs, deals] = await Promise.all([
+    listZeroRegistrations(),
+    getDeskSettings(),
+    listMembers().catch(() => ({ available: false as const, members: [], reason: "The member list could not be loaded." })),
+    listRecords(MEMBER_PREFS).catch(() => []),
+    listDeskDeals().catch(() => []),
+  ]);
   const quarterStart = (() => {
     const now = new Date();
     return new Date(Date.UTC(now.getUTCFullYear(), Math.floor(now.getUTCMonth() / 3) * 3, 1)).toISOString();
@@ -79,6 +88,44 @@ export default async function ZeroAdminPage() {
       </div>
 
       <ZeroRegistrationsPanel rows={rows} />
+
+      <section className="mt-8 rounded-2xl border border-border bg-white px-4 py-4">
+        <h2 className="text-[15px] font-semibold text-ink">Subscribers and weekly bids</h2>
+        <p className="mt-1 text-[13px] text-mid">Firm bids close {settings.zeroWeeklyClose}. Change that under Settings → Trade templates. An off-list request still uses the normal trade flow.</p>
+        {members.available ? (
+          <ul className="mt-3 divide-y divide-border">
+            {members.members.filter((member) => member.plan === "enterprise").length === 0 ? <li className="py-2 text-[13px] text-mid">No AQ Zero subscription yet.</li> : null}
+            {members.members
+              .filter((member) => member.plan === "enterprise")
+              .map((member) => {
+                const pref = prefs.find((item) => item.userId === member.id);
+                const products = pref?.interests?.categories?.length ? pref.interests.categories.join(", ") : pref?.briefProducts?.join(", ") || "No products chosen yet";
+                return (
+                  <li key={member.id} className="py-2 text-[13px]">
+                    <span className="font-semibold text-ink">{member.name || member.email}</span>
+                    <span className="text-mid"> · {member.company || member.email} · {products}</span>
+                  </li>
+                );
+              })}
+          </ul>
+        ) : (
+          <p className="mt-3 text-[13px] text-mid">{members.reason}</p>
+        )}
+        <h3 className="mt-4 text-[13px] font-semibold text-ink">AQ Zero trades</h3>
+        <ul className="mt-2 space-y-1 text-[13px]">
+          {deals.filter((deal) => deal.buyerPlan === "aq_zero").length === 0 ? <li className="text-mid">No inquiry is marked AQ Zero yet. Set the buyer plan on the shortlist.</li> : null}
+          {deals
+            .filter((deal) => deal.buyerPlan === "aq_zero")
+            .map((deal) => (
+              <li key={deal.id}>
+                <Link href={`/admin/desk/${deal.id}`} className="font-semibold text-blue no-underline">
+                  {deal.requestId}
+                </Link>
+                <span className="text-mid"> · {deal.product} · {deal.buyerCompany || deal.buyerName || "Buyer"} · margin locked</span>
+              </li>
+            ))}
+        </ul>
+      </section>
     </div>
   );
 }

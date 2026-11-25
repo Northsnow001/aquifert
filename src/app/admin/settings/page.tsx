@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import { DeliveryPanel } from "@/components/admin/settings/delivery-panel";
 import { FormEmailsPanel } from "@/components/admin/settings/form-emails-panel";
 import { MembersPanel } from "@/components/admin/settings/members-panel";
+import { TradeTemplatesPanel } from "@/components/admin/settings/trade-templates-panel";
 import { StoragePanel } from "@/components/admin/settings/storage-panel";
 import { PageHeader } from "@/components/admin/ui";
 import { storageStatus } from "@/lib/data/status";
@@ -20,6 +21,7 @@ const TABS = [
   { key: "order", label: "Order Desk emails" },
   { key: "zero", label: "Aquifert Zero emails" },
   { key: "members", label: "Sign-up rules" },
+  { key: "trade", label: "Trade templates" },
   { key: "delivery", label: "Email delivery" },
   { key: "storage", label: "Data storage" },
 ] as const;
@@ -140,6 +142,15 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         />
       ) : null}
       {tab === "members" ? <MembersPanel key={settings.updatedAt ?? "seed"} initial={members} savedAt={settings.updatedAt} banned={bans.map((ban) => ban.email)} /> : null}
+      {tab === "trade" ? (
+        <TradeTemplatesPanel
+          key={settings.updatedAt ?? "seed"}
+          indicationTemplate={settings.indicationTemplate}
+          firmOfferTerms={settings.firmOfferTerms}
+          zeroWeeklyClose={settings.zeroWeeklyClose}
+          marketInbox={settings.marketInbox}
+        />
+      ) : null}
       {tab === "delivery" ? (
         <DeliveryPanel
           key={settings.updatedAt ?? "seed"}

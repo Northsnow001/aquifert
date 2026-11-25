@@ -110,6 +110,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       title: "Trade book",
       items: [
         { href: "/admin/desk", label: "Desk shortlists", icon: "desk", badge: deskWaiting ? `${deskWaiting} wait` : deskDeals.length },
+        { href: "/admin/desk/matching", label: "Needs matching", icon: "inbox" },
         { href: "/admin/desk/negotiation", label: "Shortlist Negotiation", icon: "desk", badge: negotiating || undefined },
         { href: "/admin/trade", label: "Overview", icon: "trade", badge: trade?.toInvite ? `${trade.toInvite} invite` : trade?.suppliers || undefined },
       ],

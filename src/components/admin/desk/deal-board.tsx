@@ -3,22 +3,17 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { confirmIndicationAction, endNegotiationAction, handNegotiationToAgentAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
+import { endNegotiationAction, handNegotiationToAgentAction, sendDeskReplyAction } from "@/app/admin/desk/actions";
+import { ShortlistPanel } from "@/components/admin/desk/shortlist-panel";
 import { AfterPayment } from "@/components/admin/desk/after-payment";
 import { FoEditor } from "@/components/admin/desk/fo-editor";
 import { PiEditor } from "@/components/admin/desk/pi-editor";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
-import { agreedPriceFromThread, buyerUnitPrice } from "@/lib/desk-hitl/logic";
+import { agreedPriceFromThread } from "@/lib/desk-hitl/logic";
 import { DEAL_STATUS_LABEL, type DeskDeal } from "@/lib/desk-hitl/types";
 
-const money = (n: number, currency: string) =>
-  `${currency} ${n.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
+export function DeskDealBoard({ deal, template, terms }: { deal: DeskDeal; template: string; terms: string }) {
   const router = useRouter();
-  const waiting = deal.status === "waiting_desk";
-  const [offerId, setOfferId] = useState(deal.selectedOfferId ?? deal.offers[0]?.id ?? "");
-  const [margin, setMargin] = useState(deal.marginPct != null ? String(deal.marginPct) : "8");
   const [reply, setReply] = useState("");
   const suggested = agreedPriceFromThread(deal);
   const [agreed, setAgreed] = useState(suggested != null ? String(suggested) : "");
@@ -30,23 +25,6 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
     const timer = window.setInterval(() => router.refresh(), 8000);
     return () => window.clearInterval(timer);
   }, [matt, router]);
-
-  const offer = deal.offers.find((item) => item.id === offerId) ?? deal.offers[0];
-  const marginPct = Number(margin);
-  const preview =
-    offer && Number.isFinite(marginPct) ? buyerUnitPrice(offer.unitPrice, marginPct) : null;
-
-  const confirm = () => {
-    start(async () => {
-      const result = await confirmIndicationAction({ id: deal.id, offerId, marginPct });
-      if (!result.ok) {
-        toast.error(result.message);
-        return;
-      }
-      toast.success("Indication queued for WhatsApp. n8n will send it to the buyer.");
-      router.refresh();
-    });
-  };
 
   const send = () => {
     start(async () => {
@@ -92,79 +70,9 @@ export function DeskDealBoard({ deal }: { deal: DeskDeal }) {
         {deal.buyerPhone ? ` · ${deal.buyerPhone}` : " · no WhatsApp number on the shortlist"}
       </p>
 
-      <section className="space-y-2">
-        {deal.offers.map((item) => {
-          const selected = item.id === offerId;
-          return (
-            <label
-              key={item.id}
-              className={`block cursor-pointer rounded-2xl border px-4 py-3 ${
-                selected ? "border-blue bg-blue-light/40" : "border-border bg-white"
-              } ${waiting ? "" : "cursor-default"}`}
-            >
-              <div className="flex items-start gap-3">
-                {waiting ? (
-                  <input
-                    type="radio"
-                    name="offer"
-                    className="mt-1"
-                    checked={selected}
-                    onChange={() => setOfferId(item.id)}
-                  />
-                ) : (
-                  <span className="mt-1 h-4 w-4" />
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-semibold text-ink">{item.supplierName}</span>
-                    <span className="font-mono text-[14px] text-ink">{money(item.unitPrice, item.currency)}</span>
-                  </span>
-                  <span className="mt-1 block text-[12.5px] text-mid">
-                    {[item.incoterm, item.loadPort, item.destination].filter(Boolean).join(" · ") || "No extra terms"}
-                    {item.wechatOpenId ? ` · WeChat ${item.wechatOpenId}` : ""}
-                  </span>
-                </span>
-              </div>
-            </label>
-          );
-        })}
-      </section>
+      <ShortlistPanel deal={deal} template={template} />
 
-      {waiting ? (
-        <section className="rounded-2xl border border-border bg-white px-4 py-4">
-          <label className={label} htmlFor="margin">
-            Your margin %
-          </label>
-          <input
-            id="margin"
-            inputMode="decimal"
-            value={margin}
-            onChange={(e) => setMargin(e.target.value)}
-            className={`${input} mt-1 max-w-[8rem]`}
-          />
-          <p className="mt-2 text-[13.5px] text-ink">
-            Buyer sees{" "}
-            <span className="font-semibold">
-              {preview != null && offer ? money(preview, offer.currency) : "—"} / MT
-            </span>
-          </p>
-          <button type="button" disabled={pending || !offerId} onClick={confirm} className={`${btnPrimary} mt-4 w-full sm:w-auto`}>
-            {pending ? "Sending…" : "Send indication to buyer"}
-          </button>
-        </section>
-      ) : (
-        <section className="rounded-2xl border border-border bg-white px-4 py-3 text-[13.5px]">
-          <p>
-            Indication{" "}
-            <span className="font-semibold">
-              {deal.buyerPrice != null ? money(deal.buyerPrice, deal.currency) : "—"} / MT
-            </span>
-            {deal.marginPct != null ? ` (supplier + ${deal.marginPct}%)` : ""}
-          </p>
-        </section>
-      )}
-
-      {deal.buyerPrice != null && (deal.firmOffer || deal.execution?.confirmedAt) ? <FoEditor deal={deal} /> : null}
+      {deal.buyerPrice != null && (deal.firmOffer || deal.execution?.confirmedAt || deal.buyerPlan === "aq_zero") ? <FoEditor deal={deal} terms={terms} /> : null}
       {deal.pi ? <PiEditor deal={deal} /> : null}
       {deal.pi?.status === "sent" ? <AfterPayment deal={deal} /> : null}
 

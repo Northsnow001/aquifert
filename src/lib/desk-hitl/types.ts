@@ -47,6 +47,21 @@ export const DEAL_STATUS_LABEL: Record<DealStatus, string> = {
   closed: "Closed",
 };
 
+export type BuyerPlan = "aq_one" | "aq_zero" | "aq_analytics";
+
+export type OfferChannel = "email" | "wechat" | "whatsapp";
+
+export type SupplierDoc = { filename: string; href: string; receivedAt: string };
+
+export type SupplierMessage = {
+  id: string;
+  at: string;
+  from: "desk" | "supplier" | "system";
+  channel: OfferChannel;
+  text: string;
+  actor?: string;
+};
+
 export type DeskOffer = {
   id: string;
   supplierName: string;
@@ -59,6 +74,41 @@ export type DeskOffer = {
   receivedAt: string;
   notes: string;
   wechatOpenId?: string;
+  /** Absent on older deals, which stay on the shortlist. */
+  shortlisted?: boolean;
+  channel?: OfferChannel;
+  product?: string;
+  supplierEmail?: string;
+  messages?: SupplierMessage[];
+  documents?: {
+    coa?: SupplierDoc | null;
+    tds?: SupplierDoc | null;
+    photos?: SupplierDoc[];
+    firmOffer?: SupplierDoc | null;
+  };
+};
+
+export type IndicationDraft = {
+  text: string;
+  savedAt: string | null;
+  savedBy: string | null;
+};
+
+export type FirmEmailDraft = {
+  subject: string;
+  note: string;
+  savedAt: string | null;
+  savedBy: string | null;
+};
+
+export type DealSend = {
+  id: string;
+  at: string;
+  actor: string;
+  channel: string;
+  to: string;
+  subject: string;
+  body: string;
 };
 
 /** Collected after YES. Buyer price stays on the deal; these are the commercial terms for PDFs. */
@@ -101,6 +151,10 @@ export type DeskDeal = {
   buyerCompany: string;
   /** From Buyers sheet / shortlist / firm-terms. FO Email (send to) uses this. */
   buyerEmail: string;
+  /** Which membership this buyer is on. AQ Zero locks the margin and skips the indication. */
+  buyerPlan?: BuyerPlan;
+  packing?: string;
+  shipmentWindow?: string;
   offers: DeskOffer[];
   selectedOfferId: string | null;
   marginPct: number | null;
@@ -129,6 +183,9 @@ export type DeskDeal = {
   pi?: DeskPi | null;
   salesContract?: DeskPi | null;
   supplierPackSentAt?: string | null;
+  indicationDraft?: IndicationDraft | null;
+  firmEmail?: FirmEmailDraft | null;
+  sends?: DealSend[];
 };
 
 export type BuyerReplyKind = "agree" | "negotiate" | "chat";

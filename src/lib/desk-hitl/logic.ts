@@ -678,10 +678,13 @@ export function parseShortlistBody(body: unknown): {
         receivedAt: text(o.receivedAt ?? o.received_at, 40),
         notes: text(o.notes, 500),
         wechatOpenId: text(o.wechatOpenId ?? o.wechat_open_id ?? o.openid ?? o.openId ?? o.wechatId, 80),
+        product: text(o.product, 120) || product,
+        supplierEmail: text(o.supplierEmail ?? o.supplier_email ?? o.email, 160),
+        channel: text(o.channel, 16) === "whatsapp" ? "whatsapp" : text(o.wechatOpenId ?? o.wechat_open_id ?? o.openid ?? o.openId ?? o.wechatId, 80) ? "wechat" : "email",
+        shortlisted: typeof o.shortlisted === "boolean" ? o.shortlisted : index < 3,
       };
     })
-    .filter((o): o is DeskOffer => Boolean(o))
-    .slice(0, 3);
+    .filter((o): o is DeskOffer => Boolean(o));
 
   if (!offers.length) return null;
 

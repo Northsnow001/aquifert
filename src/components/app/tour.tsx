@@ -81,17 +81,12 @@ export function Tour({ userId, stops = TOUR_STOPS }: { userId: string; stops?: t
   useEffect(() => {
     if (!onHub) return;
     const saved = read(key);
-    const unfinished = saved?.status === "running" && !saved.offered;
-    if (saved && !unfinished) return;
+    if (saved?.status === "done" || saved?.status === "skipped" || saved?.offered) return;
     const timer = setTimeout(() => {
       const visible = visibleStops();
       setRun(visible);
-      if (!saved || saved.step === 0) {
-        setStep(0);
-        save({ status: "running", step: 0 });
-      } else {
-        setResume(Math.min(saved.step, visible.length - 1));
-      }
+      setStep(0);
+      save({ status: "running", step: 0, offered: true });
     }, 900);
     return () => clearTimeout(timer);
   }, [onHub, key, visibleStops, save]);

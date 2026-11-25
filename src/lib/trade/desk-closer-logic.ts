@@ -35,11 +35,12 @@ export function pickDeskShortlist(input: {
   const now = input.now ?? Date.now();
   const start = Date.parse(input.fanoutAt || "");
   const waitOver = Number.isFinite(start) && now - start >= DESK_QUOTE_WAIT_MS;
+  const ranked = unique.slice(0, DESK_QUOTE_TARGET);
   if (unique.length >= DESK_QUOTE_TARGET) {
-    return { promote: true as const, reason: "three_quotes" as const, offers: unique.slice(0, DESK_QUOTE_TARGET) };
+    return { promote: true as const, reason: "three_quotes" as const, offers: ranked, allOffers: unique };
   }
   if (unique.length >= 1 && waitOver) {
-    return { promote: true as const, reason: "wait_elapsed" as const, offers: unique.slice(0, DESK_QUOTE_TARGET) };
+    return { promote: true as const, reason: "wait_elapsed" as const, offers: ranked, allOffers: unique };
   }
-  return { promote: false as const, reason: unique.length ? ("waiting" as const) : ("none" as const), offers: unique };
+  return { promote: false as const, reason: unique.length ? ("waiting" as const) : ("none" as const), offers: unique, allOffers: unique };
 }

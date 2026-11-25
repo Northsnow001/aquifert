@@ -14,7 +14,7 @@ type Draft = FormEmails & { showOnHub?: boolean };
 type Audience = "applicant" | "admin";
 
 const COPY: Record<TemplateKind, { name: string; adminPath: string; memberEvent: string }> = {
-  order: { name: "Order Desk", adminPath: "/admin/desk/inquiries?view=enquiries", memberEvent: "sends an enquiry" },
+  order: { name: "Order Desk", adminPath: "/admin/desk/inquiries?tab=app", memberEvent: "sends an enquiry" },
   zero: { name: "Aquifert Zero", adminPath: "/admin/zero", memberEvent: "registers interest" },
 };
 

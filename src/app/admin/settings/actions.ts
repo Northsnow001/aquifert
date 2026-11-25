@@ -70,6 +70,24 @@ export async function saveMemberRules(input: { blocked: string; allowed: string 
   return { ok: true, rules, savedAt: saved.updatedAt! };
 }
 
+export async function saveTradeTemplates(input: { indicationTemplate: string; firmOfferTerms: string; zeroWeeklyClose: string; marketInbox: string }): Promise<Result<{ savedAt: string }>> {
+  await requireAdmin();
+  const indicationTemplate = input.indicationTemplate.replace(/\r\n/g, "\n").trim();
+  const firmOfferTerms = input.firmOfferTerms.replace(/\r\n/g, "\n").trim();
+  if (indicationTemplate.length < 20) return { ok: false, message: "Write the indication template. It needs the placeholders for the trade." };
+  if (!firmOfferTerms) return { ok: false, message: "Write the firm offer terms." };
+  const marketInbox = input.marketInbox.trim().toLowerCase();
+  if (marketInbox && !EMAIL_PATTERN.test(marketInbox)) return { ok: false, message: "Enter the analytics inbox address, or leave it empty." };
+  const saved = await updateDeskSettings((draft) => {
+    draft.indicationTemplate = indicationTemplate;
+    draft.firmOfferTerms = firmOfferTerms;
+    draft.zeroWeeklyClose = input.zeroWeeklyClose.replace(/\s+/g, " ").trim() || draft.zeroWeeklyClose;
+    draft.marketInbox = marketInbox;
+  });
+  refresh();
+  return { ok: true, savedAt: saved.updatedAt! };
+}
+
 export async function saveDelivery(input: DeskSettings["delivery"]): Promise<Result<{ savedAt: string }>> {
   await requireAdmin();
   const replyTo = clip(input.replyTo, 200).trim().toLowerCase();
@@ -93,7 +111,7 @@ export async function sendTestEmail(kind: TemplateKind, audience: "applicant" | 
     template: cleaned,
     data: sampleFor(kind).data,
     deskEmail: delivery.replyTo,
-    adminHref: `${await siteOrigin()}${kind === "order" ? "/admin/desk/inquiries?view=enquiries" : "/admin/zero"}`,
+    adminHref: `${await siteOrigin()}${kind === "order" ? "/admin/desk/inquiries?tab=app" : "/admin/zero"}`,
   });
   const entry = await sendEmail({ kind: "test", to: user.email, ...email, subject: `[Test] ${email.subject}` }, delivery);
   refresh();

@@ -20,11 +20,36 @@ export type MemberRules = {
 
 export type DeliverySettings = { fromName: string; replyTo: string };
 
+export const DEFAULT_INDICATION_TEMPLATE = `Aquifert indication — {inquiry_id}
+
+{buyer_name}
+{company}
+
+Product: {product}
+Quantity: {quantity}
+Destination: {destination}
+Incoterm: {incoterm}
+Packing: {packing}
+Delivery window: {delivery_window}
+
+Indication price: {price_per_tonne}
+Valid until: {validity}
+
+This is an indication of where we can work. It is not an offer and it cannot be accepted by a one-word reply. Tell us what you need changed, or ask us to prepare a firm offer. A firm offer, if we send one, will be a separate message.`;
+
+export const DEFAULT_FIRM_TERMS = `This firm offer is made by Aquifert Limited. It is open for acceptance only by a reply to this email. A message on another channel does not accept it. Title, risk and delivery follow the Incoterm stated above. The wording of Aquifert's general terms applies to this offer. Matt will replace this paragraph with the signed terms.`;
+
 export type DeskSettings = {
   orderDesk: FormEmails;
   zero: ZeroEmails;
   members: MemberRules;
   delivery: DeliverySettings;
+  indicationTemplate: string;
+  firmOfferTerms: string;
+  /** When AQ Zero firm bids close each week, in plain language. */
+  zeroWeeklyClose: string;
+  /** Inbox address Phil uses for AQ Analytics market data. */
+  marketInbox: string;
   updatedAt: string | null;
 };
 
@@ -92,6 +117,10 @@ export const DEFAULT_DESK_SETTINGS: DeskSettings = {
   },
   members: { blocked: [], allowed: [] },
   delivery: { fromName: "Aquifert", replyTo: "noreply@aquifert.com" },
+  indicationTemplate: DEFAULT_INDICATION_TEMPLATE,
+  firmOfferTerms: DEFAULT_FIRM_TERMS,
+  zeroWeeklyClose: "Friday 17:00 UK",
+  marketInbox: "",
   updatedAt: null,
 };
 
