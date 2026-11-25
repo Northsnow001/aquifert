@@ -327,9 +327,12 @@ export async function recordBuyerInbound(input: {
   requestId?: string;
   text: string;
   email?: string;
+  /** n8n sends the WhatsApp reply itself. The in-app desk still delivers. */
+  deliver?: boolean;
 }): Promise<DeskDeal | { error: string } | { event: "chat" | "negotiating" | "firm_interest"; phase?: DeskPhase; dealId?: string; requestId?: string }> {
   const text = input.text.trim().slice(0, 4000);
   if (!text) return { error: "Empty message." };
+  const deliver = input.deliver !== false;
   const inboundEmail = String(input.email || "").trim();
 
   const deals = await listRecords(DESK_DEALS);
@@ -430,7 +433,7 @@ export async function recordBuyerInbound(input: {
     if (!startingNew) {
       const follow = await resolveFirmFollowUp(text, collecting.product);
       if (follow === "firm_order") {
-        return continueFirmInterest(collecting, text, inboundEmail, phone);
+        return continueFirmInterest(collecting, text, inboundEmail, phone, deliver);
       }
     }
   }
@@ -465,12 +468,14 @@ export async function recordBuyerInbound(input: {
   }
 
   if (deal?.status === "indication_sent" && (kind === "negotiate" || looksLikeCounter(text)) && !isPlainRefusal(text)) {
-    const ack = message({
-      from: "desk",
-      channel: "whatsapp",
-      text: "Thanks. The desk has this and will reply to you here.",
-      outboundStatus: "queued",
-    });
+    const ack = deliver
+      ? message({
+          from: "desk",
+          channel: "whatsapp",
+          text: "Thanks. The desk has this and will reply to you here.",
+          outboundStatus: "queued",
+        })
+      : null;
     const saved = (await save({
       ...deal,
       status: "negotiating",
@@ -480,13 +485,13 @@ export async function recordBuyerInbound(input: {
         ...deal.messages,
         message({ from: "buyer", channel: "whatsapp", text }),
         message({ from: "system", channel: "app", text: "Buyer asked to negotiate. Matt has the thread." }),
-        ack,
+        ...(ack ? [ack] : []),
       ],
     }))!;
     await emailMattAboutNegotiation(saved, text);
     await syncRfqStatus(saved.requestId, "negotiating");
-    const delivered = await deliverDeskLines(saved, [ack.id], undefined, phone || saved.buyerPhone);
-    return delivered;
+    if (!deliver || !ack) return saved;
+    return deliverDeskLines(saved, [ack.id], undefined, phone || saved.buyerPhone);
   }
 
   if (!deal || kind === "chat") return { event: "chat" };
@@ -499,12 +504,14 @@ export async function recordBuyerInbound(input: {
     }
     const exec = await seededExecution(deal);
     const ask = firmOfferNextAsk(exec, deal, lastDeskText(deal));
-    const outbound = message({
-      from: "desk",
-      channel: "whatsapp",
-      text: ask.text,
-      outboundStatus: "queued",
-    });
+    const outbound = deliver
+      ? message({
+          from: "desk",
+          channel: "whatsapp",
+          text: ask.text,
+          outboundStatus: "queued",
+        })
+      : null;
     const saved = (await save({
       ...deal,
       status: "firm_interest",
@@ -518,10 +525,10 @@ export async function recordBuyerInbound(input: {
           from: "system",
           channel: "app",
           text: exec.packing
-            ? `Buyer agreed. Packing already on file (${exec.packing}). Collecting remaining firm-offer terms.`
-            : "Buyer agreed. Collecting packing and payment for the firm offer.",
+            ? `Buyer agreed. Packing already on file (${exec.packing}). The firm-offer agent collects the remaining terms.`
+            : "Buyer agreed. The firm-offer agent collects the remaining terms.",
         }),
-        outbound,
+        ...(outbound ? [outbound] : []),
       ]),
     }))!;
     await syncRfqStatus(saved.requestId, "firm_interest", {
@@ -542,6 +549,7 @@ export async function recordBuyerInbound(input: {
         }),
       )
       .catch(() => undefined);
+    if (!deliver || !outbound) return saved;
     return deliverDeskLines(saved, [outbound.id], undefined, phone || saved.buyerPhone);
   }
 
@@ -702,7 +710,7 @@ function lastDeskText(deal: DeskDeal) {
   return [...deal.messages].reverse().find((row) => row.from === "desk")?.text || "";
 }
 
-async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: string, phone = "") {
+async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: string, phone = "", deliver = true) {
   const row = inboundEmail.includes("@") ? applyBuyerEmail(deal, inboundEmail) : deal;
   const inbound = message({ from: "buyer", channel: "whatsapp", text });
   const exec = await seededExecution(row);
@@ -718,16 +726,18 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
         message({ from: "system", channel: "app", text: "Buyer confirmed execution terms. Firm offer is on the desk to review." }),
       ],
     });
-    const thanks = message({
-      from: "desk",
-      channel: "whatsapp",
-      text: "Thanks — the firm offer is with the desk to review. We will send it when it is ready.",
-      outboundStatus: "queued",
-    });
+    const thanks = deliver
+      ? message({
+          from: "desk",
+          channel: "whatsapp",
+          text: "Thanks — the firm offer is with the desk to review. We will send it when it is ready.",
+          outboundStatus: "queued",
+        })
+      : null;
     const saved = (await save({
       ...parked,
       buyerPhone: phone || parked.buyerPhone,
-      messages: retireQueuedIndicationAsks([...parked.messages, thanks]),
+      messages: retireQueuedIndicationAsks([...parked.messages, ...(thanks ? [thanks] : [])]),
     }))!;
     await import("@/lib/trade/admin-alerts")
       .then(({ notifyFirmOfferOnDesk }) =>
@@ -741,22 +751,26 @@ async function continueFirmInterest(deal: DeskDeal, text: string, inboundEmail: 
         }),
       )
       .catch(() => undefined);
+    if (!deliver || !thanks) return saved;
     return deliverDeskLines(saved, [thanks.id], undefined, phone || saved.buyerPhone);
   }
   const merged = recapPending ? { ...exec, notes: [exec.notes, text.trim()].filter(Boolean).join(" · ") } : applyBuyerTermAnswer(exec, text);
   const ask = firmOfferNextAsk(merged, row, lastDeskText(row));
-  const outbound = message({
-    from: "desk",
-    channel: "whatsapp",
-    text: ask.text,
-    outboundStatus: "queued",
-  });
+  const outbound = deliver
+    ? message({
+        from: "desk",
+        channel: "whatsapp",
+        text: ask.text,
+        outboundStatus: "queued",
+      })
+    : null;
   const saved = (await save({
     ...row,
     buyerPhone: phone || row.buyerPhone,
     execution: merged,
-    messages: retireQueuedIndicationAsks([...row.messages, inbound, outbound]),
+    messages: retireQueuedIndicationAsks([...row.messages, inbound, ...(outbound ? [outbound] : [])]),
   }))!;
+  if (!deliver || !outbound) return saved;
   return deliverDeskLines(saved, [outbound.id], undefined, phone || saved.buyerPhone);
 }
 

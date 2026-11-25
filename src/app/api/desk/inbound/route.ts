@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     requestId: typeof body?.requestId === "string" ? body.requestId : undefined,
     text,
     email,
+    deliver: false,
   });
   if ("error" in result) return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
   const echo = { phone, text, body: text, email: email || "" };
