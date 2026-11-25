@@ -85,6 +85,23 @@ export default async function AiInquiryPage({ params }: { params: Promise<{ id: 
             )}
           </Card>
           <Card>
+            <CardHeader title="Workflow activity" meta="Messages the WeChat and WhatsApp workflows wrote for this request." />
+            {desk.activity.length === 0 ? (
+              <p className="px-5 py-6 text-[13.5px] text-mid">No workflow messages on this request yet. Fan-out and supplier replies show up here.</p>
+            ) : (
+              <ul className="max-h-[280px] space-y-2 overflow-y-auto px-5 py-4">
+                {desk.activity.map((item) => (
+                  <li key={item.id} className="rounded-2xl bg-s2 px-3 py-2 text-[13px] text-ink">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-dim">
+                      {item.direction === "out" ? "Sent" : "Received"} · {item.channel}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap">{item.body}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card>
             <CardHeader title="Buyer conversation" meta={deal ? DEAL_STATUS_LABEL[deal.status] : "No shortlist yet"} />
             {deal?.messages.length ? (
               <ul className="max-h-[420px] space-y-2 overflow-y-auto px-5 py-4">

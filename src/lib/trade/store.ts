@@ -20,7 +20,7 @@ import type {
 } from "@/lib/trade/types";
 import { formatOfferCode, mondayOf } from "@/lib/trade/offer-code";
 import { rfqLookupKeys } from "@/lib/trade/rfq-code";
-import { ONBOARDING_STATUSES } from "@/lib/trade/types";
+import { ONBOARDING_STATUSES, RFQ_ASK_STATUSES } from "@/lib/trade/types";
 
 const text = (v: unknown) => (typeof v === "string" ? v : v == null ? "" : String(v));
 const num = (v: unknown) => {
@@ -712,13 +712,22 @@ export async function getTradeRfqDesk(id: string): Promise<TradeRfqDesk | null> 
   const rfq = await getTradeRfqRecord(id);
   if (!rfq) return null;
   const buyerId = text(rfq.buyer_id);
-  const [{ data: buyer }, { data: asks, error: askError }, { data: quotes }] = await Promise.all([
+  const [{ data: buyer }, { data: asks, error: askError }, { data: quotes }, { data: messages }] = await Promise.all([
     buyerId ? db.from("trade_buyers").select("company_name, contact_name, email, whatsapp_e164").eq("id", buyerId).maybeSingle() : Promise.resolve({ data: null }),
     db.from("trade_rfq_asks").select("*").eq("rfq_id", id),
     db.from("trade_quotes").select("supplier_id, unit_price, incoterm, load_port, is_no_offer, received_at, status").eq("rfq_id", id).eq("kind", "rfq"),
+    db.from("trade_messages").select("id, direction, channel, body, created_at").eq("rfq_id", id).order("created_at", { ascending: false }).limit(20),
   ]);
   if (askError && !isMissingTable(askError)) throw databaseError("list RFQ asks", askError);
-  const supplierIds = [...new Set((asks ?? []).map((row) => text((row as { supplier_id: string }).supplier_id)).filter(Boolean))];
+  const quoteRows = (quotes ?? []) as Record<string, unknown>[];
+  const supplierIds = [
+    ...new Set(
+      [
+        ...(asks ?? []).map((row) => text((row as { supplier_id: string }).supplier_id)),
+        ...quoteRows.map((row) => text(row.supplier_id)),
+      ].filter(Boolean),
+    ),
+  ];
   const { data: suppliers } = supplierIds.length
     ? await db.from("trade_suppliers").select("id, company_name, contact_name, wechat_openid").in("id", supplierIds)
     : { data: [] };
@@ -746,6 +755,29 @@ export async function getTradeRfqDesk(id: string): Promise<TradeRfqDesk | null> 
       quoteAt: quote ? text(quote.received_at) : null,
     };
   });
+  const seenSuppliers = new Set(deskAsks.map((ask) => ask.supplierId));
+  for (const row of quoteRows) {
+    const supplierId = text(row.supplier_id);
+    if (!supplierId || seenSuppliers.has(supplierId)) continue;
+    seenSuppliers.add(supplierId);
+    const mill = millMap[supplierId] ?? {};
+    const noOffer = row.is_no_offer === true || text(row.status) === "no_offer";
+    deskAsks.push({
+      id: `quote-${supplierId}`,
+      rfqId: id,
+      supplierId,
+      companyName: text(mill.company_name) || "Supplier",
+      contactName: text(mill.contact_name),
+      wechatOpenid: text(mill.wechat_openid) || null,
+      status: noOffer ? "no_offer" : "quoted",
+      error: "",
+      sentAt: null,
+      unitPrice: noOffer ? null : num(row.unit_price),
+      incoterm: text(row.incoterm),
+      loadPort: text(row.load_port),
+      quoteAt: text(row.received_at) || null,
+    });
+  }
   deskAsks.sort((a, b) => a.companyName.localeCompare(b.companyName));
   const b = (buyer ?? {}) as Record<string, unknown>;
   return {
@@ -768,7 +800,81 @@ export async function getTradeRfqDesk(id: string): Promise<TradeRfqDesk | null> 
     createdAt: text(rfq.created_at),
     updatedAt: text(rfq.updated_at),
     asks: deskAsks,
+    activity: (messages ?? []).map((row) => {
+      const message = row as Record<string, unknown>;
+      return {
+        id: text(message.id),
+        direction: text(message.direction) === "out" ? "out" as const : "in" as const,
+        channel: text(message.channel),
+        body: text(message.body),
+        createdAt: text(message.created_at),
+      };
+    }),
   };
+}
+
+const ASK_PROGRESS = new Set(["quoted", "no_offer"]);
+
+/** n8n fan-out and quote intake. Keeps the inquiry desk in step with the workflow. */
+export async function recordWorkflowRfqAsk(input: {
+  requestId?: string;
+  rfqId?: string;
+  supplierId?: string;
+  wechatOpenId?: string;
+  status: string;
+  error?: string;
+  log?: boolean;
+}): Promise<{ ok: true; skipped?: true; reason?: string; rfqId?: string; supplierId?: string; status?: RfqAskStatus } | { ok: false; error: string }> {
+  const db = dataClient();
+  if (!db) return { ok: false, error: "Supabase is not configured." };
+  const status = askStatus(input.status);
+  if (!RFQ_ASK_STATUSES.includes(input.status as RfqAskStatus)) {
+    return { ok: false, error: "Unknown ask status." };
+  }
+  const rfqId = text(input.rfqId) || (await findRfqIdByCode(text(input.requestId))) || "";
+  if (!rfqId) return { ok: true, skipped: true, reason: "rfq_not_found" };
+  let supplierId = text(input.supplierId);
+  if (!supplierId && text(input.wechatOpenId)) {
+    const supplier = await getTradeSupplierByWechatOpenid(text(input.wechatOpenId));
+    supplierId = supplier?.id || "";
+  }
+  if (!supplierId) return { ok: true, skipped: true, reason: "supplier_not_found" };
+  const { data: existing } = await db
+    .from("trade_rfq_asks")
+    .select("status")
+    .eq("rfq_id", rfqId)
+    .eq("supplier_id", supplierId)
+    .maybeSingle();
+  if (existing && ASK_PROGRESS.has(text(existing.status)) && !ASK_PROGRESS.has(status)) {
+    return { ok: true, rfqId, supplierId, status: askStatus(existing.status) };
+  }
+  await upsertRfqAsk({
+    rfqId,
+    supplierId,
+    status,
+    error: text(input.error),
+  });
+  if (input.log !== false) {
+    const note =
+      status === "sent"
+        ? "RFQ sent on WeChat"
+        : status === "failed"
+          ? `WeChat send failed${text(input.error) ? `: ${text(input.error)}` : ""}`
+          : status === "quoted"
+            ? "Supplier quote received"
+            : status === "no_offer"
+              ? "Supplier replied no offer"
+              : `Supplier ask ${status}`;
+    await logTradeMessage({
+      direction: status === "quoted" || status === "no_offer" ? "in" : "out",
+      channel: "wechat",
+      supplierId,
+      rfqId,
+      body: note,
+      payload: { event: "rfq_ask", status },
+    });
+  }
+  return { ok: true, rfqId, supplierId, status };
 }
 
 const CLOSED_RFQ = new Set(["won", "lost", "expired", "closed"]);

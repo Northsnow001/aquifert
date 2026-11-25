@@ -198,6 +198,14 @@ export type TradeRfqAsk = {
   quoteAt: string | null;
 };
 
+export type TradeRfqActivity = {
+  id: string;
+  direction: "in" | "out";
+  channel: string;
+  body: string;
+  createdAt: string;
+};
+
 export type TradeRfqDesk = {
   id: string;
   code: string;
@@ -218,6 +226,7 @@ export type TradeRfqDesk = {
   createdAt: string;
   updatedAt: string;
   asks: TradeRfqAsk[];
+  activity: TradeRfqActivity[];
 };
 
 export type TradeQuote = {
