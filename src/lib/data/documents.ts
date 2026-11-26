@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "fs";
 import path from "path";
 import { assertLocalAllowed, databaseError, dataClient, readFallback } from "@/lib/data/db";
 import type { DocumentKey } from "@/lib/data/tables";
+import { versionedReader } from "@/lib/data/versioned-reader";
 
 const localPath = (key: DocumentKey) => path.join(process.cwd(), "data", `${key}.json`);
 const MAX_ATTEMPTS = 6;
@@ -33,6 +34,30 @@ function serialize<T>(key: DocumentKey, task: () => Promise<T>): Promise<T> {
   queues.set(key, tail);
   void tail.then(() => queues.get(key) === tail && queues.delete(key));
   return run;
+}
+
+/**
+ * Hub content is one large JSON document shared by every hub page. Unchanged
+ * reads select only updated_at, avoiding repeated JSON serialization/transfer in
+ * Postgres. Keep this separate from mutation reads, which must always be fresh.
+ * The caller (getHubContent) clones the returned snapshot before exposing it.
+ */
+const readHubSnapshot = versionedReader<unknown>(
+  async () => {
+    const { data, error } = await dataClient()!.from("app_documents").select("updated_at").eq("key", "hub-content").maybeSingle();
+    if (error) return readFallback("app_documents", error, null);
+    return (data?.updated_at as string | undefined) ?? null;
+  },
+  async () => {
+    const { data, error } = await dataClient()!.from("app_documents").select("data, updated_at").eq("key", "hub-content").maybeSingle();
+    if (error) return readFallback("app_documents", error, { version: null, value: null });
+    return { version: (data?.updated_at as string | undefined) ?? null, value: (data?.data as unknown) ?? null };
+  },
+);
+
+/** Read-only hub snapshot; local development still reads its JSON file each time. */
+export function readHubDocument(): Promise<unknown> {
+  return dataClient() ? readHubSnapshot() : Promise.resolve(readLocal("hub-content"));
 }
 
 /** The stored document, or null when none has been saved yet. Throws when Supabase cannot be read, so a failed read is never mistaken for empty content and saved over. */

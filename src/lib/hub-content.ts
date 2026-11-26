@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { readDocument, updateDocument } from "@/lib/data/documents";
+import { readHubDocument, updateDocument } from "@/lib/data/documents";
 import { indicators as seedIndicators, telex as seedTelex } from "@/data/sample";
 import { freightBoard as seedFreight, toolsCommentary as seedToolsCommentary } from "@/data/desk";
 import { collections as seedCollections, hedgeReports as seedHedge, libraryDocuments as seedLibrary } from "@/data/library";
@@ -196,7 +196,7 @@ function normalize(raw: Record<string, unknown>): HubContent {
 
 const fromStored = (raw: unknown) => (isRecord(raw) ? normalize(raw) : seed());
 
-const cachedHubContent = cache(async () => fromStored(await readDocument("hub-content")));
+const cachedHubContent = cache(async () => fromStored(await readHubDocument()));
 
 /** Read once per request; each caller gets its own copy to change. */
 export async function getHubContent(): Promise<HubContent> {
