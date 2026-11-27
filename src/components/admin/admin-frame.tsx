@@ -8,12 +8,14 @@ import { ArrowUpRight, LogOut, Menu, Search, X } from "lucide-react";
 import { AdminNav, AdminNavIcon, isAdminActive, type NavGroup } from "@/components/admin/admin-nav";
 import { CommandPalette, openPalette, type PaletteItem } from "@/components/app/command-palette";
 import { IdleTimeout } from "@/components/app/idle-timeout";
+import { ThemeToggle } from "@/components/hub/theme-toggle";
 import { initials, type SessionUser } from "@/lib/session-shared";
+import { THEME_COOKIE, type Theme } from "@/lib/theme";
 
-function Brand() {
+function Brand({ theme }: { theme: Theme }) {
   return (
     <Link href="/admin" aria-label="Admin dashboard" className="flex items-center gap-2 no-underline transition-opacity hover:opacity-80">
-      <Image src="/brand/logo.png" alt="Aquifert" width={784} height={209} className="h-7 w-auto" priority />
+      <Image src={theme === "dark" ? "/brand/logo-v2-light.png" : "/brand/logo.png"} alt="Aquifert" width={784} height={209} className="h-7 w-auto" priority />
       <span className="rounded-md bg-ink px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-white">Admin</span>
     </Link>
   );
@@ -38,9 +40,19 @@ function UserCard({ user }: { user: SessionUser }) {
   );
 }
 
-export function AdminFrame({ user, groups, children }: { user: SessionUser; groups: NavGroup[]; children: React.ReactNode }) {
+export function AdminFrame({ user, groups, theme: initialTheme = "light", children }: { user: SessionUser; groups: NavGroup[]; theme?: Theme; children: React.ReactNode }) {
   const pathname = usePathname();
   const [drawer, setDrawer] = useState(false);
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    return () => root.classList.remove("dark");
+  }, [theme]);
+  const changeTheme = (next: Theme) => {
+    setTheme(next);
+    document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
+  };
 
   const items = groups.flatMap((group) => group.items.map((item) => ({ ...item, group: group.title })));
   const current = items.filter((item) => isAdminActive(pathname, item.href)).sort((a, b) => b.href.length - a.href.length)[0];
@@ -69,7 +81,7 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
   );
 
   return (
-    <div className="aq-app aq-frame h-dvh overflow-hidden lg:p-2.5">
+    <div className={`aq-app aq-frame h-dvh overflow-hidden lg:p-2.5 ${theme === "dark" ? "dark" : ""}`}>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[99] focus:rounded-lg focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
@@ -79,7 +91,7 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
       <div className="aq-canvas flex h-full overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)]">
         <aside className="aq-rail hidden w-[256px] shrink-0 flex-col border-r border-black/[.06] lg:flex">
           <div className="flex h-16 shrink-0 items-center px-5">
-            <Brand />
+            <Brand theme={theme} />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto">
             <AdminNav groups={groups} />
@@ -109,7 +121,7 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
               <Menu className="h-5 w-5" />
             </button>
             <div className="lg:hidden">
-              <Brand />
+              <Brand theme={theme} />
             </div>
             <div className="hidden min-w-0 items-center gap-2 text-[14px] lg:flex" aria-label="Current page">
               <span className="text-dim">{current?.group ?? "Admin"}</span>
@@ -130,6 +142,7 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
               <button type="button" onClick={openPalette} aria-label="Search admin" className="flex h-9 w-9 items-center justify-center rounded-full text-ink hover:bg-black/[.05] md:hidden">
                 <Search className="h-[18px] w-[18px]" />
               </button>
+              <ThemeToggle theme={theme} onChange={changeTheme} tone="onLight" />
               <Link
                 href="/hub"
                 className="hidden h-9 items-center gap-1 rounded-full border border-black/[.08] bg-white px-3.5 text-[12.5px] font-semibold text-ink no-underline transition hover:text-blue sm:inline-flex"
@@ -154,7 +167,7 @@ export function AdminFrame({ user, groups, children }: { user: SessionUser; grou
           <button type="button" aria-label="Close menu" className="aq-backdrop absolute inset-0 cursor-default bg-[#0b1e2d]/45" onClick={() => setDrawer(false)} />
           <div className="aq-drawer aq-rail absolute inset-y-0 left-0 flex w-[min(86vw,320px)] flex-col shadow-2xl">
             <div className="flex h-14 shrink-0 items-center justify-between px-4">
-              <Brand />
+              <Brand theme={theme} />
               <button type="button" onClick={() => setDrawer(false)} aria-label="Close menu" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-ink">
                 <X className="h-4 w-4" />
               </button>

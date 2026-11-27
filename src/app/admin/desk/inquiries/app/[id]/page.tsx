@@ -6,7 +6,7 @@ import { listInbox } from "@/lib/inbox";
 export const dynamic = "force-dynamic";
 
 const LABELS: Record<string, string> = {
-  reference: "Inquiry ID",
+  reference: "Enquiry ID",
   name: "Name",
   email: "Email",
   company: "Company",
@@ -36,8 +36,8 @@ export default async function AppInquiryPage({ params }: { params: Promise<{ id:
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        crumbs={[{ href: contact ? "/admin/desk/inquiries?view=enquiries" : "/admin/desk/inquiries", label: contact ? "General inquiries" : "Trade inquiries" }]}
-        title={item.payload.reference || (contact ? item.payload.name || "Contact message" : "Trade Desk inquiry")}
+        crumbs={[{ href: contact ? "/admin/desk/inquiries?view=enquiries" : "/admin/desk/inquiries", label: contact ? "General enquiries" : "Trade enquiries" }]}
+        title={item.payload.reference || (contact ? item.payload.name || "Contact message" : "Trade Desk enquiry")}
         description={`Received ${new Date(item.at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`}
         actions={<Pill tone={contact ? "amber" : "blue"}>{contact ? "Contact" : "Trade Desk App"}</Pill>}
       />

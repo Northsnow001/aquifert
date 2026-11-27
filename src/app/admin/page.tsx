@@ -40,7 +40,7 @@ const MODULES: Module[] = [
   { title: "Hedge Tables", body: "Direct hedge reports, pasted or built by commodity.", icon: Table2, href: "/admin/hedge" },
   { title: "Library", body: "Member documents and the collections they sit in.", icon: Library, href: "/admin/library" },
   { title: "Collections", body: "Nested groups for library files, public or private.", icon: FolderTree, href: "/admin/collections" },
-  { title: "Trade inquiries", body: "Trade desk requests, the AI agent, and general contact questions.", icon: Inbox, href: "/admin/desk/inquiries" },
+  { title: "Trade enquiries", body: "Trade desk requests, the AI agent, and general contact questions.", icon: Inbox, href: "/admin/desk/inquiries" },
   { title: "Freight Routes", body: "Open freight enquiries and their visibility on the hub.", icon: Ship, href: "/admin/freight" },
   { title: "AQ Trader Tools", body: "The AQ Trader Tools commentary shown inside the hub.", icon: BookOpen, href: "/admin/tools" },
   { title: "Aquibot Trader AI", body: "Prompt lifecycle, limits, retrieval, vocabulary and extraction rules.", icon: Bot, href: "/admin/aquibot" },
@@ -105,7 +105,7 @@ export default async function AdminHomePage() {
     {
       href: "/admin/desk/inquiries",
       icon: Inbox,
-      label: "Inquiries",
+      label: "Enquiries",
       value: inbox.length,
       unit: "received",
       detail: inbox[0] ? `Latest ${inbox[0].at.slice(0, 16).replace("T", " ")}` : "Order Desk and Contact",

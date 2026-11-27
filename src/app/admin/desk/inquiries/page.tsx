@@ -65,11 +65,11 @@ export default async function InquiriesPage({
     <div className="mx-auto max-w-[1600px]">
       <PageHeader
         crumbs={[{ href: "/admin/desk", label: "Desk shortlists" }]}
-        title={view === "enquiries" ? "General inquiries" : "Trade inquiries"}
+        title={view === "enquiries" ? "General enquiries" : "Trade enquiries"}
         description={
           view === "enquiries"
-            ? "Contact form and other general questions. Trade requests stay on Trade inquiries."
-            : "Trade desk requests and AI agent inquiries. Open a row for the full request. Supplier choice and margin approval stay on the shortlist."
+            ? "Contact form and other general questions. Trade requests stay on Trade enquiries."
+            : "Trade desk requests and AI agent enquiries. Open a row for the full request. Supplier choice and margin approval stay on the shortlist."
         }
         actions={
           <a href={`/admin/desk/inquiries/export${query({})}`} className="inline-flex h-9 items-center rounded-full border border-border bg-white px-4 text-[13px] font-semibold text-ink no-underline">
@@ -80,8 +80,8 @@ export default async function InquiriesPage({
       <div className="mb-4 inline-flex rounded-full bg-s2 p-1" role="tablist" aria-label="Inbox">
         {(
           [
-            { key: "inquiries", label: "Trade inquiries", count: inquiriesCount },
-            { key: "enquiries", label: "General inquiries", count: enquiriesCount },
+            { key: "inquiries", label: "Trade enquiries", count: inquiriesCount },
+            { key: "enquiries", label: "General enquiries", count: enquiriesCount },
           ] as const
         ).map((item) => {
           const on = view === item.key;
@@ -133,15 +133,15 @@ export default async function InquiriesPage({
         </div>
         {slice.length === 0 ? (
           <EmptyState
-            title={view === "enquiries" ? "No general inquiries" : "No trade inquiries"}
-            body={view === "enquiries" ? "Contact form messages land here as soon as they are sent." : "Trade desk requests and AI agent inquiries appear here as soon as they are received."}
+            title={view === "enquiries" ? "No general enquiries" : "No trade enquiries"}
+            body={view === "enquiries" ? "Contact form messages land here as soon as they are sent." : "Trade desk requests and AI agent enquiries appear here as soon as they are received."}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1280px] text-left text-[12.5px]">
               <thead className="bg-s2 text-[11px] uppercase tracking-wide text-dim">
                 <tr>
-                  {["Inquiry", "Received", "Source", "Buyer", "Company", "Contact", "Product", "Qty", "Packaging", "Incoterm", "Destination", "Window", "Target", "Quotes", "AI", "Status", ""].map((heading) => (
+                  {["Enquiry", "Received", "Source", "Buyer", "Company", "Contact", "Product", "Qty", "Packaging", "Incoterm", "Destination", "Window", "Target", "Quotes", "AI", "Status", ""].map((heading) => (
                     <th key={heading} className="whitespace-nowrap px-3 py-2 font-semibold">
                       {heading}
                     </th>

@@ -13,6 +13,7 @@ import {
   setOfferShortlistAction,
 } from "@/app/admin/desk/actions";
 import { btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 import { indicationDraftText } from "@/lib/desk-hitl/gates";
 import { buyerUnitPrice } from "@/lib/desk-hitl/logic";
 import type { BuyerPlan, DeskDeal, DeskOffer, OfferChannel } from "@/lib/desk-hitl/types";
@@ -91,7 +92,7 @@ export function ShortlistPanel({ deal, template }: { deal: DeskDeal; template: s
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
             <h2 className="text-[14px] font-semibold text-ink">Supplier quotes</h2>
-            <p className="text-[12.5px] text-mid">{`${deal.offers.length} ${deal.offers.length === 1 ? "quote" : "quotes"} on ${deal.requestId}. The first three start on the shortlist. You can add or remove any of them.`}</p>
+            <p className="text-[12.5px] text-mid">{`${deal.offers.length} ${deal.offers.length === 1 ? "quote" : "quotes"} on ${displayRfqCode(deal.requestId)}. The first three start on the shortlist. You can add or remove any of them.`}</p>
           </div>
           <label className="text-[12px] font-semibold text-mid">
             Buyer plan
@@ -128,7 +129,7 @@ export function ShortlistPanel({ deal, template }: { deal: DeskDeal; template: s
                 <th className="px-3 py-2 font-semibold">Product</th>
                 <th className="px-3 py-2 font-semibold">Quantity</th>
                 <th className="px-3 py-2 font-semibold">Price</th>
-                <th className="px-3 py-2 font-semibold">Inquiry ID</th>
+                <th className="px-3 py-2 font-semibold">Enquiry ID</th>
                 <th className="px-3 py-2 font-semibold">Buyer</th>
                 <th className="px-3 py-2 font-semibold">Channel</th>
                 <th className="px-3 py-2 font-semibold">Received</th>
@@ -318,7 +319,7 @@ function QuoteRows({
         <td className="px-3 py-2 text-mid">{item.product || deal.product}</td>
         <td className="px-3 py-2 text-mid">{item.quantityMt ?? deal.quantityMt ?? "—"}</td>
         <td className="px-3 py-2 font-mono text-ink">{money(item.unitPrice, item.currency)}</td>
-        <td className="px-3 py-2 font-mono text-[12px] text-mid">{deal.requestId}</td>
+        <td className="px-3 py-2 font-mono text-[12px] text-mid">{displayRfqCode(deal.requestId)}</td>
         <td className="px-3 py-2 text-mid">{deal.buyerName || deal.buyerCompany || "—"}</td>
         <td className="px-3 py-2 text-mid">{CHANNEL[channelOf(item)]}</td>
         <td className="px-3 py-2 text-mid">{item.receivedAt ? when(item.receivedAt) : "—"}</td>
@@ -370,7 +371,7 @@ function QuoteRows({
                           )}
                         </span>
                         {!files ? (
-                          <button type="button" className="shrink-0 text-[12px] font-semibold text-blue" onClick={() => setText(`Please send the ${check.label} for ${item.product || deal.product}, inquiry ${deal.requestId}.`)}>
+                          <button type="button" className="shrink-0 text-[12px] font-semibold text-blue" onClick={() => setText(`Please send the ${check.label} for ${item.product || deal.product}, enquiry ${displayRfqCode(deal.requestId)}.`)}>
                             Request
                           </button>
                         ) : null}

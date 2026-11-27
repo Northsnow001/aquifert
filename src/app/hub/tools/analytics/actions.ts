@@ -87,6 +87,7 @@ export async function estimateHubLaneAction(input: LaneEstimateInput): Promise<{
   try {
     return { ok: true, data: await estimateLane(input) };
   } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "Could not price that lane." };
+    console.error("[lane]", error);
+    return { ok: false, message: "That lane could not be priced just now. Check the ports and cargo, then try again." };
   }
 }

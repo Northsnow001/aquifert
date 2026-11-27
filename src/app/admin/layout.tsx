@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { isAdminUser } from "@/lib/admin-access";
 import { getSession } from "@/lib/session";
+import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "Aquifert Admin",
@@ -13,5 +15,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getSession();
   if (!user) redirect("/login?redirect_to=/admin");
   if (!isAdminUser(user)) redirect("/hub");
-  return <AdminShell user={user}>{children}</AdminShell>;
+  const jar = await cookies();
+  return <AdminShell user={user} theme={parseTheme(jar.get(THEME_COOKIE)?.value)}>{children}</AdminShell>;
 }

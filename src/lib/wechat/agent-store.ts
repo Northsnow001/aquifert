@@ -1,6 +1,6 @@
 import "server-only";
 
-import { dataClient, databaseError } from "@/lib/data/db";
+import { DATA_OFFLINE, dataClient, databaseError } from "@/lib/data/db";
 import type { TradeAgent } from "@/lib/trade/types";
 import { TRADE_AGENTS, defaultPrompt, type TradeAgentKey } from "@/lib/wechat/agent-defs";
 
@@ -77,7 +77,7 @@ export async function getTradeAgent(key: TradeAgentKey): Promise<TradeAgent> {
 export async function saveTradeAgent(key: string, input: { name: string; description: string; systemPrompt: string }) {
   if (!(key in TRADE_AGENTS)) throw new Error("Unknown agent.");
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const { error } = await db.from("trade_agents").upsert(
     {
       key,

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { firmOfferEmailDocument } from "@/lib/firm-order/offer-email";
+import { firmOfferEmailDocument, firmOfferEmailFromMarkdown, firmOfferLetterMarkdown } from "@/lib/firm-order/offer-email";
 import { parseFirmOrder } from "@/lib/firm-order/types";
 
 describe("firmOfferEmailDocument", () => {
@@ -37,5 +37,14 @@ describe("firmOfferEmailDocument", () => {
     assert.match(mail.text, /780 MTS \+\/- 5% IN BUYERS OPTION/);
     assert.doesNotMatch(mail.text, /The offer is this email/);
     assert.doesNotMatch(mail.html, /Matt will replace this paragraph/);
+    const letter = firmOfferLetterMarkdown({ order, note: "Dear Harbour, thank you." });
+    assert.match(letter, /# FIRM OFFER/);
+    assert.match(letter, /FO-0105/);
+    assert.match(letter, /Reply YES to this email to accept this firm offer/);
+    const edited = firmOfferEmailFromMarkdown(letter.replace("Dear Harbour, thank you.", "Dear Harbour, this is the revised offer."));
+    assert.match(edited.html, /revised offer/);
+    assert.match(edited.html, /FIRM OFFER/);
+    assert.match(edited.html, /logo-v2.png/);
+    assert.match(edited.text, /USD 840.00 PER METRIC TONNE/);
   });
 });

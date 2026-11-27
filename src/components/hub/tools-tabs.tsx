@@ -15,7 +15,7 @@ const ANALYTICS: { href: string; label: string; id: string }[] = [
   { href: "/hub/tools/analytics/board", label: "Freight Board", id: "board" },
   { href: "/hub/tools/analytics/market", label: "My Market", id: "market" },
   { href: "/hub/tools/analytics/producers", label: "Producers", id: "producers" },
-  { href: "/hub/tools/analytics/enquiries", label: "Freight Inquiries", id: "enquiries" },
+  { href: "/hub/tools/analytics/enquiries", label: "Freight Enquiries", id: "enquiries" },
   { href: "/hub/tools/analytics/reports", label: "Reports", id: "reports" },
   { href: "/hub/tools/analytics/alerts", label: "Alerts", id: "alerts" },
   { href: "/hub/tools/analytics/plans", label: "Plans", id: "plans" },

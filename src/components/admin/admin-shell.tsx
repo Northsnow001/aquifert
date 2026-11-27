@@ -15,10 +15,11 @@ import { listBans } from "@/lib/member-access";
 import { getNetbackDesk } from "@/lib/netback-desk/store";
 import { liveOrigins } from "@/lib/netback-desk/types";
 import type { SessionUser } from "@/lib/session-shared";
+import type { Theme } from "@/lib/theme";
 import { tradeCounts } from "@/lib/trade/store";
 import { listZeroRegistrations } from "@/lib/zero-interest";
 
-export async function AdminShell({ user, children }: { user: SessionUser; children: React.ReactNode }) {
+export async function AdminShell({ user, theme = "light", children }: { user: SessionUser; theme?: Theme; children: React.ReactNode }) {
   const [content, inbox, desk, netback, zero, banList, aq, requests, registrations, nitrogenReports, deskDeals, trade] = await Promise.all([
     getHubContent(),
     listInbox(),
@@ -99,7 +100,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
       items: [
         {
           href: "/admin/desk/inquiries",
-          label: "Inquiries",
+          label: "Enquiries",
           icon: "inbox",
           badge: inbox.length + (trade?.openRfqs ?? 0) || undefined,
         },
@@ -158,7 +159,7 @@ export async function AdminShell({ user, children }: { user: SessionUser; childr
   ];
 
   return (
-    <AdminFrame user={user} groups={groups}>
+    <AdminFrame user={user} groups={groups} theme={theme}>
       {children}
     </AdminFrame>
   );

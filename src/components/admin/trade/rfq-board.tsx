@@ -6,6 +6,7 @@ import { DevQuoteBar } from "@/components/admin/trade/dev-quote-bar";
 import { RfqDesk } from "@/components/admin/trade/rfq-desk";
 import { TradeLive } from "@/components/admin/trade/live-table";
 import { formatStamp } from "@/lib/content-types";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 import type { TradeRfq } from "@/lib/trade/types";
 
 function statusLabel(status: string) {
@@ -56,7 +57,7 @@ export function RfqBoard({ initial }: { initial: TradeRfq[] }) {
                     className="cursor-pointer border-b border-border last:border-0 hover:bg-[#f8fafc]"
                     onClick={() => setOpenId(row.id)}
                   >
-                    <td className="px-4 py-3 font-semibold text-ink">{row.code}</td>
+                    <td className="px-4 py-3 font-semibold text-ink">{displayRfqCode(row.code)}</td>
                     <td className="px-4 py-3 text-mid">{row.buyerCompany || "—"}</td>
                     <td className="px-4 py-3 text-ink">{row.productLabel || "—"}</td>
                     <td className="px-4 py-3 text-mid">{row.quantityMt ? `${row.quantityMt} MT` : "—"}</td>

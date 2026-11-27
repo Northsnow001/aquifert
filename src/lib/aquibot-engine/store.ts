@@ -14,12 +14,15 @@ export function db() {
 
 function required() {
   const database = db();
-  if (!database) throw new Error("Supabase is not configured (NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY).");
+  if (!database) throw new Error("Aquibot cannot reach its records. Ask the desk to check the data connection, then try again.");
   return database;
 }
 
 function check<T>(result: { data: T; error: { message: string } | null }) {
-  if (result.error) throw new Error(result.error.message);
+  if (result.error) {
+    console.error("[aquibot]", result.error.message);
+    throw new Error("Aquibot could not read its records just now. Wait a moment and try again.");
+  }
   return result.data;
 }
 
@@ -38,10 +41,15 @@ export async function engineStatus(): Promise<EngineStatus> {
     const { error } = await database.from("aquibot_documents").select("id", { head: true, count: "exact" }).limit(1);
     tables = !error;
     tablesVerified = tables;
-    if (error) problem = /does not exist|schema cache|relation/i.test(error.message) ? "The Aquibot tables are missing. Run supabase/migrations/002_aquibot.sql." : error.message;
+    if (error) {
+      console.error("[aquibot] tables", error.message);
+      problem = /does not exist|schema cache|relation/i.test(error.message)
+        ? "Aquibot’s records are not ready yet. Ask the desk to finish the database setup, then try again."
+        : "Aquibot could not read its records just now. Wait a moment and try again.";
+    }
   }
-  if (!database) problem = "Supabase is not configured.";
-  else if (!gemini) problem = problem ?? "GEMINI_API_KEY is not set.";
+  if (!database) problem = "Aquibot cannot reach its records. Ask the desk to check the data connection, then try again.";
+  else if (!gemini) problem = problem ?? "Aquibot’s writing service is not connected. Ask the desk to check it, then try again.";
   return { gemini, supabase: Boolean(database), tables, ready: gemini && Boolean(database) && tables, problem };
 }
 
@@ -232,7 +240,10 @@ export async function listSessions(options: { search?: string; limit: number; of
     query = query.or(`user_email.ilike.${term},user_name.ilike.${term},title.ilike.${term}`);
   }
   const { data, count, error } = await query.range(options.offset, options.offset + options.limit - 1);
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("[aquibot] sessions", error.message);
+    throw new Error("Aquibot could not open the conversation list. Wait a moment and try again.");
+  }
   return { rows: (data ?? []) as SessionRow[], total: count ?? 0 };
 }
 

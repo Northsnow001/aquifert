@@ -143,7 +143,8 @@ async function sendWithResend(message: Message, delivery: DeliverySettings, from
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(`Resend returned ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`);
+    console.error("[mail] resend", response.status, detail.slice(0, 200));
+    throw new Error("The email service refused the message. Check the sender address, then try again.");
   }
   const body = (await response.json().catch(() => null)) as { id?: unknown } | null;
   return typeof body?.id === "string" ? body.id : undefined;
@@ -172,7 +173,8 @@ export async function sendEmail(
       entry.status = "sent";
     } catch (error) {
       entry.status = "failed";
-      entry.error = error instanceof Error ? error.message : "Delivery failed.";
+      console.error("[mail]", error);
+      entry.error = "The email could not be sent. Check the sender settings and try again.";
     }
   }
   try {

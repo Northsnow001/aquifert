@@ -7,7 +7,6 @@ import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecutio
 import { deleteFoAttachmentFile, FO_MAX_FILES, storeFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { applyFirmOfferEditor, applyPiEditor, applySalesContractEditor, proformaFromN8n, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import type { BuyerPlan, DeskDeal, DeskExecution, DeskFoAttachment, DeskFoPack, DeskMessage, DeskOffer, OfferChannel, SupplierDoc } from "@/lib/desk-hitl/types";
-import { listOutbox } from "@/lib/mailer";
 import { buyerDocumentFromDeal, firmOfferDraftFromDeal, salesContractDraftFromDeal, salesContractFromPi, supplierDocumentFromDeal } from "@/lib/firm-order/from-deal";
 
 const now = () => new Date().toISOString();
@@ -113,58 +112,24 @@ function firmOfferWhatsApp(deal: DeskDeal, email: string) {
   return `Aquifert desk — ${product}\nYour firm offer for ${qty}${product} is in your email (${email}). Reply YES on that email to accept.`;
 }
 
-function stripHtml(html: string) {
-  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-}
-
-/** WF8 used to wipe PI; recover emailed PI terms from the outbox. */
-async function recoverPiIfSent(deal: DeskDeal, mails?: Awaited<ReturnType<typeof listOutbox>>): Promise<DeskDeal> {
-  if (deal.pi?.status === "sent" && deal.pi.order?.unit_price_usd) return deal;
-  const box = mails ?? (await listOutbox().catch(() => []));
-  const hit = box
-    .filter((row) => row.kind === "pi-buyer" && row.subject.toLowerCase().includes(deal.requestId.toLowerCase()))
-    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0];
-  if (!hit) return deal;
-  const base = deal.pi?.order ?? buyerDocumentFromDeal(deal, "proforma");
-  if (!base) return deal;
-  const body = stripHtml(hit.html);
-  const parsed = body.match(/for\s+([\d.]+)\s+MT\s+(.+?)\s+at USD\s+([\d.]+)/i);
-  const next: DeskDeal = {
-    ...deal,
-    pi: {
-      status: "sent",
-      updatedAt: hit.at,
-      sentAt: hit.at,
-      sentTo: hit.to,
-      order: {
-        ...base,
-        document: "proforma",
-        quantity_mt: parsed ? Number(parsed[1]) : base.quantity_mt,
-        product: parsed ? parsed[2].trim() : base.product,
-        unit_price_usd: parsed ? Number(parsed[3]) : base.unit_price_usd,
-        buyer: { ...base.buyer, email: hit.to },
-      },
-    },
-  };
-  return (await save(next))!;
-}
-
 export async function listDeskDeals() {
-  const [rows, mails] = await Promise.all([listRecords(DESK_DEALS), listOutbox().catch(() => [])]);
-  return Promise.all(rows.map((row) => recoverPiIfSent(row, mails)));
+  return listRecords(DESK_DEALS);
 }
 
 export async function getDeskDeal(id: string) {
   const deal = await getRecord(DESK_DEALS, id);
   if (!deal) return null;
-  const recovered = await recoverPiIfSent(deal);
-  if (recovered.execution?.confirmedAt && recovered.buyerPrice != null && recovered.firmOffer?.status !== "sent" && !recovered.firmOffer) {
-    return (await save(parkFirmOffer(recovered)))!;
+  try {
+    if (deal.execution?.confirmedAt && deal.buyerPrice != null && deal.firmOffer?.status !== "sent" && !deal.firmOffer) {
+      return (await save(parkFirmOffer(deal))) ?? deal;
+    }
+    if (deal.buyerEmail && deal.firmOffer?.order && !deal.firmOffer.order.buyer.email) {
+      return (await save(applyBuyerEmail(deal, deal.buyerEmail))) ?? deal;
+    }
+  } catch (error) {
+    console.error("[desk] the stored offer could not be refreshed", error);
   }
-  if (recovered.buyerEmail && recovered.firmOffer?.order && !recovered.firmOffer.order.buyer.email) {
-    return (await save(applyBuyerEmail(recovered, recovered.buyerEmail)))!;
-  }
-  return recovered;
+  return deal;
 }
 
 function mergeOffers(incoming: DeskOffer[], previous: DeskOffer[] | undefined): DeskOffer[] {
@@ -1017,12 +982,13 @@ async function emailSupplierPack(
           text:
             mailed.status === "sent"
               ? `Supplier pack emailed to ${offer.supplierName} <${millEmail}> at ${priceLine}.`
-              : `Supplier pack email to ${offer.supplierName} <${millEmail}> was ${mailed.status}${mailed.error ? `: ${mailed.error}` : ""}.`,
+              : `The supplier pack email to ${offer.supplierName} was not sent. Check the supplier email and try again.`,
         }),
       ],
     });
     return mailed.status;
   } catch (error) {
+    console.error("[desk] supplier pack email", error);
     const latest = (await getRecord(DESK_DEALS, deal.id)) ?? deal;
     await save({
       ...latest,
@@ -1031,7 +997,7 @@ async function emailSupplierPack(
         message({
           from: "system",
           channel: "email",
-          text: `Supplier pack email to ${offer.supplierName} failed: ${error instanceof Error ? error.message : "send error"}.`,
+          text: `The supplier pack email to ${offer.supplierName} was not sent. Check the supplier email and try again.`,
         }),
       ],
     });
@@ -1556,16 +1522,17 @@ async function notifyChosenSupplier(deal: DeskDeal): Promise<{ millName: string;
           text:
             mailed.status === "sent"
               ? `Firm offer emailed to ${mill.supplierName} <${millEmail}> at ${priceLine}.`
-              : `Firm offer email to ${mill.supplierName} <${millEmail}> was ${mailed.status}${mailed.error ? `: ${mailed.error}` : ""}.`,
+              : `The firm offer email to ${mill.supplierName} was not sent. Check the supplier email and try again.`,
         }),
       );
     } catch (error) {
+      console.error("[desk] mill firm offer email", error);
       millEmailStatus = "failed";
       notes.push(
         message({
           from: "system",
           channel: "email",
-          text: `Firm offer email to ${mill.supplierName} failed: ${error instanceof Error ? error.message : "send error"}.`,
+          text: `The firm offer email to ${mill.supplierName} was not sent. Check the supplier email and try again.`,
         }),
       );
     }
@@ -1874,12 +1841,21 @@ export async function markSupplierDocument(input: {
   return saved ?? { error: "Could not save the document." };
 }
 
-export async function saveFirmEmail(input: { id: string; subject: string; note: string; actor: string }) {
+export async function saveFirmEmail(input: { id: string; subject: string; note: string; body?: string; actor: string }) {
   const deal = await loadDeal(input.id);
   if (!deal) return { error: "That shortlist was not found." };
   const subject = input.subject.trim();
   if (!subject) return { error: "Write a subject. It should keep the inquiry ID." };
-  const saved = await save({ ...deal, firmEmail: { subject, note: input.note.trim(), savedAt: now(), savedBy: input.actor || "Desk" } });
+  const saved = await save({
+    ...deal,
+    firmEmail: {
+      subject,
+      note: input.note.trim(),
+      body: input.body?.trim() || deal.firmEmail?.body || "",
+      savedAt: now(),
+      savedBy: input.actor || "Desk",
+    },
+  });
   return saved ?? { error: "Could not save the email draft." };
 }
 

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { dataClient, databaseError } from "@/lib/data/db";
+import { DATA_OFFLINE, dataClient, databaseError } from "@/lib/data/db";
 import { BOOK_SPECS, bookSpec, type BookField, type BookRow, type BookSpec } from "@/lib/trade/book";
 import { formatOfferCode, mondayOf } from "@/lib/trade/offer-code";
 import { extractRfqCode } from "@/lib/trade/rfq-code";
@@ -202,7 +202,7 @@ function valuesFor(spec: BookSpec, input: Record<string, string>) {
 export async function saveBookRow(slug: string, id: string | null, input: Record<string, string>) {
   const spec = bookSpec(slug);
   const db = dataClient();
-  if (!spec || !db) throw new Error("Supabase is not configured.");
+  if (!spec || !db) throw new Error(DATA_OFFLINE);
   const body = valuesFor(spec, input);
 
   if (spec.identity === "settings") {
@@ -271,7 +271,7 @@ export async function deleteBookRow(slug: string, id: string) {
 export async function deleteBookRows(slug: string, ids: string[]) {
   const spec = bookSpec(slug);
   const db = dataClient();
-  if (!spec || !db) throw new Error("Supabase is not configured.");
+  if (!spec || !db) throw new Error(DATA_OFFLINE);
   const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
   if (!unique.length) return 0;
 

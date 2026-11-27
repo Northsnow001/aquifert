@@ -228,7 +228,7 @@ export function FormEmailsPanel({
       const result = await sendTestEmail(kind, which, draft[which]);
       if (!result.ok) toast.error(result.message);
       else if (result.status === "sent") toast.success(`Test sent to ${result.to}.`);
-      else if (result.status === "failed") toast.error(`The provider refused the test: ${result.error ?? "unknown error"}`);
+      else if (result.status === "failed") toast.error(result.error || "The test email was not sent. Check the sender settings and try again.");
       else toast.info("Test kept in the outbox. Delivery is not connected yet, so open it under Email delivery.");
       router.refresh();
     } finally {

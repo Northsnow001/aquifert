@@ -13,6 +13,9 @@ export function dataBackend(): "supabase" | "local" {
   return dataClient() ? "supabase" : "local";
 }
 
+/** Shown when a screen cannot reach the records store. The technical detail stays in the server log. */
+export const DATA_OFFLINE = "The records store is not connected. Wait a moment and try again. If it keeps happening, ask the desk to check the data connection.";
+
 export function dataClient(): SupabaseClient | null {
   if (client === undefined) client = process.env.AQUIFERT_DATA_BACKEND === "local" ? null : createAdminClient();
   return client;
@@ -21,7 +24,8 @@ export function dataClient(): SupabaseClient | null {
 /** Hosted deployments have a read-only disk, so they must reach Supabase. */
 export function assertLocalAllowed() {
   if (process.env.VERCEL) {
-    throw new Error("Supabase is not configured on this deployment. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+    console.error("[data] Supabase is not configured on this deployment.");
+    throw new Error(DATA_OFFLINE);
   }
 }
 
@@ -33,9 +37,14 @@ export const isMissingTable = (error: { message: string; code?: string }) =>
   /could not find the table/i.test(error.message);
 
 export function databaseError(action: string, error: { message: string; code?: string }) {
-  return new Error(
-    isMissingTable(error) ? `Could not ${action}: the table is missing. Run the SQL files in supabase/migrations (003 onwards) in the Supabase SQL editor.` : `Could not ${action}: ${error.message}`,
-  );
+  console.error(`[data] ${action}`, error.code ?? "", error.message);
+  if (isMissingTable(error)) {
+    return new Error("A records list is not ready yet. Ask the desk to finish the database setup, then try again.");
+  }
+  if (/timeout|canceling statement|statement_timeout|57014/i.test(`${error.code ?? ""} ${error.message}`)) {
+    return new Error("This is taking too long to load. Go back, wait a moment, and open it again.");
+  }
+  return new Error("The records could not be read just now. Wait a moment and try again.");
 }
 
 const warned = new Set<string>();

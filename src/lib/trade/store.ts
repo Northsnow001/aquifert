@@ -1,6 +1,6 @@
 import "server-only";
 
-import { dataClient, databaseError, isMissingTable } from "@/lib/data/db";
+import { DATA_OFFLINE, dataClient, databaseError, isMissingTable } from "@/lib/data/db";
 import type {
   OnboardingStatus,
   TradeAgent,
@@ -118,7 +118,7 @@ export async function getTradeSupplierByWechatOpenid(openid: string): Promise<Tr
 
 export async function insertTradeSupplier(input: TradeSupplierDraft) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const { data: code, error: codeError } = await db.rpc("trade_next_code", {
     counter_key: "next_supplier_number",
     prefix: "S-",
@@ -142,7 +142,7 @@ export async function insertTradeSupplier(input: TradeSupplierDraft) {
 
 export async function deleteTradeSuppliers(ids: string[]) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return 0;
   for (let i = 0; i < unique.length; i += 80) {
@@ -154,7 +154,7 @@ export async function deleteTradeSuppliers(ids: string[]) {
 
 export async function updateTradeSupplier(id: string, input: TradeSupplierDraft) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const body = supplierWrite(input);
   const patch: Record<string, unknown> = { ...body };
   if (!body.wechat_openid) delete patch.wechat_openid;
@@ -166,7 +166,7 @@ export async function updateTradeSupplier(id: string, input: TradeSupplierDraft)
 
 export async function linkSupplierWechatFollow(input: { openid: string; email: string; joinedAt?: string }) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const email = input.email.trim().toLowerCase();
   const openid = input.openid.trim();
   if (!email || !openid) return { ok: false as const, error: "openid and email are required." };
@@ -212,7 +212,7 @@ export async function linkSupplierWechatFollow(input: { openid: string; email: s
 
 export async function markSupplierInvited(id: string, fields: { email: string; scene: string; ticket: string }) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const now = new Date().toISOString();
   const { data, error } = await db
     .from("trade_suppliers")
@@ -233,7 +233,7 @@ export async function markSupplierInvited(id: string, fields: { email: string; s
 
 export async function setSupplierAwaitingReply(id: string, stage: string) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const { error } = await db
     .from("trade_suppliers")
     .update({ awaiting_reply: stage || null, last_contact_at: new Date().toISOString() })
@@ -409,7 +409,7 @@ export async function patchTradeRfq(
   },
 ) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const body: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.status) body.status = patch.status;
   if (patch.extras) body.extras = patch.extras;
@@ -569,7 +569,7 @@ export async function upsertRfqAsk(input: {
   extras?: Record<string, unknown>;
 }) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const now = new Date().toISOString();
   const { error } = await db.from("trade_rfq_asks").upsert(
     {
@@ -826,7 +826,7 @@ export async function recordWorkflowRfqAsk(input: {
   log?: boolean;
 }): Promise<{ ok: true; skipped?: true; reason?: string; rfqId?: string; supplierId?: string; status?: RfqAskStatus } | { ok: false; error: string }> {
   const db = dataClient();
-  if (!db) return { ok: false, error: "Supabase is not configured." };
+  if (!db) return { ok: false, error: DATA_OFFLINE };
   const status = askStatus(input.status);
   if (!RFQ_ASK_STATUSES.includes(input.status as RfqAskStatus)) {
     return { ok: false, error: "Unknown ask status." };
@@ -985,7 +985,7 @@ export async function getTradeBuyerByEmail(email: string): Promise<TradeBuyer | 
 
 export async function insertTradeBuyer(input: TradeBuyerDraft) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const { data: code, error: codeError } = await db.rpc("trade_next_code", {
     counter_key: "next_buyer_number",
     prefix: "B-",
@@ -1025,7 +1025,7 @@ async function deleteBuyerWhatsAppMemory(db: NonNullable<ReturnType<typeof dataC
 
 export async function deleteTradeBuyers(ids: string[]) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return 0;
   const { data: rows, error: readError } = await db.from("trade_buyers").select("id, whatsapp_e164").in("id", unique);
@@ -1047,7 +1047,7 @@ export async function deleteTradeBuyers(ids: string[]) {
 
 export async function updateTradeBuyer(id: string, input: TradeBuyerDraft) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const body = buyerWrite(input);
   const patch: Record<string, unknown> = { ...body };
   if (!body.whatsapp_e164) delete patch.whatsapp_e164;
@@ -1058,7 +1058,7 @@ export async function updateTradeBuyer(id: string, input: TradeBuyerDraft) {
 
 export async function markBuyerOnWhatsApp(id: string, phone: string) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const e164Phone = e164(phone);
   if (!e164Phone) throw new Error("A WhatsApp number is required.");
   const { data, error } = await db
@@ -1077,7 +1077,7 @@ export async function markBuyerOnWhatsApp(id: string, phone: string) {
 
 export async function markBuyerInvited(id: string, email: string) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const now = new Date().toISOString();
   const current = await getTradeBuyer(id);
   const { data, error } = await db
@@ -1097,7 +1097,7 @@ export async function markBuyerInvited(id: string, email: string) {
 
 export async function linkBuyerWhatsApp(input: { phone: string; email: string }) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const email = input.email.trim().toLowerCase();
   const phone = e164(input.phone);
   if (!email || !phone) return { ok: false as const, error: "phone and email are required." };
@@ -1142,7 +1142,7 @@ function sameName(left: string, right: string) {
 
 export async function linkBuyerWhatsAppFromHello(input: { phone: string; name: string; company: string }) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const phone = e164(input.phone);
   const company = input.company.trim();
   const name = input.name.trim();
@@ -1199,7 +1199,7 @@ export async function insertWhatsAppRfq(input: {
   status?: "collecting" | "open";
 }) {
   const db = dataClient();
-  if (!db) throw new Error("Supabase is not configured.");
+  if (!db) throw new Error(DATA_OFFLINE);
   const { data: code, error: codeError } = await db.rpc("trade_next_code", {
     counter_key: "next_rfq_number",
     prefix: "rfq#",

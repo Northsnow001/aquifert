@@ -35,7 +35,7 @@ import {
 import { parseFoUpload, readFoAttachmentFile } from "@/lib/desk-hitl/fo-pack";
 import { FO_ATTACHMENT_LABEL } from "@/lib/desk-hitl/types";
 import { getDeskSettings } from "@/lib/desk-settings/store";
-import { firmOfferEmailDocument } from "@/lib/firm-order/offer-email";
+import { firmOfferEmailDocument, firmOfferEmailFromMarkdown } from "@/lib/firm-order/offer-email";
 import { buildFirmOrderPdf, firmOrderFilename } from "@/lib/firm-order/pdf";
 import { sendEmail } from "@/lib/mailer";
 import { getSession } from "@/lib/session";
@@ -123,7 +123,7 @@ export async function markSupplierDocumentAction(input: { id: string; offerId: s
   return { ok: true as const };
 }
 
-export async function saveFirmEmailAction(input: { id: string; subject: string; note: string }) {
+export async function saveFirmEmailAction(input: { id: string; subject: string; note: string; body?: string }) {
   const user = await requireAdmin();
   const deal = await saveFirmEmail({ ...input, id: String(input.id ?? "").trim(), actor: user.name || user.email });
   if ("error" in deal) return { ok: false as const, message: deal.error };
@@ -187,14 +187,14 @@ export async function saveFirmOfferDraftAction(input: {
   return { ok: true };
 }
 
-async function firmOfferMail(id: string, values: PiEditorValues, subject: string, note: string, actor: string) {
+async function firmOfferMail(id: string, values: PiEditorValues, subject: string, note: string, body: string, actor: string) {
   const saved = await saveFirmOfferDraft(id, values, actor);
   if ("error" in saved) return saved;
-  await saveFirmEmail({ id, subject, note, actor });
+  await saveFirmEmail({ id, subject, note, body, actor });
   const order = saved.firmOffer?.order;
   if (!order) return { error: "No firm offer on this deal yet." };
   const settings = await getDeskSettings();
-  const letter = firmOfferEmailDocument({ order, note });
+  const letter = body.trim() ? firmOfferEmailFromMarkdown(body) : firmOfferEmailDocument({ order, note });
   const attachments = [];
   for (const file of saved.foPack?.attachments ?? []) {
     const content = await readFoAttachmentFile(file);
@@ -209,11 +209,12 @@ export async function sendFirmOfferToBuyerAction(input: {
   values: PiEditorValues;
   subject: string;
   note: string;
+  body?: string;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
   const user = await requireAdmin();
   const id = String(input.id ?? "").trim();
   const actor = user.name || user.email;
-  const packed = await firmOfferMail(id, input.values, String(input.subject ?? ""), String(input.note ?? ""), actor);
+  const packed = await firmOfferMail(id, input.values, String(input.subject ?? ""), String(input.note ?? ""), String(input.body ?? ""), actor);
   if ("error" in packed) return { ok: false, message: packed.error };
   const to = packed.order.buyer.email?.trim() || "";
   if (!to.includes("@")) return { ok: false, message: "Set a buyer email on the firm offer before sending." };
@@ -243,12 +244,13 @@ export async function sendFirmOfferDraftToMeAction(input: {
   values: PiEditorValues;
   subject: string;
   note: string;
+  body?: string;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
   const user = await requireAdmin();
   const id = String(input.id ?? "").trim();
   const actor = user.name || user.email;
   if (!user.email.includes("@")) return { ok: false, message: "Your admin account has no email address for the draft." };
-  const packed = await firmOfferMail(id, input.values, String(input.subject ?? ""), String(input.note ?? ""), actor);
+  const packed = await firmOfferMail(id, input.values, String(input.subject ?? ""), String(input.note ?? ""), String(input.body ?? ""), actor);
   if ("error" in packed) return { ok: false, message: packed.error };
   const mailed = await sendEmail(
     {

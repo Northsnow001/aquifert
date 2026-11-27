@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CloseAllDealsButton } from "@/components/admin/desk/close-all-deals";
 import { Card, EmptyState, PageHeader, Pill } from "@/components/admin/ui";
 import { DEAL_STATUS_LABEL, type DealStatus } from "@/lib/desk-hitl/types";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 import { listDeskDeals } from "@/lib/desk-hitl/store";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +59,7 @@ export default async function DeskShortlistsPage() {
                       {deal.quantityMt ? ` · ${deal.quantityMt} MT` : ""}
                       {deal.destination ? ` → ${deal.destination}` : ""}
                     </span>
-                    <span className="mt-0.5 block font-mono text-[11px] text-dim">{deal.requestId}</span>
+                    <span className="mt-0.5 block font-mono text-[11px] text-dim">{displayRfqCode(deal.requestId)}</span>
                   </span>
                   <Pill
                     tone={

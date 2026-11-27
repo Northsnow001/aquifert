@@ -18,19 +18,19 @@ export function ErrorPanel({ error, retry, compact = false }: { error: Error & {
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fff6e5] text-[#9a5b00]">
         <TriangleAlert className="h-6 w-6" />
       </span>
-      <h1 className="mt-4 text-[20px] font-bold tracking-tight text-ink">This page didn&apos;t load</h1>
+      <h1 className="mt-4 text-[20px] font-bold tracking-tight text-ink">This page didn&apos;t finish loading</h1>
       <p className="mt-2 text-[14.5px] leading-relaxed text-mid">
-        This is usually a brief hiccup while the server is busy. Try again in a moment. If it keeps happening, tell the desk and quote the reference below.
+        The records took too long to come back, so the page stopped. That wait is what makes the screen feel stuck. Go back to the list, wait a few seconds, and open the record once. If it fails again, wait a minute before trying.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
         <button type="button" onClick={() => retry()} className={btnPrimary}>
           <RotateCcw className="h-4 w-4" /> Try again
         </button>
-        <button type="button" onClick={() => window.location.reload()} className={btnSecondary}>
-          Reload the page
+        <button type="button" onClick={() => window.history.back()} className={btnSecondary}>
+          Go back
         </button>
       </div>
-      {error.digest ? <p className="mt-5 font-mono text-[12px] text-dim">Reference {error.digest}</p> : null}
+      {error.digest ? <p className="mt-5 font-mono text-[12px] text-dim">If you tell the desk, quote {error.digest}</p> : null}
     </div>
   );
 }

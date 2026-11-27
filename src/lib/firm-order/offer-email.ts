@@ -1,6 +1,7 @@
 import { EMAIL_ASSET_ORIGIN, escapeHtml } from "@/lib/email/brand";
 import { legalContractCopy } from "@/lib/firm-order/contract-copy";
 import type { FirmOrderDraft } from "@/lib/firm-order/types";
+import { markdownText, parseMarkdown, type Block, type Inline } from "@/lib/rich-text/markdown";
 
 const SERIF = "Georgia,'Times New Roman',Times,serif";
 const INK = "#1C1C1C";
@@ -85,6 +86,84 @@ export function firmOfferMessageText(input: { order: FirmOrderDraft; note: strin
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+/** The letter, ready to edit. The same words as the firm offer, written as plain text. */
+export function firmOfferLetterMarkdown(input: { order: FirmOrderDraft; note: string }) {
+  const copy = legalContractCopy(input.order, "sales", "FIRM OFFER");
+  const lines: string[] = [];
+  const note = input.note.trim();
+  if (note) lines.push(note, "");
+  lines.push("Reply YES to this email to accept this firm offer.", "", `# ${copy.title}`, "", copy.letterhead, "", `**CONTRACT REFERENCE:** ${copy.reference}`, `**DATE:** ${copy.date}`, "", copy.preamble, "");
+  for (const term of copy.terms) lines.push(`**${term.label}**`, term.body, "");
+  for (const clause of copy.clauses) lines.push(`## ${clause.heading}`, "", clause.body, "");
+  lines.push(
+    `**${copy.sellerSignOff}**`,
+    "",
+    "SIGNATURE",
+    `NAME: ${copy.signatoryName}`,
+    `TITLE: ${copy.signatoryTitle}`,
+    `DATE: ${copy.date}`,
+    "",
+    `**${copy.counterpartySignOff}**`,
+    "",
+    "SIGNATURE",
+    "NAME:",
+    "TITLE:",
+    "DATE:",
+    "",
+    copy.footer,
+  );
+  return lines.join("\n").trim();
+}
+
+const emailText = (nodes: Inline[]): string =>
+  nodes
+    .map((node) => {
+      if (node.t === "text") return escapeHtml(node.v);
+      if (node.t === "br") return "<br>";
+      if (node.t === "strong") return `<strong>${emailText(node.c)}</strong>`;
+      if (node.t === "em") return `<em>${emailText(node.c)}</em>`;
+      return emailText("c" in node ? node.c : []);
+    })
+    .join("");
+
+function emailBlock(block: Block) {
+  const text = `font-family:${SERIF}; color:${INK};`;
+  if (block.t === "h" && block.level === 1) {
+    return `<p style="margin:0 0 16px; ${text} font-size:22px; line-height:26px; font-weight:bold; letter-spacing:0.5px; text-align:center;">${emailText(block.c)}</p>`;
+  }
+  if (block.t === "h") {
+    return `<p style="margin:18px 0 8px; ${text} font-size:13px; line-height:18px; font-weight:bold;">${emailText(block.c)}</p>`;
+  }
+  if (block.t === "p") return `<p style="margin:0 0 12px; ${text} font-size:14px; line-height:20px;">${emailText(block.c) || "&nbsp;"}</p>`;
+  if (block.t === "quote") return `<p style="margin:0 0 12px; ${text} font-size:14px; line-height:20px; font-style:italic;">${emailText(block.c)}</p>`;
+  if (block.t === "list") {
+    return block.items
+      .map((item) => `<p style="margin:0 0 8px; ${text} font-size:14px; line-height:20px;">• ${emailText(item.c)}</p>`)
+      .join("");
+  }
+  return "";
+}
+
+/** The edited letter, set in the firm-offer email. */
+export function firmOfferEmailFromMarkdown(markdown: string) {
+  const inner = parseMarkdown(markdown).map(emailBlock).join("") || `<p style="margin:0; font-family:${SERIF}; font-size:14px; color:${INK};">&nbsp;</p>`;
+  const logo = `${EMAIL_ASSET_ORIGIN}/logo-v2.png`;
+  const body = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border:1px solid #b4b4b4;">
+<tr><td style="padding:22px 28px 8px;" align="right"><img src="${logo}" alt="Aquifert" width="130" style="display:inline-block; width:130px; max-width:130px; height:auto; border:0;" /></td></tr>
+<tr><td style="padding:8px 28px 28px;">${inner}</td></tr>
+</table>`;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>FIRM OFFER</title></head>
+<body style="margin:0; padding:24px 12px; background:#f3f3f3;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
+<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px; max-width:640px;"><tr><td>${body}</td></tr></table>
+</td></tr></table>
+</body>
+</html>`;
+  return { html, text: markdownText(markdown) };
 }
 
 export function firmOfferEmailDocument(input: { order: FirmOrderDraft; note: string }) {

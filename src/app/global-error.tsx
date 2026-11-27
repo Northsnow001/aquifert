@@ -14,19 +14,19 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
       <body style={{ margin: 0, fontFamily: "system-ui, -apple-system, Segoe UI, sans-serif", background: "#f4f6f9", color: "#16263b" }}>
         <title>Aquifert</title>
         <main style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
-          <h1 style={{ fontSize: 22, margin: 0 }}>Aquifert didn&apos;t load</h1>
-          <p style={{ maxWidth: 440, marginTop: 10, lineHeight: 1.6, color: "#4b5d73" }}>
-            This is usually a brief hiccup while the server is busy. Try again in a moment.
+          <h1 style={{ fontSize: 22, margin: 0 }}>Aquifert didn&apos;t finish loading</h1>
+          <p style={{ maxWidth: 460, marginTop: 10, lineHeight: 1.6, color: "#4b5d73" }}>
+            The records took too long to come back, so the page stopped. Go back, wait a few seconds, and open it once. If it fails again, wait a minute before trying.
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
             <button type="button" onClick={() => retry()} style={{ ...button, border: 0, background: "#2f6fb3", color: "#fff" }}>
               Try again
             </button>
-            <button type="button" onClick={() => window.location.reload()} style={{ ...button, border: "1px solid #d6dee7", background: "#fff", color: "#16263b" }}>
-              Reload the page
+            <button type="button" onClick={() => window.history.back()} style={{ ...button, border: "1px solid #d6dee7", background: "#fff", color: "#16263b" }}>
+              Go back
             </button>
           </div>
-          {error.digest ? <p style={{ marginTop: 18, fontFamily: "monospace", fontSize: 12, color: "#8494a7" }}>Reference {error.digest}</p> : null}
+          {error.digest ? <p style={{ marginTop: 18, fontFamily: "monospace", fontSize: 12, color: "#8494a7" }}>If you tell the desk, quote {error.digest}</p> : null}
         </main>
       </body>
     </html>

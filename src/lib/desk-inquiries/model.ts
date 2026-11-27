@@ -3,6 +3,7 @@ import "server-only";
 import { listDeskDeals } from "@/lib/desk-hitl/store";
 import { listInbox } from "@/lib/inbox";
 import { listTradeRfqs } from "@/lib/trade/store";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 import type { TradeRfq } from "@/lib/trade/types";
 
 export type InquirySource = "trade_desk_app" | "ai_agent" | "contact";
@@ -123,7 +124,7 @@ function fromRfq(rfq: TradeRfq, quotes: number): InquiryRow {
   return {
     id: rfq.id,
     href: `/admin/desk/inquiries/ai/${rfq.id}`,
-    ref: rfq.code || rfq.id.slice(0, 8),
+    ref: displayRfqCode(rfq.code || rfq.id.slice(0, 8)),
     at: rfq.createdAt || rfq.updatedAt,
     source: "ai_agent",
     channel: "WhatsApp",

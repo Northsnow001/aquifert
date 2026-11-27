@@ -11,6 +11,11 @@ export function extractRfqCode(text: string) {
   return match ? `rfq#${match[1].padStart(3, "0")}` : "";
 }
 
+/** Shown on the desk. Stored codes stay `rfq#074` so existing matches keep working. */
+export function displayRfqCode(code: string) {
+  return String(code || "").replace(/\brfq#/gi, "RFQ#");
+}
+
 export function rfqLookupKeys(code: string) {
   const raw = String(code || "").trim();
   const normalized = normalizeRfqCode(raw);

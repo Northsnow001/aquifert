@@ -230,7 +230,7 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "aa-enquiries",
     href: "/hub/tools/analytics/enquiries",
-    label: "Freight Inquiries",
+    label: "Freight Enquiries",
     short: "Enquiries",
     icon: Inbox,
     section: "AQ Analytics",
@@ -485,7 +485,7 @@ export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: fa
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },
   { key: "home", title: "Client Suite", body: "Your workspace dropdown: Hub, Telex, AQ View, Library, Calculators and AQ Trader Tools." },
   { key: "aq-analytics", title: "AQ Analytics", body: "Opens the AQ Analytics subscription. Once that membership is active, it opens the product: its pages sit in the left menu, and this header stays so you can move around Aquifert ONE." },
-  { key: "aa-map", title: "AQ Analytics", body: "Intelligent Map, Freight Board, My Market, producers, freight inquiries, reports, alerts and plans." },
+  { key: "aa-map", title: "AQ Analytics", body: "Intelligent Map, Freight Board, My Market, producers, freight enquiries, reports, alerts and plans." },
   { key: "zero", title: "AQ Zero", body: "Opens the AQ Zero subscription. Once that membership is active, it opens AQ Zero with its own left menu, and this header stays so you can move around Aquifert ONE." },
   { key: "nitrogen", title: "Nitrogen Report", body: "Answer six questions on one page and get an AQ View nitrogen brief tailored to your market, yours to keep." },
   { key: "order", title: "Order Fertiliser", body: "Send the trading desk an enquiry for the products, quantity and months you need." },

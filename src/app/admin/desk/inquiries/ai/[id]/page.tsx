@@ -6,6 +6,7 @@ import { DEAL_STATUS_LABEL } from "@/lib/desk-hitl/types";
 import { RFQ_ASK_LABEL } from "@/lib/trade/types";
 import { getTradeRfqDesk } from "@/lib/trade/store";
 import { rfqStatusLabel } from "@/lib/desk-inquiries/model";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 
 export const dynamic = "force-dynamic";
 
@@ -34,8 +35,8 @@ export default async function AiInquiryPage({ params }: { params: Promise<{ id: 
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        crumbs={[{ href: "/admin/desk/inquiries", label: "Inquiries" }]}
-        title={desk.code || "AI inquiry"}
+        crumbs={[{ href: "/admin/desk/inquiries", label: "Enquiries" }]}
+        title={displayRfqCode(desk.code) || "AI enquiry"}
         description="Captured by the WhatsApp desk. Supplier choice, margin and the buyer indication continue on the existing shortlist."
         actions={
           <div className="flex flex-wrap items-center gap-2">

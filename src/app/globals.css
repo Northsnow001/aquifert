@@ -157,8 +157,8 @@ body::before {
   background: rgb(47 111 179 / 0.18);
 }
 
-/* Hub dark mode. The hub shell carries .dark (and sets it on <html> while open, so portals
-   follow); admin and the marketing site never do. Tokens flip here; the remaps below catch
+/* Hub and admin dark mode. Each shell carries .dark (and sets it on <html> while open, so portals
+   follow). The marketing site never does. Tokens flip here; the remaps below catch
    the hard-coded light colours older markup still uses. */
 .aq-app.dark,
 .dark .aq-app {

@@ -7,6 +7,7 @@ import { fanOutRfqAction, generateDevQuotesAction, getRfqDeskAction } from "@/ap
 import { SupplierThread } from "@/components/admin/trade/supplier-thread";
 import { btnGhost, btnPrimary, btnSecondary } from "@/components/admin/ui";
 import { formatStamp } from "@/lib/content-types";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 import {
   RFQ_ASK_LABEL,
   type RfqAskStatus,
@@ -129,7 +130,7 @@ export function RfqDesk({ rfqId, onClose }: { rfqId: string; onClose: () => void
         <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-dim">Trade</p>
-            <h2 className="mt-1 truncate text-[18px] font-semibold tracking-[-0.03em] text-ink">{desk?.code || "Buyer request"}</h2>
+            <h2 className="mt-1 truncate text-[18px] font-semibold tracking-[-0.03em] text-ink">{desk?.code ? displayRfqCode(desk.code) : "Buyer request"}</h2>
             <p className="mt-0.5 text-[12.5px] text-mid">
               {desk ? `${desk.buyerCompany || "Buyer"} · ${desk.productLabel || "Product"}` : "Loading…"}
             </p>

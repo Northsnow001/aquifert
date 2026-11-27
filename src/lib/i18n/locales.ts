@@ -75,7 +75,7 @@ const en = {
   "nav.aa-board": "Freight Board",
   "nav.aa-market": "My Market",
   "nav.aa-producers": "Producers",
-  "nav.aa-enquiries": "Freight Inquiries",
+  "nav.aa-enquiries": "Freight Enquiries",
   "nav.aa-lane": "Lane calculator",
   "nav.aa-reports": "Reports",
   "nav.aa-alerts": "Alerts",

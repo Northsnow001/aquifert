@@ -97,6 +97,8 @@ export type IndicationDraft = {
 export type FirmEmailDraft = {
   subject: string;
   note: string;
+  /** The letter the buyer receives. Empty until the desk saves an edited copy. */
+  body?: string;
   savedAt: string | null;
   savedBy: string | null;
 };

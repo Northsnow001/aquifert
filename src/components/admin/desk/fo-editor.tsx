@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -14,11 +14,12 @@ import {
   sendMillFirmOfferAction,
   uploadFoAttachmentAction,
 } from "@/app/admin/desk/actions";
+import { DocEditor } from "@/components/admin/doc-editor";
 import { btnDanger, btnPrimary, btnSecondary, input, label, textarea } from "@/components/admin/ui";
 import { applyFirmOfferEditor, valuesFromPi, type PiEditorValues } from "@/lib/desk-hitl/pi";
 import { firmOfferMismatches, firmOfferSubject } from "@/lib/desk-hitl/gates";
 import { firmOfferDraftFromDeal } from "@/lib/firm-order/from-deal";
-import { firmOfferMessageHtml } from "@/lib/firm-order/offer-email";
+import { firmOfferEmailFromMarkdown, firmOfferLetterMarkdown } from "@/lib/firm-order/offer-email";
 import { FO_ATTACHMENT_KINDS, FO_ATTACHMENT_LABEL, type DeskDeal, type FoAttachmentKind } from "@/lib/desk-hitl/types";
 
 const emptyValues: PiEditorValues = {
@@ -63,18 +64,10 @@ function Field({
   );
 }
 
-function FirmOfferPreview({ order, values, note }: { order: NonNullable<ReturnType<typeof firmOfferDraftFromDeal>>; values: PiEditorValues; note: string }) {
+function letterFrom(order: NonNullable<ReturnType<typeof firmOfferDraftFromDeal>>, values: PiEditorValues, note: string) {
   const next = applyFirmOfferEditor(order, values);
-  if ("error" in next) {
-    return <p className="rounded-xl border border-border bg-s2/40 px-3 py-2 text-[12.5px] text-mid">{next.error}</p>;
-  }
-  return (
-    <div
-      className="max-h-96 overflow-auto rounded-xl border border-border bg-[#f3f3f3] p-3"
-      aria-label="Firm offer email preview"
-      dangerouslySetInnerHTML={{ __html: firmOfferMessageHtml({ order: next, note }) }}
-    />
-  );
+  if ("error" in next) return "";
+  return firmOfferLetterMarkdown({ order: next, note });
 }
 
 export function FoEditor({ deal }: { deal: DeskDeal }) {
@@ -82,8 +75,9 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [kind, setKind] = useState<FoAttachmentKind>("coa");
+  const opening = deal.firmEmail?.note || `Dear ${deal.buyerName || "Buyer"}, thank you. Please see our firm offer below.`;
   const [subject, setSubject] = useState(deal.firmEmail?.subject || firmOfferSubject(deal));
-  const [note, setNote] = useState(deal.firmEmail?.note || `Dear ${deal.buyerName || "Buyer"}, thank you. Please see our firm offer below.`);
+  const [note, setNote] = useState(opening);
   const [values, setValues] = useState<PiEditorValues>(() => {
     const v = order ? valuesFromPi(order) : emptyValues;
     return {
@@ -93,6 +87,13 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
       buyerPhone: v.buyerPhone || deal.buyerPhone || "",
     };
   });
+  const [body, setBody] = useState(() => {
+    if (deal.firmEmail?.body?.trim()) return deal.firmEmail.body;
+    if (!order) return "";
+    const seeded = valuesFromPi(order);
+    return letterFrom(order, { ...seeded, buyerName: seeded.buyerName || deal.buyerName || "", buyerEmail: seeded.buyerEmail || deal.buyerEmail || "", buyerPhone: seeded.buyerPhone || deal.buyerPhone || "" }, opening);
+  });
+  const review = useMemo(() => (body.trim() ? firmOfferEmailFromMarkdown(body).html : ""), [body]);
   if (!order || deal.status === "waiting_desk") return null;
   const closed = deal.status === "closed";
   const fo = deal.firmOffer;
@@ -114,7 +115,7 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
 
   const send = () => {
     start(async () => {
-      const result = await sendFirmOfferToBuyerAction({ id: deal.id, values, subject, note });
+      const result = await sendFirmOfferToBuyerAction({ id: deal.id, values, subject, note, body });
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -167,10 +168,10 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
           <h2 className="text-[14.5px] font-semibold text-ink">Firm offer</h2>
           <p className="mt-0.5 text-[12.5px] text-mid">
             {closed
-              ? "This request is closed. The PDF is still on file."
+              ? "This request is closed. The letter is still on file."
               : fo?.status === "sent"
-                ? `Last sent to ${fo.sentTo || "buyer"}. Edit and send again if they rejected terms.`
-                : "Buyer has not received this. Edit the FO, attach COA/TDS/photos, then send. Supplier cost never appears."}
+                ? `Last sent to ${fo.sentTo || "buyer"}. Edit the letter and send again if they rejected terms.`
+                : "Buyer has not received this. The letter is loaded from the offer. Edit it, review the email, then send. Supplier cost never appears."}
           </p>
         </div>
         <span
@@ -332,7 +333,7 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
           </fieldset>
           <fieldset className="space-y-3" disabled={closed}>
             <legend className="text-[12px] font-semibold uppercase tracking-wide text-dim">Email to the buyer</legend>
-            <p className="text-[12.5px] text-mid">The email is the firm offer, in the same layout as the PDF. COA, TDS and photos stay as attachments. Nothing is sent until you press Send.</p>
+            <p className="text-[12.5px] text-mid">The email is the firm offer. Write it on the right, review the email below it, then send. COA, TDS and photos stay as attachments. Nothing is sent until you press Send.</p>
             {firmOfferMismatches(deal).length ? (
               <ul className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-ink">
                 {firmOfferMismatches(deal).map((flag) => (
@@ -350,15 +351,22 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
               <label className={label} htmlFor="fo-note">Personal note</label>
               <textarea id="fo-note" rows={3} className={`${textarea} mt-1`} value={note} onChange={(event) => setNote(event.target.value)} />
             </div>
-            <FirmOfferPreview order={order} values={values} note={note} />
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={btnSecondary}
+                disabled={pending || closed}
+                onClick={() => setBody(letterFrom(order, values, note))}
+              >
+                Reload letter
+              </button>
               <button
                 type="button"
                 className={btnSecondary}
                 disabled={pending || closed}
                 onClick={() => {
                   start(async () => {
-                    const result = await saveFirmEmailAction({ id: deal.id, subject, note });
+                    const result = await saveFirmEmailAction({ id: deal.id, subject, note, body });
                     if (!result.ok) {
                       toast.error(result.message);
                       return;
@@ -376,7 +384,7 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
                 disabled={pending || closed}
                 onClick={() => {
                   start(async () => {
-                    const result = await sendFirmOfferDraftToMeAction({ id: deal.id, values, subject, note });
+                    const result = await sendFirmOfferDraftToMeAction({ id: deal.id, values, subject, note, body });
                     if (!result.ok) {
                       toast.error(result.message);
                       return;
@@ -391,7 +399,7 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
           </fieldset>
           <div className="flex flex-wrap gap-2">
             <button type="submit" disabled={pending || closed} className={btnSecondary}>
-              {pending ? "Saving…" : "Save & refresh PDF"}
+              {pending ? "Saving…" : "Save offer"}
             </button>
             <button
               type="button"
@@ -414,8 +422,26 @@ export function FoEditor({ deal }: { deal: DeskDeal }) {
             </button>
           </div>
         </form>
-        <div className="min-h-[28rem]">
-          <iframe title="Firm offer preview" src={preview} className="h-[40rem] w-full rounded-xl border border-border bg-white" />
+        <div className="flex min-h-[28rem] flex-col gap-4">
+          <DocEditor
+            id="firm-offer-letter"
+            title="Firm offer"
+            value={body}
+            onChange={setBody}
+            placeholder="The firm offer loads here. Edit it before you send."
+            meta="Write, then review the email underneath."
+            images={false}
+            minHeight={420}
+          />
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-dim">Email review</p>
+              <a href={preview} target="_blank" rel="noreferrer" className="text-[12px] font-semibold text-blue no-underline">
+                PDF copy
+              </a>
+            </div>
+            <iframe title="Firm offer email review" srcDoc={review} className="h-[36rem] w-full rounded-xl border border-border bg-white" />
+          </div>
         </div>
       </div>
     </section>

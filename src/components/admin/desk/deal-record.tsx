@@ -6,6 +6,7 @@ import { Pill } from "@/components/admin/ui";
 import { dealDocumentRows } from "@/lib/desk-hitl/documents";
 import { selectedOffer } from "@/lib/desk-hitl/logic";
 import { DEAL_STATUS_LABEL, type DeskDeal } from "@/lib/desk-hitl/types";
+import { displayRfqCode } from "@/lib/trade/rfq-code";
 
 const tabs = [
   { id: "details", label: "Details" },
@@ -30,7 +31,7 @@ export function DealRecord({ deal, template }: { deal: DeskDeal; template: strin
     <div className="space-y-4">
       <section className="rounded-2xl border border-border bg-white px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="font-mono text-[12px] text-dim">{deal.requestId}</p>
+          <p className="font-mono text-[12px] text-dim">{displayRfqCode(deal.requestId)}</p>
           <Pill
             tone={
               deal.status === "closed"
