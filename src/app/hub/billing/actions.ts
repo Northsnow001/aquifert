@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { isAdminUser } from "@/lib/admin-access";
 import { BillingError, beginCheckout, beginPortal } from "@/lib/billing/stripe";
 import { checkoutCancelPath, isBillingOffer } from "@/lib/billing/catalog";
 import { getSession } from "@/lib/session";
@@ -17,6 +18,7 @@ export async function startCheckout(form: FormData) {
   const user = await getSession();
   if (!user) redirect(`/login?redirect_to=${encodeURIComponent(back)}`);
   if (!offer) redirect("/hub/account/membership?billing=invalid");
+  if (offer === "analytics" && !isAdminUser(user)) redirect(`${back}?billing=closed`);
   try {
     const url = await beginCheckout(user, offer);
     redirect(url);

@@ -6,6 +6,7 @@ const COPY: Record<string, string> = {
   incomplete: "The payment is not complete yet.",
   portal: "The billing portal could not be opened. Enable the Stripe customer portal, then try again.",
   invalid: "Choose AQ Analytics or an AQ Zero tier.",
+  closed: "AQ Analytics checkout is not open for member accounts yet.",
 };
 
 export function BillingNotice({ code }: { code?: string }) {

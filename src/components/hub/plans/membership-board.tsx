@@ -13,6 +13,7 @@ type OfferId = MembershipOffer["id"];
 
 export function MembershipBoard({
   plan,
+  admin = false,
   currentTier,
 }: {
   plan: Plan;
@@ -78,7 +79,12 @@ export function MembershipBoard({
                   ))}
                 </ul>
                 <div className="mt-auto pt-6">
-                  {state === "open" ? (
+                  {state === "open" && offer.id === "analytics" && !admin ? (
+                    <Link href="/hub/contact?topic=AQ%20Analytics" className={`${buttonBase} bg-navy-600 text-white no-underline shadow-[0_8px_18px_-10px_rgb(37_79_118/0.9)] hover:bg-navy-700`}>
+                      {t("mem.talk")}
+                      <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                    </Link>
+                  ) : state === "open" ? (
                     <form action={startCheckout}>
                       <input type="hidden" name="offer" value={offer.id} />
                       <button

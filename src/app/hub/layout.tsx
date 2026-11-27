@@ -30,7 +30,7 @@ export default async function HubLayout({ children }: { children: React.ReactNod
   const admin = isAdminUser(user);
   const [modules, content, prefs] = await Promise.all([getAqModules(), getHubContent(), getPrefs(user).catch(() => null)]);
   const access = {
-    analytics: hasAqAnalytics({ plan: user.plan, mockPlan: prefs?.mockPlan ?? null }),
+    analytics: hasAqAnalytics({ plan: user.plan, admin, mockPlan: prefs?.mockPlan ?? null }),
     zero: hasAqZero({ plan: user.plan, mockPlan: prefs?.mockPlan ?? null }),
   };
   const unlocked = unlockedModules(modules.access, { plan: user.plan, admin });

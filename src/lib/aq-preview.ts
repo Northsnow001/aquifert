@@ -23,6 +23,6 @@ export async function requireAqAnalytics(fallback: string) {
   const user = await getSession();
   if (!user) redirect(fallback);
   const prefs = await getPrefs(user);
-  if (!hasAqAnalytics({ plan: user.plan, mockPlan: prefs.mockPlan })) redirect(fallback);
+  if (!hasAqAnalytics({ plan: user.plan, admin: isAdminUser(user), mockPlan: prefs.mockPlan })) redirect(fallback);
   return user;
 }

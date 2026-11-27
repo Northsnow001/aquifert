@@ -8,9 +8,10 @@ export function canSeeAqAnalytics(viewer: { plan: Plan; admin?: boolean } | null
   return Boolean(viewer.admin) || viewer.plan === "growth" || viewer.plan === "enterprise";
 }
 
-/** Payment is collected when Stripe has set the account plan to AQ Analytics or AQ ZERO. */
-export function hasAqAnalytics(viewer: { plan: Plan; mockPlan?: MockProductPlan }) {
-  return viewer.plan === "growth" || viewer.plan === "enterprise";
+/** A paid plan, or an admin using the demo subscription. A member's saved demo flag does not open the product. */
+export function hasAqAnalytics(viewer: { plan: Plan; admin?: boolean; mockPlan?: MockProductPlan }) {
+  if (viewer.plan === "growth" || viewer.plan === "enterprise") return true;
+  return Boolean(viewer.admin) && (viewer.mockPlan === "growth" || viewer.mockPlan === "enterprise");
 }
 
 /** AQ Zero opens once that membership is active. AQ Analytics alone does not include it. */

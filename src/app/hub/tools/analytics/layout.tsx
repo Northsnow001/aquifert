@@ -1,3 +1,4 @@
+import { isAdminUser } from "@/lib/admin-access";
 import { ProductOnboarding } from "@/components/hub/product-onboarding";
 import { fmtDayYear } from "@/lib/aq-analytics/contracts";
 import { dataNow } from "@/lib/aq-analytics/queries";
@@ -10,8 +11,9 @@ export const dynamic = "force-dynamic";
 export default async function AnalyticsLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAqAnalytics("/hub/plans/aq-analytics");
   const prefs = await getPrefs(user);
-  const plan = productPlan(user, prefs);
-  if (plan && needsProductOnboarding(user, prefs)) {
+  const demo = isAdminUser(user) && prefs.mockPlan === "growth" && user.plan !== "growth" && user.plan !== "enterprise";
+  const plan = productPlan(user, prefs) ?? (demo ? "growth" : null);
+  if (plan && (demo ? !prefs.onboardingDone : needsProductOnboarding(user, prefs))) {
     const gate = await ProductOnboarding({ plan });
     if (gate) return gate;
   }
