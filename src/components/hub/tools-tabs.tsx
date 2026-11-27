@@ -11,12 +11,11 @@ const TOOLS: { href: string; label: string; id: string }[] = [
 ];
 
 const ANALYTICS: { href: string; label: string; id: string }[] = [
-  { href: "/hub/tools/analytics", label: "Intelligence map", id: "map" },
-  { href: "/hub/tools/analytics/board", label: "Freight board", id: "board" },
-  { href: "/hub/tools/analytics/market", label: "My market", id: "market" },
+  { href: "/hub/tools/analytics", label: "Intelligent Map", id: "map" },
+  { href: "/hub/tools/analytics/board", label: "Freight Board", id: "board" },
+  { href: "/hub/tools/analytics/market", label: "My Market", id: "market" },
   { href: "/hub/tools/analytics/producers", label: "Producers", id: "producers" },
-  { href: "/hub/tools/analytics/enquiries", label: "Freight enquiries", id: "enquiries" },
-  { href: "/hub/tools/analytics/calculator", label: "Lane calculator", id: "lane" },
+  { href: "/hub/tools/analytics/enquiries", label: "Freight Inquiries", id: "enquiries" },
   { href: "/hub/tools/analytics/reports", label: "Reports", id: "reports" },
   { href: "/hub/tools/analytics/alerts", label: "Alerts", id: "alerts" },
   { href: "/hub/tools/analytics/plans", label: "Plans", id: "plans" },
@@ -27,7 +26,6 @@ function analyticsId(pathname: string) {
   if (pathname.startsWith("/hub/tools/analytics/market")) return "market";
   if (pathname.startsWith("/hub/tools/analytics/producers")) return "producers";
   if (pathname.startsWith("/hub/tools/analytics/enquiries")) return "enquiries";
-  if (pathname.startsWith("/hub/tools/analytics/calculator")) return "lane";
   if (pathname.startsWith("/hub/tools/analytics/reports")) return "reports";
   if (pathname.startsWith("/hub/tools/analytics/alerts")) return "alerts";
   if (pathname.startsWith("/hub/tools/analytics/plans")) return "plans";

@@ -34,7 +34,7 @@ export function offerForPrice(priceId: string, env: Record<string, string | unde
 }
 
 export function productHome(offer: BillingOffer) {
-  return offer === "analytics" ? "/hub/tools/analytics/home" : "/hub/zero";
+  return offer === "analytics" ? "/hub/tools/analytics" : "/hub/zero";
 }
 
 export function checkoutCancelPath(offer: BillingOffer) {

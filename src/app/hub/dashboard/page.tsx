@@ -20,6 +20,8 @@ import { INBOX } from "@/lib/data/tables";
 import { getFreightDesk, monthlyUsage, nextReset } from "@/lib/freight-desk/store";
 import { planLimit as freightLimit } from "@/lib/freight-desk/types";
 import { getHubContent } from "@/lib/hub-content";
+import { ProductOnboarding } from "@/components/hub/product-onboarding";
+import { needsProductOnboarding, productPlan } from "@/lib/onboarding/gate";
 import { answerTerms, feedIsPersonal, matchesFeed } from "@/lib/onboarding/questions";
 import { getOnboardingQuestions } from "@/lib/onboarding/store";
 import { getNetbackDesk, netbackUsage } from "@/lib/netback-desk/store";
@@ -46,6 +48,14 @@ export default async function DashboardPage() {
     myRegistrations(user),
     listRecords(INBOX, { email: user.email, limit: 20 }),
   ]);
+
+  if (needsProductOnboarding(user, prefs)) {
+    const plan = productPlan(user, prefs);
+    if (plan) {
+      const gate = await ProductOnboarding({ plan });
+      if (gate) return gate;
+    }
+  }
 
   const personal = feedIsPersonal({ admin, mockPlan: prefs.mockPlan, onboardingDone: prefs.onboardingDone });
   const terms = personal ? answerTerms(await getOnboardingQuestions(), prefs.onboardingAnswers) : [];

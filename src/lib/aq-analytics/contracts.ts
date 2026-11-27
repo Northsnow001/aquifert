@@ -187,9 +187,9 @@ export interface Plan {
 export const PLANS: Plan[] = [
   {
     code: "standard",
-    name: "Standard",
+    name: "AQ Zero Standard",
     tagline: "See where the market is pricing",
-    price: "[Price TBC]",
+    price: "£2,800 / year",
     cta: "Request access",
     features: [
       "Weekly data updates",
@@ -201,9 +201,9 @@ export const PLANS: Plan[] = [
   },
   {
     code: "premium",
-    name: "Premium",
+    name: "AQ Zero Premium",
     tagline: "Know what is loading and who is behind pace",
-    price: "[Price TBC]",
+    price: "£5,000 / year",
     cta: "Request access",
     recommended: true,
     features: [
@@ -217,9 +217,9 @@ export const PLANS: Plan[] = [
   },
   {
     code: "enterprise",
-    name: "Enterprise",
+    name: "AQ Zero Enterprise",
     tagline: "For trading and analyst teams",
-    price: "[Price TBC]",
+    price: "£7,000 / year",
     cta: "Talk to us",
     features: [
       "Everything in Premium",

@@ -33,7 +33,7 @@ export function OnboardingOverlay({ plan, questions, embedded = false }: { plan:
   const last = step === questions.length - 1;
   const ready = !question.required || picked.length > 0;
   const many = question.options.length > 8;
-  const single = question.kind === "single";
+  const single = false;
 
   useEffect(() => {
     if (embedded) return;
@@ -72,6 +72,7 @@ export function OnboardingOverlay({ plan, questions, embedded = false }: { plan:
       setPending(false);
       return;
     }
+    router.push("/hub/dashboard");
     router.refresh();
   };
 

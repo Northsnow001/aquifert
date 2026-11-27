@@ -23,15 +23,11 @@ export function ProductRail({ product }: { product: "analytics" | "zero" }) {
   const title = product === "analytics" ? "AQ Analytics" : "AQ Zero";
   const links =
     product === "analytics"
-      ? [
-          { href: "/hub/tools/analytics/home", label: "Dashboard", icon: LayoutDashboard as LucideIcon },
-          ...HUB_NAV.filter((item) => item.analyticsTool).map((item) => ({
-            href: item.href,
-            label: item.label,
-            icon: (item.icon === "aquibot" ? LayoutDashboard : item.icon) as LucideIcon,
-          })),
-          { href: "/hub/account/profile", label: "Preferences", icon: CircleUser },
-        ]
+      ? HUB_NAV.filter((item) => item.analyticsTool).map((item) => ({
+          href: item.href,
+          label: item.label,
+          icon: item.icon as LucideIcon,
+        }))
       : ZERO;
 
   const menu = (row: boolean) => (

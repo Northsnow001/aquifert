@@ -71,7 +71,7 @@ export default async function AlertsPage() {
         </form>
         <section className="aq-card p-5">
           <h3 className="font-semibold">Recent alerts</h3>
-          <p className="text-[12px] text-dim">Preview from the freight pipeline. WhatsApp and email delivery follows once your markets are saved.</p>
+          <p className="text-[12px] text-dim">In-app preview from the freight pipeline. WhatsApp and email are saved with the choice below. Neither is sent from here yet.</p>
           <ul className="mt-3 divide-y divide-border">
             {preview.items.map((item, index) => (
               <li key={`${item.title}-${index}`} className="py-3">

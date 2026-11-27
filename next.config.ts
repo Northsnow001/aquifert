@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   redirects: async () => [
     { source: "/legal/terms-of-trading", destination: "/legal/terms", permanent: true },
     { source: "/legal/payments-and-refunds", destination: "/legal/payments", permanent: true },
+    { source: "/hub/tools/analytics/home", destination: "/hub/dashboard", permanent: false },
+    { source: "/hub/tools/analytics/calculator", destination: "/hub/freight-calculator", permanent: false },
   ],
 };
 

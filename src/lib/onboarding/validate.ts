@@ -35,7 +35,6 @@ export function checkedAnswers(
     const picked = [...new Set((raw[question.id] ?? []).map((item) => item.trim()).filter((item) => allowed.has(item.toLowerCase())))];
     const canonical = question.options.filter((item) => picked.some((value) => value.toLowerCase() === item.toLowerCase()));
     if (question.required && !canonical.length) return { ok: false, message: `Answer “${question.prompt}” before the dashboard opens.` };
-    if (question.kind === "single" && canonical.length > 1) canonical.splice(1);
     answers[question.id] = canonical;
   }
   return { ok: true, answers, interests: interestsFrom(live, answers), terms: answerTerms(live, answers) };

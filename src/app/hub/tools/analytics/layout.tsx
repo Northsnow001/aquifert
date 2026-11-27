@@ -21,7 +21,6 @@ export default async function AnalyticsLayout({ children }: { children: React.Re
       <p className="text-[12px] text-dim">
         Freight analytics · BL data to {fmtDayYear(now)}
         <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-800">Sample data</span>
-        <span className="ml-2">Premium · daily updates</span>
       </p>
       {children}
     </div>

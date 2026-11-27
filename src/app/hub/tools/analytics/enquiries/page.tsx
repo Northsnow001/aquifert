@@ -87,7 +87,7 @@ export default async function EnquiriesPage({
                   <td>Stage {stageOf(row.laycanStart, row.laycanEnd, data.now)}</td>
                   <td>
                     <Link
-                      href={`/hub/tools/analytics/calculator?load=${encodeURIComponent(row.loadPort)}&disch=${encodeURIComponent(row.dischPort)}&qty=${row.qtyMax}&product=${encodeURIComponent(row.product)}`}
+                      href="/hub/freight-calculator"
                       className="font-semibold text-blue no-underline"
                     >
                       Price lane

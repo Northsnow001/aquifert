@@ -9,5 +9,5 @@ export async function ProductOnboarding({ plan }: { plan: ProductPlan }) {
   const [questions, catalog] = await Promise.all([getOnboardingQuestions(), catalogFromDesk()]);
   const live = resolveQuestions(questions, catalog);
   if (!live.length) return null;
-  return <OnboardingOverlay plan={plan} questions={live} embedded />;
+  return <OnboardingOverlay plan={plan} questions={live} />;
 }

@@ -190,7 +190,7 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "aa-map",
     href: "/hub/tools/analytics",
-    label: "Intelligence map",
+    label: "Intelligent Map",
     short: "Map",
     icon: Map,
     section: "AQ Analytics",
@@ -200,7 +200,7 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "aa-board",
     href: "/hub/tools/analytics/board",
-    label: "Freight board",
+    label: "Freight Board",
     short: "Board",
     icon: Ship,
     section: "AQ Analytics",
@@ -210,7 +210,7 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "aa-market",
     href: "/hub/tools/analytics/market",
-    label: "My market",
+    label: "My Market",
     short: "Market",
     icon: ChartLine,
     section: "AQ Analytics",
@@ -230,22 +230,12 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "aa-enquiries",
     href: "/hub/tools/analytics/enquiries",
-    label: "Freight enquiries",
+    label: "Freight Inquiries",
     short: "Enquiries",
     icon: Inbox,
     section: "AQ Analytics",
     analyticsTool: true,
     tip: "Open freight enquiries, the vessel sizes they need and where they are in the desk.",
-  },
-  {
-    key: "aa-lane",
-    href: "/hub/tools/analytics/calculator",
-    label: "Lane calculator",
-    short: "Lane",
-    icon: Calculator,
-    section: "AQ Analytics",
-    analyticsTool: true,
-    tip: "Estimate one lane from load port, discharge port, product and cargo size.",
   },
   {
     key: "aa-reports",
@@ -413,7 +403,7 @@ export type HubTabLink = { key: string; href: string; match?: string; icon: HubN
 export type HubTab = { key: string; tour?: string; links: HubTabLink[] };
 
 /** Desk pages that live under AQ Analytics, in menu order. They stay in the product's left menu, not the header. */
-export const ANALYTICS_MENU_KEYS = ["aa-map", "aa-board", "aa-market", "aa-producers", "aa-enquiries", "aa-lane", "aa-reports", "aa-alerts", "aa-plans"] as const;
+export const ANALYTICS_MENU_KEYS = ["aa-map", "aa-board", "aa-market", "aa-producers", "aa-enquiries", "aa-reports", "aa-alerts", "aa-plans"] as const;
 
 /** Which paid products this member can open. False sends the header straight to that product's subscription page. */
 export type ProductAccess = { analytics: boolean; zero: boolean };
@@ -422,7 +412,7 @@ export const CLOSED_ACCESS: ProductAccess = { analytics: false, zero: false };
 
 /** Header and drawer destination. A single link: subscription until payment, then the product home. */
 export function hubHref(key: string, href: string, access: ProductAccess): { href: string; match?: string } {
-  if (key === "aq-analytics" && access.analytics) return { href: "/hub/tools/analytics/home", match: "/hub/tools/analytics" };
+  if (key === "aq-analytics" && access.analytics) return { href: "/hub/tools/analytics", match: "/hub/tools/analytics" };
   if (key === "zero" && access.zero) return { href: "/hub/zero", match: "/hub/zero" };
   return { href };
 }
@@ -495,7 +485,7 @@ export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: fa
   { key: "dashboard", title: "Dashboard", body: "Your day at a glance: usage, recent requests, the latest Telex and a briefing tuned to you." },
   { key: "home", title: "Client Suite", body: "Your workspace dropdown: Hub, Telex, AQ View, Library, Calculators and AQ Trader Tools." },
   { key: "aq-analytics", title: "AQ Analytics", body: "Opens the AQ Analytics subscription. Once that membership is active, it opens the product: its pages sit in the left menu, and this header stays so you can move around Aquifert ONE." },
-  { key: "aa-map", title: "AQ Analytics", body: "Intelligence map, freight board, your market, producers, freight enquiries, the lane calculator, reports, alerts and plans." },
+  { key: "aa-map", title: "AQ Analytics", body: "Intelligent Map, Freight Board, My Market, producers, freight inquiries, reports, alerts and plans." },
   { key: "zero", title: "AQ Zero", body: "Opens the AQ Zero subscription. Once that membership is active, it opens AQ Zero with its own left menu, and this header stays so you can move around Aquifert ONE." },
   { key: "nitrogen", title: "Nitrogen Report", body: "Answer six questions on one page and get an AQ View nitrogen brief tailored to your market, yours to keep." },
   { key: "order", title: "Order Fertiliser", body: "Send the trading desk an enquiry for the products, quantity and months you need." },

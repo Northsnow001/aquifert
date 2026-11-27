@@ -64,7 +64,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             {report.lanes.map((row) => (
               <li key={row.key} className="flex items-center justify-between px-5 py-2.5 text-[13px]">
                 <span>{row.key}</span>
-                <Link href="/hub/tools/analytics/calculator" className="font-semibold text-blue no-underline">
+                <Link href="/hub/freight-calculator" className="font-semibold text-blue no-underline">
                   Price
                 </Link>
               </li>

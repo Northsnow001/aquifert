@@ -76,7 +76,7 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
                 </span>
                 <Link
                   className="shrink-0 font-semibold text-blue no-underline"
-                  href={`/hub/tools/analytics/calculator?load=${encodeURIComponent(row.loadPort)}&disch=${encodeURIComponent(row.dischPort)}&qty=${row.qtyMax}&product=${encodeURIComponent(row.product)}`}
+                  href="/hub/freight-calculator"
                 >
                   Price lane
                 </Link>

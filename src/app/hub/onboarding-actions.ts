@@ -28,7 +28,7 @@ export async function completeOnboarding(answers: Record<string, string[]>) {
   revalidatePath("/hub/dashboard");
   revalidatePath("/hub");
   revalidatePath("/hub/telex");
-  revalidatePath("/hub/tools/analytics/home");
+  revalidatePath("/hub/tools/analytics");
   revalidatePath("/hub/zero");
   return { ok: true as const };
 }
