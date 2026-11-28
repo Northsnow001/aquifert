@@ -27,7 +27,7 @@ import { LiveAnalyticsPanel } from "@/components/admin/live-analytics";
 import { Card, CardHeader, PageHeader, StatusBadge, btnPrimary, btnSecondary } from "@/components/admin/ui";
 import { excerpt, formatDay, formatStamp, hedgeRowCount, telexHeadline } from "@/lib/content-types";
 import { getHubContent, sortHedge, sortTelex } from "@/lib/hub-content";
-import { listInbox } from "@/lib/inbox";
+import { inboxSnapshot } from "@/lib/inbox";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +68,7 @@ function greeting() {
 export default async function AdminHomePage() {
   const user = await getSession();
   const content = await getHubContent();
-  const inbox = await listInbox();
+  const inbox = await inboxSnapshot();
   const telex = sortTelex(content.telex);
   const published = telex.filter((item) => item.status === "published");
   const drafts = telex.filter((item) => item.status === "draft");
@@ -106,9 +106,9 @@ export default async function AdminHomePage() {
       href: "/admin/desk/inquiries",
       icon: Inbox,
       label: "Enquiries",
-      value: inbox.length,
+      value: inbox.total,
       unit: "received",
-      detail: inbox[0] ? `Latest ${inbox[0].at.slice(0, 16).replace("T", " ")}` : "Order Desk and Contact",
+      detail: inbox.latestAt ? `Latest ${inbox.latestAt.slice(0, 16).replace("T", " ")}` : "Order Desk and Contact",
     },
   ];
 

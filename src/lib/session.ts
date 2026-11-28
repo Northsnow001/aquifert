@@ -3,24 +3,23 @@ import { cache } from "react";
 import { isAdminUser } from "@/lib/admin-access";
 import { DEFAULT_SIGNUP_RULES, accountAddressRefused, underSignupRules } from "@/lib/desk-settings/email-rules";
 import { getDeskSettings } from "@/lib/desk-settings/store";
+import { DEMO_COOKIE, DEV_LOGIN } from "@/lib/dev-access";
 import { findBan, type BanRecord } from "@/lib/member-access";
 import { createClient } from "@/lib/supabase/server";
 import type { Plan, SessionUser } from "@/lib/session-shared";
 
 export type { Plan, SessionUser };
 
-const DEMO_COOKIE = "aq_demo";
-
 /**
  * The signed-in member plus any ban on their account, and whether it is a new account on an address the
  * sign-up rules refuse (a throwaway inbox or a blocked address). Admins are never treated as banned or refused.
  */
-export async function getSessionAccess(): Promise<{ user: SessionUser | null; ban: BanRecord | null; addressRefused: boolean }> {
+export const getSessionAccess = cache(async (): Promise<{ user: SessionUser | null; ban: BanRecord | null; addressRefused: boolean }> => {
   const user = await readSession();
   if (!user || isAdminUser(user)) return { user, ban: null, addressRefused: false };
   const [ban, addressRefused] = await Promise.all([banFor(user.id, user.email), refusedAddress(user.email, user.createdAt)]);
   return { user, ban, addressRefused };
-}
+});
 
 const banFor = cache((id: string, email: string) => findBan({ id, email }));
 
@@ -37,8 +36,10 @@ export async function getSession(): Promise<SessionUser | null> {
   return ban || addressRefused ? null : user;
 }
 
-async function readSession(): Promise<SessionUser | null> {
-  const supabase = await createClient();
+const readSession = cache(async (): Promise<SessionUser | null> => {
+  const jar = await cookies();
+  const devSession = DEV_LOGIN && jar.has(DEMO_COOKIE);
+  const supabase = devSession ? null : await createClient();
   if (supabase) {
     const { data } = await supabase.auth.getUser();
     const user = data.user;
@@ -67,16 +68,15 @@ async function readSession(): Promise<SessionUser | null> {
     };
   }
 
-  const jar = await cookies();
   const raw = jar.get(DEMO_COOKIE)?.value;
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as SessionUser;
     if (!parsed.email) return null;
-    return { ...parsed, admin: false };
+    return { ...parsed, admin: devSession && parsed.admin === true };
   } catch {
     return null;
   }
-}
+});
 
 export { DEMO_COOKIE };

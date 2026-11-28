@@ -26,6 +26,27 @@ function writeLocal(key: DocumentKey, value: object) {
 
 const queues = new Map<DocumentKey, Promise<unknown>>();
 
+/**
+ * Warm copies of documents. Pages are force-dynamic, which skips Next's data cache,
+ * so this map is what stops every click from downloading the whole JSON blob again.
+ * Each read checks `updated_at` first. A save clears the copy on this instance, and
+ * any other instance reloads as soon as that timestamp changes.
+ */
+const memory = new Map<string, { updatedAt: string | null; data: unknown }>();
+
+function copy<T>(value: T): T {
+  return structuredClone(value);
+}
+
+function remember(key: string, updatedAt: string | null, data: unknown) {
+  memory.set(key, { updatedAt, data });
+  return copy(data);
+}
+
+function forget(key: string) {
+  memory.delete(key);
+}
+
 /** Runs one change at a time per document within this server process. */
 function serialize<T>(key: DocumentKey, task: () => Promise<T>): Promise<T> {
   const run = (queues.get(key) ?? Promise.resolve()).catch(() => undefined).then(task);
@@ -39,9 +60,17 @@ function serialize<T>(key: DocumentKey, task: () => Promise<T>): Promise<T> {
 export async function readDocument(key: DocumentKey): Promise<unknown> {
   const db = dataClient();
   if (!db) return readLocal(key);
-  const { data, error } = await db.from("app_documents").select("data").eq("key", key).maybeSingle();
+  const kept = memory.get(key);
+  if (kept) {
+    const { data: stamp, error: stampError } = await db.from("app_documents").select("updated_at").eq("key", key).maybeSingle();
+    if (stampError) return readFallback("app_documents", stampError, null);
+    const updatedAt = (stamp?.updated_at as string | null) ?? null;
+    if (updatedAt === kept.updatedAt) return copy(kept.data);
+  }
+  const { data, error } = await db.from("app_documents").select("data, updated_at").eq("key", key).maybeSingle();
   if (error) return readFallback("app_documents", error, null);
-  return (data?.data as unknown) ?? null;
+  const updatedAt = (data?.updated_at as string | null) ?? null;
+  return remember(key, updatedAt, (data?.data as unknown) ?? null);
 }
 
 /**
@@ -65,7 +94,10 @@ export function updateDocument<T extends object>(key: DocumentKey, change: (curr
       const stamp = new Date().toISOString();
       if (!row) {
         const { error: insertError } = await db.from("app_documents").insert({ key, data: next, updated_at: stamp });
-        if (!insertError) return next;
+        if (!insertError) {
+          forget(key);
+          return next;
+        }
         if (insertError.code === "23505") continue;
         throw databaseError(`save ${key}`, insertError);
       }
@@ -76,7 +108,10 @@ export function updateDocument<T extends object>(key: DocumentKey, change: (curr
         .eq("updated_at", row.updated_at as string)
         .select("key");
       if (updateError) throw databaseError(`save ${key}`, updateError);
-      if (saved?.length) return next;
+      if (saved?.length) {
+        forget(key);
+        return next;
+      }
     }
     throw new Error(`Could not save ${key}: it kept changing while saving. Try again.`);
   });
@@ -88,6 +123,7 @@ export async function writeDocument(key: DocumentKey, value: object) {
   if (!db) return writeLocal(key, value);
   const { error } = await db.from("app_documents").upsert({ key, data: value, updated_at: new Date().toISOString() }, { onConflict: "key" });
   if (error) throw databaseError(`save ${key}`, error);
+  forget(key);
 }
 
 export async function deleteDocument(key: DocumentKey) {
@@ -95,6 +131,7 @@ export async function deleteDocument(key: DocumentKey) {
   if (db) {
     const { error } = await db.from("app_documents").delete().eq("key", key);
     if (error) throw databaseError(`delete ${key}`, error);
+    forget(key);
     return;
   }
   assertLocalAllowed();

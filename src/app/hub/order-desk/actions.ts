@@ -7,7 +7,8 @@ import { notifySubmission } from "@/lib/desk-settings/notify";
 import { emailReference } from "@/lib/email/brand";
 import { activePorts, getFreightDesk } from "@/lib/freight-desk/store";
 import { resolvePort, portText } from "@/lib/ports";
-import { listInbox } from "@/lib/inbox";
+import { listRecords } from "@/lib/data/records";
+import { INBOX } from "@/lib/data/tables";
 import { getSession } from "@/lib/session";
 
 const WINDOW_MS = 10 * 60 * 1000;
@@ -51,7 +52,9 @@ export async function submitOrderEnquiry(input: OrderInput) {
 
   const account = user.email.toLowerCase();
   const since = Date.now() - WINDOW_MS;
-  const recent = (await listInbox()).filter((item) => item.table === "order_enquiries" && item.payload.account === account && Date.parse(item.at) > since).length;
+  const recent = (await listRecords(INBOX, { since: new Date(since).toISOString() })).filter(
+    (item) => item.table === "order_enquiries" && item.payload.account === account && Date.parse(item.at) > since,
+  ).length;
   if (recent >= MAX_IN_WINDOW) return { ok: false as const, message: "You have sent several enquiries in the last few minutes. Wait a little, then try again." };
 
   const submission: OrderSubmission = { ...order, reference: emailReference("R"), submittedAt: new Date().toISOString() };

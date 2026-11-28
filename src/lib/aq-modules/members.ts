@@ -1,5 +1,6 @@
 import "server-only";
 
+import { dataClient } from "@/lib/data/db";
 import { countRecords, getRecord, listRecords, putRecords, removeRecords } from "@/lib/data/records";
 import { CALL_REGISTRATIONS, MEMBER_ALERTS, MEMBER_PREFS, MEMBERSHIP_REQUESTS, NITROGEN_REPORTS } from "@/lib/data/tables";
 import type { CallRegistration, MemberAlert, MemberPrefs, MembershipRequest, NitrogenReport } from "@/lib/aq-modules/member-types";
@@ -134,6 +135,24 @@ export async function cancelRegistration(user: Owner, callId: string) {
 /* ---------------- Membership requests ---------------- */
 
 export const listMembershipRequests = (): Promise<MembershipRequest[]> => listRecords(MEMBERSHIP_REQUESTS);
+
+/** Nav badge: how many requests exist, and how many are still new. */
+export async function membershipRequestCounts(): Promise<{ total: number; fresh: number }> {
+  const db = dataClient();
+  if (!db) {
+    const rows = await listMembershipRequests();
+    return { total: rows.length, fresh: rows.filter((row) => row.status === "new").length };
+  }
+  const [total, fresh] = await Promise.all([
+    countRecords(MEMBERSHIP_REQUESTS),
+    db.from(MEMBERSHIP_REQUESTS.table).select("id", { count: "exact", head: true }).contains("data", { status: "new" }),
+  ]);
+  if (fresh.error) {
+    const rows = await listMembershipRequests();
+    return { total: rows.length, fresh: rows.filter((row) => row.status === "new").length };
+  }
+  return { total, fresh: fresh.count ?? 0 };
+}
 
 export const myMembershipRequests = (user: Owner): Promise<MembershipRequest[]> => listRecords(MEMBERSHIP_REQUESTS, owner(user));
 

@@ -90,10 +90,19 @@ function supplierWrite(input: TradeSupplierDraft) {
   };
 }
 
+const SUPPLIER_COLUMNS =
+  "id, code, company_name, contact_name, email, whatsapp_e164, wechat_openid, country, address, products_supplied, origins, load_ports, typical_payment_terms, status, onboarding_status, qr_ticket, qr_scene, invited_at, last_rfq_code, awaiting_reply, last_contact_at, notes, created_at, updated_at";
+
+const missingColumn = (error: { code?: string; message: string }) =>
+  error.code === "42703" || error.code === "PGRST204" || /column .+ does not exist/i.test(error.message);
+
 export async function listTradeSuppliers(): Promise<TradeSupplier[]> {
   const db = dataClient();
   if (!db) return [];
-  const { data, error } = await db.from("trade_suppliers").select("*").order("updated_at", { ascending: false });
+  const narrow = await db.from("trade_suppliers").select(SUPPLIER_COLUMNS).order("updated_at", { ascending: false });
+  const { data, error } = narrow.error && missingColumn(narrow.error)
+    ? await db.from("trade_suppliers").select("*").order("updated_at", { ascending: false })
+    : narrow;
   if (error) throw databaseError("list suppliers", error);
   return (data ?? []).map((row) => supplierFrom(row as Record<string, unknown>));
 }
@@ -879,11 +888,17 @@ export async function recordWorkflowRfqAsk(input: {
 
 const CLOSED_RFQ = new Set(["won", "lost", "expired", "closed"]);
 
+const BUYER_COLUMNS =
+  "id, code, company_name, contact_name, email, whatsapp_e164, wechat_id, country, address, job_title, buyer_type, products_of_interest, kyc_status, status, partner_name, partner_email, onboarding_status, invited_at, last_contact_at, notes, created_at, updated_at";
+
 export async function listTradeBuyers(): Promise<TradeBuyer[]> {
   const db = dataClient();
   if (!db) return [];
+  const narrow = db.from("trade_buyers").select(BUYER_COLUMNS).order("updated_at", { ascending: false });
   const [{ data, error }, rfqs] = await Promise.all([
-    db.from("trade_buyers").select("*").order("updated_at", { ascending: false }),
+    narrow.then((result) =>
+      result.error && missingColumn(result.error) ? db.from("trade_buyers").select("*").order("updated_at", { ascending: false }) : result,
+    ),
     db.from("trade_rfqs").select("buyer_id, status, created_at, updated_at"),
   ]);
   if (error) throw databaseError("list buyers", error);
@@ -1231,10 +1246,16 @@ export async function insertWhatsAppRfq(input: {
   return { id: text(data.id), code: text(data.code) };
 }
 
+const RFQ_COLUMNS =
+  "id, code, buyer_company, product_label, quantity_mt, packing, incoterm, destination_port, destination_country, shipment_window, status, buyer_ready, ready_quote_count, buyer_unit_price, supplier_unit_price, selected_supplier, created_at, updated_at";
+
 export async function listTradeRfqs(): Promise<TradeRfq[]> {
   const db = dataClient();
   if (!db) return [];
-  const { data, error } = await db.from("trade_rfq_board").select("*").order("updated_at", { ascending: false });
+  const narrow = await db.from("trade_rfq_board").select(RFQ_COLUMNS).order("updated_at", { ascending: false });
+  const { data, error } = narrow.error && missingColumn(narrow.error)
+    ? await db.from("trade_rfq_board").select("*").order("updated_at", { ascending: false })
+    : narrow;
   if (error) throw databaseError("list RFQs", error);
   return (data ?? []).map((row) => {
     const r = row as Record<string, unknown>;
@@ -1331,26 +1352,29 @@ export async function tradeCounts(): Promise<TradeCounts> {
   };
   const db = dataClient();
   if (!db) return empty;
-  const [buyers, suppliers, rfqs, quotes, freight] = await Promise.all([
+  const closed = "(won,lost,expired,closed)";
+  const [buyers, suppliers, toInvite, invited, subscribed, rfqs, openRfqs, quotes, readyQuotes, freight] = await Promise.all([
     db.from("trade_buyers").select("id", { count: "exact", head: true }),
-    db.from("trade_suppliers").select("id, onboarding_status"),
-    db.from("trade_rfqs").select("id, status"),
-    db.from("trade_quotes").select("id, ready", { count: "exact" }).limit(1000),
+    db.from("trade_suppliers").select("id", { count: "exact", head: true }),
+    db.from("trade_suppliers").select("id", { count: "exact", head: true }).eq("onboarding_status", "to_invite"),
+    db.from("trade_suppliers").select("id", { count: "exact", head: true }).eq("onboarding_status", "invited"),
+    db.from("trade_suppliers").select("id", { count: "exact", head: true }).eq("onboarding_status", "subscribed"),
+    db.from("trade_rfqs").select("id", { count: "exact", head: true }),
+    db.from("trade_rfqs").select("id", { count: "exact", head: true }).not("status", "in", closed),
+    db.from("trade_quotes").select("id", { count: "exact", head: true }),
+    db.from("trade_quotes").select("id", { count: "exact", head: true }).eq("ready", true),
     db.from("trade_freight_quotes").select("id", { count: "exact", head: true }),
   ]);
-  const mills = suppliers.data ?? [];
-  const requests = rfqs.data ?? [];
-  const offers = quotes.data ?? [];
   return {
     buyers: buyers.count ?? 0,
-    suppliers: mills.length,
-    toInvite: mills.filter((row) => row.onboarding_status === "to_invite").length,
-    invited: mills.filter((row) => row.onboarding_status === "invited").length,
-    subscribed: mills.filter((row) => row.onboarding_status === "subscribed").length,
-    rfqs: requests.length,
-    openRfqs: requests.filter((row) => !["won", "lost", "expired", "closed"].includes(String(row.status))).length,
-    quotes: quotes.count ?? offers.length,
-    readyQuotes: offers.filter((row) => row.ready).length,
+    suppliers: suppliers.count ?? 0,
+    toInvite: toInvite.count ?? 0,
+    invited: invited.count ?? 0,
+    subscribed: subscribed.count ?? 0,
+    rfqs: rfqs.count ?? 0,
+    openRfqs: openRfqs.count ?? 0,
+    quotes: quotes.count ?? 0,
+    readyQuotes: readyQuotes.count ?? 0,
     freightQuotes: freight.count ?? 0,
   };
 }

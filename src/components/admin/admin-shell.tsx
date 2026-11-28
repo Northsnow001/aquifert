@@ -1,37 +1,36 @@
 import { AdminFrame } from "@/components/admin/admin-frame";
 import { marketFreshness } from "@/components/admin/aq-data/freshness";
 import type { NavGroup } from "@/components/admin/admin-nav";
-import { listMembershipRequests, listRegistrations } from "@/lib/aq-modules/members";
+import { listRegistrations, membershipRequestCounts } from "@/lib/aq-modules/members";
 import { getAqModules, upcomingCalls } from "@/lib/aq-modules/store";
 import { countRecords } from "@/lib/data/records";
-import { listDeskDeals } from "@/lib/desk-hitl/store";
-import { NITROGEN_REPORTS } from "@/lib/data/tables";
+import { BANS, NITROGEN_REPORTS } from "@/lib/data/tables";
+import { deskNavCounts } from "@/lib/desk-hitl/store";
 import { auditPorts } from "@/lib/freight-desk/port-quality";
 import { getFreightDesk } from "@/lib/freight-desk/store";
 import { ageInDays } from "@/lib/freight-desk/types";
 import { getHubContent } from "@/lib/hub-content";
-import { listInbox } from "@/lib/inbox";
-import { listBans } from "@/lib/member-access";
+import { inboxSnapshot } from "@/lib/inbox";
 import { getNetbackDesk } from "@/lib/netback-desk/store";
 import { liveOrigins } from "@/lib/netback-desk/types";
 import type { SessionUser } from "@/lib/session-shared";
 import type { Theme } from "@/lib/theme";
 import { tradeCounts } from "@/lib/trade/store";
-import { listZeroRegistrations } from "@/lib/zero-interest";
+import { zeroRegistrationCounts } from "@/lib/zero-interest";
 
 export async function AdminShell({ user, theme = "light", children }: { user: SessionUser; theme?: Theme; children: React.ReactNode }) {
-  const [content, inbox, desk, netback, zero, banList, aq, requests, registrations, nitrogenReports, deskDeals, trade] = await Promise.all([
+  const [content, inbox, desk, netback, zero, bans, aq, requests, registrations, nitrogenReports, deskNav, trade] = await Promise.all([
     getHubContent(),
-    listInbox(),
+    inboxSnapshot().catch(() => ({ total: 0, orders: 0, latestAt: null })),
     getFreightDesk(),
     getNetbackDesk(),
-    listZeroRegistrations(),
-    listBans(),
+    zeroRegistrationCounts().catch(() => ({ total: 0, fresh: 0 })),
+    countRecords(BANS).catch(() => 0),
     getAqModules(),
-    listMembershipRequests().catch(() => []),
+    membershipRequestCounts().catch(() => ({ total: 0, fresh: 0 })),
     listRegistrations().catch(() => []),
     countRecords(NITROGEN_REPORTS).catch(() => 0),
-    listDeskDeals().catch(() => []),
+    deskNavCounts().catch(() => ({ total: 0, waiting: 0, negotiating: 0 })),
     tradeCounts().catch(() => null),
   ]);
   const drafts = content.telex.filter((item) => item.status === "draft").length;
@@ -39,14 +38,12 @@ export async function AdminShell({ user, theme = "light", children }: { user: Se
   const marketIssue = desk.bunker.lastError || desk.bdi.lastError ? "check" : desk.bdi.source === "default" ? "no BDI" : undefined;
   const netbackAge = ageInDays(netback.date);
   const netbackBadge = !liveOrigins(netback.benchmarks).length ? "no prices" : netbackAge === null || netbackAge > 14 ? "stale" : netback.week ? `wk ${netback.week}` : undefined;
-  const zeroNew = zero.filter((row) => row.status === "new").length;
-  const bans = banList.length;
   const analysisDrafts = aq.analysis.filter((note) => note.status === "draft").length;
   const nextCall = upcomingCalls(aq).next;
   const nextCallRegistered = nextCall ? registrations.filter((row) => row.callId === nextCall.id && row.status === "registered").length : 0;
-  const requestsNew = requests.filter((row) => row.status === "new").length;
-  const deskWaiting = deskDeals.filter((row) => row.status === "waiting_desk").length;
-  const negotiating = deskDeals.filter((row) => row.mattThread && row.status === "negotiating").length;
+  const requestsNew = requests.fresh;
+  const deskWaiting = deskNav.waiting;
+  const negotiating = deskNav.negotiating;
 
   const groups: NavGroup[] = [
     { title: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: "dashboard" }] },
@@ -82,7 +79,7 @@ export async function AdminShell({ user, theme = "light", children }: { user: Se
         { href: "/admin/community-calls", label: "Weekly Market Calls", icon: "calls", badge: nextCallRegistered },
         { href: "/admin/supply-demand", label: "Supply & demand", icon: "supplyDemand" },
         { href: "/admin/briefing", label: "The Briefing", icon: "briefing", badge: aq.briefings.length },
-        { href: "/admin/membership-requests", label: "Membership requests", icon: "requests", badge: requestsNew ? `${requestsNew} new` : requests.length },
+        { href: "/admin/membership-requests", label: "Membership requests", icon: "requests", badge: requestsNew ? `${requestsNew} new` : requests.total },
         { href: "/admin/nitrogen-reports", label: "Nitrogen reports", icon: "nitrogen", badge: nitrogenReports },
         { href: "/admin/nitrogen-reports/template", label: "Nitrogen report template", icon: "nitrogen" },
       ],
@@ -102,15 +99,15 @@ export async function AdminShell({ user, theme = "light", children }: { user: Se
           href: "/admin/desk/inquiries",
           label: "Enquiries",
           icon: "inbox",
-          badge: inbox.length + (trade?.openRfqs ?? 0) || undefined,
+          badge: inbox.total + (trade?.openRfqs ?? 0) || undefined,
         },
-        { href: "/admin/zero", label: "Aquifert Zero", icon: "zero", badge: zeroNew ? `${zeroNew} new` : zero.length },
+        { href: "/admin/zero", label: "Aquifert Zero", icon: "zero", badge: zero.fresh ? `${zero.fresh} new` : zero.total },
       ],
     },
     {
       title: "Trade book",
       items: [
-        { href: "/admin/desk", label: "Desk shortlists", icon: "desk", badge: deskWaiting ? `${deskWaiting} wait` : deskDeals.length },
+        { href: "/admin/desk", label: "Desk shortlists", icon: "desk", badge: deskWaiting ? `${deskWaiting} wait` : deskNav.total },
         { href: "/admin/desk/matching", label: "Needs matching", icon: "inbox" },
         { href: "/admin/desk/negotiation", label: "Shortlist Negotiation", icon: "desk", badge: negotiating || undefined },
         { href: "/admin/trade", label: "Overview", icon: "trade", badge: trade?.toInvite ? `${trade.toInvite} invite` : trade?.suppliers || undefined },

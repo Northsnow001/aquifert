@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/admin/ui";
 import { storageStatus } from "@/lib/data/status";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 import { DEFAULT_DESK_SETTINGS } from "@/lib/desk-settings/types";
-import { listInbox } from "@/lib/inbox";
+import { inboxSnapshot } from "@/lib/inbox";
 import { deliveryStatus, listOutbox } from "@/lib/mailer";
 import { listBans } from "@/lib/member-access";
 import { getSession } from "@/lib/session";
@@ -41,13 +41,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     getSession(),
     getDeskSettings(),
     listOutbox(),
-    listInbox(),
+    inboxSnapshot(),
     listZeroRegistrations(),
     listBans(),
     storageStatus(),
   ]);
   const status = deliveryStatus();
-  const orders = inbox.filter((item) => item.table === "order_enquiries").length;
+  const orders = inbox.orders;
   const storageFailing = storage.backend === "local" ? storage.hosted : storage.checks.some((check) => !check.ok);
   const failed = outbox.filter((entry) => entry.status === "failed").length;
   const { orderDesk, zero, members } = settings;

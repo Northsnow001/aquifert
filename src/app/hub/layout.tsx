@@ -23,12 +23,15 @@ export const metadata: Metadata = {
 };
 
 export default async function HubLayout({ children }: { children: React.ReactNode }) {
-  const { user, ban, addressRefused } = await getSessionAccess();
+  const sessionPromise = getSessionAccess();
+  const modulesPromise = getAqModules();
+  const contentPromise = getHubContent();
+  const { user, ban, addressRefused } = await sessionPromise;
   if (!user) redirect("/login");
   if (ban) return <SuspendedNotice email={user.email} />;
   if (addressRefused) return <AddressRefusedNotice email={user.email} />;
   const admin = isAdminUser(user);
-  const [modules, content, prefs] = await Promise.all([getAqModules(), getHubContent(), getPrefs(user).catch(() => null)]);
+  const [modules, content, prefs] = await Promise.all([modulesPromise, contentPromise, getPrefs(user).catch(() => null)]);
   const access = {
     analytics: hasAqAnalytics({ plan: user.plan, admin, mockPlan: prefs?.mockPlan ?? null }),
     zero: hasAqZero({ plan: user.plan, mockPlan: prefs?.mockPlan ?? null }),

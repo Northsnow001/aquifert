@@ -1,6 +1,7 @@
 import "server-only";
 
-import { getRecord, listRecords, putRecords } from "@/lib/data/records";
+import { dataClient } from "@/lib/data/db";
+import { countRecords, getRecord, listRecords, putRecords } from "@/lib/data/records";
 import { DESK_DEALS } from "@/lib/data/tables";
 import { resolveBuyerReply, resolveFirmFollowUp } from "@/lib/desk-hitl/classify-reply";
 import { applyBuyerTermAnswer, buyerUnitPrice, classifyBuyerReply, emptyExecution, firmOfferNextAsk, hideBuyerPriceFromSupplier, indicationWhatsApp, isIndicationAsk, isPlainRefusal, knownFirmTermsFromThread, lockedInboundDecision, looksLikeCounter, looksLikeNewRfq, looksLikeNewSupply, mentionsLockedRequest, millFirmOfferWeChat, offerIsLocked, parseBuyerEmailReply, parseShortlistBody, retireQueuedIndicationAsks, rfqKey, seedFirmExecution, selectedOffer, shouldTakeLocked, type DeskPhase } from "@/lib/desk-hitl/logic";
@@ -114,6 +115,24 @@ function firmOfferWhatsApp(deal: DeskDeal, email: string) {
 
 export async function listDeskDeals() {
   return listRecords(DESK_DEALS);
+}
+
+/** Badge counts for the admin nav. Uses the status column instead of every deal's JSON. */
+export async function deskNavCounts(): Promise<{ total: number; waiting: number; negotiating: number }> {
+  const fromRows = (deals: DeskDeal[]) => ({
+    total: deals.length,
+    waiting: deals.filter((deal) => deal.status === "waiting_desk").length,
+    negotiating: deals.filter((deal) => deal.mattThread && deal.status === "negotiating").length,
+  });
+  const db = dataClient();
+  if (!db) return fromRows(await listDeskDeals());
+  const [total, waiting, negotiating] = await Promise.all([
+    countRecords(DESK_DEALS),
+    db.from(DESK_DEALS.table).select("id", { count: "exact", head: true }).eq("status", "waiting_desk"),
+    db.from(DESK_DEALS.table).select("id", { count: "exact", head: true }).eq("status", "negotiating").filter("data->>mattThread", "eq", "true"),
+  ]);
+  if (waiting.error || negotiating.error) return fromRows(await listDeskDeals());
+  return { total, waiting: waiting.count ?? 0, negotiating: negotiating.count ?? 0 };
 }
 
 export async function getDeskDeal(id: string) {
