@@ -6,7 +6,7 @@ import { hasAqAnalytics } from "@/lib/aq-analytics-access";
 import { getPrefs } from "@/lib/aq-modules/members";
 import { getSession } from "@/lib/session";
 
-/** AQ Trade stays with admins until a subscription opens it to members. */
+/** Admin-only gate for previews that are still closed. Trades is open to every member and shows that member's own records. */
 export async function aqPreviewAccess() {
   const user = await getSession();
   return { user, allowed: isAdminUser(user) };
