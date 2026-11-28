@@ -41,7 +41,7 @@ export function HomeHero({ name, variant = "dashboard" }: { name: string; varian
   return (
     <section className={`aq-rise flex flex-col items-center px-1 text-center ${hub ? "py-4" : "pb-2 pt-2 sm:pt-4"}`}>
       {hub ? (
-        <h1 className="text-[24px] font-normal leading-tight tracking-tight text-ink sm:text-[32px] sm:leading-[40px]">
+        <h1 className="max-w-[18ch] text-[22px] font-normal leading-tight tracking-tight text-ink sm:max-w-none sm:text-[32px] sm:leading-[40px]">
           Hi, <span translate="no">{first}</span>! What do you want to check today?
         </h1>
       ) : (

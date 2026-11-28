@@ -85,8 +85,8 @@ export default async function HomePage() {
       <HomeHero name={user.name} variant="hub" />
       <HubFreeStrip />
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="order-2 flex min-w-0 flex-1 flex-col gap-6 lg:order-1">
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} readIds={readIds} />
             <AqViewCard notes={notes} view={parseFeedView(jar.get(feedViewCookie("analysis"))?.value)} />
@@ -102,7 +102,7 @@ export default async function HomePage() {
           )}
         </div>
 
-        <HubRail user={user} modules={modules} />
+        <HubRail user={user} modules={modules} className="order-1 lg:order-2" />
       </div>
     </div>
   );

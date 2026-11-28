@@ -1363,9 +1363,17 @@ body::before {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+.aq-ticker {
+  max-width: 100%;
+  min-width: 0;
+}
 .aq-ticker-track {
   animation: aq-ticker var(--aq-ticker-time, 42s) linear infinite;
+  pointer-events: none;
   will-change: transform;
+}
+.aq-ticker-track a {
+  pointer-events: auto;
 }
 .aq-ticker:hover .aq-ticker-track,
 .aq-ticker:focus-within .aq-ticker-track {

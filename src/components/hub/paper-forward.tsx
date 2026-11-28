@@ -50,9 +50,9 @@ function Quote({ row }: { row?: HedgeRow }) {
 function CurveTable({ sections }: { sections: HedgeSection[] }) {
   const periods = curvePeriods(sections);
   const span = periods.length + 2;
-  const pin = "sticky left-0 z-[1] bg-white";
+  const pin = "bg-white md:sticky md:left-0 md:z-[1]";
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
+    <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-border [contain:inline-size]">
       <table className="w-full border-separate border-spacing-0 text-[13px]" style={{ minWidth: 260 + periods.length * 120 }}>
         <thead>
           <tr className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/85 *:bg-navy-800">
@@ -73,7 +73,7 @@ function CurveTable({ sections }: { sections: HedgeSection[] }) {
           <tbody key={section.id}>
             <tr>
               <th scope="rowgroup" colSpan={span} className="border-t border-border bg-s2 px-4 py-2 text-left">
-                <span className="sticky left-4 text-[11px] font-bold uppercase tracking-[0.14em] text-navy-700">{section.label}</span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-navy-700 md:sticky md:left-4">{section.label}</span>
               </th>
             </tr>
             {section.commodities

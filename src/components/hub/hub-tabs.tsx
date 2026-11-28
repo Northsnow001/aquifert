@@ -97,7 +97,7 @@ export function HubTabs({ tabs, pathname }: { tabs: HubTab[]; pathname: string }
   const openTab = open ? tabs.find((tab) => tab.key === open.key) : null;
 
   return (
-    <nav aria-label="Sections" className="aq-tabs-scroll flex items-stretch gap-0 overflow-x-auto overscroll-x-contain px-2 sm:px-6 xl:px-7">
+    <nav aria-label="Sections" className="aq-tabs-scroll flex max-w-full items-stretch gap-0 overflow-x-auto overscroll-x-contain px-1 sm:px-4 xl:px-7">
       {tabs.map((tab, index) => {
         const active = tab.links.some((link) => linkActive(pathname, link));
         const divider = index > 0 ? <span key={`${tab.key}-div`} className="mx-0.5 my-auto h-4 w-px shrink-0 bg-white/20" aria-hidden /> : null;

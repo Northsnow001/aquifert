@@ -323,7 +323,7 @@ export function AppShell({
       </a>
       <div className="flex h-full min-w-0 flex-col overflow-hidden lg:rounded-[22px] lg:shadow-[0_24px_64px_-24px_rgb(0_0_0/0.55)] xl:flex-1">
         <div className="aq-masthead relative z-30 shrink-0">
-          <header className={`flex h-14 items-center gap-1 border-b border-white/10 px-2 sm:gap-2 sm:px-5 lg:h-[72px] ${NAVY}`}>
+          <header className={`flex h-14 min-w-0 items-center gap-1 overflow-x-clip border-b border-white/10 px-2 sm:gap-2 sm:px-5 lg:h-[72px] ${NAVY}`}>
             <button
               type="button"
               onClick={() => setDrawer(true)}
@@ -377,7 +377,7 @@ export function AppShell({
 
         <div className={rail ? "flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row" : "contents"}>
           {rail}
-          <div id="aq-scroll" className="aq-canvas relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+          <div id="aq-scroll" className="aq-canvas relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-clip overscroll-contain">
             <main id="main-content" className="relative flex-1 px-3 pb-28 pt-4 transition-opacity duration-300 sm:px-6 sm:pt-5 lg:px-8 lg:pb-10 lg:pt-7">
               <DeskConnect name={user.name} email={user.email} show={user.plan === "core"} />
               <div key={pathname} className="aq-page mx-auto w-full max-w-[1440px]">

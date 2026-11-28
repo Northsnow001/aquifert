@@ -16,16 +16,16 @@ const CARDS: { eyebrow: string; title: string; body: string; href: string; cta: 
 
 export function HubFreeStrip() {
   return (
-    <section className="aq-card px-5 py-6 sm:px-7">
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-[22px] font-bold tracking-[-0.02em] text-ink sm:text-[24px]">Everything in AQ ONE is free</h2>
-        <p className="text-[14.5px] text-mid">General market information from the Aquifert desk, every week.</p>
+    <section className="aq-card min-w-0 px-4 py-5 sm:px-7 sm:py-6">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2 sm:mb-5">
+        <h2 className="text-[20px] font-bold tracking-[-0.02em] text-ink sm:text-[24px]">Everything in AQ ONE is free</h2>
+        <p className="text-[14px] text-mid sm:text-[14.5px]">General market information from the Aquifert desk, every week.</p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 xl:grid-cols-5">
         {CARDS.map((card) => (
           <article
             key={card.title}
-            className={`flex min-h-[190px] flex-col gap-2 rounded-xl border p-5 ${
+            className={`flex w-[min(78vw,280px)] shrink-0 snap-start flex-col gap-2 rounded-xl border p-4 sm:p-5 md:w-auto md:min-h-[190px] ${
               card.accent ? "border-2 border-amber-400 bg-amber-50" : "border-border bg-white"
             }`}
           >
@@ -52,14 +52,14 @@ function when(iso: string) {
   return new Date(iso).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 }
 
-export async function HubRail({ user, modules }: { user: SessionUser; modules: AqModules }) {
+export async function HubRail({ user, modules, className = "" }: { user: SessionUser; modules: AqModules; className?: string }) {
   const [registrations, requests] = await Promise.all([myRegistrations(user), listRecords(INBOX, { email: user.email, limit: 8 })]);
   const orders = requests.filter((item) => item.table === "order_enquiries").slice(0, 3);
   const { next } = upcomingCalls(modules);
   const registered = Boolean(next && registrations.some((row) => row.callId === next.id && row.status === "registered"));
 
   return (
-    <aside className="flex w-full flex-col gap-5 lg:w-[300px] lg:shrink-0">
+    <aside className={`flex w-full min-w-0 flex-col gap-5 lg:w-[300px] lg:shrink-0 ${className}`}>
       <section className="aq-card p-5">
         <h2 className="text-[18px] font-bold text-ink">My orders</h2>
         <p className="mt-1 text-[14.5px] leading-relaxed text-mid">Track quotes and shipments here once you trade with us.</p>
