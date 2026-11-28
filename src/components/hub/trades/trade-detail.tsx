@@ -8,7 +8,7 @@ export function TradeDetail({ trade }: { trade: BuyerTrade }) {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-[13px] text-mid">
-        <Link href="/hub/order-desk/trades" className="text-blue no-underline">
+        <Link href="/hub/trade" className="text-blue no-underline">
           Trades
         </Link>{" "}
         / {trade.ref}
@@ -129,7 +129,7 @@ function Completed({ trade }: { trade: BuyerTrade }) {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-[13px] text-mid">
-        <Link href="/hub/order-desk/trades" className="no-underline">
+        <Link href="/hub/trade" className="no-underline">
           Trades
         </Link>{" "}
         / {trade.ref} / Trade summary

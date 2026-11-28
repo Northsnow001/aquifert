@@ -1,19 +1,12 @@
 import Link from "next/link";
-import { aqPreviewAccess } from "@/lib/aq-preview";
 import { getDeskSettings } from "@/lib/desk-settings/store";
 
-export type OrderSection = "zero" | "trades" | "documents" | "desk";
+export type OrderSection = "zero" | "desk";
 
 export async function OrderSectionNav({ current }: { current: OrderSection }) {
-  const [settings, preview] = await Promise.all([getDeskSettings(), aqPreviewAccess()]);
+  const settings = await getDeskSettings();
   const items: { id: OrderSection; href: string; label: string; badge?: string }[] = [
     ...(settings.zero.showOnHub ? [{ id: "zero" as const, href: "/hub/order-desk?tab=zero", label: "Aquifert Zero", badge: "Soon" }] : []),
-    ...(preview.allowed
-      ? [
-          { id: "trades" as const, href: "/hub/order-desk/trades", label: "Your trades" },
-          { id: "documents" as const, href: "/hub/order-desk/documents", label: "Documents" },
-        ]
-      : []),
     { id: "desk", href: "/hub/order-desk?tab=desk", label: "Trading Desk" },
   ];
   return (

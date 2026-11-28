@@ -35,7 +35,7 @@ export function DocumentsBoard() {
               <div className="h-full rounded-full bg-[#1c6b45]" style={{ width: `${(trade.docsFinal / trade.docsTotal) * 100}%` }} />
             </div>
             <div className="mt-3 flex gap-2">
-              <Link href={`/hub/order-desk/trades/${trade.ref}`} className="rounded-full border border-border px-3 py-1.5 text-[12.5px] font-semibold no-underline">
+              <Link href={`/hub/trade/${trade.ref}`} className="rounded-full border border-border px-3 py-1.5 text-[12.5px] font-semibold no-underline">
                 Open folder
               </Link>
             </div>
@@ -63,7 +63,7 @@ export function DocumentsBoard() {
                     <p className="text-[12px] text-dim">{doc.file}</p>
                   </td>
                   <td>
-                    <Link href={`/hub/order-desk/trades/${trade.ref}`} className="font-semibold text-blue no-underline">
+                    <Link href={`/hub/trade/${trade.ref}`} className="font-semibold text-blue no-underline">
                       {trade.ref}
                     </Link>
                     <p className="text-[12px] text-dim">{trade.product}</p>

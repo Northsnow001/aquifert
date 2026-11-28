@@ -32,11 +32,11 @@ export function TradesHome({ tab }: { tab: "active" | "completed" | "all" }) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Your trades</h1>
+          <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-ink md:text-[30px]">Your Trades</h1>
           <p className="mt-1 max-w-xl text-[15px] text-mid">Every trade with Aquifert in one place: where it is, what has been paid, and every finalised document.</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/hub/order-desk/documents" className="rounded-full border border-border bg-white px-4 py-2 text-[13.5px] font-semibold text-ink no-underline">
+          <Link href="/hub/trade/documents" className="rounded-full border border-border bg-white px-4 py-2 text-[13.5px] font-semibold text-ink no-underline">
             All documents
           </Link>
           <Link href="/hub/order-desk?tab=desk" className="rounded-full bg-[#123a5f] px-4 py-2 text-[13.5px] font-semibold text-white no-underline">
@@ -75,7 +75,7 @@ export function TradesHome({ tab }: { tab: "active" | "completed" | "all" }) {
               ).map(([id, label]) => (
                 <Link
                   key={id}
-                  href={id === "active" ? "/hub/order-desk/trades" : `/hub/order-desk/trades?tab=${id}`}
+                  href={id === "active" ? "/hub/trade" : `/hub/trade?tab=${id}`}
                   className={`rounded-full px-3 py-1 no-underline ${tab === id ? "bg-white text-ink shadow-sm" : "text-mid"}`}
                 >
                   {label}
@@ -99,7 +99,7 @@ export function TradesHome({ tab }: { tab: "active" | "completed" | "all" }) {
                 {shown.map((trade) => (
                   <tr key={trade.ref} className="border-b border-border last:border-0">
                     <td className="px-4 py-3">
-                      <Link href={`/hub/order-desk/trades/${trade.ref}`} className="font-semibold text-blue no-underline">
+                      <Link href={`/hub/trade/${trade.ref}`} className="font-semibold text-blue no-underline">
                         {trade.ref}
                       </Link>
                       <p className="text-ink">{trade.product}</p>
@@ -122,7 +122,7 @@ export function TradesHome({ tab }: { tab: "active" | "completed" | "all" }) {
                       <p>
                         {trade.docsFinal} of {trade.docsTotal} final
                       </p>
-                      <Link href={`/hub/order-desk/trades/${trade.ref}`} className="text-[12.5px] font-semibold text-blue no-underline">
+                      <Link href={`/hub/trade/${trade.ref}`} className="text-[12.5px] font-semibold text-blue no-underline">
                         Open trade folder
                       </Link>
                     </td>

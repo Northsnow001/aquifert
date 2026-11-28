@@ -60,9 +60,10 @@ test("AQ ONE does not see the AQ Analytics desk menus", () => {
   for (const key of ANALYTICS_MENU_KEYS) assert.equal(keys.includes(key), false);
 });
 
-test("Client Suite holds Hub, Telex, AQ View, Library, Calculators and Trader Tools; Trade Desk and Weekly Meetup stay top-level", () => {
+test("Client Suite holds Hub, Telex, AQ View, Library, Calculators and Trader Tools; Market Call, Trades and Trade Desk stay top-level", () => {
   const tabs = tabsFor(navFor("core", false), [], { plan: "core", admin: false });
   const keys = tabs.map((tab) => tab.key);
+  assert.equal(keys.indexOf("trade"), keys.indexOf("contact") - 1);
   assert.deepEqual(tabs.find((tab) => tab.key === "suite")?.links.map((link) => link.key), ["home", "telex", "analysis", "library", "freight", "netback", "tools"]);
   assert.equal(keys.includes("guide"), false);
   assert.equal(keys.includes("aquibot"), false);

@@ -3,6 +3,7 @@ import { FeedCardHeader, FeedGrid, FeedItem, tileSizes } from "@/components/hub/
 import { FeedViewFrame } from "@/components/hub/feed-view";
 import { HomeHero } from "@/components/hub/home-hero";
 import { HomeTelex } from "@/components/hub/home-telex";
+import { HubFreeStrip, HubRail } from "@/components/hub/hub-rail";
 import { FeedThumb, StoryImage } from "@/components/hub/kit";
 import { PaperForwardBrief } from "@/components/hub/paper-forward";
 import { getHubAccess } from "@/lib/aq-modules/access";
@@ -80,22 +81,29 @@ export default async function HomePage() {
   const hedgeReports = sortHedge(content.hedgeReports).filter((item) => item.status === "published");
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-5 pb-2">
+    <div className="flex flex-col gap-6 pb-2">
       <HomeHero name={user.name} variant="hub" />
+      <HubFreeStrip />
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} readIds={readIds} />
-        <AqViewCard notes={notes} view={parseFeedView(jar.get(feedViewCookie("analysis"))?.value)} />
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div className="flex min-w-0 flex-1 flex-col gap-6">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <HomeTelex items={shown.slice(0, telexCount)} latest={readable[0]?.publishedAt} now={deskNow()} filter={saved} view={parseFeedView(jar.get(feedViewCookie("telex"))?.value)} readIds={readIds} />
+            <AqViewCard notes={notes} view={parseFeedView(jar.get(feedViewCookie("analysis"))?.value)} />
+          </div>
+
+          {hedgeReports.length ? (
+            <PaperForwardBrief reports={hedgeReports} />
+          ) : (
+            <section className="aq-card px-5 py-4">
+              <h2 className="text-[19px] font-extrabold uppercase leading-none tracking-[0.12em] text-navy-800">Direct Hedge</h2>
+              <p className="mt-2 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
+            </section>
+          )}
+        </div>
+
+        <HubRail user={user} modules={modules} />
       </div>
-
-      {hedgeReports.length ? (
-        <PaperForwardBrief reports={hedgeReports} />
-      ) : (
-        <section className="aq-card px-5 py-4">
-          <h2 className="text-[19px] font-extrabold uppercase leading-none tracking-[0.12em] text-navy-800">Direct Hedge</h2>
-          <p className="mt-2 text-[14px] text-mid">The desk has not published a paper forward curve yet.</p>
-        </section>
-      )}
     </div>
   );
 }

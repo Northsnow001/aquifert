@@ -160,11 +160,11 @@ export const HUB_NAV: HubNavItem[] = [
   {
     key: "call",
     href: "/hub/community-call",
-    label: "Weekly Meetup",
-    short: "Meetup",
+    label: "Market Call",
+    short: "Call",
     icon: PhoneCall,
     section: "AQ ONE",
-    tip: "A free 45-minute market and freight meetup with the Aquifert desk. Register once and we email you the joining link.",
+    tip: "A free 45-minute market and freight call with the Aquifert desk. Register once and we email you the joining link.",
   },
 
   {
@@ -378,6 +378,15 @@ export const HUB_NAV: HubNavItem[] = [
     tip: "Step-by-step help for every part of Aquifert, including what each number means and how the calculators work. Start here if something isn't obvious.",
   },
   {
+    key: "trade",
+    href: "/hub/trade",
+    label: "Trades",
+    short: "Trades",
+    icon: ClipboardList,
+    section: "Help",
+    tip: "Your trades with Aquifert, and the documents for each one.",
+  },
+  {
     key: "contact",
     href: "/hub/contact",
     label: "Trade Desk",
@@ -427,6 +436,7 @@ function tabGroups(): { key: string; items: string[] }[] {
     { key: "nitrogen", items: ["nitrogen"] },
     { key: "order-group", items: ["order"] },
     { key: "call", items: ["call"] },
+    { key: "trade", items: ["trade"] },
     { key: "contact", items: ["contact"] },
   ];
 }
@@ -470,7 +480,7 @@ export function drawerGroupsFor(_plan: Plan, _admin: boolean): { key: string; la
     { key: "suite", labelKey: "tab.suite", noteKey: "note.aq1", items: [...SUITE_KEYS] },
     { key: "analytics", labelKey: null, items: ["aq-analytics"] },
     { key: "zero", labelKey: null, items: ["zero"] },
-    { key: "desk", labelKey: null, items: ["nitrogen", "aquibot", "order", "call", "contact"] },
+    { key: "desk", labelKey: null, items: ["nitrogen", "aquibot", "order", "call", "trade", "contact"] },
     { key: "help", labelKey: "section.help", items: ["guide"] },
     { key: "you", labelKey: "section.you", items: ["account"] },
   ];
@@ -489,7 +499,8 @@ export const TOUR_STOPS: { key: string; title: string; body: string; anchor?: fa
   { key: "zero", title: "AQ Zero", body: "Opens the AQ Zero subscription. Once that membership is active, it opens AQ Zero with its own left menu, and this header stays so you can move around Aquifert ONE." },
   { key: "nitrogen", title: "Nitrogen Report", body: "Answer six questions on one page and get an AQ View nitrogen brief tailored to your market, yours to keep." },
   { key: "order", title: "Order Fertiliser", body: "Send the trading desk an enquiry for the products, quantity and months you need." },
-  { key: "call", title: "Weekly Meetup", body: "Join the desk's weekly market meetup, or catch up on the last one." },
+  { key: "call", title: "Market Call", body: "Join the desk's weekly market call, or catch up on the last one." },
+  { key: "trade", title: "Trades", body: "Your trades with Aquifert, and the documents for each one." },
   { key: "contact", title: "Trade Desk", body: "Reach the desk by WhatsApp, a booked meeting or a message." },
   { key: "more", title: "More", body: "Everything else in the menu lives here: Client Suite pages, plans, Aquibot and help." },
   { key: "search", title: "Search", body: "Jump to any page or tool. Press Ctrl K from anywhere." },

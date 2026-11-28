@@ -51,7 +51,7 @@ export default async function PlansPage() {
           <p className="font-semibold">Trading with Aquifert on AQ ZERO?</p>
           <p className="text-[13px] text-white/70">An AQ Zero membership includes this analytics desk, alongside your trade dashboard and document folders.</p>
         </div>
-        <Link href="/hub/order-desk/trades" className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-[#10263b] no-underline">
+        <Link href="/hub/trade" className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-[#10263b] no-underline">
           Go to my trades
         </Link>
       </section>
