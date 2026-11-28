@@ -5,6 +5,7 @@ import { DESK_DEALS, INBOX } from "@/lib/data/tables";
 import { dataClient } from "@/lib/data/db";
 import { listDeskDeals } from "@/lib/desk-hitl/store";
 import type { DeskDeal } from "@/lib/desk-hitl/types";
+import { briefMessage } from "@/lib/buyer-trades/brief";
 import type { MemberDoc, MemberStage, MemberTrade } from "@/lib/buyer-trades/member";
 import type { SessionUser } from "@/lib/session-shared";
 
@@ -62,11 +63,11 @@ function fromDeal(deal: DeskDeal): MemberTrade {
     route: route || "Route to be confirmed",
     stage: mapped.stage,
     stageLabel: mapped.label,
-    stageNote: when(deal.updatedAt) ? `Updated ${when(deal.updatedAt)}` : "",
+    stageNote: when(deal.updatedAt),
     shipment: execution?.shipmentWindow?.trim() || "Not nominated",
-    shipmentNote: execution?.destinationPort?.trim() || deal.destination || "",
+    shipmentNote: "",
     payment: payment || "Not invoiced",
-    paymentNote: deal.buyerPrice != null ? `${deal.currency || "USD"} ${deal.buyerPrice.toLocaleString("en-GB")} / MT` : "",
+    paymentNote: deal.buyerPrice != null ? `${deal.currency || "USD"} ${deal.buyerPrice.toLocaleString("en-GB", { maximumFractionDigits: 2 })}/MT` : "",
     documents: documentsFor(deal),
     terms: [
       ["Product", deal.product],
@@ -85,7 +86,10 @@ function fromDeal(deal: DeskDeal): MemberTrade {
       .filter((message) => message.text?.trim())
       .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
       .slice(0, 6)
-      .map((message) => ({ when: when(message.at), text: message.text.trim() })),
+      .map((message) => {
+        const who = message.from === "buyer" ? "You" : "Desk";
+        return { when: when(message.at), who, text: briefMessage(message.text, who === "You" ? "You wrote to the desk." : "The desk sent an update.") };
+      }),
     updatedAt: deal.updatedAt || deal.at,
   };
 }
@@ -103,9 +107,9 @@ function fromEnquiry(item: { id: string; at: string; payload: Record<string, str
     route: [payload.incoterm, payload.destination].filter(Boolean).join(" · ") || "Route to be confirmed",
     stage: "quote",
     stageLabel: "Enquiry received",
-    stageNote: when(item.at) ? `Sent ${when(item.at)}` : "",
+    stageNote: when(item.at),
     shipment: payload.shipping?.trim() || "Not nominated",
-    shipmentNote: payload.destination?.trim() || "",
+    shipmentNote: "",
     payment: "Not invoiced",
     paymentNote: "",
     documents: [],
@@ -120,7 +124,7 @@ function fromEnquiry(item: { id: string; at: string; payload: Record<string, str
     ]
       .filter(([, value]) => value?.trim())
       .map(([label, value]) => ({ label, value: value.trim() })),
-    updates: when(item.at) ? [{ when: when(item.at), text: "Enquiry sent to the desk." }] : [],
+    updates: when(item.at) ? [{ when: when(item.at), who: "You", text: "Enquiry sent to the desk." }] : [],
     updatedAt: item.at,
   };
 }
@@ -141,9 +145,9 @@ function fromRfq(row: Record<string, unknown>): MemberTrade {
     route: [String(row.incoterm ?? "").trim(), destination].filter(Boolean).join(" · ") || "Route to be confirmed",
     stage: mapped.stage,
     stageLabel: mapped.label,
-    stageNote: when(updated) ? `Updated ${when(updated)}` : "",
+    stageNote: when(updated),
     shipment: String(row.shipment_window ?? "").trim() || "Not nominated",
-    shipmentNote: destination,
+    shipmentNote: "",
     payment: "Not invoiced",
     paymentNote: "",
     documents: [],
@@ -157,7 +161,7 @@ function fromRfq(row: Record<string, unknown>): MemberTrade {
     ]
       .filter(([, value]) => value.trim())
       .map(([label, value]) => ({ label, value: value.trim() })),
-    updates: when(updated) ? [{ when: when(updated), text: "The desk has this request." }] : [],
+    updates: when(updated) ? [{ when: when(updated), who: "Desk", text: "The desk has this request." }] : [],
     updatedAt: updated,
   };
 }

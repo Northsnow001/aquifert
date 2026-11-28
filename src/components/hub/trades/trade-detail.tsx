@@ -58,8 +58,11 @@ export function TradeDetail({ trade }: { trade: MemberTrade }) {
             <ul className="mt-3 space-y-3">
               {trade.updates.map((update) => (
                 <li key={`${update.when}-${update.text}`}>
-                  <p className="text-[12px] text-dim">{update.when}</p>
-                  <p className="text-[13.5px] text-ink">{update.text}</p>
+                  <p className="text-[12px] text-dim">
+                    {update.when}
+                    {update.who ? ` · ${update.who}` : ""}
+                  </p>
+                  <p className="text-[13.5px] leading-snug text-ink">{update.text}</p>
                 </li>
               ))}
             </ul>

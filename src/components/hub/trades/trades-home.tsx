@@ -10,7 +10,7 @@ export function TradesHome({ tab, trades }: { tab: "active" | "completed" | "all
   const documents = trades.reduce((sum, trade) => sum + trade.documents.length, 0);
   const activeMt = active.reduce((sum, trade) => sum + (trade.quantityMt ?? 0), 0);
   const counts = new Map(MEMBER_STAGES.map((item) => [item.stage, trades.filter((trade) => trade.stage === item.stage).length]));
-  const updates = trades.flatMap((trade) => trade.updates.map((update) => ({ ...update, ref: trade.ref }))).slice(0, 4);
+  const updates = trades.flatMap((trade) => (trade.updates[0] ? [{ ...trade.updates[0], ref: trade.ref, id: trade.id }] : [])).slice(0, 6);
 
   return (
     <div className="flex flex-col gap-5">
@@ -45,7 +45,7 @@ export function TradesHome({ tab, trades }: { tab: "active" | "completed" | "all
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="flex flex-col gap-4">
         <section className="aq-card overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
             <h2 className="text-[16px] font-semibold">Trades</h2>
@@ -100,20 +100,20 @@ export function TradesHome({ tab, trades }: { tab: "active" | "completed" | "all
                 ))}
               </ul>
               <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[760px] text-left text-[13px]">
+                <table className="w-full text-left text-[13px]">
                   <thead>
                     <tr className="border-b border-border font-mono text-[10.5px] uppercase tracking-wide text-dim">
                       <th className="px-4 py-2">Trade</th>
-                      <th>Route</th>
-                      <th>Stage</th>
-                      <th>Shipment</th>
-                      <th>Payment</th>
-                      <th>Documents</th>
+                      <th className="px-3 py-2">Route</th>
+                      <th className="px-3 py-2">Stage</th>
+                      <th className="px-3 py-2">Shipment</th>
+                      <th className="px-3 py-2">Payment</th>
+                      <th className="px-4 py-2">Documents</th>
                     </tr>
                   </thead>
                   <tbody>
                     {shown.map((trade) => (
-                      <tr key={trade.id} className="border-b border-border last:border-0">
+                      <tr key={trade.id} className="border-b border-border align-top last:border-0">
                         <td className="px-4 py-3">
                           <Link href={`/hub/trade/${encodeURIComponent(trade.id)}`} className="font-semibold text-blue no-underline">
                             {trade.ref}
@@ -121,23 +121,19 @@ export function TradesHome({ tab, trades }: { tab: "active" | "completed" | "all
                           <p className="text-ink">{trade.product}</p>
                           {trade.detail ? <p className="text-[12px] text-dim">{trade.detail}</p> : null}
                         </td>
-                        <td className="max-w-[180px] text-[12.5px] text-mid">{trade.route}</td>
-                        <td>
+                        <td className="max-w-[16rem] px-3 py-3 text-[12.5px] text-mid">{trade.route}</td>
+                        <td className="whitespace-nowrap px-3 py-3">
                           <p className="font-medium">{trade.stageLabel}</p>
                           {trade.stageNote ? <p className="text-[12px] text-dim">{trade.stageNote}</p> : null}
                         </td>
-                        <td>
-                          <p>{trade.shipment}</p>
-                          {trade.shipmentNote ? <p className="text-[12px] text-dim">{trade.shipmentNote}</p> : null}
-                        </td>
-                        <td>
+                        <td className="max-w-[12rem] px-3 py-3">{trade.shipment}</td>
+                        <td className="whitespace-nowrap px-3 py-3">
                           <p>{trade.payment}</p>
-                          {trade.paymentNote ? <p className="mt-1 text-[12px] text-dim">{trade.paymentNote}</p> : null}
+                          {trade.paymentNote ? <p className="text-[12px] text-dim">{trade.paymentNote}</p> : null}
                         </td>
-                        <td>
-                          <p>{trade.documents.length ? `${trade.documents.length} sent` : "None yet"}</p>
-                          <Link href={`/hub/trade/${encodeURIComponent(trade.id)}`} className="text-[12.5px] font-semibold text-blue no-underline">
-                            Open trade folder
+                        <td className="whitespace-nowrap px-4 py-3">
+                          <Link href={`/hub/trade/${encodeURIComponent(trade.id)}`} className="font-semibold text-blue no-underline">
+                            {trade.documents.length ? `${trade.documents.length} sent` : "Open"}
                           </Link>
                         </td>
                       </tr>
@@ -148,25 +144,26 @@ export function TradesHome({ tab, trades }: { tab: "active" | "completed" | "all
             </>
           )}
         </section>
-        <aside className="flex flex-col gap-4">
-          <section className="aq-card p-4">
-            <h2 className="text-[15px] font-semibold">Latest updates</h2>
-            {updates.length ? (
-              <ul className="mt-3 space-y-3">
-                {updates.map((item) => (
-                  <li key={`${item.ref}-${item.when}-${item.text}`}>
-                    <p className="text-[12px] text-dim">{item.when}</p>
-                    <p className="text-[13px] leading-snug text-ink">
-                      <span className="font-semibold">{item.ref}</span> {item.text}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 text-[13px] text-mid">Updates from the desk will show here.</p>
-            )}
-          </section>
-        </aside>
+        <section className="aq-card p-4 sm:p-5">
+          <h2 className="text-[15px] font-semibold">Latest updates</h2>
+          {updates.length ? (
+            <ul className="mt-3 divide-y divide-border">
+              {updates.map((item) => (
+                <li key={item.id} className="grid grid-cols-1 gap-1 py-3 sm:grid-cols-[7.5rem_7rem_minmax(0,1fr)] sm:items-baseline sm:gap-4">
+                  <p className="text-[12.5px] text-dim">{item.when}</p>
+                  <Link href={`/hub/trade/${encodeURIComponent(item.id)}`} className="truncate font-semibold text-blue no-underline">
+                    {item.ref}
+                  </Link>
+                  <p className="line-clamp-2 text-[13.5px] leading-snug text-ink">
+                    <span className="font-medium text-mid">{item.who}.</span> {item.text}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-[13px] text-mid">Updates from the desk will show here.</p>
+          )}
+        </section>
       </div>
     </div>
   );

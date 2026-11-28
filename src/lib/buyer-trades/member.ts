@@ -26,7 +26,7 @@ export type MemberTrade = {
   paymentNote: string;
   documents: MemberDoc[];
   terms: { label: string; value: string }[];
-  updates: { when: string; text: string }[];
+  updates: { when: string; who: string; text: string }[];
   updatedAt: string;
 };
 
